@@ -1,0 +1,60 @@
+import { Agent } from "@/types/agent"
+
+export const DEFAULT_AGENTS: Agent[] = [
+  {
+    id: "fastgpt-1",
+    name: "通用助手",
+    type: "fastgpt",
+    description: "智能对话与知识问答",
+    systemPrompt: "你是专业的AI助手，能流畅对话和解答问题。",
+    iconType: "bot",
+    isPublished: true,
+    supportsFileUpload: true,
+    supportsImageUpload: true,
+  },
+  {
+    id: "fastgpt-2",
+    name: "代码助手",
+    type: "fastgpt",
+    description: "编程与代码生成",
+    systemPrompt: "你是专业的编程助手，能生成和解释代码。",
+    iconType: "code",
+    isPublished: true,
+    supportsFileUpload: true,
+    supportsImageUpload: true,
+  },
+  {
+    id: "fastgpt-3",
+    name: "写作助手",
+    type: "fastgpt",
+    description: "写作与润色",
+    systemPrompt: "你是专业的写作助手，能帮助用户写作和润色。",
+    iconType: "edit",
+    isPublished: true,
+    supportsFileUpload: true,
+    supportsImageUpload: true,
+  },
+  {
+    id: "fastgpt-4",
+    name: "翻译助手",
+    type: "fastgpt",
+    description: "多语言翻译",
+    systemPrompt: "你是专业的翻译助手，能进行多语言翻译。",
+    iconType: "translate",
+    isPublished: true,
+    supportsFileUpload: true,
+    supportsImageUpload: true,
+  },
+  {
+    id: "cad-analyzer",
+    name: "CAD解读智能体",
+    type: "cad-analyzer",
+    description: "上传CAD图纸，自动识别安防设备并生成专业分析报告。",
+    systemPrompt: "你是安防系统工程师和CAD图纸分析专家，能识别设备、统计、分析并生成结构化报告。",
+    iconType: "cad",
+    isPublished: true,
+    supportsFileUpload: true,
+    supportsImageUpload: true,
+    multimodalModel: "qwen-vl-max"
+  }
+] 
