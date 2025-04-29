@@ -101,12 +101,35 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
   };
 
   const handleUpdateAgent = async (agent: any) => {
+    console.log(`开始更新智能体[${agent.id}:${agent.name}]，数据:`, {
+      id: agent.id,
+      name: agent.name,
+      isPublished: agent.isPublished,
+      type: agent.type
+    });
+
     try {
+      // 调用API更新智能体
       const updated = await updateAgent(agent);
+
+      console.log(`智能体[${agent.id}:${agent.name}]更新成功，返回数据:`, {
+        id: updated.id,
+        name: updated.name,
+        isPublished: updated.isPublished,
+        type: updated.type
+      });
+
+      // 更新本地状态
       setAgents((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
+
+      // 显示成功提示
       toast({ title: t("agentUpdated"), description: agent.name });
+
+      return updated;
     } catch (e) {
+      console.error(`更新智能体[${agent.id}:${agent.name}]失败:`, e);
       toast({ title: "错误", description: String(e), variant: "destructive" });
+      throw e; // 重新抛出错误，让调用者可以处理
     }
   };
 
@@ -249,21 +272,50 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
                           onCheckedChange={async (checked) => {
                             setSwitchLoadingId(agent.id);
                             const prev = agent.isPublished;
+
+                            // 先更新UI状态
                             setAgents((prevAgents) =>
                               prevAgents.map((a) =>
                                 a.id === agent.id ? { ...a, isPublished: checked } : a
                               )
                             );
+
+                            console.log(`尝试更新智能体[${agent.id}:${agent.name}]发布状态: ${prev} -> ${checked}`);
+
                             try {
-                              const updated = { ...agent, isPublished: checked };
-                              await handleUpdateAgent(updated);
+                              // 确保isPublished字段是布尔值
+                              const updated = {
+                                ...agent,
+                                isPublished: checked
+                              };
+
+                              // 调用API更新
+                              const result = await handleUpdateAgent(updated);
+                              console.log(`智能体[${agent.id}:${agent.name}]发布状态更新结果:`, result);
+
+                              // 刷新智能体列表
+                              fetchAgents()
+                                .then(newAgents => {
+                                  setAgents(newAgents);
+                                  console.log("已刷新智能体列表");
+                                })
+                                .catch(err => console.error("刷新智能体列表失败:", err));
+
                             } catch (e) {
+                              console.error(`更新智能体[${agent.id}:${agent.name}]发布状态失败:`, e);
+
+                              // 恢复UI状态
                               setAgents((prevAgents) =>
                                 prevAgents.map((a) =>
                                   a.id === agent.id ? { ...a, isPublished: prev } : a
                                 )
                               );
-                              toast({ title: "发布失败", description: String(e), variant: "destructive" });
+
+                              toast({
+                                title: "发布状态更新失败",
+                                description: String(e),
+                                variant: "destructive"
+                              });
                             } finally {
                               setSwitchLoadingId(null);
                             }

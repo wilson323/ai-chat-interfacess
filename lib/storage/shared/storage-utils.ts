@@ -90,9 +90,9 @@ export function compressMessages(messages: Message[]): Message[] {
 
     if (message.metadata) {
       const essentialMetadata: Record<string, any> = {}
-      
+
       // 保留必要的元数据
-      const keysToKeep = ["deviceId", "agentId", "offline", "files"]
+      const keysToKeep = ["deviceId", "agentId", "offline", "files", "responseId", "apiKey", "appId"]
       keysToKeep.forEach(key => {
         if (message.metadata?.[key] !== undefined) {
           essentialMetadata[key] = message.metadata[key]
@@ -152,4 +152,4 @@ export function formatPreviewText(text: string, maxLength: number = 50): string 
 export function formatTitleText(text: string, maxLength: number = 30): string {
   if (typeof text !== "string") return "对话"
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
-} 
+}

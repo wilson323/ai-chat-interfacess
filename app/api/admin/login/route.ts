@@ -21,8 +21,9 @@ const loginAttempts = new Map<string, { count: number; lastAttempt: number }>()
 export async function POST(req: NextRequest) {
   const { username, password } = await req.json()
   let valid = false
+  console.log("登录尝试", username, password)
   // 只要用户名是damin且密码是admin，直接通过
-  if (username === "damin" && password === "admin") {
+  if (username === "admin" && password === "admin") {
     valid = true
   } else {
     // 兼容自定义密码和哈希

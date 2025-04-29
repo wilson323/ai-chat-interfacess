@@ -99,11 +99,33 @@ export async function PUT(req: NextRequest) {
     agent.temperature = typeof body.temperature === 'number' ? body.temperature : Number(body.temperature) || agent.temperature;
     agent.maxTokens = typeof body.maxTokens === 'number' ? body.maxTokens : Number(body.maxTokens) || agent.maxTokens;
     agent.multimodalModel = body.multimodalModel ?? agent.multimodalModel;
+    // 明确记录isPublished字段的更新
+    const oldPublishState = agent.isPublished;
     agent.isPublished = typeof body.isPublished === 'boolean' ? body.isPublished : agent.isPublished;
+    console.log(`智能体[${agent.id}:${agent.name}] 发布状态更新: ${oldPublishState} -> ${agent.isPublished}`);
     agent.description = body.description ?? agent.description;
     agent.order = typeof body.order === 'number' ? body.order : Number(body.order) || agent.order;
-    await agent.save();
-    return NextResponse.json({ success: true, data: agent });
+    try {
+      // 强制设置updatedAt为当前时间
+      agent.updatedAt = new Date();
+
+      // 保存更改
+      const savedAgent = await agent.save();
+
+      // 验证保存后的状态
+      const verifyAgent = await AgentConfig.findByPk(agent.id);
+      console.log(`智能体[${agent.id}:${agent.name}] 保存后验证:`, {
+        请求的发布状态: typeof body.isPublished === 'boolean' ? body.isPublished : '未提供',
+        保存前状态: oldPublishState,
+        保存后状态: verifyAgent?.isPublished,
+        保存是否成功: verifyAgent?.isPublished === agent.isPublished ? '是' : '否'
+      });
+
+      return NextResponse.json({ success: true, data: savedAgent });
+    } catch (saveError) {
+      console.error(`智能体[${agent.id}:${agent.name}] 保存失败:`, saveError);
+      throw saveError; // 重新抛出以便被外层catch捕获
+    }
   } catch (error) {
     const stack = error instanceof Error ? error.stack : undefined;
     console.error('AgentConfig-PUT异常:', error, stack);
@@ -132,4 +154,4 @@ export async function DELETE(req: NextRequest) {
     console.error('AgentConfig-DELETE异常:', error, stack);
     return NextResponse.json({ success: false, error: '删除失败', detail: String(error), stack }, { status: 500 });
   }
-} 
+}

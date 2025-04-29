@@ -177,7 +177,7 @@ canvas {
 /* Custom styles for chat messages */
 .message-bubble-user {
   background-color: #6cb33f !important;
-  color: #111 !important;
+  color: #fff !important;
   border-radius: 16px 16px 4px 16px !important;
   padding: 14px 18px !important;
   max-width: 85% !important;
@@ -305,7 +305,7 @@ canvas {
     padding: 12px 12px !important;
     font-size: 15px !important;
     background-color: #6cb33f !important;
-    color: #111 !important;
+    color: #fff !important;
   }
 
   .message-bubble-ai {

@@ -11,10 +11,10 @@ try {
 }
 
 const DB_NAME = 'zkteco-agent';
-const DB_USER = process.env.POSTGRES_USER || 'postgres';
-const DB_PASSWORD = process.env.POSTGRES_PASSWORD || '123456';
-const DB_HOST = process.env.POSTGRES_HOST || 'localhost';
-const DB_PORT = Number(process.env.POSTGRES_PORT) || 5433;
+const DB_USER = process.env.POSTGRES_USER || 'root';
+const DB_PASSWORD = process.env.POSTGRES_PASSWORD || 'ZKTeco##123';
+const DB_HOST = process.env.POSTGRES_HOST || '192.168.10.111';
+const DB_PORT = Number(process.env.POSTGRES_PORT) || 5442;
 
 async function ensureDatabaseExists() {
   const client = new Client({

@@ -1,7 +1,7 @@
 "use client"
 import type { Message } from "@/types/message"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import {
   Bot,
@@ -130,25 +130,120 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
   // 检查消息是否包含文件
   const hasFiles = Array.isArray(message.metadata?.files) && message.metadata.files.length > 0
 
-  const handleFeedback = async (type: 'like' | 'dislike') => {
-    if (feedbackLoading || feedback === type) return;
+  const handleFeedback = useCallback(async (type: 'like' | 'dislike', e?: React.MouseEvent) => {
+    // 阻止事件冒泡和默认行为
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    // 如果已经在加载中或者已经是当前反馈状态，则不执行
+    if (feedbackLoading || feedback === type) {
+      console.log('跳过反馈操作，原因:', feedbackLoading ? '正在加载中' : '已经是当前反馈状态');
+      return;
+    }
+
+    console.log('开始执行反馈操作:', type, '消息ID:', message.id);
     setFeedbackLoading(true)
     setFeedback(type)
+
     try {
+      // 保存到本地反馈记录
       await fetch('/api/message-feedback', { method: 'POST', body: JSON.stringify({ messageId: message.id, type }) })
-    } catch {}
+      // 如果有chatId，则调用外部反馈API
+      console.log('检查是否可以调用外部反馈API:', { chatId, appId: message.metadata?.appId });
+      if (chatId && message.metadata?.appId) {
+        const userGoodFeedback = type === 'like' ? 'yes' : undefined;
+        const apiKey = message.metadata?.apiKey;
+
+        // 使用API响应的id字段，这是对话接口返回的正确id
+        // 确保使用responseId，这是在chat-container.tsx中从API响应中提取并保存的
+        // 如果没有responseId，则使用消息ID作为备选
+        const dataId = message.metadata?.responseId || message.id;
+
+        // 记录是否使用了备选ID
+        if (!message.metadata?.responseId) {
+          console.warn('缺少responseId，使用消息ID作为备选:', message.id);
+        }
+
+        // 调试信息：输出消息元数据，帮助排查问题
+        console.log('消息元数据:', {
+          id: message.id,
+          responseId: message.metadata?.responseId,
+          appId: message.metadata?.appId,
+          apiKey: message.metadata?.apiKey ? '已设置' : '未设置',
+          使用的ID: dataId
+        });
+
+        if (!apiKey) {
+          console.warn('缺少API密钥，尝试使用默认方式调用反馈API');
+          // 继续执行，不要提前返回
+        }
+
+        try {
+          console.log('发送反馈:', {
+            appId: message.metadata?.appId,
+            chatId,
+            dataId: dataId,
+            userGoodFeedback
+          });
+
+          // 构建请求头，如果有API密钥则添加Authorization
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json'
+          };
+
+          if (apiKey) {
+            headers['Authorization'] = `Bearer ${apiKey}`;
+          }
+
+          console.log('准备发送反馈请求，headers:', Object.keys(headers));
+
+          const response = await fetch('https://zktecoaihub.com/api/core/chat/feedback/updateUserFeedback', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              appId: message.metadata?.appId,
+              chatId: chatId,
+              dataId: dataId,
+              userGoodFeedback
+            })
+          });
+
+          // 尝试解析响应
+          try {
+            const responseData = await response.json();
+            console.log('反馈API响应:', responseData);
+
+            if (responseData.code !== 200) {
+              console.warn('反馈API返回非成功状态码:', responseData);
+            }
+          } catch (error) {
+            // 如果响应不是JSON格式，则获取文本内容
+            const responseText = await response.text();
+            console.log('反馈API响应(文本):', responseText);
+          }
+        } catch (error) {
+          console.error('调用外部反馈API失败:', error);
+        }
+      } else {
+        console.log('跳过外部反馈API调用，原因:', !chatId ? '缺少chatId' : '缺少appId');
+      }
+    } catch (error) {
+      console.error('保存反馈失败:', error);
+    }
+
     setTimeout(() => setFeedbackLoading(false), 1500)
-  }
+  }, [feedbackLoading, feedback, message.id, message.metadata, chatId])
 
   // TTS语音播放
-  const handleTTS = () => {
+  const handleTTS = useCallback(() => {
     if (typeof window !== 'undefined' && !isUser && typeof message.content === 'string') {
       window.speechSynthesis.cancel(); // 防止多次叠加
       const utter = new window.SpeechSynthesisUtterance(message.content)
       utter.lang = /[\u4e00-\u9fa5]/.test(message.content) ? 'zh-CN' : 'en-US'
       window.speechSynthesis.speak(utter)
     }
-  }
+  }, [isUser, message.content])
 
   return (
     <div
@@ -342,8 +437,8 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
                         "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0",
                         liked ? "text-green-500" : "text-muted-foreground hover:text-green-500",
                       )}
-                      onClick={() => handleFeedback('like')}
-                      disabled={feedbackLoading || feedback === 'like'}
+                      onClick={(e) => handleFeedback('like', e)}
+                      disabled={feedbackLoading}
                     >
                       <ThumbsUp className="h-3.5 w-3.5" />
                     </Button>
@@ -364,8 +459,8 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
                         "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0",
                         disliked ? "text-red-500" : "text-muted-foreground hover:text-red-500",
                       )}
-                      onClick={() => handleFeedback('dislike')}
-                      disabled={feedbackLoading || feedback === 'dislike'}
+                      onClick={(e) => handleFeedback('dislike', e)}
+                      disabled={feedbackLoading}
                     >
                       <ThumbsDown className="h-3.5 w-3.5" />
                     </Button>
@@ -386,8 +481,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 text-muted-foreground hover:text-primary"
-                    onClick={() => handleFeedback('like')}
-                    disabled={feedbackLoading || feedback === 'like'}
+                    onClick={handleTTS}
                   >
                     <Volume2 className="h-3.5 w-3.5" />
                   </Button>

@@ -20,7 +20,7 @@ import { generateFallbackChatId } from "@/lib/api/fastgpt"
 
 // Add isAdmin prop to the component
 export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
-  const { toggleHistorySidebar, selectedAgent, agents, selectAgent } = useAgent()
+  const { selectedAgent, agents, selectAgent } = useAgent()
   const { language, setLanguage, availableLanguages, t } = useLanguage()
   const isMobile = useMobile()
 
@@ -98,10 +98,6 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
           onClick={createNewConversation}
         >
           <Plus className="h-4 sm:h-5 w-4 sm:w-5" />
-        </Button>
-
-        <Button variant="ghost" size="icon" onClick={() => toggleHistorySidebar()} className="h-8 sm:h-9 w-8 sm:w-9">
-          <History className="h-4 sm:h-5 w-4 sm:w-5" />
         </Button>
 
         {/* 语言下拉菜单 */}

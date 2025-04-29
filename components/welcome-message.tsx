@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, ChevronUp, MessageSquare, History, Sparkles } from "lucide-react"
@@ -17,6 +17,7 @@ interface WelcomeMessageProps {
 
 export function WelcomeMessage({ message, interacts = [], onInteractClick }: WelcomeMessageProps) {
   const [expanded, setExpanded] = useState(true)
+  const [mounted, setMounted] = useState(false)
   const isMobile = useMobile()
   const { t } = useTranslation()
 
@@ -30,6 +31,31 @@ export function WelcomeMessage({ message, interacts = [], onInteractClick }: Wel
       : message && typeof message === "object" && "content" in message
         ? String(message.content)
         : "你好！有什么我可以帮助你的吗？"
+
+  // 防止水合不匹配
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // 在客户端渲染之前返回一个简单的占位符
+  if (!mounted) {
+    return (
+      <Card className="border-pantone369-100 dark:border-pantone369-900/30 overflow-hidden shadow-md mt-4 transition-all duration-300 hover:shadow-lg">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-pantone369-100 dark:bg-pantone369-900/30 flex items-center justify-center shrink-0">
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-pantone369-600 dark:text-pantone369-400" />
+            </div>
+            <div className="flex-1">
+              <div className="prose prose-sm max-w-[80%] sm:max-w-[60%] dark:prose-invert mb-2 sm:mb-3 text-sm sm:text-base">
+                <div className="whitespace-pre-wrap">{formattedMessage}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-pantone369-100 dark:border-pantone369-900/30 overflow-hidden shadow-md mt-4 transition-all duration-300 hover:shadow-lg">

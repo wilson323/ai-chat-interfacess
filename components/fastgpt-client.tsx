@@ -13,6 +13,7 @@ interface StreamOptions {
   onProcessingStep?: (step: ProcessingStep) => void
   onError?: (error: Error) => void
   onFinish?: () => void
+  onResponseData?: (data: any) => void // 添加回调函数用于处理响应数据，特别是ID
 }
 
 export class FastGPTClient {
@@ -116,7 +117,7 @@ export class FastGPTClient {
         body: JSON.stringify(proxyData),
         signal: controller.signal,
       })
-
+      console.log('response----22222-------=',response)
       clearTimeout(timeoutId)
 
       if (!response.ok) {
@@ -395,7 +396,18 @@ export class FastGPTClient {
   /**
    * 发送非流式聊天请求
    */
-  async chat(messages: any[], options: Omit<StreamOptions, "onChunk" | "onStart"> = {}): Promise<string> {
+  async chat(messages: any[], options: {
+    temperature?: number;
+    maxTokens?: number;
+    onResponseData?: (responseData: {
+      id?: string | null;
+      chatCompletionId?: string | null;
+      completionId?: string | null;
+      model?: string | null;
+      created?: number | null;
+      object?: string | null;
+    }) => void;
+  } = {}): Promise<string> {
     if (!this.agent.apiEndpoint || !this.agent.apiKey || !this.agent.appId) {
       throw new Error("API 配置不完整。请配置 API 端点、密钥和 AppId。")
     }
@@ -447,6 +459,23 @@ export class FastGPTClient {
         // 如果API响应状态不是200，返回一个离线响应
         console.log("API响应状态不是200，使用离线响应")
         return "抱歉，服务器返回了一个错误。我将以离线模式为您服务。请问有什么我可以帮助您的？"
+      }
+
+      // 提取并处理响应数据，特别是 ID
+      if (options.onResponseData && data.data) {
+        // 提取可能的ID字段
+        const responseData = {
+          id: data.data.id || null,
+          chatCompletionId: data.data.chatCompletionId || null,
+          completionId: data.data.completionId || null,
+          // 输出其他可能有用的元数据
+          model: data.data.model || null,
+          created: data.data.created || null,
+          object: data.data.object || null,
+        };
+
+        console.log("非流式聊天响应数据:", responseData);
+        options.onResponseData(responseData);
       }
 
       return data.data.choices[0].message.content

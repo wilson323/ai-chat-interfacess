@@ -107,8 +107,10 @@ AgentConfig.init(
   {
     sequelize,
     tableName: 'agent_config',
-    timestamps: false,
+    timestamps: true,
+    updatedAt: 'updatedAt',
+    createdAt: false
   }
 );
 
-export default AgentConfig; 
+export default AgentConfig;

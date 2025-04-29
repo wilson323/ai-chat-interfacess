@@ -116,6 +116,20 @@ export function compressMessages(messages: Message[]): Message[] {
         essentialMetadata.files = message.metadata.files
       }
 
+      // 保留API响应ID，用于点赞功能
+      if (message.metadata.responseId) {
+        essentialMetadata.responseId = message.metadata.responseId
+      }
+
+      // 保留API密钥和应用ID，用于点赞功能
+      if (message.metadata.apiKey) {
+        essentialMetadata.apiKey = message.metadata.apiKey
+      }
+
+      if (message.metadata.appId) {
+        essentialMetadata.appId = message.metadata.appId
+      }
+
       if (Object.keys(essentialMetadata).length > 0) {
         minimalMessage.metadata = essentialMetadata
       }
@@ -123,4 +137,4 @@ export function compressMessages(messages: Message[]): Message[] {
 
     return minimalMessage
   })
-} 
+}

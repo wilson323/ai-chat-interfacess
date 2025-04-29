@@ -351,6 +351,7 @@ export class FastGPTClient {
         body: JSON.stringify(proxyData),
         signal: controller.signal,
       })
+      console.log('response-----------=',response)
 
       clearTimeout(timeoutId)
 
