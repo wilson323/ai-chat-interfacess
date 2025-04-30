@@ -5,8 +5,9 @@ import { useMobile } from "@/hooks/use-mobile"
 import { useAgent } from "@/context/agent-context"
 import { useLanguage } from "@/context/language-context"
 import type { Agent } from "@/types/agent"
-import { X } from "lucide-react"
+import { X, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
 
 const { Title } = Typography
 
@@ -17,12 +18,24 @@ interface SidebarProps {
 }
 
 export function AgentSidebar({ isOpen, onClose, isAdmin = false }: SidebarProps) {
-  const { agents, selectedAgent, selectAgent } = useAgent()
+  const { agents, selectedAgent, selectAgent, refreshAgents } = useAgent()
   const { t } = useLanguage()
   const isMobile = useMobile()
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // 只在用户界面过滤已发布的智能体
   const filteredAgents = isAdmin ? agents : agents.filter((agent) => agent.isPublished)
+
+  // 刷新智能体列表
+  const handleRefresh = async () => {
+    if (isRefreshing) return
+    setIsRefreshing(true)
+    try {
+      await refreshAgents()
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500) // 至少显示加载状态500ms
+    }
+  }
 
   const handleAgentSelect = (agent: Agent) => {
     selectAgent(agent)
@@ -55,12 +68,25 @@ export function AgentSidebar({ isOpen, onClose, isAdmin = false }: SidebarProps)
           </Title>
         </div>
 
-        {/* 移动端关闭按钮 */}
-        {isMobile && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={onClose}>
-            <X className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          {/* 刷新按钮 */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
           </Button>
-        )}
+
+          {/* 移动端关闭按钮 */}
+          {isMobile && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <List

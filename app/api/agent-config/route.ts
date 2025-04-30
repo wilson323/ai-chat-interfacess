@@ -4,10 +4,10 @@ import AgentConfig from '@/lib/db/models/agent-config';
 // 只允许 GET，返回已发布的智能体列表，异常结构统一
 export async function GET() {
   try {
-    const agents = await AgentConfig.findAll({
-      where: { isPublished: true },
-      order: [['order', 'ASC'], ['updatedAt', 'DESC']],
-    });
+    // 使用原始SQL查询，确保正确处理PostgreSQL中的布尔值
+    const [agents] = await AgentConfig.sequelize!.query(
+      "SELECT * FROM agent_config WHERE is_published = 't' ORDER BY \"order\" ASC, \"updatedAt\" DESC"
+    );
     console.log("API 返回 agents 数量:", agents.length, agents.map((a: any) => a.name));
     // 返回公开字段和必要的API配置信息
     const safeAgents = agents.map((a: any) => ({
