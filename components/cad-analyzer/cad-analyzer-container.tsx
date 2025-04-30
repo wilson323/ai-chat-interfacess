@@ -101,9 +101,14 @@ export function CADAnalyzerContainer() {
   }, [isLoading, progress])
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("handleFileUpload 被调用", event);
     const files = event.target.files
-    if (!files || files.length === 0) return
+    if (!files || files.length === 0) {
+      console.log("没有选择文件");
+      return;
+    }
 
+    console.log(`选择了 ${files.length} 个文件:`, Array.from(files).map(f => f.name));
     setIsLoading(true)
     setProgress(0)
 
@@ -123,28 +128,61 @@ export function CADAnalyzerContainer() {
         }
         setFileType(isImageFile ? "image" : "cad")
         // === 新增：后端API分析 ===
+        console.log(`开始上传文件: ${file.name}, 大小: ${file.size} 字节`);
         const formData = new FormData()
         formData.append('file', file)
-        const res = await fetch('/api/cad-analyzer/analyze', { method: 'POST', body: formData })
-        const data = await res.json()
-        if (data.error) {
-          toast({ title: '分析失败', description: data.error, variant: 'destructive' })
-          continue
+
+        // 添加管理员token头，确保API调用成功
+        console.log("发送API请求...");
+
+        try {
+          const res = await fetch('/api/cad-analyzer/analyze', {
+            method: 'POST',
+            headers: {
+              'x-admin-token': 'admin123' // 使用环境变量中配置的默认值
+            },
+            body: formData
+          })
+
+          if (!res.ok) {
+            const errorText = await res.text();
+            console.error(`API请求失败: ${res.status} ${res.statusText}`, errorText);
+            throw new Error(`API请求失败: ${res.status} ${res.statusText}`);
+          }
+
+          console.log("API请求成功，正在解析响应...");
+          const data = await res.json()
+
+          if (data.error) {
+            toast({ title: '分析失败', description: data.error, variant: 'destructive' })
+            continue
+          }
+
+          const resultData = {
+            filename: file.name,
+            time: new Date().toLocaleString(),
+            preview: data.url,
+            metadata: null,
+            analysis: data.analysis,
+            raw_data: null,
+            isImage: isImageFile,
+            imageData: isImageFile ? data.url : undefined,
+            reportUrl: data.reportUrl,
+          }
+
+          console.log("创建结果数据:", resultData);
+          setAnalysisResults((prev) => [resultData, ...prev])
+          setCurrentResult(resultData)
+          setProgress(100)
+        } catch (uploadError) {
+          console.error("文件上传或处理失败:", uploadError);
+          toast({
+            title: '处理失败',
+            description: uploadError instanceof Error ? uploadError.message : '文件处理过程中发生错误',
+            variant: 'destructive'
+          });
+          continue;
         }
-        const resultData = {
-          filename: file.name,
-          time: new Date().toLocaleString(),
-          preview: data.url,
-          metadata: null,
-          analysis: data.analysis,
-          raw_data: null,
-          isImage: isImageFile,
-          imageData: isImageFile ? data.url : undefined,
-          reportUrl: data.reportUrl,
-        }
-        setAnalysisResults((prev) => [resultData, ...prev])
-        setCurrentResult(resultData)
-        setProgress(100)
       }
 
       // Switch to results tab if we have results
@@ -290,7 +328,7 @@ export function CADAnalyzerContainer() {
       3. 安装调试建议
       4. 预估布线数据
       5. 使用Mermaid语法描述系统拓扑关系
-      
+
       请以结构化文本形式输出，包括设备统计表、摄像头信息表、安装调试建议、预估布线数据以及系统拓扑图。
     `
 
@@ -359,7 +397,7 @@ export function CADAnalyzerContainer() {
       3. 安装调试建议
       4. 预估布线数据
       5. 使用Mermaid语法描述系统拓扑关系
-      
+
       请以结构化文本形式输出，包括设备统计表、摄像头信息表、安装调试建议、预估布线数据以及系统拓扑图。
       请特别注意识别图片中的安防设备符号和标注。
     `
@@ -478,7 +516,9 @@ export function CADAnalyzerContainer() {
                     <Alert className="bg-pantone369-50 dark:bg-pantone369-900/20 border-pantone369-200 dark:border-pantone369-800/30 text-xs sm:text-sm">
                       <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-pantone369-500" />
                       <AlertTitle className="text-sm sm:text-base">{t("instructions")}</AlertTitle>
-                      <AlertDescription className="text-xs sm:text-sm">{t("uploadInstructions")}</AlertDescription>
+                      <AlertDescription className="text-xs sm:text-sm">
+                        {t("uploadInstructions")}
+                      </AlertDescription>
                     </Alert>
 
                     <div
@@ -495,11 +535,16 @@ export function CADAnalyzerContainer() {
                     >
                       <input
                         ref={fileInputRef}
+                        type="file"
                         className="hidden"
                         accept=".dxf,.dwg,.jpg,.jpeg,.png,.gif,.bmp,.webp"
                         multiple
-                        onChange={handleFileUpload}
+                        onChange={(e) => {
+                          console.log("文件选择事件触发", e.target.files);
+                          handleFileUpload(e);
+                        }}
                         disabled={isLoading}
+                        id="cad-file-input"
                       />
 
                       {isLoading ? (
@@ -530,7 +575,20 @@ export function CADAnalyzerContainer() {
                               {t("supportedFormats")}: JPG, PNG
                             </p>
                           </div>
-                          <Button className="mt-3 sm:mt-4 bg-pantone369-500 hover:bg-pantone369-600 text-white flex items-center gap-2 text-xs sm:text-sm h-8 sm:h-10">
+                          <Button
+                            type="button"
+                            className="mt-3 sm:mt-4 bg-pantone369-500 hover:bg-pantone369-600 text-white flex items-center gap-2 text-xs sm:text-sm h-8 sm:h-10"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log("选择文件按钮被点击");
+                              if (fileInputRef.current) {
+                                fileInputRef.current.click();
+                              } else {
+                                console.error("文件输入引用为空");
+                              }
+                            }}
+                          >
                             <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             {t("selectFile")}
                           </Button>

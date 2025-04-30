@@ -1290,10 +1290,8 @@ export function ChatContainer() {
     return null;
   }
 
-  // 如果是特殊类型的智能体，渲染对应的组件
-  if (selectedAgent?.type === "image-editor" || selectedAgent?.type === "cad-analyzer") {
-    return renderSpecialAgentComponent();
-  }
+  // 是否是特殊类型的智能体
+  const isSpecialAgent = selectedAgent?.type === "image-editor" || selectedAgent?.type === "cad-analyzer";
 
   // 渲染前日志追踪，避免 Fragment linter 报错
   if (selectedAgent?.type === 'fastgpt' && welcomeMessage && messages.length === 0) {
@@ -1330,6 +1328,11 @@ export function ChatContainer() {
       setWelcomeMessage("")
     }
   }, [selectedAgent])
+
+  // 如果是特殊类型的智能体，渲染对应的组件
+  if (isSpecialAgent) {
+    return renderSpecialAgentComponent();
+  }
 
   return (
     <div className="flex flex-col h-full w-full max-w-3xl mx-auto px-2 sm:px-6">

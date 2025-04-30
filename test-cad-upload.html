@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试CAD智能体文件上传</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .step {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试CAD智能体文件上传</h1>
+    
+    <div class="step">
+        <h2>步骤1: 打开用户聊天页面</h2>
+        <p>点击下面的按钮打开用户聊天页面：</p>
+        <a href="http://localhost:3002/user/chat" target="_blank" class="button">打开用户聊天页面</a>
+    </div>
+    
+    <div class="step">
+        <h2>步骤2: 切换到CAD智能体</h2>
+        <p>在页面上找到智能体切换器（通常在页面顶部），选择CAD智能体。</p>
+    </div>
+    
+    <div class="step">
+        <h2>步骤3: 点击"选择文件"按钮</h2>
+        <p>在CAD智能体界面中，找到并点击"选择文件"按钮。</p>
+        <p>如果按钮点击没有反应，说明修复失败。</p>
+        <p>如果点击按钮后出现文件选择对话框，说明修复成功。</p>
+    </div>
+    
+    <div class="step">
+        <h2>步骤4: 选择一个测试文件</h2>
+        <p>在文件选择对话框中，选择一个图片文件（如JPG、PNG）或CAD文件（如DXF、DWG）。</p>
+    </div>
+    
+    <div class="step">
+        <h2>测试结果</h2>
+        <form>
+            <input type="radio" id="success" name="result" value="success">
+            <label for="success">修复成功 - 点击"选择文件"按钮后出现文件选择对话框</label><br>
+            <input type="radio" id="failure" name="result" value="failure">
+            <label for="failure">修复失败 - 点击"选择文件"按钮没有反应</label><br>
+        </form>
+    </div>
+</body>
+</html>

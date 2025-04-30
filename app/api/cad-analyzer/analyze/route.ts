@@ -75,12 +75,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `文件过大，最大${safeConfig.maxFileSizeMB}MB` }, { status: 400 })
     }
     const fileName = `${Date.now()}_${file.name}`
+    // 确保目录存在
     const saveDir = path.join(process.cwd(), 'public', 'cad-analyzer')
-    await fs.mkdir(saveDir, { recursive: true })
+    try {
+      await fs.mkdir(saveDir, { recursive: true })
+      console.log(`目录创建成功: ${saveDir}`)
+    } catch (err) {
+      console.error(`创建目录失败: ${saveDir}`, err)
+      // 尝试使用临时目录
+      const tempDir = path.join(process.cwd(), 'tmp')
+      await fs.mkdir(tempDir, { recursive: true })
+      console.log(`使用临时目录: ${tempDir}`)
+    }
+
     const filePath = path.join(saveDir, fileName)
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    await fs.writeFile(filePath, buffer)
+
+    try {
+      await fs.writeFile(filePath, buffer)
+      console.log(`文件保存成功: ${filePath}`)
+    } catch (err) {
+      console.error(`文件保存失败: ${filePath}`, err)
+      throw new Error(`文件保存失败: ${err.message}`)
+    }
     const url = `/cad-analyzer/${fileName}`
 
     // 简单模拟分析逻辑
@@ -111,4 +129,4 @@ export async function POST(req: NextRequest) {
     await logApiError('cad-analyzer-analyze', error)
     return NextResponse.json({ error: '服务异常，请稍后重试' }, { status: 500 })
   }
-} 
+}
