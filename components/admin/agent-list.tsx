@@ -206,7 +206,7 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
                       ? "bg-accent/70 border-pantone369-200 dark:border-pantone369-800"
                       : "border-border",
                   )}
-                  onClick={() => setSelectedAgent(agent)}
+                  onClick={() => { setSelectedAgent(agent); handleEditAgentClick(agent); }}
                 >
                   <div className="flex gap-2 mr-3 shrink-0 z-10 items-center">
                     <TooltipProvider>
@@ -226,7 +226,7 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    {agent.type !== 'fastgpt' && (
+                    {agent.type === 'cad-analyzer' && (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -234,7 +234,7 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
                               variant="outline"
                               size="sm"
                               className="ml-2"
-                              onClick={e => { e.stopPropagation(); window.open(`/admin/${agent.type}-history`, '_blank') }}
+                              onClick={e => { e.stopPropagation(); window.open(`/admin/cad-analyzer-history`, '_blank') }}
                             >
                               {t('manageAgents')}
                             </Button>

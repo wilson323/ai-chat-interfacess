@@ -11,7 +11,6 @@ import { Header } from "@/components/header"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAgent } from "@/context/agent-context"
 import { useMobile } from "@/hooks/use-mobile"
-import { MobileNav } from "@/components/mobile-nav"
 
 // Add isAdmin prop to the LayoutProps interface
 interface LayoutProps {
@@ -106,9 +105,6 @@ export function Layout({ children, isAdmin = false }: LayoutProps) {
         {/* History Sidebar */}
         <HistorySidebar isOpen={historySidebarOpen} onClose={closeSidebars} />
       </div>
-
-      {/* 添加移动导航 */}
-      <MobileNav />
 
       {/* Theme toggle button - hide on very small screens */}
       <div className={cn(isMobile ? "hidden sm:block" : "block")}>

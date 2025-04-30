@@ -79,11 +79,16 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
                     </DropdownMenuItem>
                   ))
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Plus className="h-4 w-4 mr-2" />
-                {t("newAgent")}
-              </DropdownMenuItem>
+              {/* 仅在管理员界面显示新建智能体选项 */}
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("newAgent")}
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
