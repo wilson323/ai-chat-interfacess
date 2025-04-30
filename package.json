@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "check-db": "tsx scripts/check-db.ts",
-    "dev": "pnpm check-db && next dev",
+    "dev": "pnpm next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

@@ -76,4 +76,4 @@ export const sequelizeInitPromise = (async () => {
   }
 })();
 
-export default sequelize; 
+export default sequelize;

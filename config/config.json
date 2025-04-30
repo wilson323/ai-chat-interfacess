@@ -3,7 +3,7 @@
     "username": "root",
     "password": "ZKTeco##123",
     "database": "chat-interface",
-    "host": "192.168.10.11",
+    "host": "192.168.10.111",
     "port": 5442,
     "dialect": "postgres"
   },
@@ -11,7 +11,7 @@
     "username": "root",
     "password": "ZKTeco##123",
     "database": "chat-interface",
-    "host": "192.168.10.11",
+    "host": "192.168.10.111",
     "port": 5442,
     "dialect": "postgres"
   },
@@ -19,7 +19,7 @@
     "username": "root",
     "password": "ZKTeco##123",
     "database": "chat-interface",
-    "host": "192.168.10.11",
+    "host": "192.168.10.111",
     "port": 5442,
     "dialect": "postgres"
   }

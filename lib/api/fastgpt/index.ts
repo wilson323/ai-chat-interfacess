@@ -190,6 +190,34 @@ function generateFallbackChatResponse(message: string, model: string): FastGPTCh
  */
 function generateFallbackResponse(agent: Agent, chatId: string): ChatInitResponse {
   console.log("Generating fallback response with chatId:", chatId)
+
+  // 为不同类型的智能体生成不同的默认交互选项
+  let interacts: string[] = []
+
+  if (agent.type === "image-editor") {
+    interacts = [
+      "如何裁剪图片？",
+      "能帮我调整图片亮度吗？",
+      "如何添加滤镜效果？",
+      "能帮我去除图片背景吗？",
+      "如何调整图片大小？",
+    ]
+  } else if (agent.type === "cad-analyzer") {
+    interacts = [
+      "如何分析CAD图纸中的安防设备？",
+      "能识别图纸中的摄像头位置吗？",
+      "如何计算布线长度？",
+      "能帮我优化设备布局吗？",
+      "如何导出分析报告？",
+    ]
+  } else {
+    // 默认聊天智能体
+    interacts = ["你能做什么？", "介绍一下你的功能", "如何使用你的服务？", "你有哪些限制？", "能给我一些使用示例吗？"]
+  }
+
+  // 优先使用agent中的welcomeText，如果没有则使用systemPrompt，最后使用默认欢迎消息
+  const welcomeText = agent.welcomeText || agent.systemPrompt || "今天我能帮您什么？"
+
   return {
     code: 200,
     data: {
@@ -206,7 +234,7 @@ function generateFallbackResponse(agent: Agent, chatId: string): ChatInitRespons
           variables: [],
           fileSelectConfig: { canSelectFile: false, canSelectImg: false, maxFiles: 5 },
           _id: "",
-          welcomeText: agent.systemPrompt || "今天我能帮您什么？",
+          welcomeText: welcomeText,
         },
         chatModels: [agent.multimodalModel || "gpt-3.5-turbo"],
         name: agent.name || "AI Assistant",
@@ -215,7 +243,7 @@ function generateFallbackResponse(agent: Agent, chatId: string): ChatInitRespons
         type: "chat",
         pluginInputs: [],
       },
-      interacts: [], // 添加空的interacts数组
+      interacts: interacts, // 添加交互选项数组
     },
   }
 }
@@ -291,12 +319,38 @@ export class FastGPTClient {
     // 使用常量API端点
     const apiEndpoint = API_CONSTANTS.FASTGPT_API_ENDPOINT
 
-    if (!apiEndpoint || !this.agent.apiKey || !this.agent.appId) {
+    // 检查API端点是否配置
+    if (!apiEndpoint) {
       const error = new Error(ERROR_MESSAGES.INCOMPLETE_CONFIG)
       if (options.onError) {
         options.onError(error instanceof Error ? error : new Error(String(error)))
       }
       throw error
+    }
+
+    // 如果API密钥或AppID未配置，使用离线模式
+    if (!this.agent.apiKey || !this.agent.appId) {
+      console.warn("API key or AppID is not configured, using offline mode")
+
+      // 通知开始流式传输
+      if (options.onStart) {
+        options.onStart()
+      }
+
+      // 生成离线响应
+      const offlineResponse = "抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。"
+
+      // 发送离线响应
+      if (options.onChunk) {
+        options.onChunk(offlineResponse)
+      }
+
+      // 完成流式传输
+      if (options.onFinish) {
+        options.onFinish()
+      }
+
+      return
     }
 
     // 确保有有效的 chatId
@@ -669,9 +723,28 @@ export class FastGPTClient {
   /**
    * 发送非流式聊天请求
    */
-  async chat(messages: any[], options: Omit<StreamOptions, "onChunk" | "onStart"> = {}): Promise<string> {
+  async chat(messages: any[], options: Omit<StreamOptions, "onChunk" | "onStart"> & { onResponseData?: (data: any) => void } = {}): Promise<string> {
+    // 检查API端点是否配置
+    const apiEndpoint = API_CONSTANTS.FASTGPT_API_ENDPOINT
+    if (!apiEndpoint) {
+      console.error("API endpoint is not configured")
+      return "抱歉，API端点未配置。请联系管理员获取帮助。"
+    }
+
+    // 如果API密钥或AppID未配置，返回离线响应
+    if (!this.agent.apiKey || !this.agent.appId) {
+      console.warn("API key or AppID is not configured, using offline response")
+      return "抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。"
+    }
+
     return sendChatRequest(this.agent, messages, { ...options, stream: false }).then(
-      (response) => response.choices[0].message.content,
+      (response) => {
+        // 如果提供了onResponseData回调，调用它
+        if (options.onResponseData) {
+          options.onResponseData(response)
+        }
+        return response.choices[0].message.content
+      }
     )
   }
 
@@ -701,8 +774,15 @@ export async function initializeChat(agent: Agent, chatId?: string): Promise<Cha
   // 确保使用正确的API端点
   const apiEndpoint = API_CONSTANTS.FASTGPT_API_ENDPOINT
 
-  if (!apiEndpoint || !agent.apiKey || !agent.appId) {
-    console.error("API configuration is incomplete")
+  // 检查API端点是否配置，如果没有配置则使用回退响应
+  if (!apiEndpoint) {
+    console.error("API endpoint is not configured")
+    return generateFallbackResponse(agent, chatId || generateFallbackChatId())
+  }
+
+  // 如果API密钥或AppID未配置，使用回退响应但不阻止初始化
+  if (!agent.apiKey || !agent.appId) {
+    console.warn("API key or AppID is not configured, using fallback response")
     return generateFallbackResponse(agent, chatId || generateFallbackChatId())
   }
 
@@ -834,10 +914,27 @@ export async function sendChatRequest(
 ): Promise<FastGPTChatResponse> {
   // 1. 参数校验
   const apiEndpoint = agent.apiEndpoint || API_CONSTANTS.FASTGPT_API_ENDPOINT
-  if (!apiEndpoint || !agent.apiKey || !agent.appId) {
-    const errMsg = "API 配置不完整，请配置 API 端点、密钥和 AppId。"
+
+  // 检查API端点是否配置
+  if (!apiEndpoint) {
+    const errMsg = "API 端点未配置，请联系管理员。"
     if (options.stream && options.onChunk) options.onChunk(errMsg)
     return generateFallbackChatResponse(errMsg, agent.multimodalModel || "unknown")
+  }
+
+  // 如果API密钥或AppID未配置，使用离线模式但不阻止请求
+  if (!agent.apiKey || !agent.appId) {
+    const errMsg = "API 密钥或 AppID 未配置，使用离线模式。"
+    console.warn(errMsg)
+
+    // 如果是流式请求，发送离线响应
+    if (options.stream && options.onChunk) {
+      options.onChunk("抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。")
+      return generateFallbackChatResponse(errMsg, agent.multimodalModel || "unknown")
+    }
+
+    // 如果是非流式请求，返回离线响应
+    return generateFallbackChatResponse("抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。", agent.multimodalModel || "unknown")
   }
 
   // 2. 自动生成 chatId
@@ -969,7 +1066,19 @@ export async function getQuestionSuggestions(
 ): Promise<QuestionGuideResponse> {
   // 只做纯算法实现，不查/写 redis
   const apiEndpoint = API_CONSTANTS.FASTGPT_API_ENDPOINT;
-  if (!apiEndpoint || !agent.apiKey || !agent.appId) {
+
+  // 检查API端点是否配置
+  if (!apiEndpoint) {
+    console.error("API endpoint is not configured")
+    return {
+      code: 200,
+      data: getDefaultSuggestions(),
+    };
+  }
+
+  // 如果API密钥或AppID未配置，返回默认建议但不阻止功能
+  if (!agent.apiKey || !agent.appId) {
+    console.warn("API key or AppID is not configured, using default suggestions")
     return {
       code: 200,
       data: getDefaultSuggestions(),

@@ -115,7 +115,7 @@ export function ChatContainer() {
 
   // 当智能体变化时初始化聊天会话
   useEffect(() => {
-    if (selectedAgent?.apiEndpoint && selectedAgent?.apiKey && selectedAgent?.appId) {
+    if (selectedAgent) {
       console.log('智能体变化，初始化聊天会话:', selectedAgent.name);
 
       // 如果智能体已经有chatId，尝试加载现有会话
@@ -127,6 +127,29 @@ export function ChatContainer() {
           console.log(`找到现有会话，加载 ${existingMessages.length} 条消息`);
           setMessages(existingMessages);
           setChatId(selectedAgent.chatId);
+
+          // 尝试从localStorage恢复初始化信息
+          const savedWelcomeMessage = localStorage.getItem(`agent_${selectedAgent.id}_welcome_message`);
+          const savedSystemPrompt = localStorage.getItem(`agent_${selectedAgent.id}_system_prompt`);
+          const savedInteracts = localStorage.getItem(`agent_${selectedAgent.id}_interacts`);
+
+          if (savedWelcomeMessage) {
+            setWelcomeMessage(savedWelcomeMessage);
+          }
+
+          if (savedSystemPrompt) {
+            setSystemPrompt(savedSystemPrompt);
+          }
+
+          if (savedInteracts) {
+            try {
+              setInteracts(JSON.parse(savedInteracts));
+            } catch (e) {
+              console.error("解析保存的交互选项时出错:", e);
+              setInteracts([]);
+            }
+          }
+
           return;
         }
       }
@@ -276,22 +299,53 @@ export function ChatContainer() {
       }
 
       setConnectionError(null)
+
+      // 从API获取初始化信息
+      console.log("从API获取初始化信息...");
       const initResponse = await initializeChat(selectedAgent)
+      console.log("API初始化响应:", initResponse);
+
       // 优先级：FastGPT API 返回 > 管理员配置 > 默认
       let welcomeText = initResponse?.data?.app?.chatConfig?.welcomeText
       if (!welcomeText || typeof welcomeText !== 'string') {
         welcomeText = selectedAgent.welcomeText || "你好！我是智能助手，有什么可以帮您？"
       }
-      setSystemPrompt(selectedAgent.systemPrompt || null)
-      setWelcomeMessage(welcomeText)
-      setInteracts(Array.isArray((initResponse as any)?.interacts) ? (initResponse as any).interacts : [])
+
+      // 设置系统提示词，优先使用API返回的系统提示词
+      const systemPromptText = (initResponse as any)?.system_prompt || selectedAgent.systemPrompt || null
+      setSystemPrompt(systemPromptText)
+
+      // 设置欢迎消息，优先使用API返回的欢迎消息
+      const welcomeMessage = (initResponse as any)?.welcome_message || welcomeText
+      setWelcomeMessage(welcomeMessage)
+
+      // 设置交互选项，优先使用API返回的交互选项
+      const interactOptions = Array.isArray((initResponse as any)?.interacts)
+        ? (initResponse as any).interacts
+        : Array.isArray(initResponse?.data?.interacts)
+          ? initResponse.data.interacts
+          : []
+      setInteracts(interactOptions)
 
       // 日志追踪
-      console.log('initChatSession', { selectedAgent, welcomeMessage: welcomeText, localMessages })
+      console.log('initChatSession完成', {
+        selectedAgent,
+        welcomeMessage,
+        systemPrompt: systemPromptText,
+        interacts: interactOptions,
+        localMessages,
+        initResponse
+      })
 
       if (selectedAgent) {
         selectedAgent.chatId = localChatId
       }
+
+      // 保存初始化信息到localStorage，以便在页面刷新后恢复
+      localStorage.setItem(`agent_${selectedAgent.id}_welcome_message`, welcomeMessage);
+      localStorage.setItem(`agent_${selectedAgent.id}_system_prompt`, systemPromptText || '');
+      localStorage.setItem(`agent_${selectedAgent.id}_interacts`, JSON.stringify(interactOptions));
+
     } catch (error) {
       console.error("Unexpected error during chat initialization:", error)
       setIsOfflineMode(true)
@@ -308,6 +362,30 @@ export function ChatContainer() {
 
       if (selectedAgent) {
         selectedAgent.chatId = emergencyFallbackId
+      }
+
+      // 尝试从localStorage恢复初始化信息
+      if (selectedAgent) {
+        const savedWelcomeMessage = localStorage.getItem(`agent_${selectedAgent.id}_welcome_message`);
+        const savedSystemPrompt = localStorage.getItem(`agent_${selectedAgent.id}_system_prompt`);
+        const savedInteracts = localStorage.getItem(`agent_${selectedAgent.id}_interacts`);
+
+        if (savedWelcomeMessage) {
+          setWelcomeMessage(savedWelcomeMessage);
+        }
+
+        if (savedSystemPrompt) {
+          setSystemPrompt(savedSystemPrompt);
+        }
+
+        if (savedInteracts) {
+          try {
+            setInteracts(JSON.parse(savedInteracts));
+          } catch (e) {
+            console.error("解析保存的交互选项时出错:", e);
+            setInteracts([]);
+          }
+        }
       }
     }
   }
@@ -417,27 +495,70 @@ export function ChatContainer() {
       return
     }
 
-    // Check if API is configured
-    if (!selectedAgent?.apiEndpoint || !selectedAgent?.apiKey || !selectedAgent?.appId) {
-      setShowSettings(true)
-      toast({
-        title: "Need API configuration",
-        description: "Please configure your FastGPT API key and App ID in settings to continue",
-        variant: "destructive",
-      })
-      return
+    // 检查API是否配置 - 只在管理员模式下检查API配置
+    const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+
+    // 如果是管理员模式，则检查API配置
+    if (isAdmin) {
+      if (!selectedAgent?.apiEndpoint) {
+        setShowSettings(true)
+        toast({
+          title: "需要API配置",
+          description: "请在设置中配置API端点以继续",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (!selectedAgent?.apiKey || !selectedAgent?.appId) {
+        setShowSettings(true)
+        toast({
+          title: "需要API配置",
+          description: "请在设置中配置API密钥和AppID以继续",
+          variant: "destructive",
+        })
+        return
+      }
     }
 
-    // If not yet completed, initialize chat session
-    if (!chatId) {
-      await initChatSession()
-    }
+    // 非管理员模式下，不检查API配置，直接继续
 
-    // Ensure we have a chatId, even if initialization failed
+    // 确保我们有一个chatId，即使初始化失败
     if (!chatId && selectedAgent) {
+      // 如果没有chatId，使用已保存的初始化信息
+      const savedWelcomeMessage = localStorage.getItem(`agent_${selectedAgent.id}_welcome_message`);
+      const savedSystemPrompt = localStorage.getItem(`agent_${selectedAgent.id}_system_prompt`);
+      const savedInteracts = localStorage.getItem(`agent_${selectedAgent.id}_interacts`);
+
+      // 如果有保存的初始化信息，直接使用
+      if (savedWelcomeMessage) {
+        setWelcomeMessage(savedWelcomeMessage);
+      }
+
+      if (savedSystemPrompt) {
+        setSystemPrompt(savedSystemPrompt);
+      }
+
+      if (savedInteracts) {
+        try {
+          setInteracts(JSON.parse(savedInteracts));
+        } catch (e) {
+          console.error("解析保存的交互选项时出错:", e);
+          setInteracts([]);
+        }
+      }
+
+      // 生成一个新的chatId
       const fallbackChatId = generateFallbackChatId()
       setChatId(fallbackChatId)
       selectedAgent.chatId = fallbackChatId
+
+      console.log("使用保存的初始化信息和新的chatId:", {
+        chatId: fallbackChatId,
+        welcomeMessage: savedWelcomeMessage,
+        systemPrompt: savedSystemPrompt,
+        interacts: savedInteracts ? JSON.parse(savedInteracts) : []
+      });
     }
 
     try {
@@ -1156,11 +1277,22 @@ export function ChatContainer() {
     return
   }
 
+  // 所有hooks必须在任何条件返回之前声明和使用
+  // 这样可以确保hooks的调用数量在所有渲染路径中保持一致
+
   // 根据智能体类型渲染适当的组件
-  if (selectedAgent?.type === "image-editor") {
-    return <ImageEditorContainer />
-  } else if (selectedAgent?.type === "cad-analyzer") {
-    return <CADAnalyzerContainer />
+  const renderSpecialAgentComponent = () => {
+    if (selectedAgent?.type === "image-editor") {
+      return <ImageEditorContainer />
+    } else if (selectedAgent?.type === "cad-analyzer") {
+      return <CADAnalyzerContainer />
+    }
+    return null;
+  }
+
+  // 如果是特殊类型的智能体，渲染对应的组件
+  if (selectedAgent?.type === "image-editor" || selectedAgent?.type === "cad-analyzer") {
+    return renderSpecialAgentComponent();
   }
 
   // 渲染前日志追踪，避免 Fragment linter 报错
@@ -1184,8 +1316,16 @@ export function ChatContainer() {
 
   useEffect(() => {
     if (selectedAgent?.type === "fastgpt") {
-      // 优先级：FastGPT API 返回 > 管理员配置 > 默认
-      setWelcomeMessage(selectedAgent.welcomeText || "你好！我是智能助手，有什么可以帮您？")
+      // 检查是否有保存的欢迎消息
+      const savedWelcomeMessage = localStorage.getItem(`agent_${selectedAgent.id}_welcome_message`);
+
+      if (savedWelcomeMessage) {
+        // 优先使用保存的欢迎消息
+        setWelcomeMessage(savedWelcomeMessage);
+      } else {
+        // 如果没有保存的欢迎消息，使用智能体配置的欢迎消息
+        setWelcomeMessage(selectedAgent.welcomeText || "你好！我是智能助手，有什么可以帮您？");
+      }
     } else {
       setWelcomeMessage("")
     }

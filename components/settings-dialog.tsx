@@ -64,8 +64,16 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     if (selectedAgent) {
       // 确保API端点正确设置为v1/chat/completions
       setApiEndpoint("https://zktecoaihub.com/api/v1/chat/completions")
-      setApiKey(selectedAgent.apiKey || "")
-      setAppId(selectedAgent.appId || "")
+
+      // 只有管理员才需要设置API密钥和AppID
+      if (adminLoggedIn) {
+        setApiKey(selectedAgent.apiKey || "")
+        setAppId(selectedAgent.appId || "")
+      } else {
+        // 非管理员用户使用默认值或空值
+        setApiKey("default-api-key")
+        setAppId("default-app-id")
+      }
     }
   }, [selectedAgent, open])
 
@@ -103,7 +111,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Only allow API configuration for admins
+    // 管理员可以配置API设置
     if (isAdmin && activeTab === "api") {
       // 验证输入
       if (!validateInputs()) {
@@ -114,6 +122,13 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         apiEndpoint,
         apiKey,
         appId,
+      })
+    } else if (!isAdmin) {
+      // 非管理员用户也需要更新配置，但使用默认值
+      updateAgentConfig({
+        apiEndpoint,
+        apiKey: "default-api-key",
+        appId: "default-app-id",
       })
     }
 

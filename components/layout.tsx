@@ -107,8 +107,8 @@ export function Layout({ children, isAdmin = false }: LayoutProps) {
         <HistorySidebar isOpen={historySidebarOpen} onClose={closeSidebars} />
       </div>
 
-      {/* 添加移动导航 - 仅在管理员界面显示 */}
-      {isAdmin && <MobileNav />}
+      {/* 添加移动导航 */}
+      <MobileNav />
 
       {/* Theme toggle button - hide on very small screens */}
       <div className={cn(isMobile ? "hidden sm:block" : "block")}>

@@ -64,6 +64,12 @@ function generateFallbackResponse(agent: Agent, chatId: string): FastGPTInitResp
     interacts = ["你能做什么？", "介绍一下你的功能", "如何使用你的服务？", "你有哪些限制？", "能给我一些使用示例吗？"]
   }
 
+  // 优先使用agent中的welcomeText，如果没有则使用默认欢迎消息
+  const finalWelcomeMessage = agent.welcomeText || welcomeMessage
+
+  // 优先使用agent中的systemPrompt，如果没有则使用默认系统提示词
+  const finalSystemPrompt = agent.systemPrompt || "你是一位专业的智能助手，请耐心解答用户问题。"
+
   return {
     code: 200,
     data: {
@@ -80,7 +86,7 @@ function generateFallbackResponse(agent: Agent, chatId: string): FastGPTInitResp
           variables: [],
           fileSelectConfig: { canSelectFile: false, canSelectImg: false, maxFiles: 5 },
           _id: "",
-          welcomeText: agent.systemPrompt || welcomeMessage,
+          welcomeText: finalWelcomeMessage,
         },
         chatModels: [agent.model || "gpt-3.5-turbo"],
         name: agent.name || "AI Assistant",
@@ -89,9 +95,10 @@ function generateFallbackResponse(agent: Agent, chatId: string): FastGPTInitResp
         type: "chat",
         pluginInputs: [],
       },
+      interacts: interacts,
     },
-    welcome_message: welcomeMessage,
-    system_prompt: agent.systemPrompt || "你是一位专业的智能助手，请耐心解答用户问题。",
+    welcome_message: finalWelcomeMessage,
+    system_prompt: finalSystemPrompt,
     interacts: interacts,
   }
 }
