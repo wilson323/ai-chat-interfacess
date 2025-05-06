@@ -27,6 +27,7 @@ export async function GET() {
       isPublished: a.isPublished,
       apiKey: a.apiKey ?? '',
       appId: a.appId ?? '',
+      apiUrl: a.apiUrl ?? 'https://zktecoaihub.com/api/v1/chat/completions',
       systemPrompt: a.systemPrompt ?? '',
       temperature: a.temperature ?? 0.7,
       maxTokens: a.maxTokens ?? 2000,
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
       type: body.type,
       apiKey: body.apiKey || '',
       appId: body.appId || '',
+      apiUrl: body.apiUrl || 'https://zktecoaihub.com/api/v1/chat/completions',
       systemPrompt: body.systemPrompt || '',
       temperature: typeof body.temperature === 'number' ? body.temperature : Number(body.temperature) || 0.7,
       maxTokens: typeof body.maxTokens === 'number' ? body.maxTokens : Number(body.maxTokens) || 2000,
@@ -77,6 +79,8 @@ export async function PUT(req: NextRequest) {
   }
   try {
     const body = await req.json();
+    console.log("更新智能体请求体:", JSON.stringify(body, null, 2));
+
     if (!body.id) {
       return NextResponse.json({ success: false, error: 'id 必填' }, { status: 400 });
     }
@@ -84,17 +88,28 @@ export async function PUT(req: NextRequest) {
     if (!agent) {
       return NextResponse.json({ success: false, error: '智能体不存在' }, { status: 404 });
     }
+    // 记录原始类型，用于调试
+    const originalType = agent.type;
+
     // fastgpt 类型不允许变更类型，始终按 fastgpt 保存
     const isFastgpt = agent.type === 'fastgpt';
     if (isFastgpt) {
       agent.type = 'fastgpt';
     } else {
-      agent.type = body.type ?? agent.type;
+      // 确保type字段不为空
+      if (!body.type) {
+        console.warn(`智能体[${agent.id}:${agent.name}] 更新时type字段为空，使用原始类型: ${originalType}`);
+        agent.type = originalType;
+      } else {
+        agent.type = body.type;
+      }
+      console.log(`智能体[${agent.id}:${agent.name}] 类型更新: ${originalType} -> ${agent.type}`);
     }
     // 其它字段无验证，直接保存
     agent.name = body.name ?? agent.name;
     agent.apiKey = body.apiKey ?? agent.apiKey;
     agent.appId = body.appId ?? agent.appId;
+    agent.apiUrl = body.apiUrl ?? agent.apiUrl;
     agent.systemPrompt = body.systemPrompt ?? agent.systemPrompt;
     agent.temperature = typeof body.temperature === 'number' ? body.temperature : Number(body.temperature) || agent.temperature;
     agent.maxTokens = typeof body.maxTokens === 'number' ? body.maxTokens : Number(body.maxTokens) || agent.maxTokens;
@@ -118,7 +133,11 @@ export async function PUT(req: NextRequest) {
         请求的发布状态: typeof body.isPublished === 'boolean' ? body.isPublished : '未提供',
         保存前状态: oldPublishState,
         保存后状态: verifyAgent?.isPublished,
-        保存是否成功: verifyAgent?.isPublished === agent.isPublished ? '是' : '否'
+        保存是否成功: verifyAgent?.isPublished === agent.isPublished ? '是' : '否',
+        请求的类型: body.type || '未提供',
+        原始类型: originalType,
+        保存后类型: verifyAgent?.type,
+        类型保存是否成功: verifyAgent?.type === agent.type ? '是' : '否'
       });
 
       return NextResponse.json({ success: true, data: savedAgent });

@@ -10,6 +10,7 @@ export interface Agent {
   iconType?: string
   icon?: React.ReactNode
   apiEndpoint?: string
+  apiUrl?: string
   apiKey?: string
   appId?: string
   systemPrompt?: string

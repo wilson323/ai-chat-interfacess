@@ -21,6 +21,7 @@ export async function GET() {
       isPublished: a.isPublished,
       apiKey: a.apiKey ?? '',
       appId: a.appId ?? '',
+      apiUrl: a.apiUrl ?? 'https://zktecoaihub.com/api/v1/chat/completions',
       systemPrompt: a.systemPrompt ?? '',
       temperature: a.temperature ?? 0.7,
       maxTokens: a.maxTokens ?? 2000,

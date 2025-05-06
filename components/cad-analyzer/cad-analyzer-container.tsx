@@ -310,7 +310,7 @@ export function CADAnalyzerContainer() {
 
   // 修改analyzeWithAI函数，增强错误处理和兼容性
   const analyzeWithAI = async (cadData: CADData): Promise<string> => {
-    if (!selectedAgent?.apiEndpoint || !selectedAgent?.apiKey || !selectedAgent?.appId) {
+    if (!selectedAgent?.apiUrl || !selectedAgent?.apiKey || !selectedAgent?.appId) {
       return "错误：未配置API密钥或端点。请在管理员控制台中配置API设置。"
     }
 
@@ -334,7 +334,7 @@ export function CADAnalyzerContainer() {
 
       // 使用代理API而不是直接调用，以避免CORS问题
       const proxyData = {
-        targetUrl: selectedAgent.apiEndpoint,
+        targetUrl: selectedAgent.apiUrl,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -382,7 +382,7 @@ export function CADAnalyzerContainer() {
 
   // 同样修改多模态AI分析函数，使用相同的代理方式
   const analyzeWithMultimodalAI = async (imageData: string): Promise<string> => {
-    if (!selectedAgent?.apiEndpoint || !selectedAgent?.apiKey || !selectedAgent?.appId) {
+    if (!selectedAgent?.apiUrl || !selectedAgent?.apiKey || !selectedAgent?.appId) {
       return "错误：未配置API密钥或端点。请在管理员控制台中配置API设置。"
     }
 
@@ -404,7 +404,7 @@ export function CADAnalyzerContainer() {
 
       // 使用代理API
       const proxyData = {
-        targetUrl: selectedAgent.apiEndpoint,
+        targetUrl: selectedAgent.apiUrl,
         method: "POST",
         headers: {
           "Content-Type": "application/json",

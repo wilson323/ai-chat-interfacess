@@ -12,6 +12,11 @@ export interface AgentConfigAttributes {
   type: string;
   apiKey: string;
   appId: string;
+  /**
+   * API端点URL，默认为https://zktecoaihub.com/api/v1/chat/completions
+   * 可以为每个智能体单独配置不同的API端点
+   */
+  apiUrl?: string;
   systemPrompt: string;
   temperature: number;
   maxTokens: number;
@@ -30,6 +35,7 @@ export class AgentConfig extends Model<AgentConfigAttributes, AgentConfigCreatio
   public type!: string;
   public apiKey!: string;
   public appId!: string;
+  public apiUrl?: string;
   public systemPrompt!: string;
   public temperature!: number;
   public maxTokens!: number;
@@ -65,6 +71,11 @@ AgentConfig.init(
     appId: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    apiUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'https://zktecoaihub.com/api/v1/chat/completions',
     },
     systemPrompt: {
       type: DataTypes.TEXT,

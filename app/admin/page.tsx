@@ -34,7 +34,7 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <p className="mb-4 text-muted-foreground">管理所有对接的 FastGPT 智能体，支持编辑、配置和同步。</p>
-                <Link href="/admin/agent-list?type=fastgpt">
+                <Link href="/admin/agent-list/fastgpt">
                   <Button>进入 FastGPT 智能体管理</Button>
                 </Link>
               </CardContent>
@@ -44,9 +44,9 @@ export default function AdminPage() {
                 <CardTitle>CAD 智能体管理</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="mb-4 text-muted-foreground">配置 CAD 解读智能体的必要信息（如大模型相关信息等），支持编辑和同步。</p>
-                <Link href="/admin/cad-analyzer-config">
-                  <Button>配置 CAD 智能体</Button>
+                <p className="mb-4 text-muted-foreground">管理所有对接的 CAD 智能体，支持编辑、配置和同步。</p>
+                <Link href="/admin/agent-list/cad-analyzer">
+                  <Button>进入 CAD 智能体管理</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -55,9 +55,9 @@ export default function AdminPage() {
                 <CardTitle>图像编辑智能体管理</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="mb-4 text-muted-foreground">配置图像编辑智能体的必要信息（如大模型相关信息等），支持编辑和同步。</p>
-                <Link href="/admin/image-editor-config">
-                  <Button>配置图像编辑智能体</Button>
+                <p className="mb-4 text-muted-foreground">管理所有对接的图像编辑智能体，支持编辑、配置和同步。</p>
+                <Link href="/admin/agent-list/image-editor">
+                  <Button>进入图像编辑智能体管理</Button>
                 </Link>
               </CardContent>
             </Card>

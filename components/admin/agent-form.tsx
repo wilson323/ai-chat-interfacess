@@ -34,7 +34,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
   // 2. 初始化表单状态
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
-  const [apiEndpoint, setApiEndpoint] = useState("https://zktecoaihub.com/api/v1/chat/completions") // 统一API端点
+  const [apiUrl, setApiUrl] = useState("https://zktecoaihub.com/api/v1/chat/completions") // API端点
   const [apiKey, setApiKey] = useState("")
   const [appId, setAppId] = useState("")
   const [model, setModel] = useState("qwen-max")
@@ -52,9 +52,10 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
 
   useEffect(() => {
     if (agent) {
+      console.log("Agent loaded:", agent.name, "Type:", agent.type);
       setName(agent.name || "")
       setDescription(agent.description || "")
-      setApiEndpoint(agent.apiEndpoint || "https://zktecoaihub.com/api/v1/chat/completions")
+      setApiUrl(agent.apiUrl || "https://zktecoaihub.com/api/v1/chat/completions")
       setApiKey(agent.apiKey || "")
       setAppId(agent.appId || "")
       setIsPublished(agent.isPublished || false)
@@ -69,7 +70,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
     } else {
       setName("")
       setDescription("")
-      setApiEndpoint("https://zktecoaihub.com/api/v1/chat/completions")
+      setApiUrl("https://zktecoaihub.com/api/v1/chat/completions")
       setApiKey("")
       setAppId("")
       setIsPublished(false)
@@ -84,6 +85,16 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
     }
   }, [agent])
 
+  // 验证API端点的有效性
+  const validateApiEndpoint = (endpoint: string): boolean => {
+    try {
+      const url = new URL(endpoint);
+      return url.protocol === 'https:' || url.protocol === 'http:';
+    } catch (e) {
+      return false;
+    }
+  }
+
   // 3. handleSubmit 支持新增和编辑
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,22 +102,46 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       toast({ title: "保存失败", description: "API Key 和 App ID 必填", variant: "destructive" });
       return;
     }
+
+    // 验证CAD智能体的API端点
+    if (agent?.type === 'cad-analyzer' && !validateApiEndpoint(apiUrl)) {
+      toast({
+        title: "API端点格式错误",
+        description: "请输入有效的URL地址，以http://或https://开头",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // 如果CAD智能体的API端点被修改，显示确认对话框
+    if (agent?.type === 'cad-analyzer' &&
+        apiUrl !== "https://zktecoaihub.com/api/v1/chat/completions" &&
+        apiUrl !== agent?.apiUrl) {
+      if (!window.confirm("您已修改CAD智能体的API端点，这可能会影响用户界面的功能。确定要保存吗？")) {
+        return;
+      }
+    }
+
     setIsSaving(true)
     try {
+      // 确保使用正确的type值，如果是编辑现有智能体，优先使用agent.type
+      const agentType = agent?.type || type;
+      console.log("保存智能体，使用类型:", agentType, "原始类型:", agent?.type, "表单类型:", type);
+
       const agentData = {
         name: name || "默认智能体",
         description: description || "",
-        apiEndpoint: apiEndpoint || "https://zktecoaihub.com/api/v1/chat/completions",
+        apiUrl: apiUrl || "https://zktecoaihub.com/api/v1/chat/completions",
         apiKey: apiKey || "",
         appId: appId || "",
         isPublished,
-        type,
+        type: agentType, // 使用确定的类型
         systemPrompt: systemPrompt || "",
         temperature: temperature ?? 0.7,
         maxTokens: maxTokens ?? 2000,
         supportsFileUpload,
         supportsImageUpload,
-        ...(type === "image-editor" || type === "cad-analyzer" ? { multimodalModel: multimodalModel || "qwen-vl-max" } : {}),
+        ...(agentType === "image-editor" || agentType === "cad-analyzer" ? { multimodalModel: multimodalModel || "qwen-vl-max" } : {}),
         order: Number(order) || 100,
       }
       await onSave(agentData)
@@ -258,19 +293,84 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
 
             <TabsContent value="advanced" className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="apiEndpoint" className="text-pantone369-700 dark:text-pantone369-300">
+                <Label htmlFor="apiUrl" className="text-pantone369-700 dark:text-pantone369-300">
                   {t("apiEndpoint")} <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="apiEndpoint"
-                  value={apiEndpoint}
-                  onChange={(e) => setApiEndpoint(e.target.value)}
+                  id="apiUrl"
+                  value={apiUrl}
+                  onChange={(e) => setApiUrl(e.target.value)}
                   placeholder="https://zktecoaihub.com/api/v1/chat/completions"
                   required
                   className="border-pantone369-200 dark:border-pantone369-800/30 focus:border-pantone369-500 focus:ring-pantone369-500/20"
-                  disabled={true} // 禁用输入框，防止用户修改
+                  disabled={agent?.type !== 'cad-analyzer'} // 只允许CAD智能体修改API端点
                 />
-                <p className="text-xs text-muted-foreground">{t("apiEndpointDescription")}</p>
+                {agent?.type === 'cad-analyzer' && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={async () => {
+                      if (!validateApiEndpoint(apiUrl)) {
+                        toast({
+                          title: "API端点格式错误",
+                          description: "请输入有效的URL地址，以http://或https://开头",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+
+                      try {
+                        toast({ title: "正在测试API端点...", description: "请稍候" });
+                        const response = await fetch("/api/chat-proxy", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            targetUrl: apiUrl,
+                            method: "GET",
+                            headers: {
+                              "Content-Type": "application/json",
+                              "Authorization": `Bearer ${apiKey || "test-key"}`
+                            }
+                          })
+                        });
+
+                        if (response.ok) {
+                          toast({
+                            title: "API端点测试成功",
+                            description: "连接正常，可以保存设置",
+                            variant: "default"
+                          });
+                        } else {
+                          toast({
+                            title: "API端点测试失败",
+                            description: `HTTP状态码: ${response.status}`,
+                            variant: "destructive"
+                          });
+                        }
+                      } catch (error) {
+                        toast({
+                          title: "API端点测试失败",
+                          description: String(error),
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                  >
+                    测试API端点
+                  </Button>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {agent?.type === 'cad-analyzer'
+                    ? "注意：修改API端点可能会影响CAD智能体的功能，请确保输入正确的API端点。建议使用默认值：https://zktecoaihub.com/api/v1/chat/completions"
+                    : t("apiEndpointDescription")}
+                </p>
+                {agent?.type === 'cad-analyzer' && apiUrl !== "https://zktecoaihub.com/api/v1/chat/completions" && (
+                  <p className="text-xs text-amber-500 mt-1">
+                    警告：您已修改默认API端点，这可能会影响CAD智能体的功能。请确保新的API端点支持相同的请求格式。
+                  </p>
+                )}
               </div>
 
               <div className="grid gap-2">

@@ -59,6 +59,8 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
 
   const filteredAgents = useMemo(() => {
     if (typeFilter === 'fastgpt') return agents.filter(agent => agent.type === 'fastgpt' && agent.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (typeFilter === 'cad-analyzer') return agents.filter(agent => agent.type === 'cad-analyzer' && agent.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (typeFilter === 'image-editor') return agents.filter(agent => agent.type === 'image-editor' && agent.name.toLowerCase().includes(searchQuery.toLowerCase()));
     if (typeFilter === 'other') return agents.filter(agent => agent.type !== 'fastgpt' && agent.name.toLowerCase().includes(searchQuery.toLowerCase()));
     return agents.filter(agent => agent.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [agents, searchQuery, typeFilter])
@@ -153,8 +155,20 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
             {t("agents")}
           </span>
           <div className="flex gap-2">
-            <Button size="sm" variant={typeFilter==='fastgpt'?'default':'outline'} onClick={()=>setTypeFilter('fastgpt')}>FastGPT</Button>
-            <Button size="sm" variant={typeFilter==='other'?'default':'outline'} onClick={()=>setTypeFilter('other')}>其他</Button>
+            {propTypeFilter === 'fastgpt' ? (
+              <Button size="sm" variant="default" disabled>FastGPT</Button>
+            ) : propTypeFilter === 'cad-analyzer' ? (
+              <Button size="sm" variant="default" disabled>CAD解读</Button>
+            ) : propTypeFilter === 'image-editor' ? (
+              <Button size="sm" variant="default" disabled>图像编辑</Button>
+            ) : (
+              <>
+                <Button size="sm" variant={typeFilter==='fastgpt'?'default':'outline'} onClick={()=>setTypeFilter('fastgpt')}>FastGPT</Button>
+                <Button size="sm" variant={typeFilter==='cad-analyzer'?'default':'outline'} onClick={()=>setTypeFilter('cad-analyzer')}>CAD解读</Button>
+                <Button size="sm" variant={typeFilter==='image-editor'?'default':'outline'} onClick={()=>setTypeFilter('image-editor')}>图像编辑</Button>
+                <Button size="sm" variant={typeFilter==='other'?'default':'outline'} onClick={()=>setTypeFilter('other')}>其他</Button>
+              </>
+            )}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -236,11 +250,11 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
                               className="ml-2"
                               onClick={e => { e.stopPropagation(); window.open(`/admin/cad-analyzer-history`, '_blank') }}
                             >
-                              {t('manageAgents')}
+                              查看历史记录
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>{t('manageAgents')}</p>
+                            <p>查看CAD分析历史记录</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
