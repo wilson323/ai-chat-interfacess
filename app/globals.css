@@ -487,7 +487,7 @@ canvas {
 }
 
 .message-hover-effect:hover {
-  transform: translateY(-1px);
+  /* 移除transform效果，防止抖动 */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -515,12 +515,50 @@ canvas {
 .chat-history-item:hover {
   background-color: rgba(108, 179, 63, 0.05);
   border-color: rgba(108, 179, 63, 0.2);
-  transform: translateY(-1px);
+  /* 移除transform效果，防止抖动 */
 }
 
 .dark .chat-history-item:hover {
   background-color: rgba(108, 179, 63, 0.1);
   border-color: rgba(108, 179, 63, 0.3);
+}
+
+/* 聊天历史详情页面增强样式 */
+.chat-history-detail {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.chat-history-message {
+  transition: all 0.2s ease;
+  max-width: 85%;
+}
+
+.chat-history-message:hover {
+  /* 移除transform效果，防止抖动 */
+}
+
+.chat-history-message-user {
+  background-color: #6cb33f;
+  color: white;
+  border-radius: 16px 16px 4px 16px;
+  align-self: flex-end;
+  box-shadow: 0 2px 8px rgba(108, 179, 63, 0.2);
+}
+
+.chat-history-message-assistant {
+  background-color: #f8f9fa;
+  color: #2d3436;
+  border-radius: 16px 16px 16px 4px;
+  border: 1px solid #e9ecef;
+  align-self: flex-start;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark .chat-history-message-assistant {
+  background-color: #2d3436;
+  color: #f8f9fa;
+  border-color: #4a5568;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* 多模态内容样式优化 */
@@ -532,7 +570,7 @@ canvas {
 }
 
 .media-attachment:hover {
-  transform: scale(1.02);
+  /* 移除transform效果，防止抖动 */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -545,8 +583,51 @@ canvas {
 }
 
 .image-preview:hover {
-  transform: scale(1.01);
+  /* 移除transform效果，防止抖动 */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 增强图片容器交互 */
+.image-container {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+
+.image-container:hover {
+  /* 添加阴影效果，但不使用transform防止抖动 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 添加放大镜效果 */
+.cursor-zoom-in {
+  cursor: zoom-in;
+}
+
+.image-container:hover img {
+  filter: brightness(1.05);
+}
+
+.image-container:active {
+  /* 移除transform效果，防止抖动 */
+}
+
+/* 图片模态框动画 */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-image {
+  animation: modalFadeIn 0.2s ease-out forwards;
 }
 
 /* 优化消息加载动画 */

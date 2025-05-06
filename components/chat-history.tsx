@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAgent } from "@/context/agent-context"
-import { X, Search, MessageSquare, Calendar, Clock, ArrowLeft, Plus, Trash2, RefreshCw, Settings } from "lucide-react"
+import { X, Search, MessageSquare, Calendar, Clock, ArrowLeft, Plus, Trash2, RefreshCw, Settings, User, Bot } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { useLanguage } from "@/context/language-context"
 import type { Message } from "@/types/message"
@@ -28,6 +28,7 @@ import {
 import { useRemoteChatHistory } from "@/hooks/useRemoteChatHistory"
 import { fetchUserChatHistory } from '@/lib/api/user'
 import { Alert } from '@/components/ui/alert'
+import { MarkdownMessage } from "@/components/markdown-message"
 
 interface ChatHistoryProps {
   onClose: () => void
@@ -296,6 +297,7 @@ export function ChatHistory({ onClose, onSelect, onNewChat, onManageHistory }: C
       className={cn(
         "w-full max-w-3xl mx-auto shadow-lg border-border dark:border-zinc-700/50 relative z-50",
         "bg-card/95 dark:bg-zinc-900/95 backdrop-blur-sm",
+        "chat-history-card"
       )}
     >
       <CardHeader className="bg-muted/50 dark:bg-zinc-800/50 flex flex-row items-center justify-between">
@@ -413,47 +415,99 @@ export function ChatHistory({ onClose, onSelect, onNewChat, onManageHistory }: C
             )}
           </>
         ) : (
-          <div className="space-y-4">
-            <div className="text-sm text-muted-foreground flex items-center gap-1 mb-4">
-              <Clock className="h-3.5 w-3.5" />
+          <div className="space-y-4 chat-history-detail">
+            <div className="text-sm text-muted-foreground flex items-center gap-1 mb-4 bg-muted/30 p-2 rounded-lg">
+              <Clock className="h-3.5 w-3.5 text-primary/70" />
               {formatDistanceToNow(
                 selectedSession.messages.length > 0
                   ? new Date(selectedSession.messages[selectedSession.messages.length - 1].timestamp)
                   : new Date(),
                 { addSuffix: true },
               )}
-              <span className="ml-2 bg-muted px-1.5 py-0.5 rounded-full text-[10px]">
+              <span className="ml-2 bg-primary/10 px-2 py-0.5 rounded-full text-[10px] text-primary font-medium">
                 {selectedSession.messages.length}条消息
               </span>
             </div>
 
             <ScrollArea className="h-[350px] pr-4">
-              <div className="space-y-4">
-                {selectedSession.messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "p-3 rounded-lg",
-                      message.role === "user"
-                        ? "bg-[#6cb33f] text-white ml-8 rounded-[12px_12px_3px_12px]"
-                        : "bg-[#f8f9fa] text-[#2d3436] mr-8 rounded-[12px_12px_12px_3px] border border-[#e9ecef]",
-                    )}
-                    data-testid={`chat-message-${message.id}`}
-                  >
-                    <div className="text-xs font-medium mb-1">
-                      {message.role === "user" ? t("you") : t("assistant")}
+              <div className="space-y-6">
+                {selectedSession.messages.map((message) => {
+                  const isUser = message.role === "user";
+                  return (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "flex gap-3",
+                        isUser ? "flex-row-reverse" : ""
+                      )}
+                      data-testid={`chat-message-${message.id}`}
+                    >
+                      {/* 头像 */}
+                      <div
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                          isUser
+                            ? "bg-gradient-to-br from-primary to-primary/80 shadow-sm"
+                            : "bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-800 shadow-sm",
+                        )}
+                      >
+                        {isUser ? (
+                          <User className="h-4 w-4 text-white" />
+                        ) : (
+                          <Bot className="h-4 w-4 text-primary dark:text-primary/80" />
+                        )}
+                      </div>
+
+                      {/* 消息内容 */}
+                      <div className="flex flex-col flex-1 max-w-[calc(100%-3rem)]">
+                        {/* 发送者和时间 */}
+                        <div className="flex items-center mb-1 text-xs text-muted-foreground">
+                          <span className="font-medium">{isUser ? t("you") : t("assistant")}</span>
+                          <span className="mx-1.5">•</span>
+                          <span>{formatDistanceToNow(message.timestamp ? new Date(message.timestamp) : new Date(), { addSuffix: true })}</span>
+                        </div>
+
+                        {/* 消息气泡 */}
+                        <div
+                          className={cn(
+                            "relative",
+                            isUser
+                              ? "message-bubble-user message-hover-effect"
+                              : "message-bubble-ai message-hover-effect",
+                          )}
+                          data-testid={`message-content-${message.id}`}
+                        >
+                          {typeof message.content === 'string' ? (
+                            <MarkdownMessage
+                              content={message.content}
+                              className={isUser ? "text-white" : ""}
+                              enableImageExpand={true} // 确保启用图片放大功能
+                            />
+                          ) : (
+                            <div className="text-sm whitespace-pre-wrap">{String(message.content)}</div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm whitespace-pre-wrap" data-testid={`message-content-${message.id}`}>{message.content as string}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={handleBackToList} className="border-border/50 dark:border-zinc-700/30">
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={handleBackToList}
+                className="border-border/50 dark:border-zinc-700/30 hover:bg-muted/50 transition-all duration-200"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
                 {t("backToList")}
               </Button>
-              <Button onClick={handleLoadSession} className="bg-[#6cb33f] hover:bg-[#6cb33f]/90 text-white">
+              <Button
+                onClick={handleLoadSession}
+                className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-200"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
                 {t("continueConversation")}
               </Button>
             </div>

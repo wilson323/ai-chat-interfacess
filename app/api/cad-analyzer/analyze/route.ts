@@ -2,21 +2,40 @@ import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
 import fs from 'fs/promises'
 import { CadAnalyzerConfig } from '@/types/api/agent-config/cad-analyzer'
+import AgentConfig from '@/lib/db/models/agent-config'
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'admin123'
-const CONFIG_PATH = path.resolve(process.cwd(), 'config/cad-analyzer-config.json')
 
-// 读取安全配置参数
+// 读取安全配置参数 - 从数据库获取
 async function getSafeConfig(): Promise<Pick<CadAnalyzerConfig, 'maxFileSizeMB' | 'supportedFormats'>> {
   try {
-    const content = await fs.readFile(CONFIG_PATH, 'utf-8')
-    const config: CadAnalyzerConfig = JSON.parse(content)
-    return {
-      maxFileSizeMB: config.maxFileSizeMB,
-      supportedFormats: config.supportedFormats,
+    // 从数据库获取CAD解读智能体配置
+    const cadAgent = await AgentConfig.findOne({
+      where: {
+        type: 'cad-analyzer',
+        isPublished: true
+      }
+    });
+
+    if (!cadAgent) {
+      console.log('未找到已发布的CAD解读智能体配置，使用默认配置');
+      return {
+        maxFileSizeMB: 100,
+        supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png']
+      };
     }
-  } catch {
-    return { maxFileSizeMB: 20, supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png'] }
+
+    // 返回安全配置
+    return {
+      maxFileSizeMB: 100, // 固定值或从其他字段获取
+      supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png'] // 固定支持的格式
+    };
+  } catch (error) {
+    console.error('获取CAD解读智能体配置失败:', error);
+    return {
+      maxFileSizeMB: 100,
+      supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png']
+    };
   }
 }
 
@@ -68,11 +87,17 @@ export async function POST(req: NextRequest) {
     }
     // 校验文件大小和格式
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
-    if (!safeConfig.supportedFormats.map(f=>f.replace('.','')).includes(ext)) {
+    // 确保supportedFormats存在且是数组
+    const supportedFormats = safeConfig.supportedFormats || ['.dwg', '.dxf', '.pdf', '.jpg', '.png']
+    const supportedExtensions = supportedFormats.map(f => f.replace('.', ''))
+
+    if (!supportedExtensions.includes(ext)) {
       return NextResponse.json({ error: '不支持的文件类型' }, { status: 400 })
     }
-    if (file.size > (safeConfig.maxFileSizeMB * 1024 * 1024)) {
-      return NextResponse.json({ error: `文件过大，最大${safeConfig.maxFileSizeMB}MB` }, { status: 400 })
+
+    const maxFileSizeMB = safeConfig.maxFileSizeMB || 20
+    if (file.size > (maxFileSizeMB * 1024 * 1024)) {
+      return NextResponse.json({ error: `文件过大，最大${maxFileSizeMB}MB` }, { status: 400 })
     }
     const fileName = `${Date.now()}_${file.name}`
     // 确保目录存在
@@ -104,7 +129,10 @@ export async function POST(req: NextRequest) {
     // 简单模拟分析逻辑
     let analysis = ''
     let structured = null
-    if (["jpg","jpeg","png","gif","bmp","webp"].includes(ext) || ["dxf","dwg"].includes(ext)) {
+    const imageFormats = ["jpg","jpeg","png","gif","bmp","webp"]
+    const cadFormats = ["dxf","dwg"]
+
+    if (imageFormats.includes(ext) || cadFormats.includes(ext)) {
       // AI大模型分析
       structured = await analyzeWithAI(filePath, ext)
       analysis = structured.summary + '\n设备清单：' + JSON.stringify(structured.devices, null, 2)
@@ -126,7 +154,15 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url, analysis, reportUrl, structuredReportUrl, structured })
   } catch (error) {
+    console.error('CAD解读智能体分析错误:', error);
     await logApiError('cad-analyzer-analyze', error)
-    return NextResponse.json({ error: '服务异常，请稍后重试' }, { status: 500 })
+
+    // 返回更详细的错误信息，帮助调试
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({
+      error: '服务异常，请稍后重试',
+      detail: errorMessage,
+      success: false
+    }, { status: 500 })
   }
 }

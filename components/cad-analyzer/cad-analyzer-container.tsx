@@ -144,19 +144,38 @@ export function CADAnalyzerContainer() {
             body: formData
           })
 
-          if (!res.ok) {
+          let data;
+          try {
+            // 尝试解析响应为JSON
+            data = await res.json();
+            console.log("API响应数据:", data);
+
+            // 检查是否有错误
+            if (!res.ok || data.error) {
+              const errorMessage = data.error || `API请求失败: ${res.status} ${res.statusText}`;
+              const detailMessage = data.detail ? `(${data.detail})` : '';
+              console.error(`API请求失败: ${errorMessage} ${detailMessage}`);
+
+              toast({
+                title: '分析失败',
+                description: `${errorMessage} ${detailMessage}`,
+                variant: 'destructive'
+              });
+              continue;
+            }
+          } catch (parseError) {
+            // JSON解析失败，尝试获取文本响应
             const errorText = await res.text();
-            console.error(`API请求失败: ${res.status} ${res.statusText}`, errorText);
-            throw new Error(`API请求失败: ${res.status} ${res.statusText}`);
+            console.error(`API响应解析失败: ${parseError}`, errorText);
+            toast({
+              title: '分析失败',
+              description: '服务器响应格式错误，请稍后重试',
+              variant: 'destructive'
+            });
+            continue;
           }
 
-          console.log("API请求成功，正在解析响应...");
-          const data = await res.json()
-
-          if (data.error) {
-            toast({ title: '分析失败', description: data.error, variant: 'destructive' })
-            continue
-          }
+          console.log("API请求成功，正在处理响应...");
 
           const resultData = {
             filename: file.name,
@@ -193,7 +212,7 @@ export function CADAnalyzerContainer() {
       console.error("处理文件时出错:", error)
       toast({
         title: "处理失败",
-        description: "解析文件时发生错误，请检查文件格式是否正确",
+        description: error instanceof Error ? error.message : "解析文件时发生错误，请检查文件格式是否正确",
         variant: "destructive",
       })
     } finally {
@@ -202,11 +221,19 @@ export function CADAnalyzerContainer() {
 
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = ""
+        try {
+          fileInputRef.current.value = ""
+        } catch (e) {
+          console.error("重置文件输入框失败:", e)
+        }
       }
 
       // Reset progress bar
-      setTimeout(() => setProgress(0), 1000)
+      try {
+        setTimeout(() => setProgress(0), 1000)
+      } catch (e) {
+        console.error("重置进度条失败:", e)
+      }
     }
   }
 

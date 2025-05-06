@@ -9,7 +9,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
 import { Button } from "@/components/ui/button"
-import { Copy, Check, ExternalLink, Loader2 } from "lucide-react"
+import { Copy, Check, ExternalLink, Loader2, X } from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import rehypeHighlight from "rehype-highlight"
@@ -17,9 +17,10 @@ import rehypeHighlight from "rehype-highlight"
 interface MarkdownMessageProps {
   content: string
   className?: string
+  enableImageExpand?: boolean // 是否启用图片放大功能
 }
 
-export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
+export function MarkdownMessage({ content, className, enableImageExpand = true }: MarkdownMessageProps) {
   // 防御性处理，防止 content 为空或 undefined
   if (!content || typeof content !== 'string' || content.trim() === '') {
     return <div className={cn("whitespace-pre-wrap text-sm sm:text-base leading-relaxed", className)}></div>
@@ -53,7 +54,111 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
   }, []);
 
   const handleImageClick = useCallback((src: string) => {
-    setState(prev => ({ ...prev, expandedImage: src }));
+    console.log("图片点击事件触发，src:", src);
+
+    // 强制创建一个新的模态框元素
+    const existingModal = document.getElementById('image-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    // 直接使用DOM API创建模态框
+    const createImageModal = () => {
+      try {
+        const modal = document.createElement('div');
+        modal.id = 'image-modal';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.right = '0';
+        modal.style.bottom = '0';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        modal.style.backdropFilter = 'blur(4px)';
+        modal.style.zIndex = '99999'; // 提高z-index，确保在聊天历史页面中也能显示
+
+        const imgContainer = document.createElement('div');
+        imgContainer.style.position = 'relative';
+        imgContainer.style.maxWidth = '90vw';
+        imgContainer.style.maxHeight = '90vh';
+        imgContainer.style.padding = '8px';
+        imgContainer.style.borderRadius = '8px';
+        imgContainer.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
+
+        const img = document.createElement('img');
+        img.src = src || '/placeholder.svg';
+        img.alt = '图片预览';
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '85vh';
+        img.style.objectFit = 'contain';
+        img.style.borderRadius = '8px';
+        img.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.top = '8px';
+        closeBtn.style.right = '8px';
+        closeBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+        closeBtn.style.color = 'white';
+        closeBtn.style.border = 'none';
+        closeBtn.style.borderRadius = '9999px';
+        closeBtn.style.width = '32px';
+        closeBtn.style.height = '32px';
+        closeBtn.style.cursor = 'pointer';
+
+        const hint = document.createElement('div');
+        hint.textContent = '点击任意位置关闭';
+        hint.style.position = 'absolute';
+        hint.style.bottom = '16px';
+        hint.style.left = '50%';
+        hint.style.transform = 'translateX(-50%)';
+        hint.style.fontSize = '12px';
+        hint.style.color = 'rgba(255, 255, 255, 0.7)';
+        hint.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+        hint.style.padding = '4px 12px';
+        hint.style.borderRadius = '9999px';
+
+        imgContainer.appendChild(img);
+        imgContainer.appendChild(closeBtn);
+        imgContainer.appendChild(hint);
+        modal.appendChild(imgContainer);
+
+        const closeModal = () => {
+          try {
+            document.body.removeChild(modal);
+          } catch (e) {
+            console.error("移除模态框失败:", e);
+          }
+          setState(prev => ({ ...prev, expandedImage: null }));
+        };
+
+        modal.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeModal();
+        });
+        imgContainer.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+
+        document.body.appendChild(modal);
+      } catch (error) {
+        console.error("创建图片模态框失败:", error);
+      }
+    };
+
+    // 更新状态并创建模态框
+    setState(prev => {
+      console.log("更新expandedImage状态，当前值:", prev.expandedImage, "新值:", src);
+
+      // 使用setTimeout确保状态更新后再创建模态框
+      setTimeout(createImageModal, 0);
+
+      return { ...prev, expandedImage: src };
+    });
   }, []);
 
   // Function to process image URLs through the proxy if needed
@@ -186,16 +291,29 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
               }
 
               return (
-                <span style={{position: 'relative', display: 'inline-block'}}>
+                <div
+                  style={{position: 'relative', display: 'inline-block'}}
+                  className={cn(
+                    "image-container transition-all duration-200 relative",
+                    enableImageExpand && !error ? "cursor-zoom-in hover:opacity-95" : ""
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!error && enableImageExpand) {
+                      console.log("图片容器点击事件触发");
+                      handleImageClick(processedSrc);
+                    }
+                  }}
+                >
                   <img
                     src={processedSrc || "/placeholder.svg"}
                     alt={alt || ""}
                     className={cn(
-                      "max-w-full w-full h-auto transition-all duration-500",
+                      "max-w-full w-full h-auto transition-all duration-300 rounded-md",
                       isLoading ? "opacity-0" : "opacity-100",
-                      error ? "border-red-300" : "",
+                      error ? "border-red-300" : "hover:shadow-lg hover:brightness-105",
+                      enableImageExpand && !error ? "cursor-zoom-in" : ""
                     )}
-                    onClick={() => !error && handleImageClick(processedSrc)}
                     onLoad={handleImageLoad}
                     onError={handleImageError}
                     loading="lazy"
@@ -206,12 +324,8 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
                       <Loader2 className="h-6 w-6 text-primary animate-spin" />
                     </span>
                   )}
-                  {!isLoading && !error && (
-                    <span className="absolute bottom-2 right-2 bg-white/90 dark:bg-zinc-800/90 px-2 py-1 rounded text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                      📷 点击放大
-                    </span>
-                  )}
-                </span>
+                  {/* 移除"点击放大"按钮 */}
+                </div>
               )
             },
             p({ node, children, ...props }) {
@@ -241,29 +355,7 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
         </ReactMarkdown>
       </div>
 
-      {/* Image Modal */}
-      {state.expandedImage && (
-        <div
-          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-          onClick={() => setState(prev => ({ ...prev, expandedImage: null }))}
-        >
-          <div className="relative max-w-4xl max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={state.expandedImage || "/placeholder.svg"}
-              alt="Expanded view"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 h-8 w-8 p-0 bg-black/50 hover:bg-black/70 text-white rounded-full"
-              onClick={() => setState(prev => ({ ...prev, expandedImage: null }))}
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* 图片模态框现在通过DOM API直接创建，不再使用React状态 */}
     </ErrorBoundary>
   )
 }
