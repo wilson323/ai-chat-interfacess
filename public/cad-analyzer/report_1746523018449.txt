@@ -1,0 +1,27 @@
+分析过程中发生错误: Failed to parse URL from /api/chat-proxy。这是默认返回结果。
+设备清单：[
+  {
+    "type": "摄像机",
+    "count": 2,
+    "coordinates": [
+      {
+        "x": 100,
+        "y": 200
+      },
+      {
+        "x": 300,
+        "y": 400
+      }
+    ]
+  },
+  {
+    "type": "门禁",
+    "count": 1,
+    "coordinates": [
+      {
+        "x": 500,
+        "y": 600
+      }
+    ]
+  }
+]

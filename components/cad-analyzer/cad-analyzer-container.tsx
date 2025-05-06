@@ -87,6 +87,39 @@ export function CADAnalyzerContainer() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // 从localStorage加载分析结果
+  useEffect(() => {
+    try {
+      // 只在组件挂载时加载一次
+      const savedResults = localStorage.getItem('cad_analysis_results')
+      const savedCurrentResult = localStorage.getItem('cad_current_result')
+
+      if (savedResults) {
+        const parsedResults = JSON.parse(savedResults)
+        // 确保时间戳是Date对象
+        const processedResults = parsedResults.map((result: any) => ({
+          ...result,
+          time: result.time || new Date().toLocaleString()
+        }))
+        console.log('从localStorage恢复CAD分析结果:', processedResults.length)
+        setAnalysisResults(processedResults)
+      }
+
+      if (savedCurrentResult) {
+        const parsedCurrentResult = JSON.parse(savedCurrentResult)
+        console.log('从localStorage恢复当前CAD分析结果')
+        setCurrentResult(parsedCurrentResult)
+
+        // 如果有当前结果，自动切换到结果标签页
+        if (parsedCurrentResult) {
+          setActiveTab("results")
+        }
+      }
+    } catch (error) {
+      console.error('从localStorage恢复CAD分析结果失败:', error)
+    }
+  }, [])
+
   // 模拟进度条
   useEffect(() => {
     if (isLoading && progress < 95) {
@@ -183,15 +216,40 @@ export function CADAnalyzerContainer() {
             preview: data.url,
             metadata: null,
             analysis: data.analysis,
-            raw_data: null,
+            raw_data: data.structured || null, // 使用structured数据作为raw_data
             isImage: isImageFile,
             imageData: isImageFile ? data.url : undefined,
             reportUrl: data.reportUrl,
           }
 
           console.log("创建结果数据:", resultData);
-          setAnalysisResults((prev) => [resultData, ...prev])
-          setCurrentResult(resultData)
+
+          // 更新状态
+          setAnalysisResults((prev) => {
+            const newResults = [resultData, ...prev];
+
+            // 保存到localStorage
+            try {
+              localStorage.setItem('cad_analysis_results', JSON.stringify(newResults));
+              console.log('已保存CAD分析结果到localStorage:', newResults.length);
+            } catch (error) {
+              console.error('保存CAD分析结果到localStorage失败:', error);
+            }
+
+            return newResults;
+          })
+
+          // 更新当前结果
+          setCurrentResult(resultData);
+
+          // 保存当前结果到localStorage
+          try {
+            localStorage.setItem('cad_current_result', JSON.stringify(resultData));
+            console.log('已保存当前CAD分析结果到localStorage');
+          } catch (error) {
+            console.error('保存当前CAD分析结果到localStorage失败:', error);
+          }
+
           setProgress(100)
         } catch (uploadError) {
           console.error("文件上传或处理失败:", uploadError);
@@ -504,6 +562,42 @@ export function CADAnalyzerContainer() {
     URL.revokeObjectURL(url)
   }
 
+  // 清除分析结果
+  const clearAnalysisResults = () => {
+    // 确认是否要清除
+    if (window.confirm('确定要清除所有分析记录吗？此操作不可恢复。')) {
+      // 清除状态
+      setAnalysisResults([])
+      setCurrentResult(null)
+
+      // 清除localStorage
+      try {
+        localStorage.removeItem('cad_analysis_results')
+        localStorage.removeItem('cad_current_result')
+        console.log('已清除CAD分析结果')
+
+        // 显示成功提示
+        toast({
+          title: '清除成功',
+          description: '所有CAD分析记录已清除',
+          variant: 'default'
+        })
+
+        // 切换到上传标签页
+        setActiveTab('upload')
+      } catch (error) {
+        console.error('清除CAD分析结果失败:', error)
+
+        // 显示错误提示
+        toast({
+          title: '清除失败',
+          description: '清除CAD分析记录时出错',
+          variant: 'destructive'
+        })
+      }
+    }
+  }
+
   return (
     <div className="flex flex-col h-full relative">
       <ScrollArea className="flex-1 px-2 sm:px-4 py-4 sm:py-6">
@@ -625,10 +719,20 @@ export function CADAnalyzerContainer() {
 
                     {analysisResults.length > 0 && (
                       <div className="mt-6 sm:mt-8">
-                        <h3 className="text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center">
-                          <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-pantone369-500 mr-2" />
-                          {t("historicalRecords")}
-                        </h3>
+                        <div className="flex justify-between items-center mb-3 sm:mb-4">
+                          <h3 className="text-base sm:text-lg font-medium flex items-center">
+                            <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-pantone369-500 mr-2" />
+                            {t("historicalRecords")}
+                          </h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs h-7 sm:h-8"
+                            onClick={clearAnalysisResults}
+                          >
+                            清除记录
+                          </Button>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                           {analysisResults.map((result, index) => (
                             <Card
@@ -646,14 +750,24 @@ export function CADAnalyzerContainer() {
                                 >
                                   {result.isImage
                                     ? "图片分析"
-                                    : `${result.raw_data?.security_devices.length || 0} 个安防设备`}
+                                    : `${result.raw_data?.totalDevices || result.raw_data?.security_devices?.length || 0} 个安防设备`}
                                 </Badge>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="text-pantone369-600 hover:text-pantone369-700 hover:bg-pantone369-50 text-xs h-7 sm:h-8"
                                   onClick={() => {
+                                    // 设置当前结果
                                     setCurrentResult(result)
+
+                                    // 保存当前结果到localStorage
+                                    try {
+                                      localStorage.setItem('cad_current_result', JSON.stringify(result))
+                                      console.log('已保存当前CAD分析结果到localStorage')
+                                    } catch (error) {
+                                      console.error('保存当前CAD分析结果到localStorage失败:', error)
+                                    }
+
                                     setActiveTab("results")
                                   }}
                                 >
@@ -726,7 +840,7 @@ export function CADAnalyzerContainer() {
                                   <div className="flex justify-between">
                                     <span className="text-xs sm:text-sm font-medium">{t("securityDeviceCount")}:</span>
                                     <span className="text-xs sm:text-sm">
-                                      {currentResult.raw_data?.security_devices.length}
+                                      {currentResult.raw_data?.totalDevices || currentResult.raw_data?.security_devices?.length || 0}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
