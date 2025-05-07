@@ -1337,11 +1337,11 @@ export function ChatContainer() {
   return (
     <div className="flex flex-col h-full w-full max-w-3xl mx-auto px-2 sm:px-6">
       {/* 右上角历史按钮 - 与header中的图标对齐 */}
-      <div className="absolute top-4 right-[2.5rem] z-30">
+      <div className="fixed top-4 right-[5.5rem] sm:right-[7rem] z-30">
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 sm:h-9 w-8 sm:w-9"
+          className="h-8 sm:h-9 w-8 sm:w-9 hover:bg-accent/50 hover:scale-105 transition-all duration-200"
           onClick={() => setShowHistory(true)}
           data-testid="open-history-btn"
           aria-label="打开聊天历史"

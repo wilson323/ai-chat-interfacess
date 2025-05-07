@@ -292,10 +292,17 @@ export function ChatHistory({ onClose, onSelect, onNewChat, onManageHistory }: C
   if (loading) return <div>加载中...</div>
   if (error) return <Alert variant="destructive">{error}</Alert>
 
+  // 检查当前路径是否为user界面
+  const isUserInterface = typeof window !== 'undefined' && window.location.pathname.includes('/user');
+
   return (
     <Card
       className={cn(
-        "w-full max-w-3xl mx-auto shadow-lg border-border dark:border-zinc-700/50 relative z-50",
+        "w-full mx-auto shadow-lg border-border dark:border-zinc-700/50 relative z-50",
+        // user界面使用60%宽度，但在移动设备上使用90%宽度，其他界面保持原样
+        isUserInterface
+          ? "w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%]"
+          : "max-w-3xl",
         "bg-card/95 dark:bg-zinc-900/95 backdrop-blur-sm",
         "chat-history-card"
       )}

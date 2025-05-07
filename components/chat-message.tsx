@@ -314,7 +314,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
           )}
 
           {/* 消息内容 */}
-          <div className={cn("prose max-w-[80%] sm:max-w-[60%] p-4", isUser ? "prose-invert" : "dark:prose-invert")}>
+          <div className={cn("prose max-w-[100%] sm:max-w-[100%] p-4", isUser ? "prose-invert" : "dark:prose-invert")}>
             {isEditing ? (
               <TextareaWithAutoSize
                 autoSize

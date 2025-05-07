@@ -94,13 +94,14 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
         )}
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-2">
-        {/* 在移动设备上隐藏某些按钮 */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* 新对话按钮 - 在所有设备上显示 */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 sm:h-9 w-8 sm:w-9 hidden sm:flex"
+          className="h-8 sm:h-9 w-8 sm:w-9 hover:bg-accent/50 hover:scale-105 transition-all duration-200"
           onClick={createNewConversation}
+          aria-label="新对话"
         >
           <Plus className="h-4 sm:h-5 w-4 sm:w-5" />
         </Button>
@@ -108,7 +109,7 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
         {/* 语言下拉菜单 */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 sm:h-9 w-8 sm:w-9">
+            <Button variant="ghost" size="icon" className="h-8 sm:h-9 w-8 sm:w-9 hover:bg-accent/50 hover:scale-105 transition-all duration-200" aria-label="切换语言">
               <Globe className="h-4 sm:h-5 w-4 sm:w-5" />
             </Button>
           </DropdownMenuTrigger>
