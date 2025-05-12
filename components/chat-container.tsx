@@ -925,14 +925,16 @@ export function ChatContainer() {
 
   // 重新生成消息
   const handleRegenerate = async (messageId: string) => {
-    // 查找最后一条用户消息
-    const lastUserMessageIndex = [...messages].reverse().findIndex((msg) => msg.role === "user")
-    if (lastUserMessageIndex === -1) return
+    // 查找被点击的用户消息
+    const clickedMessageIndex = messages.findIndex((msg) => msg.id === messageId)
+    if (clickedMessageIndex === -1) return
 
-    const lastUserMessage = messages[messages.length - 1 - lastUserMessageIndex]
+    // 确保点击的是用户消息
+    const clickedMessage = messages[clickedMessageIndex]
+    if (clickedMessage.role !== "user") return
 
-    // 删除最后一条用户消息之后的所有助手消息
-    const messagesToKeep = messages.slice(0, messages.length - lastUserMessageIndex)
+    // 删除该用户消息之后的所有消息
+    const messagesToKeep = messages.slice(0, clickedMessageIndex + 1)
     setMessages(messagesToKeep)
     setIsTyping(true)
 
@@ -1258,15 +1260,21 @@ export function ChatContainer() {
 
   // Add message editing functionality
   const editMessage = (messageId: string, newContent: string) => {
-    setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, content: newContent } : msg)))
+    // 检查是否为管理员界面
+    const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
 
-    // Save updated messages to local storage
-    if (chatId) {
-      setTimeout(() => {
-        const updatedMessages = messages.map((msg) => (msg.id === messageId ? { ...msg, content: newContent } : msg))
-        useMessageStore.getState().saveMessages(chatId, updatedMessages)
-        console.log(`Saved ${updatedMessages.length} messages after editing for chat ID: ${chatId}`)
-      }, 100)
+    // 只有管理员界面才能编辑消息
+    if (isAdmin) {
+      setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, content: newContent } : msg)))
+
+      // Save updated messages to local storage
+      if (chatId) {
+        setTimeout(() => {
+          const updatedMessages = messages.map((msg) => (msg.id === messageId ? { ...msg, content: newContent } : msg))
+          useMessageStore.getState().saveMessages(chatId, updatedMessages)
+          console.log(`Saved ${updatedMessages.length} messages after editing for chat ID: ${chatId}`)
+        }, 100)
+      }
     }
   }
 

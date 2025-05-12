@@ -61,6 +61,12 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
   const messageRef = useRef<HTMLDivElement>(null)
   const [feedback, setFeedback] = useState<null | 'like' | 'dislike'>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // 检查是否为管理员界面
+  useEffect(() => {
+    setIsAdmin(localStorage.getItem("adminLoggedIn") === "true")
+  }, [])
 
   const isUser = message.role === "user"
   const isOffline = message.metadata?.offline === true
@@ -367,7 +373,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
             </Tooltip>
           </TooltipProvider>
 
-          {isUser && (
+          {isUser && isAdmin && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -405,7 +411,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
             </Tooltip>
           </TooltipProvider>
 
-          {!isUser && onRegenerate && (
+          {isUser && onRegenerate && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
