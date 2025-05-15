@@ -97,29 +97,60 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
   };
 
   const handleAgentFormSave = async (agentData: any) => {
+    console.log("AgentList - handleAgentFormSave 开始执行, 编辑模式:", !!editingAgent);
     let newAgentId = null;
-    if (editingAgent) {
-      await handleUpdateAgent({ ...editingAgent, ...agentData });
-    } else {
-      // 根据当前的typeFilter设置智能体类型
-      const agentType = typeFilter || 'fastgpt';
-      const newAgent = await createAgent({
-        ...agentData,
-        type: agentType // 使用当前选中的类型
-      });
-      newAgentId = newAgent.id;
-    }
-    setLoading(true);
-    // 刷新列表后自动选中新建的智能体
-    fetchAgents().then(fetched => {
-      setAgents(fetched);
-      if (newAgentId) {
-        const created = fetched.find(a => a.id === newAgentId);
-        setSelectedAgent(created || null);
+    try {
+      if (editingAgent) {
+        console.log("更新现有智能体:", editingAgent.id);
+        await handleUpdateAgent({ ...editingAgent, ...agentData });
+      } else {
+        // 根据当前的typeFilter设置智能体类型
+        const agentType = typeFilter || 'fastgpt';
+        console.log("创建新智能体, 类型:", agentType);
+
+        try {
+          const newAgent = await createAgent({
+            ...agentData,
+            type: agentType // 使用当前选中的类型
+          });
+          console.log("新智能体创建成功:", newAgent);
+          newAgentId = newAgent.id;
+          toast({ title: "智能体创建成功", variant: "default" });
+        } catch (createError) {
+          console.error("创建智能体失败:", createError);
+          toast({
+            title: "创建智能体失败",
+            description: String(createError),
+            variant: "destructive"
+          });
+          return; // 创建失败时直接返回，不关闭表单
+        }
       }
-    }).finally(() => setLoading(false));
-    setShowAgentForm(false);
-    setEditingAgent(null);
+
+      setLoading(true);
+      // 刷新列表后自动选中新建的智能体
+      fetchAgents().then(fetched => {
+        console.log("刷新智能体列表成功, 数量:", fetched.length);
+        setAgents(fetched);
+        if (newAgentId) {
+          const created = fetched.find(a => a.id === newAgentId);
+          console.log("查找新创建的智能体:", created ? "找到" : "未找到");
+          setSelectedAgent(created || null);
+        }
+      }).catch(error => {
+        console.error("刷新智能体列表失败:", error);
+      }).finally(() => setLoading(false));
+
+      setShowAgentForm(false);
+      setEditingAgent(null);
+    } catch (error) {
+      console.error("handleAgentFormSave 执行失败:", error);
+      toast({
+        title: "操作失败",
+        description: String(error),
+        variant: "destructive"
+      });
+    }
   };
 
   const handleUpdateAgent = async (agent: any) => {

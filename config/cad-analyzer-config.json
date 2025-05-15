@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "defaultModel": "qwen-turbo-latest",
   "maxFileSizeMB": 100,
   "supportedFormats": [

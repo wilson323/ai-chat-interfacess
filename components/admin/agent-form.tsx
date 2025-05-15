@@ -72,6 +72,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       setSupportsStream(agent.supportsStream !== undefined ? agent.supportsStream : true)
       setSupportsDetail(agent.supportsDetail !== undefined ? agent.supportsDetail : true)
     } else {
+      // 新增智能体时的默认值
       setName("")
       setDescription("")
       setApiUrl("https://zktecoaihub.com/api/v1/chat/completions")
@@ -103,7 +104,10 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
   // 3. handleSubmit 支持新增和编辑
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (type === 'fastgpt' && (!apiKey || !appId)) {
+    console.log("表单提交，类型:", type, "是否编辑模式:", !!agent);
+
+    // 对于FastGPT智能体，API Key和App ID是必填的，但在新增时可以先保存空值
+    if (type === 'fastgpt' && (!apiKey || !appId) && agent) {
       toast({ title: "保存失败", description: "API Key 和 App ID 必填", variant: "destructive" });
       return;
     }
@@ -151,9 +155,28 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
         ...(agentType === "image-editor" || agentType === "cad-analyzer" ? { multimodalModel: multimodalModel || "qwen-vl-max" } : {}),
         order: Number(order) || 100,
       }
-      await onSave(agentData)
+
+      console.log("准备保存智能体数据:", JSON.stringify(agentData, null, 2));
+
+      try {
+        await onSave(agentData);
+        console.log("智能体保存成功");
+        toast({ title: agent ? "智能体已更新" : "智能体已创建", variant: "default" });
+      } catch (saveError) {
+        console.error("调用onSave失败:", saveError);
+        toast({
+          title: "保存失败",
+          description: String(saveError),
+          variant: "destructive"
+        });
+      }
     } catch (err) {
-      toast({ title: "保存失败", description: String(err), variant: "destructive" });
+      console.error("表单提交过程中发生错误:", err);
+      toast({
+        title: "保存失败",
+        description: String(err),
+        variant: "destructive"
+      });
     } finally {
       setIsSaving(false)
     }
@@ -184,17 +207,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
     }
   };
 
-  if (!agent) {
-    return (
-      <Card className="h-full flex items-center justify-center min-h-[500px] border-pantone369-100 dark:border-pantone369-900/30">
-        <CardContent className="text-center p-6">
-          <Bot className="h-12 w-12 text-pantone369-500/50 mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">{t("noAgentSelected")}</h3>
-          <p className="text-muted-foreground">{t("selectAgentToEdit")}</p>
-        </CardContent>
-      </Card>
-    )
-  }
+  // 移除了对agent为null的判断，使新增智能体时也能显示表单
 
   return (
     <Card className="border-pantone369-100 dark:border-pantone369-900/30 h-full flex flex-col max-h-[90vh]">
@@ -503,7 +516,9 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
           {agent && (
             <Button variant="destructive" type="button" onClick={handleDelete}>删除</Button>
           )}
-          <Button type="submit" disabled={isSaving}>{isSaving ? "保存中..." : "保存"}</Button>
+          <Button type="submit" disabled={isSaving} className="bg-pantone369-500 hover:bg-pantone369-600">
+            {isSaving ? "保存中..." : (agent ? "更新" : "创建")}
+          </Button>
           <Button type="button" variant="outline" onClick={onClose}>关闭</Button>
         </CardFooter>
       </form>
