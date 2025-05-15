@@ -14,7 +14,7 @@ const nextConfig = {
     'sequelize',
     'pg-hstore',
   ],
-  output: 'standalone', // 添加此行以支持Docker部署
+  // output: 'standalone', // 添加此行以支持Docker部署
 }
 
 export default nextConfig
