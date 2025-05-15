@@ -10,13 +10,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // serverExternalPackages: ['pg', 'pg-native'], // 移除，避免与 transpilePackages 冲突
   transpilePackages: [
     'sequelize',
-  //  'pg',
     'pg-hstore',
-   // 'pg-native',
   ],
+  output: 'standalone', // 添加此行以支持Docker部署
 }
 
 export default nextConfig

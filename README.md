@@ -1,5 +1,70 @@
 # NeuroGlass AI Chat Interface
 
+## Docker 一键部署指南
+
+### 前提条件
+
+- 安装 [Docker](https://docs.docker.com/get-docker/)
+- 安装 [Docker Compose](https://docs.docker.com/compose/install/)
+- Git
+
+### 部署步骤
+
+1. 克隆仓库：
+   ```bash
+   git clone https://github.com/zqqzqqz/ai-chat-interface.git
+   cd ai-chat-interface
+   ```
+
+2. 创建环境变量文件（可选）：
+   ```bash
+   cp .env.example .env
+   ```
+   根据需要编辑 `.env` 文件中的数据库配置。
+
+3. 运行部署脚本：
+   ```bash
+   chmod +x deploy.sh
+   ./deploy.sh
+   ```
+
+4. 访问应用：
+   打开浏览器，访问 http://localhost:3000
+
+### 手动部署
+
+如果不使用部署脚本，可以手动执行以下命令：
+
+```bash
+# 构建并启动容器
+docker-compose up -d --build
+
+# 初始化数据库
+docker-compose exec app npx ts-node scripts/check-db.ts
+```
+
+### 环境变量配置
+
+可以通过 `.env` 文件或直接在 `docker-compose.yaml` 中配置以下环境变量：
+
+- `POSTGRES_USER`: 数据库用户名（默认：root）
+- `POSTGRES_PASSWORD`: 数据库密码（默认：ZKTeco##123）
+- `POSTGRES_DB`: 数据库名称（默认：agent_config）
+- `POSTGRES_HOST`: 数据库主机（默认：db）
+- `POSTGRES_PORT`: 数据库端口（默认：5432）
+
+### 数据备份与恢复
+
+备份数据库：
+```bash
+docker-compose exec db pg_dump -U root agent_config > backup_$(date +%Y%m%d%H%M%S).sql
+```
+
+恢复数据库：
+```bash
+docker-compose exec -T db psql -U root agent_config < backup_file.sql
+```
+
 <div align="center">
   <img src="/placeholder.svg?height=120&width=120&query=NeuroGlass Logo" alt="NeuroGlass Logo" width="120" />
   <h3>智能对话平台 | Intelligent Conversation Platform</h3>

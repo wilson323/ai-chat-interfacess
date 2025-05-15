@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3009:3009"
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_USER=${POSTGRES_USER:-root}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ZKTeco##123}
+      - POSTGRES_DB=${POSTGRES_DB:-agent_config}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5452
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:14-alpine
+    container_name: chat-postgres
+    ports:
+      - "5452:5452"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-root}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ZKTeco##123}
+      - POSTGRES_DB=${POSTGRES_DB:-agent_config}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgres_data:
