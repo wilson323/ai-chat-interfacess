@@ -17,4 +17,6 @@ export interface CadAnalyzerConfig {
   }
   historyRetentionDays: number
   description?: string
-} 
+  apiEndpoint?: string  // API端点配置
+  apiKey?: string       // 全局API密钥配置
+}

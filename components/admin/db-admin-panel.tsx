@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw, Database } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function DbAdminPanel() {
   const [schema, setSchema] = useState<any>({});
@@ -14,6 +15,7 @@ export function DbAdminPanel() {
   const [migrating, setMigrating] = useState(false);
   const [migrateResult, setMigrateResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchSchema = async () => {
     setLoading(true);
@@ -48,6 +50,22 @@ export function DbAdminPanel() {
     }
   };
 
+  const handleInitData = async () => {
+    if (!window.confirm('确定要初始化数据吗？这将覆盖现有数据！')) return;
+    try {
+      const res = await fetch("/api/admin/db/init-data", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        alert("初始化成功！");
+        fetchSchema();
+      } else {
+        alert("初始化失败：" + data.error);
+      }
+    } catch (e: any) {
+      alert("初始化失败：" + e.message);
+    }
+  };
+
   useEffect(() => {
     fetchSchema();
   }, []);
@@ -59,10 +77,18 @@ export function DbAdminPanel() {
           <Database className="h-5 w-5 text-pantone369-500" />
           数据库管理
         </CardTitle>
-        <Button onClick={handleMigrate} disabled={migrating} className="bg-pantone369-500 hover:bg-pantone369-600 text-white">
-          <RefreshCw className="h-4 w-4 mr-1 animate-spin" style={{ display: migrating ? 'inline' : 'none' }} />
-          {migrating ? "正在更新表结构..." : "检测并更新表结构"}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleMigrate} disabled={migrating} className="bg-pantone369-500 hover:bg-pantone369-600 text-white">
+            <RefreshCw className="h-4 w-4 mr-1 animate-spin" style={{ display: migrating ? 'inline' : 'none' }} />
+            {migrating ? "正在更新表结构..." : "检测并更新表结构"}
+          </Button>
+          <Button onClick={handleInitData} className="bg-pantone369-500 hover:bg-pantone369-600 text-white">
+            初始化数据
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/admin')}>
+            返回管理员界面
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto p-6">
         {error && (

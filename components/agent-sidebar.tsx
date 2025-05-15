@@ -36,17 +36,24 @@ export function AgentSidebar({ isOpen, onClose, isAdmin = false }: SidebarProps)
       width={280}
       className={cn(
         "fixed top-0 left-0 h-full z-50 transition-transform duration-500 ease-out",
-        "bg-glass-bg backdrop-blur-xl border-r border-border-color",
         "transform -translate-x-full",
         isOpen && "transform translate-x-0",
         "lg:translate-x-0 lg:z-10",
+        // 添加与聊天页面相同的背景效果
+        "overflow-hidden",
       )}
       collapsedWidth={0}
       trigger={null}
       collapsible
       collapsed={!isOpen}
+      style={{
+        background: 'transparent',
+        borderRight: '1px solid rgba(120,180,120,0.13)'
+      }}
     >
-      <div className="p-4 sm:p-6 border-b border-border-color mb-4 relative flex items-center justify-between">
+      {/* 添加与聊天页面相同的背景效果 */}
+      <div className="chat-bg-effect absolute inset-0 z-0"></div>
+      <div className="p-4 sm:p-6 border-b border-pantone369-100/30 dark:border-pantone369-800/30 mb-4 relative flex items-center justify-between z-10 backdrop-blur-sm">
         <div>
           <div className="absolute bottom-0 left-6 w-12 h-0.5 bg-gradient-to-r from-primary-color to-secondary-color rounded"></div>
           <Title level={5} className="flex items-center text-text-color m-0 text-base sm:text-lg">
@@ -64,15 +71,18 @@ export function AgentSidebar({ isOpen, onClose, isAdmin = false }: SidebarProps)
       </div>
 
       <List
-        className="px-2 sm:px-3 overflow-y-auto max-h-[calc(100vh-5rem)]"
+        className="px-2 sm:px-3 overflow-y-auto max-h-[calc(100vh-5rem)] relative z-10"
         dataSource={filteredAgents}
         renderItem={(agent) => (
           <List.Item
             className={cn(
               "p-3 sm:p-4 flex items-center cursor-pointer transition-all duration-400 rounded-xl sm:rounded-2xl mx-1 sm:mx-2 mb-2 sm:mb-2.5",
-              "relative overflow-hidden bg-white/5 backdrop-blur-sm",
+              "relative overflow-hidden",
+              // 使用与聊天页面相同的背景样式
               "hover:bg-primary-color/12 hover:translate-x-1",
-              selectedAgent?.id === agent.id && "bg-primary-color/18",
+              selectedAgent?.id === agent.id
+                ? "bg-gradient-to-br from-white/80 via-pantone369-50/60 to-pantone369-100/40 dark:from-zinc-900/80 dark:via-pantone369-900/30 dark:to-zinc-900/60 border border-pantone369-100 dark:border-pantone369-800/40 backdrop-blur-md"
+                : "bg-white/5 backdrop-blur-sm",
             )}
             onClick={() => handleAgentSelect(agent)}
           >
@@ -104,7 +114,7 @@ export function AgentSidebar({ isOpen, onClose, isAdmin = false }: SidebarProps)
         )}
       />
       {filteredAgents.length === 0 && (
-        <div className="text-muted-foreground text-sm text-center py-8">无可用智能体</div>
+        <div className="text-muted-foreground text-sm text-center py-8 relative z-10 backdrop-blur-sm bg-white/5 dark:bg-zinc-900/20 rounded-xl mx-2 p-4 border border-pantone369-100/30 dark:border-pantone369-800/30">无可用智能体</div>
       )}
     </Layout.Sider>
   )

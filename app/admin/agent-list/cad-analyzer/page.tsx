@@ -1,26 +1,18 @@
 'use client';
-import { AgentList } from "@/components/admin/agent-list";
-import { AgentProvider } from "@/context/agent-context";
-import { LanguageProvider } from "@/context/language-context";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function CadAnalyzerAgentListPage() {
-  const [ready, setReady] = useState(false);
+// 重定向到CAD智能体配置页面
+export default function CadAnalyzerRedirectPage() {
+  const router = useRouter();
 
   useEffect(() => {
-    setReady(true);
-  }, []);
-
-  if (!ready) {
-    // SSR 首屏和 Hydration 前都渲染 loading，保证 HTML 一致
-    return <div className="text-center py-8">加载中...</div>;
-  }
+    router.replace("/admin/cad-analyzer-config");
+  }, [router]);
 
   return (
-    <LanguageProvider>
-      <AgentProvider>
-        <AgentList typeFilter="cad-analyzer" />
-      </AgentProvider>
-    </LanguageProvider>
+    <div className="text-center py-8">
+      正在跳转到 CAD 智能体配置页面...
+    </div>
   );
 }

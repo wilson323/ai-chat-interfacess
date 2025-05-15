@@ -36,7 +36,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [apiEndpoint, setApiEndpoint] = useState("")
   const [apiKey, setApiKey] = useState("")
   const [appId, setAppId] = useState("")
-  const [activeTab, setActiveTab] = useState("language") // Default to language tab instead of API
+  const [activeTab, setActiveTab] = useState("api") // 只允许管理员看到API设置
   const [isAdmin, setIsAdmin] = useState(false)
   const [voiceInputEnabled, setVoiceInputEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -62,20 +62,19 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     setIsAdmin(adminLoggedIn)
 
     if (selectedAgent) {
-      // 确保API端点正确设置为v1/chat/completions
       setApiEndpoint("https://zktecoaihub.com/api/v1/chat/completions")
-
-      // 只有管理员才需要设置API密钥和AppID
       if (adminLoggedIn) {
         setApiKey(selectedAgent.apiKey || "")
         setAppId(selectedAgent.appId || "")
       } else {
-        // 非管理员用户使用默认值或空值
-        setApiKey("default-api-key")
-        setAppId("default-app-id")
+        setApiKey("")
+        setAppId("")
       }
     }
   }, [selectedAgent, open])
+
+  // 非管理员用户不渲染设置弹窗
+  if (!isAdmin) return null
 
   // 新增：验证输入
   const validateInputs = () => {
@@ -154,129 +153,90 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogHeader>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="grid grid-cols-2">
-              {isAdmin && <TabsTrigger value="api">{t("apiSettings")}</TabsTrigger>}
-              <TabsTrigger value="language" className={isAdmin ? "" : "col-span-2"}>
-                {t("languageSettings")}
-              </TabsTrigger>
+            <TabsList className="grid grid-cols-1">
+              <TabsTrigger value="api">{t("apiSettings")}</TabsTrigger>
             </TabsList>
-
-            {isAdmin && (
-              <TabsContent value="api" className="space-y-4 mt-4">
-                <div className="grid gap-2">
-                  <label htmlFor="apiEndpoint" className="text-sm font-medium">
-                    {t("apiEndpoint")}
-                  </label>
-                  <Input
-                    id="apiEndpoint"
-                    value={apiEndpoint}
-                    onChange={(e) => {
-                      setApiEndpoint(e.target.value)
-                      setEndpointError(null) // 清除错误
-                    }}
-                    placeholder="https://zktecoaihub.com/api"
-                    required
-                    className="border-pantone369-200 dark:border-pantone369-800/30 focus:border-pantone369-500 focus:ring-pantone369-500/20"
-                    disabled={true} // 禁用输入框，防止用户修改
-                  />
-                  {endpointError && <p className="text-xs text-red-500">{endpointError}</p>}
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="apiKey" className="text-sm font-medium">
-                    {t("apiKey")}
-                  </label>
-                  <Input
-                    id="apiKey"
-                    value={apiKey}
-                    onChange={(e) => {
-                      setApiKey(e.target.value)
-                      setApiKeyError(null) // 清除错误
-                    }}
-                    placeholder="fastgpt-xxxx"
-                    required
-                    type="password"
-                    className={apiKeyError ? "border-red-500" : ""}
-                  />
-                  {apiKeyError && <p className="text-xs text-red-500">{apiKeyError}</p>}
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="appId" className="text-sm font-medium">
-                    {t("appId")}
-                  </label>
-                  <Input
-                    id="appId"
-                    value={appId}
-                    onChange={(e) => {
-                      setAppId(e.target.value)
-                      setAppIdError(null) // 清除错误
-                    }}
-                    placeholder="c-xxxxxxxxxxxxxxxx"
-                    required
-                    className={appIdError ? "border-red-500" : ""}
-                  />
-                  {appIdError && <p className="text-xs text-red-500">{appIdError}</p>}
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="voiceInput" className="text-sm font-medium flex items-center gap-2">
-                    语音输入
-                    <Switch
-                      id="voiceInput"
-                      checked={voiceInputEnabled}
-                      onCheckedChange={setVoiceInputEnabled}
-                    />
-                  </label>
-                  <p className="text-xs text-gray-500">开启后，用户可通过语音输入与智能体对话</p>
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="asrProvider" className="text-sm font-medium flex items-center gap-2">
-                    语音识别服务
-                    <select
-                      id="asrProvider"
-                      value={asrProvider}
-                      onChange={e => setAsrProvider(e.target.value)}
-                      className="border rounded px-2 py-1 text-sm"
-                    >
-                      <option value="aliyun">阿里云</option>
-                      <option value="siliconbase">硅基流动</option>
-                    </select>
-                  </label>
-                  <p className="text-xs text-gray-500">选择语音识别服务厂商</p>
-                </div>
-
-                {/* 新增：安全提示 */}
-                <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30">
-                  <AlertCircle className="h-4 w-4 text-blue-500" />
-                  <AlertTitle>{t("securityTip")}</AlertTitle>
-                  <AlertDescription className="text-xs">{t("apiKeySecurity")}</AlertDescription>
-                </Alert>
-              </TabsContent>
-            )}
-
-            <TabsContent value="language" className="space-y-4 mt-4">
+            <TabsContent value="api" className="space-y-4 mt-4">
               <div className="grid gap-2">
-                <label htmlFor="language" className="text-sm font-medium">
-                  {t("selectLanguage")}
+                <label htmlFor="apiEndpoint" className="text-sm font-medium">
+                  {t("apiEndpoint")}
                 </label>
-                <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t("selectLanguage")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(availableLanguages).map(([code, name]) => (
-                      <SelectItem key={code} value={code}>
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4" />
-                          <span>{name}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="apiEndpoint"
+                  value={apiEndpoint}
+                  onChange={(e) => {
+                    setApiEndpoint(e.target.value)
+                    setEndpointError(null)
+                  }}
+                  placeholder="https://zktecoaihub.com/api"
+                  required
+                  className="border-pantone369-200 dark:border-pantone369-800/30 focus:border-pantone369-500 focus:ring-pantone369-500/20"
+                  disabled={true}
+                />
+                {endpointError && <p className="text-xs text-red-500">{endpointError}</p>}
               </div>
+              <div className="grid gap-2">
+                <label htmlFor="apiKey" className="text-sm font-medium">
+                  {t("apiKey")}
+                </label>
+                <Input
+                  id="apiKey"
+                  value={apiKey}
+                  onChange={(e) => {
+                    setApiKey(e.target.value)
+                    setApiKeyError(null)
+                  }}
+                  placeholder="fastgpt-xxxx"
+                  required
+                  type="password"
+                  className={apiKeyError ? "border-red-500" : ""}
+                />
+                {apiKeyError && <p className="text-xs text-red-500">{apiKeyError}</p>}
+              </div>
+              <label htmlFor="appId" className="text-sm font-medium">
+                {t("appId")}
+              </label>
+              <Input
+                id="appId"
+                value={appId}
+                onChange={(e) => {
+                  setAppId(e.target.value)
+                  setAppIdError(null)
+                }}
+                placeholder="c-xxxxxxxxxxxxxxxx"
+                required
+                className={appIdError ? "border-red-500" : ""}
+              />
+              {appIdError && <p className="text-xs text-red-500">{appIdError}</p>}
+              <div className="grid gap-2">
+                <label htmlFor="voiceInput" className="text-sm font-medium flex items-center gap-2">
+                  语音输入
+                  <Switch
+                    id="voiceInput"
+                    checked={voiceInputEnabled}
+                    onCheckedChange={setVoiceInputEnabled}
+                  />
+                </label>
+                <p className="text-xs text-gray-500">开启后，用户可通过语音输入与智能体对话</p>
+              </div>
+              <label htmlFor="asrProvider" className="text-sm font-medium flex items-center gap-2">
+                语音识别服务
+                <select
+                  id="asrProvider"
+                  value={asrProvider}
+                  onChange={e => setAsrProvider(e.target.value)}
+                  className="border rounded px-2 py-1 text-sm"
+                >
+                  <option value="aliyun">阿里云</option>
+                  <option value="siliconbase">硅基流动</option>
+                </select>
+              </label>
+              <p className="text-xs text-gray-500">选择语音识别服务厂商</p>
+              <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30">
+                <AlertCircle className="h-4 w-4 text-blue-500" />
+                <AlertTitle>{t("securityTip")}</AlertTitle>
+                <AlertDescription className="text-xs">{t("apiKeySecurity")}</AlertDescription>
+              </Alert>
             </TabsContent>
           </Tabs>
 

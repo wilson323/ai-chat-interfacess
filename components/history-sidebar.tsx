@@ -8,9 +8,11 @@ import { cn } from "@/lib/utils"
 import { useAgent } from "@/context/agent-context"
 import { X, Search, MessageSquare, Trash2, ArchiveIcon, Clock, Calendar } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
+import { zhCN } from "date-fns/locale"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useMobile } from "@/hooks/use-mobile"
 import { useLanguage } from "@/context/language-context"
+import { HistoryList } from "@/components/history/history-list"
 
 interface HistorySidebarProps {
   isOpen: boolean
@@ -133,7 +135,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
                 <div className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">{chat.preview}</div>
                 <div className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 flex items-center gap-1">
                   <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                  {formatDistanceToNow(chat.date, { addSuffix: true })}
+                  {formatDistanceToNow(chat.date, { addSuffix: true, locale: zhCN })}
                 </div>
               </div>
             ))
@@ -146,6 +148,11 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
           )}
         </div>
       </ScrollArea>
+
+      <HistoryList
+        onSelect={() => {}}
+        viewType="sidebar"
+      />
     </aside>
   )
 }

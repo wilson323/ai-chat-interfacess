@@ -44,9 +44,9 @@ export default function AdminPage() {
                 <CardTitle>CAD 智能体管理</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="mb-4 text-muted-foreground">管理所有对接的 CAD 智能体，支持编辑、配置和同步。</p>
-                <Link href="/admin/agent-list/cad-analyzer">
-                  <Button>进入 CAD 智能体管理</Button>
+                <p className="mb-4 text-muted-foreground">管理 CAD 智能体配置，支持编辑参数和测试连通性。</p>
+                <Link href="/admin/cad-analyzer-config">
+                  <Button>进入 CAD 智能体配置</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -55,9 +55,9 @@ export default function AdminPage() {
                 <CardTitle>图像编辑智能体管理</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="mb-4 text-muted-foreground">管理所有对接的图像编辑智能体，支持编辑、配置和同步。</p>
-                <Link href="/admin/agent-list/image-editor">
-                  <Button>进入图像编辑智能体管理</Button>
+                <p className="mb-4 text-muted-foreground">管理图像编辑智能体配置，支持编辑参数和测试连通性。</p>
+                <Link href="/admin/image-editor-config">
+                  <Button>进入图像编辑智能体配置</Button>
                 </Link>
               </CardContent>
             </Card>

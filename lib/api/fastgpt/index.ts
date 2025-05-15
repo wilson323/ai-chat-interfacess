@@ -5,23 +5,35 @@
 
 import type { Agent } from "../../../types/agent"
 import type { Message } from "../../../types/message"
-import type { ProcessingStep } from "../../../components/processing-flow-display"
 import { retry } from "../../utils/index"
 import { API_CONSTANTS, ERROR_MESSAGES } from "../../storage/shared/constants"
 import { DEFAULT_AGENT_SETTINGS } from "@/lib/storage/shared/constants"
 import { logFastGPTEvent, logProcessingStep, logApiRequest, logApiResponse, logError } from "../../debug-utils"
+import type {
+  ChatCompletionRequest,
+  ChatCompletionResponse,
+  ChatCompletionChunk,
+  InitChatRequest,
+  InitChatResponse,
+  ChatSession,
+  ChatMessage,
+  MessageFeedbackRequest,
+  MessageFeedbackResponse
+} from '../../../types/api/fastgpt';
 
 // ================ 类型定义 ================
 
 export interface StreamOptions {
   temperature?: number
   maxTokens?: number
+  detail?: boolean
   onStart?: () => void
   onChunk?: (chunk: string) => void
   onIntermediateValue?: (value: any, eventType: string) => void
-  onProcessingStep?: (step: ProcessingStep) => void
+  onProcessingStep?: (step: any) => void
   onError?: (error: Error) => void
   onFinish?: () => void
+  signal?: AbortSignal
 }
 
 export interface FastGPTChatResponse {
@@ -188,13 +200,13 @@ function generateFallbackChatResponse(message: string, model: string): FastGPTCh
 /**
  * 生成回退初始化响应
  */
-function generateFallbackResponse(agent: Agent, chatId: string): ChatInitResponse {
-  console.log("Generating fallback response with chatId:", chatId)
-
-  // 为不同类型的智能体生成不同的默认交互选项
+export function generateFallbackResponse(agent: Agent, chatId: string): ChatInitResponse {
+  // 为不同类型的智能体生成不同的欢迎消息
+  let welcomeMessage = "您好！我是智能助手，很高兴为您服务。请问有什么我可以帮助您的？"
   let interacts: string[] = []
 
   if (agent.type === "image-editor") {
+    welcomeMessage = "欢迎使用图像编辑助手！您可以上传图片，我将帮助您进行编辑和处理。"
     interacts = [
       "如何裁剪图片？",
       "能帮我调整图片亮度吗？",
@@ -203,6 +215,7 @@ function generateFallbackResponse(agent: Agent, chatId: string): ChatInitRespons
       "如何调整图片大小？",
     ]
   } else if (agent.type === "cad-analyzer") {
+    welcomeMessage = "欢迎使用CAD分析助手！您可以上传CAD图纸，我将帮助您分析其中的安防设备布局。"
     interacts = [
       "如何分析CAD图纸中的安防设备？",
       "能识别图纸中的摄像头位置吗？",
@@ -215,8 +228,10 @@ function generateFallbackResponse(agent: Agent, chatId: string): ChatInitRespons
     interacts = ["你能做什么？", "介绍一下你的功能", "如何使用你的服务？", "你有哪些限制？", "能给我一些使用示例吗？"]
   }
 
-  // 优先使用agent中的welcomeText，如果没有则使用systemPrompt，最后使用默认欢迎消息
-  const welcomeText = agent.welcomeText || agent.systemPrompt || "今天我能帮您什么？"
+  // 优先使用agent中的welcomeText，如果没有则使用默认欢迎消息
+  const finalWelcomeMessage = agent.welcomeText || welcomeMessage
+  // 优先使用agent中的systemPrompt，如果没有则使用默认系统提示词
+  const finalSystemPrompt = agent.systemPrompt || "你是一位专业的智能助手，请耐心解答用户问题。"
 
   return {
     code: 200,
@@ -234,7 +249,7 @@ function generateFallbackResponse(agent: Agent, chatId: string): ChatInitRespons
           variables: [],
           fileSelectConfig: { canSelectFile: false, canSelectImg: false, maxFiles: 5 },
           _id: "",
-          welcomeText: welcomeText,
+          welcomeText: finalWelcomeMessage,
         },
         chatModels: [agent.multimodalModel || "gpt-3.5-turbo"],
         name: agent.name || "AI Assistant",
@@ -243,7 +258,7 @@ function generateFallbackResponse(agent: Agent, chatId: string): ChatInitRespons
         type: "chat",
         pluginInputs: [],
       },
-      interacts: interacts, // 添加交互选项数组
+      interacts: interacts,
     },
   }
 }
@@ -298,15 +313,20 @@ export class FastGPTClient {
    * 支持流式响应和自动重试
    */
   async streamChat(messages: any[], options: StreamOptions): Promise<void> {
-    return retry(
-      async () => {
+    let attempt = 0
+    const maxRetries = 2
+    let lastError: any = null
+    while (attempt <= maxRetries) {
+      try {
         await this._streamChatInternal(messages, options)
-      },
-      this.retryOptions.maxRetries,
-      API_CONSTANTS.INITIAL_RETRY_DELAY,
-      API_CONSTANTS.MAX_RETRY_DELAY,
-      this.retryOptions.onRetry,
-    )
+        return
+      } catch (err) {
+        lastError = err
+        attempt++
+        if (attempt > maxRetries) throw lastError
+        // 断线重连提示，可加日志
+      }
+    }
   }
 
   /**
@@ -362,8 +382,8 @@ export class FastGPTClient {
     const requestBody = {
       model: this.agent.appId, // 使用 appId 作为模型参数
       chatId: this.agent.chatId,
-      stream: true,
-      detail: true, // 设置为 true 以获取中间值
+      stream: true, // 强制流式
+      detail: true, // 强制 detail
       messages: messages,
       temperature: options.temperature || this.agent.temperature || DEFAULT_AGENT_SETTINGS.temperature,
       max_tokens: options.maxTokens || this.agent.maxTokens || DEFAULT_AGENT_SETTINGS.maxTokens,
@@ -386,9 +406,10 @@ export class FastGPTClient {
       body: requestBody,
     }
 
-    // 添加超时处理
+    // 添加超时处理和外部signal支持
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), API_CONSTANTS.STREAM_TIMEOUT)
+    const signal = options.signal || controller.signal
 
     try {
       console.log("通过代理发送流式请求到:", apiEndpoint)
@@ -403,7 +424,7 @@ export class FastGPTClient {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(proxyData),
-        signal: controller.signal,
+        signal,
       })
       console.log('response-----------=',response)
 
@@ -450,6 +471,7 @@ export class FastGPTClient {
       let buffer = ""
 
       // 处理流
+      let lastEventType: string | null = null;
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
@@ -462,234 +484,70 @@ export class FastGPTClient {
         buffer = lines.pop() || "" // 保留缓冲区中的最后一个不完整行
 
         for (const line of lines) {
-          if (line.trim() === "") continue
-
-          // 提取事件类型和数据
-          let eventType = "unknown"
-          let data = ""
-
-          // 检查是否包含事件类型
-          if (line.startsWith("event: ")) {
-            const eventLine = line.trim()
-            eventType = eventLine.substring(7) // 提取事件类型
-
-            // 查找对应的数据行
-            const dataLineIndex = lines.indexOf(line) + 1
-            if (dataLineIndex < lines.length && lines[dataLineIndex].startsWith("data: ")) {
-              data = lines[dataLineIndex].substring(6).trim()
-            }
-          } else if (line.startsWith("data: ")) {
-            data = line.substring(6).trim()
-          } else {
-            continue // 跳过不符合格式的行
+          if (line.trim() === "") continue;
+          if (line.startsWith("event:")) {
+            lastEventType = line.substring(6).trim() || "unknown";
+            continue;
           }
-
-          // 检查是否是结束标记
-          if (data === "[DONE]") {
-            console.log("收到 [DONE] 事件")
-            continue
-          }
-
-          // 尝试解析数据为 JSON
-          try {
-            const parsed = data ? JSON.parse(data) : {}
-
-            // 记录事件
-            logFastGPTEvent(eventType, parsed)
-
-            // 根据事件类型处理数据
-            switch (eventType) {
-              case "answer":
-              case "fastAnswer":
-                // 处理回答内容
-                if (parsed.choices && parsed.choices.length > 0 && parsed.choices[0].delta) {
-                  const textChunk = parsed.choices[0].delta.content || ""
-                  if (textChunk && options.onChunk) {
-                    options.onChunk(textChunk)
-                  }
-                }
-                break
-
-              case "flowNodeStatus":
-              case "moduleStatus":
-              case "moduleStart":
-              case "moduleEnd":
-                // 处理节点状态更新
-                const nodeName = typeof parsed === 'object' && parsed !== null && 'name' in parsed ? (parsed as any).name : (typeof parsed === 'object' && parsed !== null && 'moduleName' in parsed ? (parsed as any).moduleName : eventType)
-                const nodeStatus = typeof parsed === 'object' && parsed !== null && 'status' in parsed ? (parsed as any).status : "running"
-
-                // 如果是处理步骤，记录步骤
-                if (options.onProcessingStep) {
-                  const step = {
-                    id: `${eventType}-${Date.now()}`,
-                    type: eventType,
-                    name: nodeName,
-                    status: nodeStatus,
-                    content: typeof parsed === 'string' ? parsed : (typeof parsed === 'object' && parsed !== null && 'content' in parsed ? (parsed as any).content : (typeof parsed === 'object' && parsed !== null && 'text' in parsed ? (parsed as any).text : JSON.stringify(parsed))),
-                    details: parsed,
-                    timestamp: new Date(),
-                  }
-
-                  logProcessingStep(step)
-                  options.onProcessingStep(step)
-                }
-
-                if (options.onIntermediateValue) {
-                  options.onIntermediateValue(parsed, eventType)
-                }
-                break
-
-              case "flowResponses":
-                // 处理节点完整响应
-                if (Array.isArray(parsed)) {
-                  parsed.forEach((response, index) => {
-                    const moduleName = response.moduleName || `模块${index + 1}`
-                    const moduleType = response.moduleType || "unknown"
-
-                    // 如果是处理步骤，记录步骤
+          if (line.startsWith("data:")) {
+            const data = line.substring(5).trim();
+            if (data === "[DONE]") continue;
+            try {
+              const parsed = data ? JSON.parse(data) : {};
+              // 只有 eventType 存在时才处理
+              if (lastEventType) {
+                logFastGPTEvent(lastEventType, parsed);
+                switch (lastEventType) {
+                  case "answer":
+                  case "fastAnswer":
+                    if (parsed.choices && parsed.choices.length > 0 && parsed.choices[0].delta) {
+                      const textChunk = parsed.choices[0].delta.content || ""
+                      if (textChunk && options.onChunk) {
+                        options.onChunk(textChunk)
+                      }
+                    }
+                    break;
+                  case "flowNodeStatus":
+                  case "moduleStatus":
+                  case "moduleStart":
+                  case "moduleEnd":
+                  case "thinking":
+                  case "thinkingStart":
+                  case "thinkingEnd":
+                  case "toolCall":
+                  case "toolParams":
+                  case "toolResponse":
+                  case "updateVariables":
                     if (options.onProcessingStep) {
                       const step = {
-                        id: `${eventType}-${Date.now()}`,
-                        type: eventType,
-                        name: typeof response === 'object' && response !== null && 'name' in response ? (response as any).name : (typeof response === 'object' && response !== null && 'moduleName' in response ? (response as any).moduleName : eventType),
-                        status: typeof response === 'object' && response !== null && 'status' in response ? (response as any).status : "running",
-                        content: typeof response === 'string' ? response : (typeof response === 'object' && response !== null && 'content' in response ? (response as any).content : (typeof response === 'object' && response !== null && 'text' in response ? (response as any).text : JSON.stringify(response))),
-                        details: response,
+                        id: `${lastEventType}-${Date.now()}`,
+                        type: lastEventType,
+                        name: typeof parsed === 'object' && parsed !== null && 'name' in parsed ? parsed.name : (typeof parsed === 'object' && parsed !== null && 'moduleName' in parsed ? parsed.moduleName : lastEventType),
+                        status: typeof parsed === 'object' && parsed !== null && 'status' in parsed ? parsed.status : "running",
+                        content: typeof parsed === 'string' ? parsed : (typeof parsed === 'object' && parsed !== null && 'content' in parsed ? parsed.content : (typeof parsed === 'object' && parsed !== null && 'text' in parsed ? parsed.text : JSON.stringify(parsed))),
+                        details: parsed,
                         timestamp: new Date(),
                       }
-
                       logProcessingStep(step)
                       options.onProcessingStep(step)
                     }
-
                     if (options.onIntermediateValue) {
-                      options.onIntermediateValue(response, `${eventType}-${moduleType}`)
+                      options.onIntermediateValue(parsed, lastEventType)
                     }
-                  })
-                } else if (options.onIntermediateValue) {
-                  options.onIntermediateValue(parsed, eventType)
+                    break;
+                  default:
+                    if (options.onIntermediateValue) {
+                      options.onIntermediateValue(parsed, lastEventType)
+                    }
+                    break;
                 }
-                break
-
-              case "thinking":
-              case "thinkingStart":
-              case "thinkingEnd":
-                // 处理思考过程
-                if (options.onIntermediateValue) {
-                  options.onIntermediateValue(
-                    typeof parsed === 'string' ? parsed : (typeof parsed === 'object' && parsed !== null && 'content' in parsed ? (parsed as any).content : (typeof parsed === 'object' && parsed !== null && 'text' in parsed ? (parsed as any).text : JSON.stringify(parsed))),
-                    eventType,
-                  )
-                }
-
-                // 如果是处理步骤，记录步骤
-                if (options.onProcessingStep) {
-                  const step = {
-                    id: `${eventType}-${Date.now()}`,
-                    type: eventType,
-                    name: typeof parsed === 'object' && parsed !== null && 'name' in parsed ? (parsed as any).name : (typeof parsed === 'object' && parsed !== null && 'moduleName' in parsed ? (parsed as any).moduleName : eventType),
-                    status: typeof parsed === 'object' && parsed !== null && 'status' in parsed ? (parsed as any).status : "running",
-                    content: typeof parsed === 'string' ? parsed : (typeof parsed === 'object' && parsed !== null && 'content' in parsed ? (parsed as any).content : (typeof parsed === 'object' && parsed !== null && 'text' in parsed ? (parsed as any).text : JSON.stringify(parsed))),
-                    details: parsed,
-                    timestamp: new Date(),
-                  }
-
-                  logProcessingStep(step)
-                  options.onProcessingStep(step)
-                }
-                break
-
-              case "toolCall":
-              case "toolParams":
-              case "toolResponse":
-                // 处理工具调用相关事件
-                // 如果是处理步骤，记录步骤
-                if (options.onProcessingStep) {
-                  const step = {
-                    id: `${eventType}-${Date.now()}`,
-                    type: eventType,
-                    name: typeof parsed === 'object' && parsed !== null && 'name' in parsed ? (parsed as any).name : (typeof parsed === 'object' && parsed !== null && 'moduleName' in parsed ? (parsed as any).moduleName : eventType),
-                    status: typeof parsed === 'object' && parsed !== null && 'status' in parsed ? (parsed as any).status : "running",
-                    content: typeof parsed === 'string' ? parsed : (typeof parsed === 'object' && parsed !== null && 'content' in parsed ? (parsed as any).content : (typeof parsed === 'object' && parsed !== null && 'text' in parsed ? (parsed as any).text : JSON.stringify(parsed))),
-                    details: parsed,
-                    timestamp: new Date(),
-                  }
-
-                  logProcessingStep(step)
-                  options.onProcessingStep(step)
-                }
-
-                if (options.onIntermediateValue) {
-                  options.onIntermediateValue(parsed, eventType)
-                }
-                break
-
-              case "updateVariables":
-                // 处理变量更新事件
-                // 如果是处理步骤，记录步骤
-                if (options.onProcessingStep) {
-                  const step = {
-                    id: `${eventType}-${Date.now()}`,
-                    type: eventType,
-                    name: typeof parsed === 'object' && parsed !== null && 'name' in parsed ? (parsed as any).name : (typeof parsed === 'object' && parsed !== null && 'moduleName' in parsed ? (parsed as any).moduleName : eventType),
-                    status: typeof parsed === 'object' && parsed !== null && 'status' in parsed ? (parsed as any).status : "running",
-                    content: typeof parsed === 'string' ? parsed : (typeof parsed === 'object' && parsed !== null && 'content' in parsed ? (parsed as any).content : (typeof parsed === 'object' && parsed !== null && 'text' in parsed ? (parsed as any).text : JSON.stringify(parsed))),
-                    details: parsed,
-                    timestamp: new Date(),
-                  }
-
-                  logProcessingStep(step)
-                  options.onProcessingStep(step)
-                }
-
-                if (options.onIntermediateValue) {
-                  options.onIntermediateValue(parsed, eventType)
-                }
-                break
-
-              case "error":
-                // 处理错误事件
-                const errorMessage = parsed.error || "未知错误"
-
-                // 如果是处理步骤，记录步骤
-                if (options.onProcessingStep) {
-                  const step = {
-                    id: `${eventType}-${Date.now()}`,
-                    type: eventType,
-                    name: typeof parsed === 'object' && parsed !== null && 'name' in parsed ? (parsed as any).name : (typeof parsed === 'object' && parsed !== null && 'moduleName' in parsed ? (parsed as any).moduleName : eventType),
-                    status: typeof parsed === 'object' && parsed !== null && 'status' in parsed ? (parsed as any).status : "running",
-                    content: typeof parsed === 'string' ? parsed : (typeof parsed === 'object' && parsed !== null && 'content' in parsed ? (parsed as any).content : (typeof parsed === 'object' && parsed !== null && 'text' in parsed ? (parsed as any).text : JSON.stringify(parsed))),
-                    details: parsed,
-                    timestamp: new Date(),
-                  }
-
-                  logProcessingStep(step)
-                  options.onProcessingStep(step)
-                }
-
-                if (options.onError) {
-                  options.onError(new Error(errorMessage))
-                }
-                break
-
-              default:
-                // 处理未知事件类型
-                // 检查是否是标准 OpenAI 格式
-                if (parsed.choices && parsed.choices.length > 0 && parsed.choices[0].delta) {
-                  const textChunk = parsed.choices[0].delta.content || ""
-                  if (textChunk && options.onChunk) {
-                    options.onChunk(textChunk)
-                  }
-                } else if (options.onIntermediateValue) {
-                  options.onIntermediateValue(parsed, eventType)
-                }
-                break
-            }
-          } catch (e) {
-            console.error("解析 SSE 块时出错:", e, "原始数据:", data)
-            // 如果不是有效的 JSON 但仍有内容，尝试提取文本
-            if (data && typeof data === "string" && data !== "[DONE]" && options.onChunk) {
-              options.onChunk(data)
+                lastEventType = null; // 只消费一次
+              } else {
+                // 没有 event:，可选择跳过或用默认类型
+                // console.warn("收到 data 但没有 event，已跳过", data);
+              }
+            } catch (e) {
+              console.error("解析 SSE data 行出错:", e)
             }
           }
         }
@@ -723,7 +581,7 @@ export class FastGPTClient {
   /**
    * 发送非流式聊天请求
    */
-  async chat(messages: any[], options: Omit<StreamOptions, "onChunk" | "onStart"> & { onResponseData?: (data: any) => void } = {}): Promise<string> {
+  async chat(messages: any[], options: StreamOptions): Promise<string> {
     // 检查API端点是否配置
     const apiEndpoint = API_CONSTANTS.FASTGPT_API_ENDPOINT
     if (!apiEndpoint) {
@@ -737,15 +595,19 @@ export class FastGPTClient {
       return "抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。"
     }
 
-    return sendChatRequest(this.agent, messages, { ...options, stream: false }).then(
-      (response) => {
-        // 如果提供了onResponseData回调，调用它
-        if (options.onResponseData) {
-          options.onResponseData(response)
-        }
-        return response.choices[0].message.content
-      }
-    )
+    const res = await fetchWithRetry(apiEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.agent.apiKey}` },
+      body: JSON.stringify({ messages, ...options }),
+    })
+
+    if (!res.ok) {
+      const errorText = await res.text()
+      throw new Error(errorText)
+    }
+
+    const response = await res.json()
+    return response.choices[0].message.content
   }
 
   /**
@@ -899,19 +761,32 @@ export async function initializeChat(agent: Agent, chatId?: string): Promise<Cha
   }
 }
 
+// fallback 响应类型转换
+function toChatCompletionResponse(obj: any): ChatCompletionResponse {
+  return {
+    id: obj.id,
+    object: 'chat.completion',
+    created: obj.created,
+    model: obj.model,
+    choices: obj.choices,
+    usage: obj.usage,
+  };
+}
+
 /**
  * 发送聊天请求
  */
 export async function sendChatRequest(
   agent: Agent,
-  messages: Message[],
+  messages: ChatCompletionRequest['messages'],
   options: {
     stream?: boolean
     temperature?: number
     maxTokens?: number
+    detail?: boolean
     onChunk?: (chunk: string) => void
   } = {},
-): Promise<FastGPTChatResponse> {
+): Promise<ChatCompletionResponse> {
   // 1. 参数校验
   const apiEndpoint = agent.apiEndpoint || API_CONSTANTS.FASTGPT_API_ENDPOINT
 
@@ -919,7 +794,7 @@ export async function sendChatRequest(
   if (!apiEndpoint) {
     const errMsg = "API 端点未配置，请联系管理员。"
     if (options.stream && options.onChunk) options.onChunk(errMsg)
-    return generateFallbackChatResponse(errMsg, agent.multimodalModel || "unknown")
+    return toChatCompletionResponse(generateFallbackChatResponse(errMsg, agent.multimodalModel || "unknown"))
   }
 
   // 如果API密钥或AppID未配置，使用离线模式但不阻止请求
@@ -930,11 +805,11 @@ export async function sendChatRequest(
     // 如果是流式请求，发送离线响应
     if (options.stream && options.onChunk) {
       options.onChunk("抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。")
-      return generateFallbackChatResponse(errMsg, agent.multimodalModel || "unknown")
+      return toChatCompletionResponse(generateFallbackChatResponse(errMsg, agent.multimodalModel || "unknown"))
     }
 
     // 如果是非流式请求，返回离线响应
-    return generateFallbackChatResponse("抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。", agent.multimodalModel || "unknown")
+    return toChatCompletionResponse(generateFallbackChatResponse("抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。", agent.multimodalModel || "unknown"))
   }
 
   // 2. 自动生成 chatId
@@ -961,6 +836,7 @@ export async function sendChatRequest(
     model: agent.appId,
     messages: formattedMessages,
     stream: options.stream === true,
+    detail: options.detail ?? true,
     temperature: options.temperature ?? agent.temperature ?? 0.8,
     max_tokens: options.maxTokens ?? agent.maxTokens ?? 2048,
     user: undefined, // 可扩展
@@ -1029,7 +905,7 @@ export async function sendChatRequest(
           },
         ],
         usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
-      }
+      } as ChatCompletionResponse;
     } else {
       // 非流式
       const response = await fetch(apiEndpoint, {
@@ -1041,12 +917,12 @@ export async function sendChatRequest(
         const errorText = await response.text()
         throw new Error(errorText)
       }
-      return await response.json()
+      return await response.json() as ChatCompletionResponse;
     }
   } catch (error: any) {
     const errMsg = error?.message || "API请求异常"
     if (options.stream && options.onChunk) options.onChunk(errMsg)
-    return generateFallbackChatResponse(errMsg, agent.multimodalModel || "unknown")
+    return toChatCompletionResponse(generateFallbackChatResponse(errMsg, agent.multimodalModel || "unknown"))
   }
 }
 
@@ -1119,3 +995,22 @@ export async function getQuestionSuggestions(
     };
   }
 }
+
+// 1. fetchWithRetry 工具
+export async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, backoff = 300): Promise<Response> {
+  let lastError
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, options)
+      if (!res.ok) throw new Error(res.statusText)
+      return res
+    } catch (err) {
+      lastError = err
+      await new Promise(r => setTimeout(r, backoff * Math.pow(2, i)))
+    }
+  }
+  throw lastError
+}
+
+// 2. streamChat 支持流式断线重连
+// 在 streamChat 内部，若流断开且未超最大重连次数，自动重连并拼接内容

@@ -1,6 +1,8 @@
 import type React from "react"
 
-export type AgentType = "fastgpt" | "chat" | "image-editor" | "cad-analyzer"
+export type ConversationAgentType = "fastgpt"
+export type NonConversationAgentType = "image-editor" | "cad-analyzer"
+export type AgentType = ConversationAgentType | NonConversationAgentType
 
 export interface Agent {
   id: string
@@ -25,4 +27,6 @@ export interface Agent {
   welcomeText?: string
   welcomeMessage?: string
   order?: number
+  supportsStream: boolean
+  supportsDetail: boolean
 }

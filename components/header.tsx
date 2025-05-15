@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/context/language-context"
-import type { Language } from "@/lib/i18n/translations"
 import { useMobile } from "@/hooks/use-mobile"
 import { generateFallbackChatId } from "@/lib/api/fastgpt"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // Add isAdmin prop to the component
 export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
@@ -94,8 +94,8 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
         )}
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* 新对话按钮 - 在所有设备上显示 */}
+      <div className="fixed flex items-center gap-3 top-[0.85rem] right-[0.5rem] z-30">
+        {/* 新对话按钮 */}
         <Button
           variant="ghost"
           size="icon"
@@ -106,28 +106,21 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
           <Plus className="h-4 sm:h-5 w-4 sm:w-5" />
         </Button>
 
-        {/* 语言下拉菜单 */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 sm:h-9 w-8 sm:w-9 hover:bg-accent/50 hover:scale-105 transition-all duration-200" aria-label="切换语言">
-              <Globe className="h-4 sm:h-5 w-4 sm:w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="p-2 text-xs font-medium text-muted-foreground">{t("selectLanguage")}</div>
-            {Object.entries(availableLanguages).map(([code, name]) => (
-              <DropdownMenuItem
-                key={code}
-                onClick={() => setLanguage(code as Language)}
-                className={cn("flex items-center gap-2 py-2", language === code && "bg-accent")}
-              >
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span>{name}</span>
-                {language === code && <Check className="h-4 w-4 ml-auto" />}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* 历史按钮 */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 sm:h-9 w-8 sm:w-9 hover:bg-accent/50 hover:scale-105 transition-all duration-200"
+          onClick={() => window.dispatchEvent(new CustomEvent("toggle-history"))}
+          aria-label="打开聊天历史"
+        >
+          <History className="h-4 sm:h-5 w-4 sm:w-5" />
+        </Button>
+
+        {/* 主题切换按钮 */}
+        <div className="flex items-center justify-center h-8 sm:h-9 w-8 sm:w-9">
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )

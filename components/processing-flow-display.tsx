@@ -8,17 +8,8 @@ import { ChevronDown, ChevronUp, Layers, Brain, CheckCircle, AlertCircle, Clock,
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { CodeBlock } from "@/components/code-block"
-
-interface ProcessingStep {
-  id: string
-  type: string
-  name: string
-  status: "running" | "success" | "error" | "pending"
-  content?: string
-  timestamp: Date
-  details?: any
-  isNew?: boolean
-}
+import type { ProcessingStep } from "@/types/message"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface ProcessingFlowDisplayProps {
   steps: ProcessingStep[]
@@ -64,7 +55,14 @@ const StepCard = ({ step, isAlternate }: { step: ProcessingStep; isAlternate: bo
   )
 
   return (
-    <div className={cardClasses}>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+      transition={{ duration: 0.28 }}
+      className={cardClasses}
+      style={{ boxShadow: '0 2px 12px 0 rgba(80,200,120,0.10)' }}
+    >
       <div className="flex items-center gap-2 mb-2">
         {getStepIcon(step.type, step.status)}
         <span className="text-sm font-medium">{step.name}</span>
@@ -95,7 +93,7 @@ const StepCard = ({ step, isAlternate }: { step: ProcessingStep; isAlternate: bo
           {formatContent(JSON.stringify(step.details, null, 2))}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

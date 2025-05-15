@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { AgentType } from './useAgentData';
+import type { ConversationAgentType } from "@/types/agent"
 
 const LOCAL_CACHE_KEY = 'fastgpt_chat_history_cache';
 const CACHE_EXPIRE_MS = 1000 * 60 * 60 * 24; // 24小时
@@ -11,7 +11,7 @@ const CACHE_EXPIRE_MS = 1000 * 60 * 60 * 24; // 24小时
  */
 export function useChatHistory() {
   // 获取缓存
-  const getCache = useCallback((agentId: string, userId: number) => {
+  const getCache = useCallback((agentId: ConversationAgentType, userId: number) => {
     const raw = localStorage.getItem(LOCAL_CACHE_KEY);
     if (!raw) return null;
     try {
@@ -27,7 +27,7 @@ export function useChatHistory() {
   }, []);
 
   // 设置缓存
-  const setCache = useCallback((agentId: string, userId: number, history: any) => {
+  const setCache = useCallback((agentId: ConversationAgentType, userId: number, history: any) => {
     const raw = localStorage.getItem(LOCAL_CACHE_KEY);
     let data: { [key: string]: { history: any; ts: number } } = {};
     try {

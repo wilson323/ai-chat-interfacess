@@ -29,6 +29,7 @@ import { useRemoteChatHistory } from "@/hooks/useRemoteChatHistory"
 import { fetchUserChatHistory } from '@/lib/api/user'
 import { Alert } from '@/components/ui/alert'
 import { MarkdownMessage } from "@/components/markdown-message"
+import { HistoryList } from "@/components/history/history-list"
 
 interface ChatHistoryProps {
   onClose: () => void
@@ -289,268 +290,62 @@ export function ChatHistory({ onClose, onSelect, onNewChat, onManageHistory }: C
     </div>
   )
 
-  if (loading) return <div>加载中...</div>
-  if (error) return <Alert variant="destructive">{error}</Alert>
+  if (loading) return (
+    <div className="w-full max-w-lg mx-auto bg-background rounded-lg shadow-lg p-6 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">加载中，请稍候...</p>
+      </div>
+    </div>
+  )
+
+  if (error) return (
+    <div className="w-full max-w-lg mx-auto bg-background rounded-lg shadow-lg p-6">
+      <Alert variant="destructive" className="mb-4">
+        <div className="font-medium">获取聊天历史失败</div>
+        <div className="text-sm mt-1">{error.message || String(error)}</div>
+      </Alert>
+      <div className="text-sm text-muted-foreground mt-4 p-3 bg-muted/30 rounded-md">
+        <p className="mb-2">可能的原因：</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>服务器暂时不可用</li>
+          <li>网络连接问题</li>
+          <li>API返回格式错误</li>
+        </ul>
+        <p className="mt-3">您可以尝试：</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>刷新页面</li>
+          <li>检查网络连接</li>
+          <li>稍后再试</li>
+        </ul>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+          刷新页面
+        </Button>
+      </div>
+    </div>
+  )
 
   // 检查当前路径是否为user界面
   const isUserInterface = typeof window !== 'undefined' && window.location.pathname.includes('/user');
 
   return (
-    <Card
-      className={cn(
-        "w-full mx-auto shadow-lg border-border dark:border-zinc-700/50 relative z-50",
-        // user界面使用60%宽度，但在移动设备上使用90%宽度，其他界面保持原样
-        isUserInterface
-          ? "w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%]"
-          : "max-w-3xl",
-        "bg-card/95 dark:bg-zinc-900/95 backdrop-blur-sm",
-        "chat-history-card"
-      )}
-    >
-      <CardHeader className="bg-muted/50 dark:bg-zinc-800/50 flex flex-row items-center justify-between">
-        <CardTitle className="text-xl font-bold flex items-center gap-2">
-          {selectedSession ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 mr-2"
-              onClick={handleBackToList}
-              aria-label="Back to chat history"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          ) : (
-            <MessageSquare className="h-5 w-5 text-primary" />
+    <div className="w-full max-w-lg mx-auto bg-background rounded-lg shadow-lg p-0">
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <span className="font-semibold text-base">历史记录</span>
+        <div className="flex gap-2">
+          {onManageHistory && (
+            <Button variant="ghost" size="sm" onClick={onManageHistory}>管理</Button>
           )}
-          {selectedSession
-            ? localSessions.find((s) => s.id === selectedSession.id)?.title || t("chatHistory")
-            : t("chatHistory")}
-        </CardTitle>
-        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close chat history" data-testid="close-history-btn">
-          <X className="h-5 w-5" />
-        </Button>
-      </CardHeader>
-      <CardContent className="p-4">
-        {/* 标签筛选与批量操作栏 */}
-        <div className="flex flex-wrap gap-2 mb-3 items-center">
-          <Input placeholder="标签筛选" className="w-32" value={tagFilter} onChange={e => setTagFilter(e.target.value)} data-testid="tag-filter-input" />
-          <Button variant="outline" size="sm" onClick={selectAllSessions} data-testid="select-all-btn">全选</Button>
-          <Button variant="outline" size="sm" onClick={clearAllSelections} data-testid="clear-selection-btn">清空选择</Button>
-          <Button variant="destructive" size="sm" onClick={handleBatchDelete} disabled={selectedSessionIds.length === 0} data-testid="batch-delete-btn">批量删除</Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>关闭</Button>
         </div>
-        {!selectedSession ? (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <div className="relative flex-1 mr-2">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t("searchHistory")}
-                  className="pl-9 bg-background"
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
-                  data-testid="search-history-input"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={refreshHistory}
-                  title={t("refreshHistory" as any)}
-                  data-testid="refresh-history-btn"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-                {onManageHistory && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
-                    onClick={onManageHistory}
-                    title={t("manageAgents")}
-                    data-testid="manage-history-btn"
-                  >
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-medium text-muted-foreground">{t("recentConversations")}</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs text-primary hover:bg-primary/10"
-                onClick={onNewChat}
-                data-testid="new-chat-btn"
-              >
-                <Plus className="h-3 w-3 mr-1.5" />
-                {t("newChat")}
-              </Button>
-            </div>
-
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="space-y-3">
-                {pagedSessions.map((session) => (
-                  <div key={session.id} className={cn("group p-3 rounded-lg border hover:border-primary/30 hover:bg-primary/5 cursor-pointer transition-all duration-200 flex items-center", selectedSessionIds.includes(session.id) && "bg-primary/10 border-primary/30")}
-                    onClick={() => handleSessionSelect(session)}
-                    data-testid={`chat-session-${session.id}`}
-                  >
-                    <input type="checkbox" className="mr-2" checked={selectedSessionIds.includes(session.id)} onChange={e => { e.stopPropagation(); toggleSessionSelect(session.id) }} data-testid={`session-checkbox-${session.id}`} />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate flex items-center gap-2">
-                        {session.title}
-                        {/* 标签显示 */}
-                        {session.tags && ((session.tags as string[]).map((tag: string) => <span key={tag} className="ml-1 px-2 py-0.5 bg-muted rounded text-xs text-muted-foreground" data-testid={`session-tag-${tag}`}>{tag}</span>))}
-                        <Button variant="ghost" size="icon" className="h-6 w-6 ml-1" onClick={e => { e.stopPropagation(); setEditingTagSessionId(session.id); setTagInput(((session.tags||[]) as string[]).join(",")) }} data-testid={`edit-tag-btn-${session.id}`}>✎</Button>
-                      </div>
-                      <div className="text-sm text-muted-foreground line-clamp-2" data-testid={`session-preview-${session.id}`}>{session.preview}</div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => confirmDelete(session.id, e)} data-testid={`delete-session-btn-${session.id}`}>
-                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-            {pagedSessions.length < mergedSessions.length && (
-              <Button className="mt-2 px-3 py-1 bg-blue-600 text-white rounded" onClick={() => setPage(page + 1)} data-testid="load-more-btn">
-                加载更多
-              </Button>
-            )}
-          </>
-        ) : (
-          <div className="space-y-4 chat-history-detail">
-            <div className="text-sm text-muted-foreground flex items-center gap-1 mb-4 bg-muted/30 p-2 rounded-lg">
-              <Clock className="h-3.5 w-3.5 text-primary/70" />
-              {formatDistanceToNow(
-                selectedSession.messages.length > 0
-                  ? new Date(selectedSession.messages[selectedSession.messages.length - 1].timestamp)
-                  : new Date(),
-                { addSuffix: true },
-              )}
-              <span className="ml-2 bg-primary/10 px-2 py-0.5 rounded-full text-[10px] text-primary font-medium">
-                {selectedSession.messages.length}条消息
-              </span>
-            </div>
-
-            <ScrollArea className="h-[350px] pr-4">
-              <div className="space-y-6">
-                {selectedSession.messages.map((message) => {
-                  const isUser = message.role === "user";
-                  return (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        "flex gap-3",
-                        isUser ? "flex-row-reverse" : ""
-                      )}
-                      data-testid={`chat-message-${message.id}`}
-                    >
-                      {/* 头像 */}
-                      <div
-                        className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                          isUser
-                            ? "bg-gradient-to-br from-primary to-primary/80 shadow-sm"
-                            : "bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-700 dark:to-zinc-800 shadow-sm",
-                        )}
-                      >
-                        {isUser ? (
-                          <User className="h-4 w-4 text-white" />
-                        ) : (
-                          <Bot className="h-4 w-4 text-primary dark:text-primary/80" />
-                        )}
-                      </div>
-
-                      {/* 消息内容 */}
-                      <div className="flex flex-col flex-1 max-w-[calc(100%-3rem)]">
-                        {/* 发送者和时间 */}
-                        <div className="flex items-center mb-1 text-xs text-muted-foreground">
-                          <span className="font-medium">{isUser ? t("you") : t("assistant")}</span>
-                          <span className="mx-1.5">•</span>
-                          <span>{formatDistanceToNow(message.timestamp ? new Date(message.timestamp) : new Date(), { addSuffix: true })}</span>
-                        </div>
-
-                        {/* 消息气泡 */}
-                        <div
-                          className={cn(
-                            "relative",
-                            isUser
-                              ? "message-bubble-user message-hover-effect"
-                              : "message-bubble-ai message-hover-effect",
-                          )}
-                          data-testid={`message-content-${message.id}`}
-                        >
-                          {typeof message.content === 'string' ? (
-                            <MarkdownMessage
-                              content={message.content}
-                              className={isUser ? "text-white" : ""}
-                              enableImageExpand={true} // 确保启用图片放大功能
-                            />
-                          ) : (
-                            <div className="text-sm whitespace-pre-wrap">{String(message.content)}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-
-            <div className="flex justify-end gap-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={handleBackToList}
-                className="border-border/50 dark:border-zinc-700/30 hover:bg-muted/50 transition-all duration-200"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {t("backToList")}
-              </Button>
-              <Button
-                onClick={handleLoadSession}
-                className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-200"
-              >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                {t("continueConversation")}
-              </Button>
-            </div>
-          </div>
-        )}
-        {/* 标签编辑弹窗 */}
-        {editingTagSessionId && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" data-testid="edit-tag-modal">
-            <div className="bg-card border rounded-lg shadow-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-medium mb-4">编辑标签</h3>
-              <div className="flex gap-1 mt-1">
-                <Input value={tagInput} onChange={e => setTagInput(e.target.value)} className="w-32" placeholder="逗号分隔标签" data-testid="edit-tag-input" />
-                <Button size="sm" onClick={e => { e.stopPropagation(); handleEditTag(editingTagSessionId, tagInput.split(',').map(s=>s.trim()).filter(Boolean)); }} data-testid="save-tag-btn">保存</Button>
-                <Button size="sm" variant="ghost" onClick={e => { e.stopPropagation(); setEditingTagSessionId(null); }} data-testid="cancel-tag-btn">取消</Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </CardContent>
-      {/* 确认删除对话框 */}
-      {sessionToDelete && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" data-testid="delete-confirm-modal">
-          <div className="bg-card border rounded-lg shadow-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-medium mb-4">{t("deleteConfirmation")}</h3>
-            <p className="mb-6">{t("confirmDeleteConversation")}</p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={cancelDelete} data-testid="cancel-delete-btn">
-                {t("cancel")}
-              </Button>
-              <Button variant="destructive" onClick={executeDelete} data-testid="confirm-delete-btn">
-                {t("confirm")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </Card>
+      </div>
+      <HistoryList
+        onSelect={onSelect}
+        onNewChat={onNewChat}
+        viewType="dialog"
+      />
+    </div>
   )
 }

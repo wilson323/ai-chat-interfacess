@@ -6,8 +6,8 @@ import AgentConfig from '@/lib/db/models/agent-config'
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'admin123'
 
-// 读取安全配置参数 - 从数据库获取
-async function getSafeConfig(): Promise<Pick<CadAnalyzerConfig, 'maxFileSizeMB' | 'supportedFormats'>> {
+// 读取安全配置参数 - 从数据库和配置文件获取
+async function getSafeConfig(): Promise<Pick<CadAnalyzerConfig, 'maxFileSizeMB' | 'supportedFormats' | 'apiEndpoint' | 'apiKey'>> {
   try {
     // 从数据库获取CAD解读智能体配置
     const cadAgent = await AgentConfig.findOne({
@@ -17,24 +17,40 @@ async function getSafeConfig(): Promise<Pick<CadAnalyzerConfig, 'maxFileSizeMB' 
       }
     });
 
-    if (!cadAgent) {
+    // 尝试从配置文件读取额外配置
+    let fileConfig: Partial<CadAnalyzerConfig> = {};
+    try {
+      const configPath = path.resolve(process.cwd(), 'config/cad-analyzer-config.json');
+      const content = await fs.readFile(configPath, 'utf-8');
+      fileConfig = JSON.parse(content);
+    } catch (fileError) {
+      console.log('读取CAD配置文件失败，使用默认配置', fileError);
+    }
+
+    if (!cadAgent && Object.keys(fileConfig).length === 0) {
       console.log('未找到已发布的CAD解读智能体配置，使用默认配置');
       return {
         maxFileSizeMB: 100,
-        supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png']
+        supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png'],
+        apiEndpoint: '',
+        apiKey: ''
       };
     }
 
-    // 返回安全配置
+    // 返回安全配置，优先使用配置文件中的值
     return {
-      maxFileSizeMB: 100, // 固定值或从其他字段获取
-      supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png'] // 固定支持的格式
+      maxFileSizeMB: fileConfig.maxFileSizeMB || 100,
+      supportedFormats: fileConfig.supportedFormats || ['.dwg', '.dxf', '.pdf', '.jpg', '.png'],
+      apiEndpoint: fileConfig.apiEndpoint || '',
+      apiKey: fileConfig.apiKey || ''
     };
   } catch (error) {
     console.error('获取CAD解读智能体配置失败:', error);
     return {
       maxFileSizeMB: 100,
-      supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png']
+      supportedFormats: ['.dwg', '.dxf', '.pdf', '.jpg', '.png'],
+      apiEndpoint: '',
+      apiKey: ''
     };
   }
 }
@@ -69,6 +85,9 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
       }
     });
 
+    // 获取配置文件中的API端点
+    const safeConfig = await getSafeConfig();
+
     if (!cadAgent) {
       console.log('未找到已发布的CAD解读智能体配置，使用默认返回');
       // 返回默认结构化JSON，确保接口兼容性
@@ -81,8 +100,11 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
       };
     }
 
-    // 检查必要的API配置是否存在
-    if (!cadAgent.apiUrl || !cadAgent.apiKey) {
+    // 检查必要的API配置是否存在，优先使用配置文件中的API端点和密钥
+    const apiUrl = safeConfig.apiEndpoint || cadAgent.apiUrl;
+    const apiKey = safeConfig.apiKey || cadAgent.apiKey;
+
+    if (!apiUrl || !apiKey) {
       console.error('CAD解读智能体API配置不完整');
       return {
         devices: [
@@ -144,14 +166,14 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
         }
     }
 
-    console.log('发送CAD分析请求到模型API:', cadAgent.apiUrl);
+    console.log('发送CAD分析请求到模型API:', apiUrl);
 
     // 直接调用模型API，不通过代理
-    const response = await fetch(cadAgent.apiUrl, {
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${cadAgent.apiKey}`
+        "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify(requestData)
     });

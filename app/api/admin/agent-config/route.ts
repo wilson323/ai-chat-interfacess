@@ -32,6 +32,8 @@ export async function GET() {
       temperature: a.temperature ?? 0.7,
       maxTokens: a.maxTokens ?? 2000,
       multimodalModel: a.multimodalModel ?? '',
+      supportsStream: a.supportsStream ?? true,
+      supportsDetail: a.supportsDetail ?? true,
     }));
     return NextResponse.json({ success: true, data: safeAgents });
   } catch (error) {
@@ -63,6 +65,8 @@ export async function POST(req: NextRequest) {
       isPublished: typeof body.isPublished === 'boolean' ? body.isPublished : true,
       description: body.description || '',
       order: typeof body.order === 'number' ? body.order : Number(body.order) || 100,
+      supportsStream: typeof body.supportsStream === 'boolean' ? body.supportsStream : true,
+      supportsDetail: typeof body.supportsDetail === 'boolean' ? body.supportsDetail : true,
     });
     return NextResponse.json({ success: true, data: agent });
   } catch (error) {
@@ -120,6 +124,8 @@ export async function PUT(req: NextRequest) {
     console.log(`智能体[${agent.id}:${agent.name}] 发布状态更新: ${oldPublishState} -> ${agent.isPublished}`);
     agent.description = body.description ?? agent.description;
     agent.order = typeof body.order === 'number' ? body.order : Number(body.order) || agent.order;
+    agent.supportsStream = typeof body.supportsStream === 'boolean' ? body.supportsStream : agent.supportsStream;
+    agent.supportsDetail = typeof body.supportsDetail === 'boolean' ? body.supportsDetail : agent.supportsDetail;
     try {
       // 强制设置updatedAt为当前时间
       agent.updatedAt = new Date();

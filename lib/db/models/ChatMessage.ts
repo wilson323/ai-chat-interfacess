@@ -9,6 +9,8 @@ export interface ChatMessageAttributes {
   content: string;
   timestamp?: Date;
   metadata?: object;
+  parentId?: string | null;
+  meta?: object;
 }
 
 export interface ChatMessageCreationAttributes extends Optional<ChatMessageAttributes, 'id'> {}
@@ -21,6 +23,8 @@ export class ChatMessage extends Model<ChatMessageAttributes, ChatMessageCreatio
   public content!: string;
   public timestamp!: Date;
   public metadata?: object;
+  public parentId?: string | null;
+  public meta?: object;
 }
 
 ChatMessage.init(
@@ -54,6 +58,14 @@ ChatMessage.init(
       type: DataTypes.JSONB,
       allowNull: true,
     },
+    parentId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    meta: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
   },
   {
     sequelize,
@@ -62,6 +74,7 @@ ChatMessage.init(
       { fields: ['sessionId'] },
       { fields: ['userId'] },
       { fields: ['timestamp'] },
+      { fields: ['parentId'] },
     ],
   }
 );

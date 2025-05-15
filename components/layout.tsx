@@ -49,11 +49,15 @@ export function Layout({ children, isAdmin = false }: LayoutProps) {
       const swipeDistance = touchEndX - touchStartX
       const threshold = 100 // 最小滑动距离
 
-      if (swipeDistance > threshold && !sidebarOpen) {
-        // 从左向右滑动，打开侧边栏
+      // 检查当前是否在user界面
+      const isUserInterface = typeof window !== 'undefined' && window.location.pathname.includes('/user')
+
+      // 在user界面下禁用向右滑动打开侧边栏的功能
+      if (swipeDistance > threshold && !sidebarOpen && !isUserInterface) {
+        // 从左向右滑动，打开侧边栏（仅在非user界面下）
         toggleSidebar()
       } else if (swipeDistance < -threshold && sidebarOpen) {
-        // 从右向左滑动，关闭侧边栏
+        // 从右向左滑动，关闭侧边栏（所有界面都可用）
         closeSidebars()
       }
     }
@@ -106,10 +110,7 @@ export function Layout({ children, isAdmin = false }: LayoutProps) {
         <HistorySidebar isOpen={historySidebarOpen} onClose={closeSidebars} />
       </div>
 
-      {/* Theme toggle button - hide on very small screens */}
-      <div className={cn(isMobile ? "hidden sm:block" : "block")}>
-        <ThemeToggle />
-      </div>
+
     </div>
   )
 }

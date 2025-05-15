@@ -39,7 +39,8 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
   const [appId, setAppId] = useState("")
   const [model, setModel] = useState("qwen-max")
   const [isPublished, setIsPublished] = useState(false)
-  const [type, setType] = useState<import("@/types/agent").AgentType>("chat")
+  // 根据agent的类型设置初始类型，如果是新建则使用"fastgpt"
+  const [type] = useState<import("@/types/agent").AgentType>(agent?.type || "fastgpt")
   const [activeTab, setActiveTab] = useState("basic")
   const [multimodalModel, setMultimodalModel] = useState("qwen-vl-max")
   const [systemPrompt, setSystemPrompt] = useState("")
@@ -49,6 +50,8 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
   const [supportsImageUpload, setSupportsImageUpload] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [order, setOrder] = useState<number>(agent?.order ?? 100)
+  const [supportsStream, setSupportsStream] = useState(true)
+  const [supportsDetail, setSupportsDetail] = useState(true)
 
   useEffect(() => {
     if (agent) {
@@ -59,7 +62,6 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       setApiKey(agent.apiKey || "")
       setAppId(agent.appId || "")
       setIsPublished(agent.isPublished || false)
-      setType(agent.type || "fastgpt")
       setMultimodalModel(agent.multimodalModel || "qwen-vl-max")
       setSystemPrompt(agent.systemPrompt || "")
       setTemperature(agent.temperature ?? 0.7)
@@ -67,6 +69,8 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       setSupportsFileUpload(agent.supportsFileUpload !== undefined ? agent.supportsFileUpload : true)
       setSupportsImageUpload(agent.supportsImageUpload !== undefined ? agent.supportsImageUpload : true)
       setOrder(agent.order ?? 100)
+      setSupportsStream(agent.supportsStream !== undefined ? agent.supportsStream : true)
+      setSupportsDetail(agent.supportsDetail !== undefined ? agent.supportsDetail : true)
     } else {
       setName("")
       setDescription("")
@@ -74,7 +78,6 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       setApiKey("")
       setAppId("")
       setIsPublished(false)
-      setType("fastgpt")
       setMultimodalModel("qwen-vl-max")
       setSystemPrompt("")
       setTemperature(0.7)
@@ -82,6 +85,8 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       setSupportsFileUpload(true)
       setSupportsImageUpload(true)
       setOrder(100)
+      setSupportsStream(true)
+      setSupportsDetail(true)
     }
   }, [agent])
 
@@ -141,6 +146,8 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
         maxTokens: maxTokens ?? 2000,
         supportsFileUpload,
         supportsImageUpload,
+        supportsStream: true, // 强制为 true
+        supportsDetail: true, // 强制为 true
         ...(agentType === "image-editor" || agentType === "cad-analyzer" ? { multimodalModel: multimodalModel || "qwen-vl-max" } : {}),
         order: Number(order) || 100,
       }
@@ -193,16 +200,15 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
     <Card className="border-pantone369-100 dark:border-pantone369-900/30 h-full flex flex-col max-h-[90vh]">
       <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col h-full">
         <CardHeader className="bg-pantone369-50/50 dark:bg-pantone369-900/10 flex flex-row items-center justify-between">
-          <div>
+          <div className="flex items-center gap-4 w-full">
             <CardTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-pantone369-500" />
               {agent ? t("editAgent") : t("newAgent")}
-              <div className="ml-auto flex items-center gap-2">
-                <Label htmlFor="isPublished" className="text-xs">{isPublished ? t("published") : t("draft")}</Label>
-                <Switch id="isPublished" checked={isPublished} onCheckedChange={setIsPublished} />
-              </div>
             </CardTitle>
-            <CardDescription>{t("configureAgent")}</CardDescription>
+            <div className="flex items-center gap-2 ml-auto">
+              <Label htmlFor="isPublished" className="text-xs">{isPublished ? t("published") : t("draft")}</Label>
+              <Switch id="isPublished" checked={isPublished} onCheckedChange={setIsPublished} />
+            </div>
           </div>
           <Button type="button" variant="ghost" onClick={onClose}>关闭</Button>
         </CardHeader>
@@ -258,22 +264,6 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
                   required
                   className="border-pantone369-200 dark:border-pantone369-800/30 focus:border-pantone369-500 focus:ring-pantone369-500/20"
                 />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="type" className="text-pantone369-700 dark:text-pantone369-300">
-                  {t("agentType")}
-                </Label>
-                <Select value={type} onValueChange={v => setType(v as import("@/types/agent").AgentType)} disabled={agent?.type === 'fastgpt'}>
-                  <SelectTrigger className="border-pantone369-200 dark:border-pantone369-800/30 focus:ring-pantone369-500/20">
-                    <SelectValue placeholder={t("agentType")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fastgpt">FastGPT</SelectItem>
-                    <SelectItem value="image-editor">图像编辑</SelectItem>
-                    <SelectItem value="cad-analyzer">CAD解读</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="grid gap-2">
@@ -463,28 +453,6 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
             </TabsContent>
 
             <TabsContent value="model" className="space-y-4">
-              {/* 仅非聊天型智能体展示多模态模型选择 */}
-              {type !== "chat" && type !== "fastgpt" && (
-                <div className="grid gap-2 p-4 rounded-md bg-pantone369-50/50 dark:bg-pantone369-900/10">
-                  <Label htmlFor="multimodalModel" className="text-pantone369-700 dark:text-pantone369-300">
-                    {t("multimodalModel")}
-                  </Label>
-                  <Select value={multimodalModel} onValueChange={setMultimodalModel}>
-                    <SelectTrigger className="border-pantone369-200 dark:border-pantone369-800/30 focus:ring-pantone369-500/20">
-                      <SelectValue placeholder={t("selectMultimodalModel")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="qwen-vl-max">阿里云 Qwen-VL-Max (推荐)</SelectItem>
-                      <SelectItem value="qwen-vl-plus">阿里云 Qwen-VL-Plus</SelectItem>
-                      <SelectItem value="gpt-4-vision-preview">GPT-4 Vision</SelectItem>
-                      <SelectItem value="claude-3-opus-vision">Claude 3 Opus Vision</SelectItem>
-                      <SelectItem value="gemini-pro-vision">Gemini Pro Vision</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">{t("multimodalModelDescription")}</p>
-                </div>
-              )}
-
               <div className="grid gap-2">
                 <Label htmlFor="temperature" className="text-pantone369-700 dark:text-pantone369-300">
                   {t("temperature")}: {temperature.toFixed(1)}
@@ -519,21 +487,24 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
               </div>
             </TabsContent>
           </Tabs>
+
+          <div className="flex gap-4 mt-4">
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">支持流式</label>
+              <span className="inline-block px-2 py-1 rounded bg-muted text-xs">{String(supportsStream ?? true)}</span>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">支持详细</label>
+              <span className="inline-block px-2 py-1 rounded bg-muted text-xs">{String(supportsDetail ?? true)}</span>
+            </div>
+          </div>
         </CardContent>
-        <CardFooter className="flex justify-between p-6 bg-pantone369-50/30 dark:bg-pantone369-900/5 border-t border-pantone369-100 dark:border-pantone369-900/30 sticky bottom-0 z-10">
-          <Button type="button" variant="destructive" onClick={handleDelete} className="flex items-center gap-2">
-            <Trash2 className="h-4 w-4" />
-            {t("deleteAgent")}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSaveClick}
-            disabled={isSaving}
-            className="flex items-center gap-2 bg-pantone369-500 hover:bg-pantone369-600 text-white"
-          >
-            <Save className="h-4 w-4" />
-            {isSaving ? "保存中..." : t("saveChanges")}
-          </Button>
+        <CardFooter className="flex justify-end gap-2 mt-6">
+          {agent && (
+            <Button variant="destructive" type="button" onClick={handleDelete}>删除</Button>
+          )}
+          <Button type="submit" disabled={isSaving}>{isSaving ? "保存中..." : "保存"}</Button>
+          <Button type="button" variant="outline" onClick={onClose}>关闭</Button>
         </CardFooter>
       </form>
     </Card>

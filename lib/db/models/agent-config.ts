@@ -25,6 +25,8 @@ export interface AgentConfigAttributes {
   updatedAt?: Date;
   description?: string;
   order: number;
+  supportsStream: boolean;
+  supportsDetail: boolean;
 }
 
 export interface AgentConfigCreationAttributes extends Optional<AgentConfigAttributes, 'id' | 'multimodalModel' | 'updatedAt'> {}
@@ -44,6 +46,8 @@ export class AgentConfig extends Model<AgentConfigAttributes, AgentConfigCreatio
   public updatedAt?: Date;
   public description?: string;
   public order!: number;
+  public supportsStream!: boolean;
+  public supportsDetail!: boolean;
 }
 
 AgentConfig.init(
@@ -113,6 +117,16 @@ AgentConfig.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 100,
+    },
+    supportsStream: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    supportsDetail: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
   },
   {

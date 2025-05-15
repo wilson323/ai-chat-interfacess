@@ -2,7 +2,7 @@
   "development": {
     "username": "root",
     "password": "ZKTeco##123",
-    "database": "chat-interface",
+    "database": "agent_config",
     "host": "192.168.10.111",
     "port": 5442,
     "dialect": "postgres"
@@ -10,7 +10,7 @@
   "test": {
     "username": "root",
     "password": "ZKTeco##123",
-    "database": "chat-interface",
+    "database": "agent_config",
     "host": "192.168.10.111",
     "port": 5442,
     "dialect": "postgres"
@@ -18,7 +18,7 @@
   "production": {
     "username": "root",
     "password": "ZKTeco##123",
-    "database": "chat-interface",
+    "database": "agent_config",
     "host": "192.168.10.111",
     "port": 5442,
     "dialect": "postgres"

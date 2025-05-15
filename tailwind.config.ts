@@ -69,6 +69,12 @@ const config = {
           900: "#304d1b",
           950: "#172a0c",
         },
+        'text-base': '#333333',
+        'text-secondary': '#666666',
+        'text-dark-base': '#E5E7EB',
+        'text-dark-secondary': '#9CA3AF',
+        'code': '#24292E',
+        'code-dark': '#F3F4F6',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -88,15 +94,29 @@ const config = {
           "0%, 100%": { backgroundPosition: "0 0" },
           "50%": { backgroundPosition: "100% 100%" },
         },
+        'slide-up': {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s linear infinite",
+        'slide-up': 'slide-up 0.3s cubic-bezier(0.4,0,0.2,1)',
       },
       fontFamily: {
         sans: ["var(--font-nunito-sans)", "system-ui", "sans-serif"],
         display: ["var(--font-montserrat)", "system-ui", "sans-serif"],
+        'base': ['"Inter"', 'system-ui', 'sans-serif'],
+        'mono': ['"Roboto Mono"', 'monospace'],
+      },
+      fontSize: {
+        'message-base': ['15px', '1.5'],
+        'message-sm': ['13px', '1.4'],
+      },
+      letterSpacing: {
+        tightest: '-0.3px',
       },
       screens: {
         xs: "480px",

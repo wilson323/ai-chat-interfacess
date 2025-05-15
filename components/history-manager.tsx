@@ -17,6 +17,7 @@ import {
   getStorageStats,
   rebuildChatIndex,
 } from "@/lib/storage/index"
+import { HistoryList } from "@/components/history/history-list"
 
 interface HistoryManagerProps {
   open: boolean
@@ -198,130 +199,10 @@ export function HistoryManager({ open, onOpenChange, onHistoryUpdated }: History
           <DialogTitle>历史记录管理</DialogTitle>
           <DialogDescription>管理您的聊天历史记录，包括导出、导入和清除</DialogDescription>
         </DialogHeader>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="manage">管理</TabsTrigger>
-            <TabsTrigger value="import-export">导入/导出</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="manage" className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h3 className="text-sm font-medium mb-2">存储使用情况</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span>已使用空间</span>
-                  <span>
-                    {storageStats.totalSizeMB.toFixed(2)} MB / {storageStats.maxSizeMB.toFixed(2)} MB
-                  </span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-primary rounded-full h-2"
-                    style={{ width: `${Math.min(storageStats.usagePercent, 100)}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span>聊天会话数</span>
-                  <span>{storageStats.chatCount}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <Button variant="outline" className="w-full justify-start" onClick={handleRebuildIndex}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                重建聊天索引
-              </Button>
-
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-medium text-destructive mb-2">危险区域</h3>
-                {confirmDelete ? (
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>此操作将永久删除所有聊天历史记录，且无法恢复。确定要继续吗？</AlertDescription>
-                  </Alert>
-                ) : null}
-                <Button variant="destructive" className="w-full" onClick={handleClearAllHistory} disabled={isDeleting}>
-                  {isDeleting ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      正在清除...
-                    </>
-                  ) : confirmDelete ? (
-                    "确认清除所有历史记录"
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      清除所有历史记录
-                    </>
-                  )}
-                </Button>
-                {confirmDelete && (
-                  <Button variant="outline" className="w-full mt-2" onClick={() => setConfirmDelete(false)}>
-                    取消
-                  </Button>
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="import-export" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium mb-2">导出历史记录</h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  将您的聊天历史记录导出为JSON文件，以便备份或迁移到其他设备
-                </p>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleExportHistory}
-                  disabled={storageStats.chatCount === 0}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  导出历史记录
-                </Button>
-              </div>
-
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-medium mb-2">导入历史记录</h3>
-                <p className="text-xs text-muted-foreground mb-3">从之前导出的JSON文件中导入聊天历史记录</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input type="file" id="import-file" accept=".json" className="hidden" onChange={handleFileChange} />
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => document.getElementById("import-file")?.click()}
-                      disabled={isImporting}
-                    >
-                      选择文件
-                    </Button>
-                  </div>
-                  {importFile && (
-                    <div className="text-xs bg-muted/50 p-2 rounded">
-                      已选择: {importFile.name} ({(importFile.size / 1024).toFixed(2)} KB)
-                    </div>
-                  )}
-                  <Button className="w-full" onClick={handleImportHistory} disabled={!importFile || isImporting}>
-                    {isImporting ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        正在导入...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        导入历史记录
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <HistoryList
+          onSelect={() => {}}
+          viewType="dialog"
+        />
       </DialogContent>
     </Dialog>
   )

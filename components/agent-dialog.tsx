@@ -101,28 +101,10 @@ export function AgentDialog({ open, onOpenChange }: AgentDialogProps) {
                   <SelectValue placeholder={t("selectAgentType")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="chat">
-                    <div className="flex items-center gap-2">
-                      <Bot className="h-4 w-4" />
-                      <span>{t("chatAgent")}</span>
-                    </div>
-                  </SelectItem>
                   <SelectItem value="fastgpt">
                     <div className="flex items-center gap-2">
                       <Bot className="h-4 w-4" />
                       <span>FastGPT</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="image-editor">
-                    <div className="flex items-center gap-2">
-                      <Bot className="h-4 w-4" />
-                      <span>{t("imageEditor")}</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="cad-analyzer">
-                    <div className="flex items-center gap-2">
-                      <Bot className="h-4 w-4" />
-                      <span>{t("cadAnalyzer")}</span>
                     </div>
                   </SelectItem>
                 </SelectContent>

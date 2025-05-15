@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAgent } from "@/context/agent-context"
-import { Paperclip, Mic, StopCircle, WifiOff, SendHorizonal, Loader2, ImageIcon, FileIcon, X, History } from "lucide-react"
+import { Paperclip, Mic, StopCircle, WifiOff, SendHorizonal, Loader2, ImageIcon, FileIcon, X, History, AlertCircle } from "lucide-react"
 import { type Message, MessageType, MessageRole } from "@/types/message"
 import { ChatMessage } from "@/components/chat-message"
 import { FileUploader } from "@/components/file-uploader"
@@ -16,10 +16,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils" // 移除 getDeviceId 导入，因为我们现在从 storage 导入它
 import { useToast } from "@/components/ui/use-toast"
 import { Bot } from "lucide-react"
-import { ImageEditorContainer } from "@/components/image-editor/image-editor-container"
-import { CADAnalyzerContainer } from "@/components/cad-analyzer/cad-analyzer-container"
-import { useLanguage } from "@/context/language-context"
-import { SettingsDialog } from "@/components/settings-dialog"
 import { ChatOptions } from "@/components/chat-options"
 import { ChatHistory } from "@/components/chat-history"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -34,15 +30,26 @@ import { FastGPTClient, generateFallbackChatId, initializeChat } from "@/lib/api
 // 导入统一存储服务
 import { HistoryManager } from "@/components/history-manager"
 
-import { ProcessingFlowDisplay, type ProcessingStep } from "@/components/processing-flow-display"
+import { ProcessingFlowDisplay } from "./processing-flow-display"
+import type { ProcessingStep } from "@/types/message"
 import { FastGPTFlowDisplay } from "@/components/fastgpt-flow-display"
 
 import { useMessageStore } from "@/lib/store/messageStore"
 import { QuestionSuggestions } from "@/components/question-suggestions"
 import VoiceRecorder from "@/components/ui/voice-recorder"
+import { useLanguage } from "@/context/language-context"
+import type { ConversationAgentType } from "@/types/agent"
 
 const createNewConversation = () => {
   window.dispatchEvent(new CustomEvent("new-conversation"))
+}
+
+function debounce<T extends (...args: any[]) => void>(fn: T, delay = 200) {
+  let timer: any
+  return (...args: Parameters<T>) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), delay)
+  }
 }
 
 export function ChatContainer() {
@@ -64,6 +71,9 @@ export function ChatContainer() {
   const [connectionError, setConnectionError] = useState<string | null>(null)
   const { toast } = useToast()
 
+  // 根据智能体类型判断是否显示CAD解读界面
+  const isCADAnalyzer = selectedAgent?.type === "cad-analyzer"
+
   // 新增状态
   const [welcomeMessage, setWelcomeMessage] = useState<string>("")
   const [systemPrompt, setSystemPrompt] = useState<string | null>(null)
@@ -75,14 +85,18 @@ export function ChatContainer() {
   const [showHistoryManager, setShowHistoryManager] = useState(false)
 
   const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([])
-  const [showProcessingFlow, setShowProcessingFlow] = useState<boolean>(false)
-  const [flowNodes, setFlowNodes] = useState<any[]>([])
-  const [showFlowNodes, setShowFlowNodes] = useState<boolean>(false)
+  const [showProcessingFlow, setShowProcessingFlow] = useState<boolean>(false) // 设置为false，禁用处理流程显示
 
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
 
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false)
+
+  // 新增流式请求abort控制
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  // 新增 currentNodeName 状态
+  const [currentNodeName, setCurrentNodeName] = useState<string>("")
 
   // 定义toggleHistory函数
   const toggleHistory = () => {
@@ -121,7 +135,7 @@ export function ChatContainer() {
       // 如果智能体已经有chatId，尝试加载现有会话
       if (selectedAgent.chatId) {
         console.log('智能体已有chatId，尝试加载现有会话:', selectedAgent.chatId);
-        const existingMessages = useMessageStore.getState().loadMessages(selectedAgent.chatId);
+        const existingMessages = useMessageStore.getState().loadMessages(selectedAgent.chatId as ConversationAgentType);
 
         if (existingMessages && existingMessages.length > 0) {
           console.log(`找到现有会话，加载 ${existingMessages.length} 条消息`);
@@ -180,7 +194,15 @@ export function ChatContainer() {
   // 添加自定义事件监听器以支持从其他组件打开历史记录
   useEffect(() => {
     const handleToggleHistory = () => {
-      toggleHistory()
+      // 如果我们正在打开历史记录，确保我们有一个有效的chatId
+      if (!chatId && selectedAgent) {
+        const fallbackChatId = generateFallbackChatId()
+        setChatId(fallbackChatId)
+        selectedAgent.chatId = fallbackChatId
+      }
+
+      // 显示历史记录对话框
+      setShowHistory(true)
     }
 
     window.addEventListener("toggle-history", handleToggleHistory)
@@ -188,7 +210,7 @@ export function ChatContainer() {
     return () => {
       window.removeEventListener("toggle-history", handleToggleHistory)
     }
-  }, []) // 移除toggleHistory依赖，避免循环依赖
+  }, [chatId, selectedAgent]) // 添加依赖项
 
   // 初始化存储系统
   // useEffect(() => {
@@ -281,45 +303,29 @@ export function ChatContainer() {
       // 生成本地chatId
       const localChatId = generateFallbackChatId()
       setChatId(localChatId)
-      console.log(`Generated new chat ID: ${localChatId}`)
+      if (selectedAgent) selectedAgent.chatId = localChatId
 
-      // 尝试从本地存储加载消息
-      console.log(`尝试从本地存储加载消息，chatId: ${localChatId}`);
-      const localMessages = useMessageStore.getState().loadMessages(localChatId);
-
-      if (localMessages && localMessages.length > 0) {
-        console.log(`成功从本地存储加载到 ${localMessages.length} 条消息`);
-        setMessages(localMessages);
-
-        // 确保消息被正确保存到localStorage
-        useMessageStore.getState().saveMessages(localChatId, localMessages);
-      } else {
-        console.log(`本地存储中没有找到消息，初始化空消息列表`);
-        setMessages([]);
-      }
+      // 清空消息队列，避免重复开场白
+      setMessages([])
 
       setConnectionError(null)
 
       // 从API获取初始化信息
-      console.log("从API获取初始化信息...");
       const initResponse = await initializeChat(selectedAgent)
-      console.log("API初始化响应:", initResponse);
 
       // 优先级：FastGPT API 返回 > 管理员配置 > 默认
       let welcomeText = initResponse?.data?.app?.chatConfig?.welcomeText
       if (!welcomeText || typeof welcomeText !== 'string') {
-        welcomeText = selectedAgent.welcomeText || "你好！我是智能助手，有什么可以帮您？"
+        welcomeText = selectedAgent?.welcomeText || "你好！我是智能助手，有什么可以帮您？"
       }
-
-      // 设置系统提示词，优先使用API返回的系统提示词
-      const systemPromptText = (initResponse as any)?.system_prompt || selectedAgent.systemPrompt || null
-      setSystemPrompt(systemPromptText)
-
-      // 设置欢迎消息，优先使用API返回的欢迎消息
       const welcomeMessage = (initResponse as any)?.welcome_message || welcomeText
       setWelcomeMessage(welcomeMessage)
 
-      // 设置交互选项，优先使用API返回的交互选项
+      // 设置系统提示词
+      const systemPromptText = (initResponse as any)?.system_prompt || selectedAgent?.systemPrompt || null
+      setSystemPrompt(systemPromptText)
+
+      // 设置交互选项
       const interactOptions = Array.isArray((initResponse as any)?.interacts)
         ? (initResponse as any).interacts
         : Array.isArray(initResponse?.data?.interacts)
@@ -327,25 +333,15 @@ export function ChatContainer() {
           : []
       setInteracts(interactOptions)
 
-      // 日志追踪
-      console.log('initChatSession完成', {
-        selectedAgent,
-        welcomeMessage,
-        systemPrompt: systemPromptText,
-        interacts: interactOptions,
-        localMessages,
-        initResponse
-      })
+      // 只插入一次开场白到消息队列
+      animateWelcomeMessage(welcomeMessage)
 
+      // 保存初始化信息到localStorage
       if (selectedAgent) {
-        selectedAgent.chatId = localChatId
+        localStorage.setItem(`agent_${selectedAgent.id}_welcome_message`, welcomeMessage);
+        localStorage.setItem(`agent_${selectedAgent.id}_system_prompt`, systemPromptText || '');
+        localStorage.setItem(`agent_${selectedAgent.id}_interacts`, JSON.stringify(interactOptions));
       }
-
-      // 保存初始化信息到localStorage，以便在页面刷新后恢复
-      localStorage.setItem(`agent_${selectedAgent.id}_welcome_message`, welcomeMessage);
-      localStorage.setItem(`agent_${selectedAgent.id}_system_prompt`, systemPromptText || '');
-      localStorage.setItem(`agent_${selectedAgent.id}_interacts`, JSON.stringify(interactOptions));
-
     } catch (error) {
       console.error("Unexpected error during chat initialization:", error)
       setIsOfflineMode(true)
@@ -390,6 +386,19 @@ export function ChatContainer() {
     }
   }
 
+  // 在 initChatSession 只插入一次开场白到消息队列时，改为插入空内容并逐字动画
+  const animateWelcomeMessage = (fullText: string) => {
+    let index = 0;
+    setMessages([{ id: Date.now().toString(), type: MessageType.Text, role: 'system', content: '', timestamp: new Date(), metadata: {} }]);
+    const interval = setInterval(() => {
+      index++;
+      setMessages([{ id: Date.now().toString(), type: MessageType.Text, role: 'system', content: fullText.slice(0, index), timestamp: new Date(), metadata: {} }]);
+      if (index >= fullText.length) {
+        clearInterval(interval);
+      }
+    }, 24); // 打字速度可调
+  };
+
   // 处理文件上传完成
   const handleFileUpload = (files: UploadedFile[]) => {
     setUploadedFiles(files)
@@ -398,8 +407,15 @@ export function ChatContainer() {
         setIsUploading(false)
         if (files.length > 0) {
           setInput((prev) => {
-            const fileNames = files.map((f) => f.name).join(", ")
-            return prev ? `${prev}\n已上传文件: ${fileNames}` : `已上传文件: ${fileNames}`
+            // 检查输入框中是否已经包含"已上传文件:"文本
+            if (prev.includes("已上传文件:")) {
+              // 如果已经包含，则不再添加
+              return prev;
+            } else {
+              // 如果不包含，则添加文件名
+              const fileNames = files.map((f) => f.name).join(", ")
+              return prev ? `${prev}\n已上传文件: ${fileNames}` : `已上传文件: ${fileNames}`
+            }
           })
         }
       }, 1000)
@@ -408,242 +424,428 @@ export function ChatContainer() {
 
   // 发送消息
   const handleSend = async () => {
-    if (!input.trim() && uploadedFiles.length === 0) return
-
-    // 验证输入
-    if (input.trim() && !validateInput(input)) {
-      toast({
-        title: "输入无效",
-        description: "您的输入包含不允许的内容",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // 过滤输入
-    const sanitizedInput = input.trim() ? sanitizeInput(input) : ""
-
-    // 创建用户消息
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: MessageType.Text,
-      role: "user" as MessageRole,
-      content: sanitizedInput,
-      timestamp: new Date(),
-      metadata: {
-        deviceId: deviceId,
-        agentId: selectedAgent?.id, // 添加智能体ID
-        apiKey: selectedAgent?.apiKey, // 添加API密钥
-        appId: selectedAgent?.appId, // 添加应用ID
-        files: uploadedFiles.length > 0 ? uploadedFiles.map((file) => ({ name: file.name, size: file.size, url: file.url! })).filter(f => !!f.url) : undefined,
-      },
-    }
-
-    // 添加用户消息到消息列表
-    setMessages((prev) => [...prev, userMessage])
-
-    // 保存消息到本地存储
-    if (chatId) {
-      const updatedMessages = [...messages, userMessage]
-      useMessageStore.getState().saveMessages(chatId, updatedMessages)
-      console.log(`Saved ${updatedMessages.length} messages to storage for chat ID: ${chatId}`)
-    }
-
-    setInput("")
-    setIsTyping(true)
-
-    // 清空已上传文件列表
-    setUploadedFiles([])
-
-    // 自动调整文本区域大小
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"
-    }
-
-    // 如果处于离线模式，生成离线响应
-    if (isOfflineMode) {
-      // 延迟一下，模拟思考时间
-      setTimeout(() => {
-        const offlineResponse = generateOfflineResponse(input)
-
-        // 添加助手消息
-        const assistantMessage = {
-          id: Date.now().toString(),
-          type: MessageType.Text,
-          role: "assistant" as MessageRole,
-          content: offlineResponse,
-          timestamp: new Date(),
-          metadata: {
-            offline: true,
-            agentId: selectedAgent?.id, // 添加智能体ID
-            apiKey: selectedAgent?.apiKey, // 添加API密钥
-            appId: selectedAgent?.appId, // 添加应用ID
-          },
-        }
-
-        setMessages((prev) => [...prev, assistantMessage])
-        setIsTyping(false)
-
-        // 保存消息到本地存储
-        if (chatId) {
-          const updatedMessages = [...messages, userMessage, assistantMessage]
-          useMessageStore.getState().saveMessages(chatId, updatedMessages)
-          console.log(`Saved offline response to storage for chat ID: ${chatId}`)
-        }
-      }, 1000)
-
-      return
-    }
-
-    // 检查API是否配置 - 只在管理员模式下检查API配置
-    const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
-
-    // 如果是管理员模式，则检查API配置
-    if (isAdmin) {
-      if (!selectedAgent?.apiEndpoint) {
-        setShowSettings(true)
-        toast({
-          title: "需要API配置",
-          description: "请在设置中配置API端点以继续",
-          variant: "destructive",
-        })
-        return
-      }
-
-      if (!selectedAgent?.apiKey || !selectedAgent?.appId) {
-        setShowSettings(true)
-        toast({
-          title: "需要API配置",
-          description: "请在设置中配置API密钥和AppID以继续",
-          variant: "destructive",
-        })
-        return
-      }
-    }
-
-    // 非管理员模式下，不检查API配置，直接继续
-
-    // 确保我们有一个chatId，即使初始化失败
-    if (!chatId && selectedAgent) {
-      // 如果没有chatId，使用已保存的初始化信息
-      const savedWelcomeMessage = localStorage.getItem(`agent_${selectedAgent.id}_welcome_message`);
-      const savedSystemPrompt = localStorage.getItem(`agent_${selectedAgent.id}_system_prompt`);
-      const savedInteracts = localStorage.getItem(`agent_${selectedAgent.id}_interacts`);
-
-      // 如果有保存的初始化信息，直接使用
-      if (savedWelcomeMessage) {
-        setWelcomeMessage(savedWelcomeMessage);
-      }
-
-      if (savedSystemPrompt) {
-        setSystemPrompt(savedSystemPrompt);
-      }
-
-      if (savedInteracts) {
-        try {
-          setInteracts(JSON.parse(savedInteracts));
-        } catch (e) {
-          console.error("解析保存的交互选项时出错:", e);
-          setInteracts([]);
-        }
-      }
-
-      // 生成一个新的chatId
-      const fallbackChatId = generateFallbackChatId()
-      setChatId(fallbackChatId)
-      selectedAgent.chatId = fallbackChatId
-
-      console.log("使用保存的初始化信息和新的chatId:", {
-        chatId: fallbackChatId,
-        welcomeMessage: savedWelcomeMessage,
-        systemPrompt: savedSystemPrompt,
-        interacts: savedInteracts ? JSON.parse(savedInteracts) : []
-      });
-    }
-
     try {
-      // 创建包含新用户消息的消息副本
-      const currentMessages = [...messages, userMessage]
-
-      // 格式化消息以适应 FastGPT API
-      const formattedMessages = currentMessages.map((msg) => ({
-        role: msg.role,
-        content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
-      }))
-
-      // 如果有系统提示词且尚未包含，则将系统提示作为第一条消息添加
-      if (systemPrompt && !formattedMessages.some((msg) => msg.role === "system")) {
-        formattedMessages.unshift({
-          role: "system" as MessageRole,
-          content: systemPrompt,
-        })
-      } else if (selectedAgent.systemPrompt && !formattedMessages.some((msg) => msg.role === "system")) {
-        formattedMessages.unshift({
-          role: "system" as MessageRole,
-          content: selectedAgent.systemPrompt,
-        })
+      setIsTyping(true)
+      console.log('[handleSend] 触发，input:', input, 'uploadedFiles:', uploadedFiles);
+      if (!input.trim() && uploadedFiles.length === 0) {
+        console.log('[handleSend] 输入为空，直接返回');
+        return;
       }
 
-      if (fastGPTClient) {
-        try {
-          // 优先尝试使用流式模式
+      // 验证输入
+      if (input.trim() && !validateInput(input)) {
+        toast({
+          title: "输入无效",
+          description: "您的输入包含不允许的内容",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // 过滤输入
+      const sanitizedInput = input.trim() ? sanitizeInput(input) : ""
+
+      // 创建用户消息
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        type: MessageType.Text,
+        role: "user" as MessageRole,
+        content: sanitizedInput,
+        timestamp: new Date(),
+        metadata: {
+          deviceId: deviceId,
+          agentId: selectedAgent?.id, // 添加智能体ID
+          apiKey: selectedAgent?.apiKey, // 添加API密钥
+          appId: selectedAgent?.appId, // 添加应用ID
+          files: uploadedFiles.length > 0 ? uploadedFiles.map((file) => ({ name: file.name, size: file.size, url: file.url! })).filter(f => !!f.url) : undefined,
+        },
+      }
+
+      // 添加用户消息到消息列表
+      setMessages((prev: Message[]) => {
+        console.log('[handleSend] 添加用户消息前，prev:', prev);
+        return [...prev, userMessage];
+      })
+
+      // 保存消息到本地存储
+      if (chatId) {
+        const updatedMessages = [...messages, userMessage]
+        useMessageStore.getState().saveMessages(chatId as ConversationAgentType, updatedMessages)
+        console.log(`Saved ${updatedMessages.length} messages to storage for chat ID: ${chatId}`)
+      }
+
+      setInput("")
+      console.log('[handleSend] 设置 isTyping 为 true');
+
+      // 清空已上传文件列表
+      setUploadedFiles([])
+
+      // 自动调整文本区域大小
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto"
+      }
+
+      // 如果处于离线模式，生成离线响应
+      if (isOfflineMode) {
+        console.log('[handleSend] 离线模式，生成离线响应');
+        // 延迟一下，模拟思考时间
+        setTimeout(() => {
+          const offlineResponse = generateOfflineResponse(input)
+
+          // 添加助手消息
+          const assistantMessage = {
+            id: Date.now().toString(),
+            type: MessageType.Text,
+            role: "assistant" as MessageRole,
+            content: offlineResponse,
+            timestamp: new Date(),
+            metadata: {
+              offline: true,
+              agentId: selectedAgent?.id, // 添加智能体ID
+              apiKey: selectedAgent?.apiKey, // 添加API密钥
+              appId: selectedAgent?.appId, // 添加应用ID
+            },
+          }
+
+          setMessages((prev: Message[]) => [...prev, assistantMessage])
+          setIsTyping(false)
+
+          // 保存消息到本地存储
+          if (chatId) {
+            const updatedMessages = [...messages, userMessage, assistantMessage]
+            useMessageStore.getState().saveMessages(chatId as ConversationAgentType, updatedMessages)
+            console.log(`Saved offline response to storage for chat ID: ${chatId}`)
+          }
+        }, 1000)
+
+        return
+      }
+
+      try {
+        // 创建包含新用户消息的消息副本
+        const currentMessages = [...messages, userMessage]
+
+        // 格式化消息以适应 FastGPT API
+        const formattedMessages = currentMessages.map((msg) => ({
+          role: msg.role,
+          content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+        }))
+
+        // 如果有系统提示词且尚未包含，则将系统提示作为第一条消息添加
+        if (systemPrompt && !formattedMessages.some((msg) => msg.role === "system")) {
+          formattedMessages.unshift({
+            role: "system" as MessageRole,
+            content: systemPrompt,
+          })
+        } else if (selectedAgent?.systemPrompt && !formattedMessages.some((msg) => msg.role === "system")) {
+          formattedMessages.unshift({
+            role: "system" as MessageRole,
+            content: selectedAgent.systemPrompt,
+          })
+        }
+
+        if (fastGPTClient) {
           try {
-            // 使用 FastGPT 客户端进行流式传输
-            await fastGPTClient.streamChat(formattedMessages, {
-              temperature: selectedAgent.temperature,
-              maxTokens: selectedAgent.maxTokens,
-              onStart: () => {
-                console.log("流开始")
-                // 重置处理步骤和流节点
-                setProcessingSteps([])
-                setFlowNodes([])
-                setShowProcessingFlow(true)
-                setShowFlowNodes(true)
-              },
-              onChunk: (chunk) => {
-                setMessages((prev) => {
-                  // 查找是否已有响应消息
-                  const lastMessage = prev[prev.length - 1]
-                  if (lastMessage.role === "assistant" && lastMessage.id === "typing") {
-                    // 更新现有消息
-                    return prev.map((msg) =>
-                      msg.id === "typing" ? { ...msg, content: (msg.content as string) + chunk } : msg,
-                    )
-                  } else {
-                    // 创建新的助手消息
+            // 优先尝试使用流式模式
+            try {
+              // 创建AbortController
+              abortControllerRef.current = new AbortController()
+
+              // 使用 FastGPT 客户端进行流式传输
+              await fastGPTClient.streamChat(formattedMessages, {
+                temperature: selectedAgent?.temperature,
+                maxTokens: selectedAgent?.maxTokens,
+                detail: true,
+                onStart: () => {
+                  console.log('[streamChat] onStart');
+                  setProcessingSteps([])
+                  // 立即创建 AI typing 消息，带头像和空内容
+                  setMessages((prev: Message[]) => {
+                    // 如果已存在 typing 消息则不重复添加
+                    if (prev.some(msg => msg.id === 'typing' && msg.role === 'assistant')) return prev;
                     return [
                       ...prev,
                       {
-                        id: "typing",
+                        id: 'typing',
                         type: MessageType.Text,
-                        role: "assistant" as MessageRole,
-                        content: chunk,
+                        role: 'assistant',
+                        content: '',
                         timestamp: new Date(),
                         metadata: {
-                          agentId: selectedAgent?.id, // 添加智能体ID
-                          apiKey: selectedAgent?.apiKey, // 添加API密钥
-                          appId: selectedAgent?.appId, // 添加应用ID
+                          agentId: selectedAgent?.id,
+                          apiKey: selectedAgent?.apiKey,
+                          appId: selectedAgent?.appId,
                         },
                       },
-                    ]
+                    ];
+                  });
+                },
+                onChunk: (chunk: string) => {
+                  console.log('[streamChat] onChunk:', chunk);
+                  setCurrentNodeName("");
+                  setMessages((prev: Message[]) => {
+                    console.log('[streamChat] onChunk setMessages, prev:', prev);
+                    // 移除 node-status 气泡
+                    const filtered = prev.filter(msg => msg.id !== 'node-status');
+                    // 后续逻辑同原来
+                    const lastMessage = filtered[filtered.length - 1];
+                    if (lastMessage && lastMessage.role === "assistant" && lastMessage.id === "typing") {
+                      return filtered.map((msg) =>
+                        msg.id === "typing" ? { ...msg, content: (msg.content as string) + chunk } : msg,
+                      );
+                    } else {
+                      return [
+                        ...filtered,
+                        {
+                          id: "typing",
+                          type: MessageType.Text,
+                          role: "assistant" as MessageRole,
+                          content: chunk,
+                          timestamp: new Date(),
+                          metadata: {
+                            agentId: selectedAgent?.id,
+                            apiKey: selectedAgent?.apiKey,
+                            appId: selectedAgent?.appId,
+                          },
+                        },
+                      ];
+                    }
+                  })
+                },
+                onIntermediateValue: (value: any, eventType: string) => {
+                  console.log('[onIntermediateValue] 事件类型:', eventType, '内容:', value);
+                  // 字段兼容处理
+                  const nodeId = value?.nodeId || value?.id || value?.moduleId || `step-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+                  const nodeName = value?.name || value?.moduleName || value?.toolName || eventType;
+                  const nodeStatus = value?.status || value?.state || "running";
+                  const step = {
+                    id: nodeId,
+                    type: eventType,
+                    name: nodeName,
+                    status: nodeStatus,
+                    content: value?.content || value?.text || value?.message || undefined,
+                    timestamp: new Date(),
+                    details: value,
+                    isNew: true,
+                  };
+                  // 日志：setMessages 前后打印 typing 消息的 processingSteps
+                  setMessages((prev: Message[]) => {
+                    // 新增：只显示一个节点气泡，内容为当前节点名称
+                    if (
+                      eventType === "flowNodeStatus" ||
+                      eventType === "moduleStatus" ||
+                      eventType === "moduleStart" ||
+                      eventType === "moduleEnd" ||
+                      eventType === "thinking" ||
+                      eventType === "thinkingStart" ||
+                      eventType === "thinkingEnd" ||
+                      eventType === "toolCall" ||
+                      eventType === "toolParams" ||
+                      eventType === "toolResponse"
+                    ) {
+                      const filtered = prev.filter(msg => msg.id !== 'node-status');
+                      return [
+                        ...filtered,
+                        {
+                          id: 'node-status',
+                          type: MessageType.Text,
+                          role: 'assistant',
+                          content: `🤖 AI正在处理：${nodeName}`,
+                          timestamp: new Date(),
+                          metadata: { isNodeStatus: true },
+                        }
+                      ];
+                    }
+                    // 原有逻辑
+                    const before = prev.find(msg => msg.id === "typing" && msg.role === "assistant");
+                    console.log('[onIntermediateValue][before] typing:', before);
+                    const next = prev.map((msg) => {
+                      if (msg.id === "typing" && msg.role === "assistant") {
+                        const prevSteps = Array.isArray(msg.metadata?.processingSteps) ? msg.metadata.processingSteps : [];
+                        return {
+                          ...msg,
+                          metadata: {
+                            ...msg.metadata,
+                            processingSteps: [...prevSteps, step],
+                          },
+                        };
+                      }
+                      return msg;
+                    });
+                    const after = next.find(msg => msg.id === "typing" && msg.role === "assistant");
+                    console.log('[onIntermediateValue][after] typing:', after);
+                    return next;
+                  });
+                  // 捕获API响应的id字段 - 更全面的事件和id字段处理
+                  if (value && (value.id || value.chatCompletionId)) {
+                    const responseId = value.id || value.chatCompletionId;
+                    console.log(`捕获到响应ID: ${responseId} (事件类型: ${eventType})`, value);
+                    setMessages((prev: Message[]) => {
+                      const lastMessage = prev[prev.length - 1]
+                      if (lastMessage && lastMessage.role === "assistant" && lastMessage.id === "typing") {
+                        return prev.map((msg) =>
+                          msg.id === "typing" ? {
+                            ...msg,
+                            metadata: {
+                              ...msg.metadata,
+                              responseId: responseId
+                            }
+                          } : msg,
+                        )
+                      }
+                      return prev
+                    })
                   }
-                })
-              },
-              onIntermediateValue: (value, eventType) => {
-                console.log(`收到中间值事件: ${eventType}`, value)
+                  // 只维护 processingSteps
+                  if (
+                    eventType === "flowNodeStatus" ||
+                    eventType === "moduleStatus" ||
+                    eventType === "moduleStart" ||
+                    eventType === "moduleEnd" ||
+                    eventType === "thinking" ||
+                    eventType === "thinkingStart" ||
+                    eventType === "thinkingEnd" ||
+                    eventType === "toolCall" ||
+                    eventType === "toolParams" ||
+                    eventType === "toolResponse"
+                  ) {
+                    setProcessingSteps((prev: ProcessingStep[]) => [
+                      ...prev,
+                      {
+                        id: nodeId,
+                        type: eventType,
+                        name: nodeName,
+                        status: nodeStatus,
+                        content: value?.content || value?.text || value?.message || undefined,
+                        timestamp: new Date(),
+                        details: value,
+                        isNew: true,
+                      },
+                    ])
+                  }
+                  // 遇到节点事件时 setCurrentNodeName
+                  if (
+                    eventType === "flowNodeStatus" ||
+                    eventType === "moduleStatus" ||
+                    eventType === "moduleStart" ||
+                    eventType === "moduleEnd" ||
+                    eventType === "thinking" ||
+                    eventType === "thinkingStart" ||
+                    eventType === "thinkingEnd" ||
+                    eventType === "toolCall" ||
+                    eventType === "toolParams" ||
+                    eventType === "toolResponse"
+                  ) {
+                    setCurrentNodeName(nodeName);
+                  }
+                },
+                onProcessingStep: (step: ProcessingStep) => {
+                  console.log('[onProcessingStep]', step);
+                  setProcessingSteps((prev: ProcessingStep[]) => [...prev, step]);
+                },
+                onError: (error: Error) => {
+                  console.error('[streamChat] onError:', error);
+                  setIsTyping(false);
 
-                // 捕获API响应的id字段 - 更全面的事件和id字段处理
-                // 检查所有可能包含id的事件类型，不限于特定事件类型
-                if (value && (value.id || value.chatCompletionId)) {
-                  const responseId = value.id || value.chatCompletionId;
-                  console.log(`捕获到响应ID: ${responseId} (事件类型: ${eventType})`, value);
+                  // 设置离线模式
+                  setIsOfflineMode(true)
 
-                  // 更新消息的metadata，添加API响应的id字段
-                  setMessages((prev) => {
+                  // 添加错误消息
+                  setMessages((prev: Message[]) => {
                     // 查找是否已有响应消息
                     const lastMessage = prev[prev.length - 1]
-                    if (lastMessage && lastMessage.role === "assistant" && lastMessage.id === "typing") {
-                      // 更新现有消息的metadata
+                    if (lastMessage.role === "assistant" && lastMessage.id === "typing") {
+                      // 更新现有消息
+                      return prev.map((msg) =>
+                        msg.id === "typing"
+                          ? {
+                              ...msg,
+                              id: Date.now().toString(),
+                              content:
+                                (msg.content as string) || "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
+                            }
+                          : msg,
+                      )
+                    } else {
+                      // 创建新的助手消息
+                      return [
+                        ...prev,
+                        {
+                          id: Date.now().toString(),
+                          type: MessageType.Text,
+                          role: "assistant" as MessageRole,
+                          content: "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
+                          timestamp: new Date(),
+                          metadata: {
+                            agentId: selectedAgent?.id, // 添加智能体ID
+                            apiKey: selectedAgent?.apiKey, // 添加API密钥
+                            appId: selectedAgent?.appId, // 添加应用ID
+                          },
+                        },
+                      ]
+                    }
+                  })
+
+                  toast({
+                    title: "网络连接错误",
+                    description: "已切换到离线模式",
+                    variant: "destructive",
+                  })
+                },
+                onFinish: () => {
+                  console.log('[streamChat] onFinish');
+                  setIsTyping(false)
+                  // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
+                  setMessages((prev: Message[]) => {
+                    return prev.map((msg) =>
+                      msg.id === "typing"
+                        ? {
+                            ...msg,
+                            id: Date.now().toString(),
+                            metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
+                          }
+                        : msg
+                    );
+                  });
+                },
+                signal: abortControllerRef.current.signal
+              })
+            } catch (streamError) {
+              console.warn('[handleSend] 流式请求失败，切换非流式:', streamError);
+
+              // 创建一个占位消息，等待非流式响应
+              setMessages((prev: Message[]) => [
+                ...prev,
+                {
+                  id: "typing",
+                  type: MessageType.Text,
+                  role: "assistant" as MessageRole,
+                  content: "",
+                  timestamp: new Date(),
+                  metadata: {
+                    agentId: selectedAgent?.id,
+                    apiKey: selectedAgent?.apiKey,
+                    appId: selectedAgent?.appId,
+                  },
+                },
+              ]);
+
+              // 切换到非流式模式
+              const content = await fastGPTClient.chat(formattedMessages, {
+                temperature: selectedAgent?.temperature,
+                maxTokens: selectedAgent?.maxTokens,
+                detail: true,
+                onResponseData: (responseData: any) => {
+                  console.log("收到非流式响应数据:", responseData);
+
+                  // 提取响应ID并保存到消息元数据中
+                  if (responseData && (responseData.id || responseData.chatCompletionId || responseData.completionId)) {
+                    const responseId = responseData.id || responseData.chatCompletionId || responseData.completionId;
+
+                    console.log(`非流式模式捕获到响应ID: ${responseId}`, responseData);
+
+                    // 更新typing消息的元数据
+                    setMessages((prev: Message[]) => {
                       return prev.map((msg) =>
                         msg.id === "typing" ? {
                           ...msg,
@@ -651,248 +853,82 @@ export function ChatContainer() {
                             ...msg.metadata,
                             responseId: responseId  // 添加API响应的id字段
                           }
-                        } : msg,
-                      )
-                    }
-                    return prev
-                  })
-                }
-
-                // 处理不同类型的中间值
-                if (
-                  eventType === "flowNodeStatus" ||
-                  eventType === "moduleStatus" ||
-                  eventType === "moduleStart" ||
-                  eventType === "moduleEnd" ||
-                  eventType === "thinking" ||
-                  eventType === "thinkingStart" ||
-                  eventType === "thinkingEnd" ||
-                  eventType === "toolCall" ||
-                  eventType === "toolParams" ||
-                  eventType === "toolResponse"
-                ) {
-                  // 追加到 processingSteps，带动画标记
-                  setProcessingSteps((prev) => [
-                    ...prev,
-                    {
-                      id: value.nodeId || value.id || `step-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-                      type: eventType,
-                      name: value.name || value.moduleName || value.toolName || eventType,
-                      status: value.status || "running",
-                      content: value.content || value.text || value.message || undefined,
-                      timestamp: new Date(),
-                      details: value,
-                      isNew: true, // 新增动画标记
-                    },
-                  ])
-                }
-                // 兼容原有 flowNodes 逻辑
-                if (
-                  eventType === "flowNodeStatus" ||
-                  eventType === "moduleStatus" ||
-                  eventType === "moduleStart" ||
-                  eventType === "moduleEnd"
-                ) {
-                  setFlowNodes((prev) => {
-                    const nodeName = value.name || value.moduleName || "未知节点"
-                    const nodeStatus = value.status || "running"
-                    const existingNodeIndex = prev.findIndex((node) => node.id === value.nodeId || node.name === nodeName)
-                    if (existingNodeIndex >= 0) {
-                      const updatedNodes = [...prev]
-                      updatedNodes[existingNodeIndex] = {
-                        ...updatedNodes[existingNodeIndex],
-                        status: nodeStatus,
-                        timestamp: new Date(),
-                        details: value,
-                      }
-                      return updatedNodes
-                    } else {
-                      return [
-                        ...prev,
-                        {
-                          id: value.nodeId || `node-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-                          name: nodeName,
-                          status: nodeStatus,
-                          timestamp: new Date(),
-                          details: value,
-                        },
-                      ]
-                    }
-                  })
-                }
-              },
-              onProcessingStep: (step) => {
-                console.log("处理步骤:", step)
-                setProcessingSteps((prev) => [...prev, step])
-              },
-              onError: (error) => {
-                console.error("流错误:", error)
-
-                // 设置离线模式
-                setIsOfflineMode(true)
-
-                // 添加错误消息
-                setMessages((prev) => {
-                  // 查找是否已有响应消息
-                  const lastMessage = prev[prev.length - 1]
-                  if (lastMessage.role === "assistant" && lastMessage.id === "typing") {
-                    // 更新现有消息
-                    return prev.map((msg) =>
-                      msg.id === "typing"
-                        ? {
-                            ...msg,
-                            id: Date.now().toString(),
-                            content:
-                              (msg.content as string) || "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
-                          }
-                        : msg,
-                    )
-                  } else {
-                    // 创建新的助手消息
-                    return [
-                      ...prev,
-                      {
-                        id: Date.now().toString(),
-                        type: MessageType.Text,
-                        role: "assistant" as MessageRole,
-                        content: "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
-                        timestamp: new Date(),
-                        metadata: {
-                          agentId: selectedAgent?.id, // 添加智能体ID
-                          apiKey: selectedAgent?.apiKey, // 添加API密钥
-                          appId: selectedAgent?.appId, // 添加应用ID
-                        },
-                      },
-                    ]
+                        } : msg
+                      );
+                    });
                   }
-                })
-
-                setIsTyping(false)
-
-                // 保存消息到本地存储
-                if (chatId) {
-                  setTimeout(() => {
-                    useMessageStore.getState().saveMessages(chatId, messages)
-                  }, 100)
                 }
+              } as any)
 
-                toast({
-                  title: "网络连接错误",
-                  description: "已切换到离线模式",
-                  variant: "destructive",
-                })
+              // 更新消息内容
+              setMessages((prev: Message[]) => {
+                return prev.map((msg) =>
+                  msg.id === "typing" ? {
+                    ...msg,
+                    id: Date.now().toString(),
+                    content: content
+                  } : msg
+                );
+              });
+
+              setIsTyping(false);
+            }
+          } catch (error) {
+            console.error("聊天请求错误:", error);
+
+            // 设置离线模式
+            setIsOfflineMode(true)
+
+            // 添加来自助手的错误消息
+            const errorMessage: Message = {
+              id: Date.now().toString(),
+              type: MessageType.Text,
+              role: "assistant" as MessageRole,
+              content: "抱歉，处理您的请求时遇到错误。我将以离线模式为您服务。",
+              timestamp: new Date(),
+              metadata: {
+                agentId: selectedAgent?.id, // 添加智能体ID
+                apiKey: selectedAgent?.apiKey, // 添加API密钥
+                appId: selectedAgent?.appId, // 添加应用ID
               },
-              onFinish: () => {
-                setIsTyping(false)
-                // 将临时消息 ID 更新为永久 ID
-                setMessages((prev) => {
-                  console.log("流完成----------=",prev)
-                  const updatedMessages = prev.map((msg) =>
-                    msg.id === "typing" ? { ...msg, id: Date.now().toString() } : msg,
-                  )
+            }
 
-                  // 保存更新后的消息到本地存储
-                  if (chatId) {
-                    useMessageStore.getState().saveMessages(chatId, updatedMessages)
-                    console.log(`Saved ${updatedMessages.length} messages after stream completion for chat ID: ${chatId}`)
-                  }
+            setMessages((prev: Message[]) => [...prev, errorMessage])
+            setIsTyping(false)
 
-                  return updatedMessages
-                })
-              },
+            toast({
+              title: "错误",
+              description: error instanceof Error ? error.message : "发送消息失败，已切换到离线模式",
+              variant: "destructive",
             })
-          } catch (streamError) {
-            console.warn("流式请求失败，尝试使用非流式模式:", streamError);
-
-            // 创建一个占位消息，等待非流式响应
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: "typing",
-                type: MessageType.Text,
-                role: "assistant" as MessageRole,
-                content: "",
-                timestamp: new Date(),
-                metadata: {
-                  agentId: selectedAgent?.id,
-                  apiKey: selectedAgent?.apiKey,
-                  appId: selectedAgent?.appId,
-                },
-              },
-            ]);
-
-            // 切换到非流式模式
-            const content = await fastGPTClient.chat(formattedMessages, {
-              temperature: selectedAgent.temperature,
-              maxTokens: selectedAgent.maxTokens,
-              // 处理非流式响应数据，特别是提取ID
-              onResponseData: (responseData: any) => {
-                console.log("收到非流式响应数据:", responseData);
-
-                // 提取响应ID并保存到消息元数据中
-                if (responseData && (responseData.id || responseData.chatCompletionId || responseData.completionId)) {
-                  const responseId = responseData.id || responseData.chatCompletionId || responseData.completionId;
-
-                  console.log(`非流式模式捕获到响应ID: ${responseId}`, responseData);
-
-                  // 更新typing消息的元数据
-                  setMessages((prev) => {
-                    return prev.map((msg) =>
-                      msg.id === "typing" ? {
-                        ...msg,
-                        metadata: {
-                          ...msg.metadata,
-                          responseId: responseId  // 添加API响应的id字段
-                        }
-                      } : msg
-                    );
-                  });
-                }
-              }
-            });
-
-            // 更新消息内容
-            setMessages((prev) => {
-              return prev.map((msg) =>
-                msg.id === "typing" ? {
-                  ...msg,
-                  id: Date.now().toString(),
-                  content: content
-                } : msg
-              );
-            });
-
-            setIsTyping(false);
           }
-        } catch (error) {
-          console.error("聊天请求错误:", error);
-
-          // 设置离线模式
-          setIsOfflineMode(true)
-
-          // 添加来自助手的错误消息
-          const errorMessage = {
-            id: Date.now().toString(),
-            type: MessageType.Text,
-            role: "assistant" as MessageRole,
-            content: "抱歉，处理您的请求时遇到错误。我将以离线模式为您服务。",
-            timestamp: new Date(),
-            metadata: {
-              agentId: selectedAgent?.id, // 添加智能体ID
-              apiKey: selectedAgent?.apiKey, // 添加API密钥
-              appId: selectedAgent?.appId, // 添加应用ID
-            },
-          }
-
-          setMessages((prev) => [...prev, errorMessage])
-          setIsTyping(false)
-
-          toast({
-            title: "错误",
-            description: error instanceof Error ? error.message : "发送消息失败，已切换到离线模式",
-            variant: "destructive",
-          })
         }
+      } catch (error) {
+        console.error("发送消息时出错:", error)
+
+        // 设置离线模式
+        setIsOfflineMode(true)
+
+        // 添加来自助手的错误消息
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          type: MessageType.Text,
+          role: "assistant" as MessageRole,
+          content: "抱歉，处理您的请求时遇到错误。我将以离线模式为您服务。",
+          timestamp: new Date(),
+          metadata: {
+            agentId: selectedAgent?.id, // 添加智能体ID
+          },
+        }
+
+        setMessages((prev: Message[]) => [...prev, errorMessage])
+        setIsTyping(false)
+
+        toast({
+          title: "错误",
+          description: error instanceof Error ? error.message : "发送消息失败，已切换到离线模式",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("发送消息时出错:", error)
@@ -901,7 +937,7 @@ export function ChatContainer() {
       setIsOfflineMode(true)
 
       // 添加来自助手的错误消息
-      const errorMessage = {
+      const errorMessage: Message = {
         id: Date.now().toString(),
         type: MessageType.Text,
         role: "assistant" as MessageRole,
@@ -912,7 +948,7 @@ export function ChatContainer() {
         },
       }
 
-      setMessages((prev) => [...prev, errorMessage])
+      setMessages((prev: Message[]) => [...prev, errorMessage])
       setIsTyping(false)
 
       toast({
@@ -929,11 +965,7 @@ export function ChatContainer() {
     const clickedMessageIndex = messages.findIndex((msg) => msg.id === messageId)
     if (clickedMessageIndex === -1) return
 
-    // 确保点击的是用户消息
-    const clickedMessage = messages[clickedMessageIndex]
-    if (clickedMessage.role !== "user") return
-
-    // 删除该用户消息之后的所有消息
+    // 只保留该用户消息及之前的消息，清理掉所有 assistant 回复
     const messagesToKeep = messages.slice(0, clickedMessageIndex + 1)
     setMessages(messagesToKeep)
     setIsTyping(true)
@@ -964,32 +996,92 @@ export function ChatContainer() {
           // 优先尝试使用流式模式
           try {
             await fastGPTClient.streamChat(formattedMessages, {
-              temperature: selectedAgent.temperature,
-              maxTokens: selectedAgent.maxTokens,
+              temperature: selectedAgent?.temperature,
+              maxTokens: selectedAgent?.maxTokens,
+              detail: true,
               onStart: () => {
                 console.log("重新生成流开始")
+                setProcessingSteps([])
               },
-              onIntermediateValue: (value, eventType) => {
-                console.log(`重新生成收到中间值事件: ${eventType}`, value)
+              onIntermediateValue: (value: any, eventType: string) => {
+                console.log('[重新生成][onIntermediateValue] 事件类型:', eventType, '内容:', value);
+                // 字段兼容处理
+                const nodeId = value?.nodeId || value?.id || value?.moduleId || `step-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+                const nodeName = value?.name || value?.moduleName || value?.toolName || eventType;
+                const nodeStatus = value?.status || value?.state || "running";
+                const step = {
+                  id: nodeId,
+                  type: eventType,
+                  name: nodeName,
+                  status: nodeStatus,
+                  content: value?.content || value?.text || value?.message || undefined,
+                  timestamp: new Date(),
+                  details: value,
+                  isNew: true,
+                };
+
+                // 日志：setMessages 前后打印 typing 消息的 processingSteps
+                setMessages((prev: Message[]) => {
+                  // 新增：只显示一个节点气泡，内容为当前节点名称
+                  if (
+                    eventType === "flowNodeStatus" ||
+                    eventType === "moduleStatus" ||
+                    eventType === "moduleStart" ||
+                    eventType === "moduleEnd" ||
+                    eventType === "thinking" ||
+                    eventType === "thinkingStart" ||
+                    eventType === "thinkingEnd" ||
+                    eventType === "toolCall" ||
+                    eventType === "toolParams" ||
+                    eventType === "toolResponse"
+                  ) {
+                    const filtered = prev.filter(msg => msg.id !== 'node-status');
+                    return [
+                      ...filtered,
+                      {
+                        id: 'node-status',
+                        type: MessageType.Text,
+                        role: 'assistant',
+                        content: `🤖 AI正在处理：${nodeName}`,
+                        timestamp: new Date(),
+                        metadata: { isNodeStatus: true },
+                      }
+                    ];
+                  }
+                  // 原有逻辑
+                  const before = prev.find(msg => msg.id === "typing" && msg.role === "assistant");
+                  console.log('[重新生成][onIntermediateValue][before] typing:', before);
+                  const next = prev.map((msg) => {
+                    if (msg.id === "typing" && msg.role === "assistant") {
+                      const prevSteps = Array.isArray(msg.metadata?.processingSteps) ? msg.metadata.processingSteps : [];
+                      return {
+                        ...msg,
+                        metadata: {
+                          ...msg.metadata,
+                          processingSteps: [...prevSteps, step],
+                        },
+                      };
+                    }
+                    return msg;
+                  });
+                  const after = next.find(msg => msg.id === "typing" && msg.role === "assistant");
+                  console.log('[重新生成][onIntermediateValue][after] typing:', after);
+                  return next;
+                });
 
                 // 捕获API响应的id字段 - 更全面的事件和id字段处理
-                // 检查所有可能包含id的事件类型，不限于特定事件类型
                 if (value && (value.id || value.chatCompletionId)) {
                   const responseId = value.id || value.chatCompletionId;
                   console.log(`重新生成捕获到响应ID: ${responseId} (事件类型: ${eventType})`, value);
-
-                  // 更新消息的metadata，添加API响应的id字段
-                  setMessages((prev) => {
-                    // 查找是否已有响应消息
+                  setMessages((prev: Message[]) => {
                     const lastMessage = prev[prev.length - 1]
                     if (lastMessage && lastMessage.role === "assistant" && lastMessage.id === "typing") {
-                      // 更新现有消息的metadata
                       return prev.map((msg) =>
                         msg.id === "typing" ? {
                           ...msg,
                           metadata: {
                             ...msg.metadata,
-                            responseId: responseId  // 添加API响应的id字段
+                            responseId: responseId
                           }
                         } : msg,
                       )
@@ -997,9 +1089,54 @@ export function ChatContainer() {
                     return prev
                   })
                 }
+
+                // 只维护 processingSteps
+                if (
+                  eventType === "flowNodeStatus" ||
+                  eventType === "moduleStatus" ||
+                  eventType === "moduleStart" ||
+                  eventType === "moduleEnd" ||
+                  eventType === "thinking" ||
+                  eventType === "thinkingStart" ||
+                  eventType === "thinkingEnd" ||
+                  eventType === "toolCall" ||
+                  eventType === "toolParams" ||
+                  eventType === "toolResponse"
+                ) {
+                  setProcessingSteps((prev: ProcessingStep[]) => [
+                    ...prev,
+                    {
+                      id: nodeId,
+                      type: eventType,
+                      name: nodeName,
+                      status: nodeStatus,
+                      content: value?.content || value?.text || value?.message || undefined,
+                      timestamp: new Date(),
+                      details: value,
+                      isNew: true,
+                    },
+                  ])
+                }
+
+                // 遇到节点事件时 setCurrentNodeName
+                if (
+                  eventType === "flowNodeStatus" ||
+                  eventType === "moduleStatus" ||
+                  eventType === "moduleStart" ||
+                  eventType === "moduleEnd" ||
+                  eventType === "thinking" ||
+                  eventType === "thinkingStart" ||
+                  eventType === "thinkingEnd" ||
+                  eventType === "toolCall" ||
+                  eventType === "toolParams" ||
+                  eventType === "toolResponse"
+                ) {
+                  setCurrentNodeName(nodeName);
+                }
               },
-              onChunk: (chunk) => {
-                setMessages((prev) => {
+              onChunk: (chunk: string) => {
+                setCurrentNodeName("");
+                setMessages((prev: Message[]) => {
                   console.log('收到流式数据:', chunk,prev);
                   // 查找是否已有响应消息
                   const lastMessage = prev[prev.length - 1]
@@ -1028,7 +1165,7 @@ export function ChatContainer() {
                   }
                 })
               },
-              onError: (error) => {
+              onError: (error: Error) => {
                 console.error("重新生成流错误:", error)
                 toast({
                   title: "错误",
@@ -1039,17 +1176,25 @@ export function ChatContainer() {
               onFinish: () => {
                 console.log("重新生成流完成")
                 setIsTyping(false)
-                // 将临时消息 ID 更新为永久 ID
-                setMessages((prev) =>
-                  prev.map((msg) => (msg.id === "typing" ? { ...msg, id: Date.now().toString() } : msg)),
-                )
+                // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
+                setMessages((prev: Message[]) => {
+                  return prev.map((msg) =>
+                    msg.id === "typing"
+                      ? {
+                          ...msg,
+                          id: Date.now().toString(),
+                          metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
+                        }
+                      : msg
+                  );
+                });
               },
             })
           } catch (streamError) {
             console.warn("重新生成流式请求失败，尝试使用非流式模式:", streamError);
 
             // 创建一个占位消息，等待非流式响应
-            setMessages((prev) => [
+            setMessages((prev: Message[]) => [
               ...prev,
               {
                 id: "typing",
@@ -1067,9 +1212,9 @@ export function ChatContainer() {
 
             // 切换到非流式模式
             const content = await fastGPTClient.chat(formattedMessages, {
-              temperature: selectedAgent.temperature,
-              maxTokens: selectedAgent.maxTokens,
-              // 处理非流式响应数据，特别是提取ID
+              temperature: selectedAgent?.temperature,
+              maxTokens: selectedAgent?.maxTokens,
+              detail: true,
               onResponseData: (responseData: any) => {
                 console.log("重新生成收到非流式响应数据:", responseData);
 
@@ -1080,7 +1225,7 @@ export function ChatContainer() {
                   console.log(`重新生成非流式模式捕获到响应ID: ${responseId}`, responseData);
 
                   // 更新typing消息的元数据
-                  setMessages((prev) => {
+                  setMessages((prev: Message[]) => {
                     return prev.map((msg) =>
                       msg.id === "typing" ? {
                         ...msg,
@@ -1093,10 +1238,10 @@ export function ChatContainer() {
                   });
                 }
               }
-            });
+            } as any)
 
             // 更新消息内容
-            setMessages((prev) => {
+            setMessages((prev: Message[]) => {
               return prev.map((msg) =>
                 msg.id === "typing" ? {
                   ...msg,
@@ -1112,7 +1257,7 @@ export function ChatContainer() {
           console.error("重新生成消息时出错:", error)
 
           // 添加错误消息
-          setMessages((prev) => [
+          setMessages((prev: Message[]) => [
             ...prev,
             {
               id: Date.now().toString(),
@@ -1136,7 +1281,7 @@ export function ChatContainer() {
         }
       } else {
         // 如果客户端不可用，则显示错误消息
-        setMessages((prev) => [
+        setMessages((prev: Message[]) => [
           ...prev,
           {
             id: Date.now().toString(),
@@ -1158,7 +1303,7 @@ export function ChatContainer() {
       console.error("重新生成消息时出错:", error)
 
       // 添加错误消息
-      setMessages((prev) => [
+      setMessages((prev: Message[]) => [
         ...prev,
         {
           id: Date.now().toString(),
@@ -1215,13 +1360,14 @@ export function ChatContainer() {
   }
 
   const handleHistorySelect = (selectedMessages: Message[], selectedChatId: string) => {
-    console.log('[历史] 选中会话', selectedChatId, selectedMessages)
     setMessages(selectedMessages)
     setChatId(selectedChatId)
     if (selectedAgent) {
       selectedAgent.chatId = selectedChatId
     }
     setShowHistory(false)
+    // 清空节点区
+    setProcessingSteps([])
   }
 
   // 尝试重新连接
@@ -1232,7 +1378,7 @@ export function ChatContainer() {
 
   // Add message deletion functionality
   const deleteMessage = (messageId: string) => {
-    setMessages((prev) => prev.filter((msg) => msg.id !== messageId))
+    setMessages((prev: Message[]) => prev.filter((msg) => msg.id !== messageId))
 
     // If we're deleting the last message and it's from the assistant, also delete the last user message
     const messageIndex = messages.findIndex((msg) => msg.id === messageId)
@@ -1244,7 +1390,7 @@ export function ChatContainer() {
         .findIndex((msg) => msg.role === "user")
       if (lastUserIndex !== -1) {
         const actualIndex = messages.length - 2 - lastUserIndex
-        setMessages((prev) => prev.filter((_, i) => i !== actualIndex))
+        setMessages((prev: Message[]) => prev.filter((_, i) => i !== actualIndex))
       }
     }
 
@@ -1252,7 +1398,7 @@ export function ChatContainer() {
     if (chatId) {
       setTimeout(() => {
         const updatedMessages = messages.filter((msg) => msg.id !== messageId)
-        useMessageStore.getState().saveMessages(chatId, updatedMessages)
+        useMessageStore.getState().saveMessages(chatId as ConversationAgentType, updatedMessages)
         console.log(`Saved ${updatedMessages.length} messages after deletion for chat ID: ${chatId}`)
       }, 100)
     }
@@ -1265,13 +1411,13 @@ export function ChatContainer() {
 
     // 只有管理员界面才能编辑消息
     if (isAdmin) {
-      setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, content: newContent } : msg)))
+      setMessages((prev: Message[]) => prev.map((msg) => (msg.id === messageId ? { ...msg, content: newContent } : msg)))
 
       // Save updated messages to local storage
       if (chatId) {
         setTimeout(() => {
           const updatedMessages = messages.map((msg) => (msg.id === messageId ? { ...msg, content: newContent } : msg))
-          useMessageStore.getState().saveMessages(chatId, updatedMessages)
+          useMessageStore.getState().saveMessages(chatId as ConversationAgentType, updatedMessages)
           console.log(`Saved ${updatedMessages.length} messages after editing for chat ID: ${chatId}`)
         }, 100)
       }
@@ -1288,19 +1434,6 @@ export function ChatContainer() {
   // 所有hooks必须在任何条件返回之前声明和使用
   // 这样可以确保hooks的调用数量在所有渲染路径中保持一致
 
-  // 根据智能体类型渲染适当的组件
-  const renderSpecialAgentComponent = () => {
-    if (selectedAgent?.type === "image-editor") {
-      return <ImageEditorContainer />
-    } else if (selectedAgent?.type === "cad-analyzer") {
-      return <CADAnalyzerContainer />
-    }
-    return null;
-  }
-
-  // 是否是特殊类型的智能体
-  const isSpecialAgent = selectedAgent?.type === "image-editor" || selectedAgent?.type === "cad-analyzer";
-
   // 渲染前日志追踪，避免 Fragment linter 报错
   if (selectedAgent?.type === 'fastgpt' && welcomeMessage && messages.length === 0) {
     console.log('WelcomeMessage render', { selectedAgentType: selectedAgent?.type, welcomeMessage, messagesLength: messages.length })
@@ -1309,12 +1442,12 @@ export function ChatContainer() {
   // setMessages 后自动本地保存
   useEffect(() => {
     if (chatId) {
-      console.log(`自动保存 ${messages.length} 条消息到本地存储，chatId: ${chatId}`);
-      useMessageStore.getState().saveMessages(chatId, messages);
+      console.log(`[useEffect] 自动保存 ${messages.length} 条消息到本地存储，chatId: ${chatId}`, messages);
+      useMessageStore.getState().saveMessages(chatId as ConversationAgentType, messages);
 
       // 验证保存是否成功
       setTimeout(() => {
-        const savedMessages = useMessageStore.getState().loadMessages(chatId);
+        const savedMessages = useMessageStore.getState().loadMessages(chatId as ConversationAgentType);
         console.log(`验证保存：从本地存储加载到 ${savedMessages.length} 条消息`);
       }, 100);
     }
@@ -1337,26 +1470,73 @@ export function ChatContainer() {
     }
   }, [selectedAgent])
 
-  // 如果是特殊类型的智能体，渲染对应的组件
-  if (isSpecialAgent) {
-    return renderSpecialAgentComponent();
+  // 日志：组件渲染
+  console.log('[ChatContainer] 渲染，messages:', messages, 'isTyping:', isTyping, 'chatId:', chatId);
+
+  // 点赞/点踩反馈方法
+  const handleFeedback = async (dataId: any, type: any) => {
+    // 这里假设 userId/token/selectedAgent 已有
+    const userId = localStorage.getItem('userId');
+    if (!dataId) {
+      toast({ title: "操作失败", description: "消息ID缺失，无法点赞/点踩" });
+      return;
+    }
+    try {
+      const res = await fetch('/api/core/chat/feedback/updateUserFeedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${selectedAgent?.apiKey || ''}`,
+        },
+        body: JSON.stringify({
+          appId: selectedAgent?.appId,
+          chatId,
+          dataId,
+          userId,
+          userGoodFeedback: type === 'like',
+        }),
+      });
+      if (res.ok) {
+        toast({ title: "操作成功", description: type === 'like' ? "已点赞" : "已点踩" });
+      } else {
+        toast({ title: "操作失败", description: "请稍后重试" });
+      }
+    } catch (e) {
+      toast({ title: "操作失败", description: "网络异常" });
+    }
+  };
+
+  // 切换会话/历史时自动清空节点区
+  useEffect(() => {
+    setProcessingSteps([])
+  }, [chatId])
+
+  // 如果是CAD解读智能体，则显示CAD解读界面
+  if (isCADAnalyzer) {
+    // 动态导入CADAnalyzerContainer组件
+    const { CADAnalyzerContainer } = require("@/components/cad-analyzer/cad-analyzer-container");
+    return <CADAnalyzerContainer />;
+  }
+
+  // 如果未选择智能体或类型不是fastgpt，直接提示并阻止输入
+  if (!selectedAgent || selectedAgent.type !== 'fastgpt') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full w-full">
+        <div className="text-lg text-muted-foreground mt-32">请先选择 FastGPT 智能体后再进行对话</div>
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-3xl mx-auto px-2 sm:px-6">
-      {/* 右上角历史按钮 - 与header中的图标对齐 */}
-      <div className="fixed top-4 right-[5.5rem] sm:right-[7rem] z-30">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 sm:h-9 w-8 sm:w-9 hover:bg-accent/50 hover:scale-105 transition-all duration-200"
-          onClick={() => setShowHistory(true)}
-          data-testid="open-history-btn"
-          aria-label="打开聊天历史"
-        >
-          <History className="h-4 sm:h-5 w-4 sm:w-5" />
-        </Button>
+    <div className={cn(
+      "relative flex flex-col h-full w-full mx-auto",
+      isMobile ? "w-full px-0" : "max-w-3xl px-2 sm:px-6"
+    )}>
+      {/* 状态区固定在顶部 - 已移除处理流程显示 */}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm">
+        {/* ProcessingFlowDisplay已移除 */}
       </div>
+
       {/* 语音输入弹窗 */}
       {showVoiceRecorder && (
         <div className="absolute z-50 left-0 right-0 bottom-16 flex justify-center">
@@ -1397,8 +1577,15 @@ export function ChatContainer() {
         />
       )}
 
-      <ScrollArea className="flex-1 px-2 sm:px-4 pt-20 pb-6 h-[calc(100vh-4rem)]">
-        <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 pb-32 mt-4">
+      {/* 消息滚动区 */}
+      <ScrollArea className={cn(
+        "flex-1 pb-6 h-[calc(100vh-4rem)]",
+        isMobile ? "px-0" : "px-2 sm:px-4"
+      )}>
+        <div className={cn(
+          "mx-auto space-y-4 sm:space-y-6 pb-32 mt-4",
+          isMobile ? "w-full px-2" : "max-w-3xl"
+        )}>
           {/* 离线模式警告 */}
           {isOfflineMode && (
             <Alert
@@ -1429,25 +1616,20 @@ export function ChatContainer() {
             </Alert>
           )}
 
-          {/* 欢迎消息 */}
-          {selectedAgent?.type === 'fastgpt' && messages.length === 0 && (
-            <WelcomeMessage
-              message={welcomeMessage}
-              interacts={interacts}
-              onInteractClick={(text: string) => {
-                setInput(text)
-                if (textareaRef.current) {
-                  (textareaRef.current as HTMLTextAreaElement).focus()
-                }
-              }}
-            />
-          )}
+          {/* 消息列表 - 过滤掉连续的助手消息，只保留最后一个 */}
+          {messages.filter((msg, idx, arr) => {
+            // 如果不是助手消息，保留
+            if (msg.role !== 'assistant') return true;
 
-          {/* 流程节点/思维链展示区 */}
-          <ProcessingFlowDisplay steps={processingSteps} isVisible={showProcessingFlow} />
+            // 如果是最后一条消息，保留
+            if (idx === arr.length - 1) return true;
 
-          {/* 消息列表 */}
-          {messages.map((msg, idx) => (
+            // 如果下一条消息不是助手消息，保留
+            if (idx < arr.length - 1 && arr[idx + 1].role !== 'assistant') return true;
+
+            // 否则过滤掉（连续的助手消息中的非最后一条）
+            return false;
+          }).map((msg, idx) => (
             <ChatMessage
               key={msg.id + idx}
               message={msg}
@@ -1456,34 +1638,46 @@ export function ChatContainer() {
               onDelete={deleteMessage}
               onEdit={editMessage}
               chatId={chatId || undefined}
+              isTyping={isTyping}
             />
           ))}
 
-          {/* 显示处理流程 */}
-          <ProcessingFlowDisplay steps={processingSteps} isVisible={showProcessingFlow && processingSteps.length > 0} />
-
-          {/* 显示FastGPT流节点 */}
-          <FastGPTFlowDisplay nodes={flowNodes} isVisible={showFlowNodes && flowNodes.length > 0} />
+          {/* 主流AI风格的美化 loading 动画，仅在 AI 回复前显示 */}
+          {isTyping && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+            <div className="flex items-center gap-3 mt-2 mb-2 px-5 py-3 rounded-3xl bg-gradient-to-r from-primary/10 via-primary/20 to-primary/10 dark:from-primary/30 dark:via-primary/20 dark:to-primary/10 shadow-lg border border-primary/20 w-fit animate-fade-in">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-zinc-100 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 flex items-center justify-center shadow-lg ring-2 ring-blue-400/30">
+                <img src="/mascot.png" alt="AI" className="w-7 h-7 rounded-full object-cover" />
+              </div>
+              <span className="flex gap-1 ml-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-primary/80 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="inline-block w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="inline-block w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </span>
+            </div>
+          )}
 
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
       {showOptions && <ChatOptions onClose={() => setShowOptions(false)} />}
-      <SettingsDialog open={showSettings} onOpenChange={setShowSettings} />
 
       {/* 工具栏 - 移动端优化 */}
-      <div className="fixed bottom-0 left-0 right-0 p-2 sm:p-4 bg-gradient-to-t from-background via-background to-transparent pt-10 z-20">
-        <div className="max-w-3xl mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background to-transparent pt-10 z-20"
+           style={isMobile ? {padding: "0.5rem 0"} : {padding: "0.5rem 1rem"}}>
+        <div className={cn(
+          "mx-auto",
+          isMobile ? "w-full" : "max-w-3xl"
+        )}>
           {/* 文件上传组件 - 根据智能体配置显示或隐藏 */}
           {isUploading && selectedAgent?.supportsFileUpload !== false && (
             <FileUploader onClose={() => setIsUploading(false)} onFileUpload={handleFileUpload} />
           )}
 
-          <div className="relative">
+          <div className={cn("relative", isMobile && "px-3")}>
             {/* Mobile buttons inside the input area */}
             {isMobile && (
-              <div className="absolute left-2 bottom-2 flex items-center gap-1.5 z-10">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 z-10">
                 {/* 文件上传按钮 - 根据智能体配置显示或隐藏 */}
                 {selectedAgent?.supportsFileUpload !== false && (
                   <Button
@@ -1511,20 +1705,19 @@ export function ChatContainer() {
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
+              onKeyDown={(e: React.KeyboardEvent) => handleKeyDown(e)}
               placeholder={isOfflineMode ? t("offlineInputPlaceholder") : t("inputPlaceholder")}
               className={cn(
-                "min-h-[60px] resize-none py-3 sm:py-4 text-sm sm:text-base shadow-none focus:shadow-none transition-colors duration-200",
+                "min-h-[60px] resize-none py-4 text-sm sm:text-base shadow-none focus:shadow-none transition-colors duration-200",
                 "border-[#e9ecef] dark:border-zinc-700 focus:border-primary focus:ring-1 focus:ring-primary/20",
-                isMobile ? "rounded-lg pl-[120px] pr-[60px]" : "rounded-lg pl-4 pr-32",
+                isMobile ? "rounded-lg pl-[130px] pr-[70px]" : "rounded-lg pl-4 pr-32",
               )}
               rows={1}
             />
 
             <div
               className={cn(
-                "absolute right-2 bottom-2 flex items-center gap-1 sm:gap-1.5",
-                textareaHeight > 100 ? "bottom-2" : "bottom-2",
+                "absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 sm:gap-1.5"
               )}
             >
               {!isMobile && (
@@ -1569,18 +1762,30 @@ export function ChatContainer() {
               )}
 
               <Button
-                onClick={handleSend}
-                disabled={(!input.trim() && uploadedFiles.length === 0) || isTyping}
+                onClick={() => {
+                  if (isTyping) {
+                    if (abortControllerRef.current) {
+                      abortControllerRef.current.abort()
+                      abortControllerRef.current = null
+                    }
+                    setIsTyping(false)
+                  } else {
+                    handleSend()
+                  }
+                }}
+                disabled={(!input.trim() && uploadedFiles.length === 0) && !isTyping}
                 className={cn(
                   "btn-primary h-8 sm:h-9 text-xs sm:text-sm font-medium",
                   "bg-primary hover:bg-primary/90",
                   "transition-colors duration-200 shadow-none",
-                  isMobile ? "w-10 min-w-[40px] px-0" : "px-3 sm:px-5",
                   isTyping && "opacity-50 cursor-not-allowed",
                 )}
               >
                 {isTyping ? (
-                  <Loader2 className="h-4 w-4 sm:h-4 sm:w-4 animate-spin" />
+                  <>
+                    <Loader2 className="h-4 w-4 sm:h-4 sm:w-4 animate-spin mr-1" />
+                    取消
+                  </>
                 ) : (
                   <>
                     <SendHorizonal className="h-4 w-4 sm:h-4 sm:w-4 mr-0 sm:mr-1.5" />
@@ -1593,8 +1798,8 @@ export function ChatContainer() {
 
           {/* 显示已上传文件的预览 */}
           {uploadedFiles.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {uploadedFiles.map((file) => (
+            <div className={cn("mt-2 flex flex-wrap gap-2", isMobile && "px-2")}>
+              {uploadedFiles.map((file: UploadedFile) => (
                 <div key={file.id} className="bg-accent/50 rounded-md p-1 px-2 text-xs flex items-center gap-1">
                   {file.type.startsWith("image/") ? (
                     <ImageIcon className="h-3 w-3" />
@@ -1617,7 +1822,7 @@ export function ChatContainer() {
 
           {/* Mobile disclaimer only */}
           {isMobile && (
-            <div className="flex justify-center items-center mt-2 px-1">
+            <div className="flex justify-center items-center mt-2 px-2">
               <div className="text-xs text-center text-muted-foreground opacity-70">{t("disclaimer")}</div>
             </div>
           )}

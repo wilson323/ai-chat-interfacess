@@ -35,26 +35,12 @@ export function AdminContainer() {
               <Tabs defaultValue="fastgpt" value={activeTab} onValueChange={setActiveTab} className="w-full mt-2">
                 <TabsList className="grid grid-cols-4 w-full mb-6 mt-2 sticky top-0 z-20 bg-background">
                   <TabsTrigger value="fastgpt" className="flex items-center gap-2">FastGPT 智能体管理</TabsTrigger>
-                  <TabsTrigger value="cad-analyzer" className="flex items-center gap-2">CAD 智能体管理</TabsTrigger>
-                  <TabsTrigger value="image-editor" className="flex items-center gap-2">图像编辑智能体管理</TabsTrigger>
                   <TabsTrigger value="db" className="flex items-center gap-2">数据库管理</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="fastgpt" className="space-y-6 mt-4">
                   <div className="grid grid-cols-1 gap-6">
                     <AgentList typeFilter="fastgpt" />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="cad-analyzer" className="space-y-6 mt-4">
-                  <div className="grid grid-cols-1 gap-6">
-                    <AgentList typeFilter="cad-analyzer" />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="image-editor" className="space-y-6 mt-4">
-                  <div className="grid grid-cols-1 gap-6">
-                    <AgentList typeFilter="image-editor" />
                   </div>
                 </TabsContent>
 

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import sequelize from '@/lib/db/sequelize';
 
 // 辅助函数，验证 URL
 function isValidUrl(url: string): boolean {
@@ -86,7 +85,7 @@ export async function GET(request: Request) {
           break
         } catch (error) {
           retryCount++
-          console.error(`GET Fetch 错误 (尝试 ${retryCount}/${maxRetries + 1}): ${error.message}`)
+          console.error(`GET Fetch 错误 (尝试 ${retryCount}/${maxRetries + 1}): ${typeof error === 'object' && error && 'message' in error ? (error as any).message : String(error)}`)
 
           // 如果已达到最大重试次数，抛出错误
           if (retryCount > maxRetries) {
@@ -187,11 +186,6 @@ export async function POST(request: Request) {
     // 确保 requestBody 不为 undefined
     const safeRequestBody = requestBody || {}
 
-    // 确保 detail 参数设置为 false，以减少中间处理步骤，提高性能
-    if (typeof safeRequestBody === "object") {
-      safeRequestBody.detail = false
-    }
-
     // 检查这是否是流式请求
     const isStreaming = headers.Accept === "text/event-stream" || (safeRequestBody && safeRequestBody.stream === true)
 
@@ -281,7 +275,7 @@ export async function POST(request: Request) {
             console.log("向客户端发送 [DONE] 事件")
           } catch (readError) {
             console.error("读取流时出错:", readError)
-            await writer.write(encoder.encode(`data: {"error": "${readError.message}"}\n\n`))
+            await writer.write(encoder.encode(`data: {"error": "${typeof readError === 'object' && readError && 'message' in readError ? (readError as any).message : String(readError)}"}\n\n`))
           }
         })
         .catch(async (error) => {
@@ -357,7 +351,7 @@ export async function POST(request: Request) {
             break
           } catch (fetchError) {
             retryCount++
-            console.error(`Fetch 错误 (尝试 ${retryCount}/${maxRetries + 1}): ${fetchError.message}`)
+            console.error(`Fetch 错误 (尝试 ${retryCount}/${maxRetries + 1}): ${typeof fetchError === 'object' && fetchError && 'message' in fetchError ? (fetchError as any).message : String(fetchError)}`)
 
             // 如果已达到最大重试次数，抛出错误
             if (retryCount > maxRetries) {

@@ -44,3 +44,17 @@ export interface Message {
   timestamp: Date
   metadata?: MessageMetadata
 }
+
+/**
+ * 流程节点/处理步骤类型
+ */
+export interface ProcessingStep {
+  id: string
+  type: string
+  name: string
+  status: "running" | "success" | "error" | "pending"
+  content?: string
+  timestamp: Date
+  details?: any
+  isNew?: boolean
+}

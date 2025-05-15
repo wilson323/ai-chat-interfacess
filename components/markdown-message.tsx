@@ -214,141 +214,97 @@ export function MarkdownMessage({ content, className, enableImageExpand = true }
       <div
         className={cn(
           "relative group max-w-full w-fit min-w-[60px] px-4 py-3 my-2",
-          // 如果是用户消息（text-white类），则不添加背景色和边框样式
-          className?.includes("text-white")
-            ? "bg-transparent border-0 shadow-none"
-            : "rounded-2xl shadow-md border border-zinc-200 dark:border-zinc-700/50 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900",
-          "prose prose-sm sm:prose max-w-none dark:prose-invert",
-          "prose-headings:font-semibold prose-headings:text-pantone369-700 dark:prose-headings:text-pantone369-300",
-          "prose-p:my-2 sm:prose-p:my-3 prose-p:leading-relaxed",
-          "prose-a:text-pantone369-600 dark:text-pantone369-400 prose-a:font-medium",
-          "prose-code:bg-zinc-100 dark:bg-zinc-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs sm:prose-code:text-sm",
-          "prose-pre:bg-zinc-100 dark:bg-zinc-800 prose-pre:p-0 prose-pre:rounded-md",
-          "prose-img:rounded-md prose-img:my-2 sm:prose-img:my-3 prose-img:max-w-full prose-img:cursor-pointer",
-          "prose-hr:my-3 sm:prose-hr:my-4 prose-hr:border-pantone369-200 dark:prose-hr:border-pantone369-800/30",
-          "prose-blockquote:border-l-4 prose-blockquote:border-pantone369-300 dark:prose-blockquote:border-pantone369-700 prose-blockquote:pl-4 prose-blockquote:italic",
-          "prose-li:my-0.5 sm:prose-li:my-1",
-          "text-sm sm:text-base",
+          // 只保留内容排版和字体美化，去掉bg-gradient-to-br、rounded-2xl、shadow-md、border等
+          "prose prose-sm sm:prose max-w-none !p-0 !m-0 [p_>_*]:!m-0 [p_>_*]:!p-0",
+          "prose-headings:font-semibold prose-headings:text-pantone369-700 dark:prose-headings:text-pantone369-300 prose-p:my-2 sm:prose-p:my-3 prose-p:leading-relaxed prose-a:text-pantone369-600 dark:text-pantone369-400 prose-a:font-medium prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs sm:prose-code:text-sm prose-pre:p-0 prose-pre:rounded-md prose-img:rounded-md prose-img:my-2 sm:prose-img:my-3 prose-img:max-w-full prose-img:cursor-pointer prose-hr:my-3 sm:prose-hr:my-4 prose-hr:border-pantone369-200 dark:prose-hr:border-pantone369-800/30 prose-blockquote:border-l-4 prose-blockquote:border-pantone369-300 dark:prose-blockquote:border-pantone369-700 prose-blockquote:pl-4 prose-blockquote:italic prose-li:my-0.5 sm:prose-li:my-1 text-sm sm:text-base",
           className,
         )}
         style={{
           transition: 'box-shadow 0.2s',
-          boxShadow: className?.includes("text-white") ? 'none' : '0 2px 12px 0 rgba(60,60,60,0.06)',
+          boxShadow: className?.includes("text-white") ? 'none' : undefined,
         }}
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={rehypePlugins}
+          rehypePlugins={[rehypeRaw, rehypeHighlight]}
           components={{
-            code(props: any) {
-              return <code {...props} />
-            },
-            a({ node, children, href, ...props }) {
-              return (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-pantone369-600 dark:text-pantone369-400 hover:underline font-medium inline-flex items-center"
-                  {...props}
-                >
-                  {children}
-                  <ExternalLink className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-0.5 sm:ml-1 inline-block" />
-                </a>
-              )
-            },
-            img({ node, src, alt, ...props }) {
-              const processedSrc = src ? processImageUrl(src) : "/placeholder.svg"
-              const isLoading = state.imageLoadingStates[processedSrc]?.isLoading ?? true
-              const error = state.imageLoadingStates[processedSrc]?.error ?? false
-
-              const handleImageLoad = () => {
-                setState(prev => ({
-                  ...prev,
-                  imageLoadingStates: {
-                    ...prev.imageLoadingStates,
-                    [processedSrc]: { isLoading: false, error: false }
-                  }
-                }));
+            p: ({ children }) => (
+              <p className="font-sans font-medium text-message-base text-text-base dark:text-text-dark-base mb-0 last:mb-0 tracking-tightest p-0 m-0 leading-relaxed drop-shadow-sm" style={{letterSpacing: '0.01em', lineHeight: '1.8', textShadow: '0 1px 8px rgba(60,60,60,0.04)'}}>{children}</p>
+            ),
+            strong: ({ children }) => (
+              <strong className="font-bold text-pantone369-700 dark:text-pantone369-300 tracking-tightest p-0 m-0" style={{letterSpacing: '0.01em'}}>{children}</strong>
+            ),
+            a: ({ children, href }) => (
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline underline-offset-2 p-0 m-0">{children}</a>
+            ),
+            img: (props) => {
+              try {
+                const { src, alt, title, ...rest } = props;
+                if (typeof src !== 'string' || !src.trim()) return null;
+                const safeAlt = typeof alt === 'string' ? alt : '';
+                const safeTitle = typeof title === 'string' ? title : '';
+                const safeRest = Object.fromEntries(
+                  Object.entries(rest).filter(([_, v]) => typeof v === 'string')
+                );
+                return <img src={src} alt={safeAlt} title={safeTitle} {...safeRest} />;
+              } catch (e) {
+                return null;
               }
-
-              const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                setState(prev => ({
-                  ...prev,
-                  imageLoadingStates: {
-                    ...prev.imageLoadingStates,
-                    [processedSrc]: { isLoading: false, error: true }
-                  }
-                }));
-
-                const target = e.target as HTMLImageElement
-                target.onerror = null
-                target.classList.add("border-red-300")
-                const errorDiv = document.createElement("div")
-                errorDiv.className = "text-xs text-red-500 mt-1"
-                errorDiv.textContent = `图片加载失败: ${src}`
-                target.parentNode?.appendChild(errorDiv)
-              }
-
-              return (
-                <div
-                  style={{position: 'relative', display: 'inline-block'}}
-                  className={cn(
-                    "image-container transition-all duration-200 relative",
-                    enableImageExpand && !error ? "cursor-zoom-in hover:opacity-95" : ""
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!error && enableImageExpand) {
-                      console.log("图片容器点击事件触发");
-                      handleImageClick(processedSrc);
-                    }
-                  }}
-                >
-                  <img
-                    src={processedSrc || "/placeholder.svg"}
-                    alt={alt || ""}
-                    className={cn(
-                      "max-w-full w-full h-auto transition-all duration-300 rounded-md",
-                      isLoading ? "opacity-0" : "opacity-100",
-                      error ? "border-red-300" : "hover:shadow-lg hover:brightness-105",
-                      enableImageExpand && !error ? "cursor-zoom-in" : ""
-                    )}
-                    onLoad={handleImageLoad}
-                    onError={handleImageError}
-                    loading="lazy"
-                    {...props}
-                  />
-                  {isLoading && (
-                    <span className="absolute inset-0 flex items-center justify-center bg-pantone369-50/30 dark:bg-pantone369-900/30 rounded-md">
-                      <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                    </span>
-                  )}
-                  {/* 移除"点击放大"按钮 */}
-                </div>
-              )
             },
-            p({ node, children, ...props }) {
-              if (
-                Array.isArray(children) &&
-                children.length === 1 &&
-                React.isValidElement(children[0]) &&
-                children[0].type === 'div'
-              ) {
-                return children[0];
-              }
-              return <p {...props}>{children}</p>;
-            },
-            blockquote({ node, children, ...props }) {
-              return (
-                <blockquote
-                  className="border-l-4 border-primary pl-4 italic my-4 bg-primary/5 dark:bg-primary/10 py-2 pr-2 rounded-r-md"
-                  {...props}
-                >
-                  {children}
-                </blockquote>
-              )
-            },
+            code: ({ children, className }) => (
+              <code className={`font-mono text-[13.5px] px-2 py-1 rounded text-code dark:text-code-dark border border-gray-200 dark:border-gray-700 ${className || ''} p-0 m-0`}>{children}</code>
+            ),
+            pre: ({ children }) => (
+              <pre className="rounded-lg px-3 py-2 overflow-x-auto border border-gray-200 dark:border-gray-700 my-0 p-0 m-0">
+                <code className="font-mono text-[13.5px] text-code dark:text-code-dark p-0 m-0">{children}</code>
+              </pre>
+            ),
+            ul: ({ children }) => (
+              <ul className="list-disc pl-5 space-y-1 marker:text-gray-400 dark:marker:text-gray-500 p-0 m-0">{children}</ul>
+            ),
+            ol: ({ children }) => (
+              <ol className="list-decimal pl-5 space-y-1 marker:font-mono marker:text-gray-400 dark:marker:text-gray-500 p-0 m-0">{children}</ol>
+            ),
+            li: ({ children }) => (
+              <li className="pl-1 p-0 m-0">{children}</li>
+            ),
+            h1: ({ children }) => (
+              <h1 className="text-xl font-bold mt-6 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700 p-0 m-0">{children}</h1>
+            ),
+            h2: ({ children }) => (
+              <h2 className="text-lg font-semibold mt-5 mb-2 p-0 m-0">{children}</h2>
+            ),
+            h3: ({ children }) => (
+              <h3 className="text-base font-medium mt-4 mb-1.5 p-0 m-0">{children}</h3>
+            ),
+            blockquote: ({ children }) => (
+              <blockquote className="border-l-3 border-gray-300 dark:border-gray-600 pl-3 text-gray-600 dark:text-gray-300 italic my-0 p-0 m-0">{children}</blockquote>
+            ),
+            hr: () => (
+              <hr className="my-4 border-t border-gray-200 dark:border-gray-700 opacity-50 p-0 m-0" />
+            ),
+            span: ({ children }) => <span className="font-sans text-message-base tracking-tightest p-0 m-0" style={{letterSpacing: '0.01em'}}>{children}</span>,
+            // 添加表格相关组件
+            table: ({ children }) => (
+              <div className="overflow-x-auto my-4">
+                <table className="min-w-full border border-collapse border-gray-200 dark:border-gray-700 rounded-md">{children}</table>
+              </div>
+            ),
+            thead: ({ children }) => (
+              <thead>{children}</thead>
+            ),
+            tbody: ({ children }) => (
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{children}</tbody>
+            ),
+            tr: ({ children }) => (
+              <tr>{children}</tr>
+            ),
+            th: ({ children }) => (
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-r border-gray-200 dark:border-gray-700 last:border-r-0">{children}</th>
+            ),
+            td: ({ children }) => (
+              <td className="px-4 py-2 text-sm border-r border-gray-200 dark:border-gray-700 last:border-r-0">{children}</td>
+            ),
           }}
         >
           {safeContent}

@@ -13,21 +13,11 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("en")
+  // 默认语言强制为中文
+  const [language, setLanguageState] = useState<Language>("zh")
 
-  useEffect(() => {
-    // Try to get language from localStorage
-    const savedLanguage = localStorage.getItem("language") as Language | null
-    if (savedLanguage && Object.keys(translations).includes(savedLanguage)) {
-      setLanguageState(savedLanguage)
-    } else {
-      // Try to detect browser language
-      const browserLanguage = navigator.language.split("-")[0] as Language
-      if (Object.keys(translations).includes(browserLanguage)) {
-        setLanguageState(browserLanguage)
-      }
-    }
-  }, [])
+  // 彻底移除自动检测和localStorage逻辑
+  // 只允许手动切换语言
 
   const setLanguage = (newLanguage: Language) => {
     setLanguageState(newLanguage)

@@ -3,6 +3,7 @@ import "@/app/globals.css"
 import type { Metadata } from "next"
 import { Nunito_Sans, Montserrat } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${nunitoSans.variable} ${montserrat.variable} font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeToggle />
           {children}
         </ThemeProvider>
       </body>

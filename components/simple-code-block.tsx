@@ -68,7 +68,7 @@ export function SimpleCodeBlock({ code, language, className, showLineNumbers = f
 
       <pre
         className={cn(
-          "bg-zinc-100 dark:bg-zinc-800 p-4 rounded-md overflow-x-auto text-sm font-mono",
+          "bg-zinc-100 dark:bg-[#181c23] p-4 rounded-md overflow-x-auto text-sm font-mono text-zinc-800 dark:text-[#e6e6e6] border border-zinc-200 dark:border-zinc-700",
           getLanguageClass(),
         )}
       >
