@@ -229,10 +229,10 @@ export function MarkdownMessage({ content, className, enableImageExpand = true }
           rehypePlugins={[rehypeRaw, rehypeHighlight]}
           components={{
             p: ({ children }) => (
-              <p className="font-sans font-medium text-message-base text-text-base dark:text-text-dark-base mb-0 last:mb-0 tracking-tightest p-0 m-0 leading-relaxed drop-shadow-sm" style={{letterSpacing: '0.01em', lineHeight: '1.8', textShadow: '0 1px 8px rgba(60,60,60,0.04)'}}>{children}</p>
+              <p className="font-sans font-medium text-message-base text-text-base dark:text-text-dark-base prose-invert:text-white mb-0 last:mb-0 tracking-tightest p-0 m-0 leading-relaxed drop-shadow-sm" style={{letterSpacing: '0.01em', lineHeight: '1.8', textShadow: '0 1px 8px rgba(60,60,60,0.04)'}}>{children}</p>
             ),
             strong: ({ children }) => (
-              <strong className="font-bold text-pantone369-700 dark:text-pantone369-300 tracking-tightest p-0 m-0" style={{letterSpacing: '0.01em'}}>{children}</strong>
+              <strong className="font-bold text-pantone369-700 dark:text-pantone369-300 prose-invert:text-white tracking-tightest p-0 m-0" style={{letterSpacing: '0.01em'}}>{children}</strong>
             ),
             a: ({ children, href }) => (
               <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline underline-offset-2 p-0 m-0">{children}</a>
@@ -260,13 +260,13 @@ export function MarkdownMessage({ content, className, enableImageExpand = true }
               </pre>
             ),
             ul: ({ children }) => (
-              <ul className="list-disc pl-5 space-y-1 marker:text-gray-400 dark:marker:text-gray-500 p-0 m-0">{children}</ul>
+              <ul className="list-disc pl-5 space-y-1 marker:text-text-base dark:marker:text-text-dark-base prose-invert:marker:text-white p-0 m-0">{children}</ul>
             ),
             ol: ({ children }) => (
-              <ol className="list-decimal pl-5 space-y-1 marker:font-mono marker:text-gray-400 dark:marker:text-gray-500 p-0 m-0">{children}</ol>
+              <ol className="list-decimal pl-5 space-y-1 marker:font-mono marker:text-text-base dark:marker:text-text-dark-base prose-invert:marker:text-white p-0 m-0">{children}</ol>
             ),
             li: ({ children }) => (
-              <li className="pl-1 p-0 m-0">{children}</li>
+              <li className="pl-1 p-0 m-0 text-text-base dark:text-text-dark-base prose-invert:text-white">{children}</li>
             ),
             h1: ({ children }) => (
               <h1 className="text-xl font-bold mt-6 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700 p-0 m-0">{children}</h1>
