@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAgent } from "@/context/agent-context"
-import { FileText, Loader2, Download, Info, AlertCircle, CheckCircle2, ImageIcon, Upload } from "lucide-react"
+import { FileText, Loader2, Download, Info, AlertCircle, CheckCircle2, ImageIcon, Upload, X, Maximize2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +16,9 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useLanguage } from "@/context/language-context"
+import { MarkdownMessage } from "@/components/markdown-message"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import DxfParser from "dxf-parser"
 
 // 安防设备关键词列表
 const SECURITY_KEYWORDS = [
@@ -55,6 +58,7 @@ interface CADData {
   text_annotations: CADEntity[]
   dimensions: CADEntity[]
   wiring: CADEntity[]
+  totalDevices?: number // 添加可选的totalDevices字段
 }
 
 interface AnalysisResult {
@@ -84,6 +88,8 @@ export function CADAnalyzerContainer() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([])
   const [currentResult, setCurrentResult] = useState<AnalysisResult | null>(null)
   const [fileType, setFileType] = useState<"cad" | "image" | null>(null)
+  const [showImageModal, setShowImageModal] = useState(false)
+  const [expandedImage, setExpandedImage] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -160,10 +166,41 @@ export function CADAnalyzerContainer() {
           continue
         }
         setFileType(isImageFile ? "image" : "cad")
-        // === 新增：后端API分析 ===
+
+        // === 使用dxf-parser解析DXF文件 ===
+        let dxfData = null;
+        if (fileExtension === "dxf") {
+          try {
+            console.log("开始解析DXF文件...");
+            const fileContent = await readFileAsArrayBuffer(file);
+
+            // 对于大文件，可能需要分块处理
+            if (file.size > 50 * 1024 * 1024) { // 如果文件大于50MB
+              console.log("DXF文件过大，跳过前端解析，将由后端处理");
+            } else {
+              try {
+                const fileText = new TextDecoder().decode(fileContent);
+                const parser = new DxfParser();
+                dxfData = parser.parseSync(fileText);
+                console.log("DXF文件解析成功");
+              } catch (textDecodeError) {
+                console.error("DXF文件文本解码失败:", textDecodeError);
+              }
+            }
+          } catch (parseError) {
+            console.error("DXF文件解析失败:", parseError);
+          }
+        }
+
+        // === 后端API分析 ===
         console.log(`开始上传文件: ${file.name}, 大小: ${file.size} 字节`);
         const formData = new FormData()
         formData.append('file', file)
+
+        // 如果有DXF解析数据，添加到formData
+        if (dxfData) {
+          formData.append('dxfData', JSON.stringify(dxfData));
+        }
 
         // 添加管理员token头，确保API调用成功
         console.log("发送API请求...");
@@ -210,17 +247,31 @@ export function CADAnalyzerContainer() {
 
           console.log("API请求成功，正在处理响应...");
 
+          // 打印API返回的数据，用于调试
+          console.log("API返回的完整数据:", data);
+
+          // 检查preview_image是否存在
+          if (data.preview_image) {
+            console.log("发现preview_image字段:", data.preview_image.substring(0, 100) + "...");
+          } else {
+            console.log("未找到preview_image字段");
+          }
+
           const resultData = {
             filename: file.name,
             time: new Date().toLocaleString(),
-            preview: data.url,
-            metadata: null,
+            preview: data.preview_image || data.url, // 优先使用preview_image
+            metadata: data.metadata || null,
             analysis: data.analysis,
-            raw_data: data.structured || null, // 使用structured数据作为raw_data
+            raw_data: data.structured || data.raw_data || null, // 使用structured数据或raw_data作为raw_data
             isImage: isImageFile,
             imageData: isImageFile ? data.url : undefined,
             reportUrl: data.reportUrl,
           }
+
+          // 打印构建的结果数据，用于调试
+          console.log("构建的结果数据:", resultData);
+          console.log("预览图URL:", resultData.preview);
 
           console.log("创建结果数据:", resultData);
 
@@ -539,12 +590,18 @@ export function CADAnalyzerContainer() {
     }
   }
 
+  // 处理图片点击，打开放大查看模态框
+  const handleImageClick = (imageUrl: string) => {
+    setExpandedImage(imageUrl);
+    setShowImageModal(true);
+  }
+
   // 下载分析报告
   const downloadReport = (result: AnalysisResult) => {
     const reportData = {
       filename: result.filename,
       analysis: result.analysis,
-      devices: result.raw_data?.security_devices.map((d) => d.name) || [],
+      devices: result.raw_data?.security_devices?.map((d) => d.name) || [],
       metadata: result.metadata,
       timestamp: result.time,
       isImage: result.isImage,
@@ -600,6 +657,30 @@ export function CADAnalyzerContainer() {
 
   return (
     <div className="flex flex-col h-full relative">
+      {/* 图片放大查看模态框 */}
+      <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
+        <DialogContent className="max-w-5xl w-full p-0 overflow-hidden bg-transparent border-none">
+          {/* 添加DialogTitle但使用sr-only类使其只对屏幕阅读器可见 */}
+          <DialogTitle className="sr-only">CAD图纸预览</DialogTitle>
+          <div className="relative w-full h-full max-h-[80vh] flex items-center justify-center">
+            {expandedImage && (
+              <img
+                src={expandedImage}
+                alt="放大查看"
+                className="max-w-full max-h-[80vh] object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            <button
+              className="absolute top-2 right-2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70"
+              onClick={() => setShowImageModal(false)}
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <ScrollArea className="flex-1 px-2 sm:px-4 py-4 sm:py-6">
         <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 pb-20">
           <Card className="shadow-lg border-pantone369-100 dark:border-pantone369-900/30 overflow-hidden">
@@ -819,11 +900,28 @@ export function CADAnalyzerContainer() {
                             <CardContent className="p-3 sm:p-4">
                               <div className="aspect-square bg-muted rounded-md overflow-hidden border border-pantone369-100 dark:border-pantone369-900/30">
                                 {currentResult.preview || currentResult.imageData ? (
-                                  <img
-                                    src={currentResult.imageData || currentResult.preview || "/placeholder.svg"}
-                                    alt={currentResult.isImage ? "图片预览" : "CAD预览"}
-                                    className="w-full h-full object-contain"
-                                  />
+                                  <>
+                                    {/* 打印预览图URL，用于调试 */}
+                                    {console.log("显示预览图:", currentResult.preview || currentResult.imageData)}
+                                    <div
+                                      className="relative w-full h-full group cursor-pointer"
+                                      onClick={() => handleImageClick(currentResult.preview || currentResult.imageData || "/placeholder.svg")}
+                                    >
+                                      <img
+                                        src={currentResult.preview || currentResult.imageData || "/placeholder.svg"}
+                                        alt={currentResult.isImage ? "图片预览" : "CAD预览"}
+                                        className="w-full h-full object-contain"
+                                        onError={(e) => {
+                                          console.error("预览图加载失败:", e);
+                                          // 如果图片加载失败，显示占位图
+                                          e.currentTarget.src = "/placeholder.svg";
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Maximize2 className="h-8 w-8 text-white" />
+                                      </div>
+                                    </div>
+                                  </>
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
                                     <p className="text-xs sm:text-sm text-muted-foreground">{t("noPreview")}</p>
@@ -835,7 +933,7 @@ export function CADAnalyzerContainer() {
                                 <div className="mt-3 sm:mt-4 space-y-1 sm:space-y-2">
                                   <div className="flex justify-between">
                                     <span className="text-xs sm:text-sm font-medium">{t("totalEntities")}:</span>
-                                    <span className="text-xs sm:text-sm">{currentResult.metadata.total_entities}</span>
+                                    <span className="text-xs sm:text-sm">{currentResult.metadata?.total_entities || 0}</span>
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-xs sm:text-sm font-medium">{t("securityDeviceCount")}:</span>
@@ -845,7 +943,7 @@ export function CADAnalyzerContainer() {
                                   </div>
                                   <div className="flex justify-between">
                                     <span className="text-xs sm:text-sm font-medium">{t("wireCount")}:</span>
-                                    <span className="text-xs sm:text-sm">{currentResult.raw_data?.wiring.length}</span>
+                                    <span className="text-xs sm:text-sm">{currentResult.raw_data?.wiring?.length || 0}</span>
                                   </div>
                                 </div>
                               )}
@@ -856,7 +954,7 @@ export function CADAnalyzerContainer() {
                                   <div>
                                     <h4 className="text-xs sm:text-sm font-medium mb-1 sm:mb-2">{t("layerInfo")}:</h4>
                                     <div className="flex flex-wrap gap-1 sm:gap-2">
-                                      {currentResult.metadata.layers.map((layer, index) => (
+                                      {currentResult.metadata?.layers?.map((layer, index) => (
                                         <Badge
                                           key={index}
                                           variant="outline"
@@ -885,9 +983,7 @@ export function CADAnalyzerContainer() {
                             </CardHeader>
                             <CardContent className="p-3 sm:p-6">
                               <div className="prose prose-sm max-w-none text-xs sm:text-sm">
-                                {currentResult.analysis.split("\n").map((line, index) => (
-                                  <div key={index}>{line.trim() === "" ? <br /> : <p>{line}</p>}</div>
-                                ))}
+                                <MarkdownMessage content={currentResult.analysis} />
                               </div>
                             </CardContent>
                           </Card>
