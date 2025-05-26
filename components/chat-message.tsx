@@ -17,8 +17,13 @@ import {
   Pencil,
   Check,
   Volume2,
+  Brain,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useLanguage } from "@/context/language-context"
 import { MarkdownMessage } from "@/components/markdown-message"
@@ -48,11 +53,12 @@ interface ChatMessageProps {
   onCopy?: () => void
   onDelete?: (messageId: string) => void
   onEdit?: (messageId: string, newContent: string) => void
+  onInteractiveSelect?: (messageId: string, selectedOption: any) => void
   chatId?: string
   isTyping?: boolean
 }
 
-export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, chatId, isTyping }: ChatMessageProps) {
+export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, onInteractiveSelect, chatId, isTyping }: ChatMessageProps) {
   const { t } = useLanguage()
   const [copied, setCopied] = useState(false)
   const [liked, setLiked] = useState(false)
@@ -279,6 +285,68 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
     }
   }, [isUser, message.content])
 
+  // 处理交互节点选择
+  const handleInteractiveSelect = useCallback(async (selectedOption: any) => {
+    if (onInteractiveSelect) {
+      await onInteractiveSelect(message.id, selectedOption)
+    }
+  }, [onInteractiveSelect, message.id])
+
+  // 渲染thinking详细内容
+  const renderThinkingDetails = () => {
+    const thinkingSteps = message.metadata?.processingSteps?.filter((step: any) =>
+      step.type.includes('thinking') && step.content
+    ) || []
+
+    if (thinkingSteps.length === 0) return null
+
+    return (
+      <div className="mt-3 space-y-2">
+        {thinkingSteps.map((step: any) => (
+          <div key={step.id} className="bg-amber-50/50 dark:bg-amber-900/10 rounded-lg p-3 border border-amber-200 dark:border-amber-800/30">
+            <div className="flex items-center gap-2 mb-2">
+              <Brain className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium text-amber-700 dark:text-amber-300">思考过程</span>
+              <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/30">
+                {step.timestamp ? new Date(step.timestamp).toLocaleTimeString() : ''}
+              </Badge>
+            </div>
+            <div className="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap">
+              {step.content}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // 渲染交互节点按钮
+  const renderInteractiveNode = () => {
+    if (!message.metadata?.interactive || !message.metadata?.userSelectOptions) return null
+
+    return (
+      <div className="mt-3 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800/30">
+        <div className="flex items-center gap-2 mb-3">
+          <MessageSquare className="h-4 w-4 text-blue-500" />
+          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">请选择您的回答</span>
+        </div>
+        <div className="grid gap-2">
+          {message.metadata.userSelectOptions.map((option: any, index: number) => (
+            <Button
+              key={index}
+              variant="outline"
+              className="justify-start text-left h-auto p-3 hover:bg-blue-100 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800/30"
+              onClick={() => handleInteractiveSelect(option)}
+            >
+              <span className="font-medium mr-2">{index + 1}.</span>
+              {option.label || option.value}
+            </Button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   // 头像渲染
   const userAvatar = (
     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg ring-2 ring-primary/30">
@@ -374,6 +442,12 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
               )
             )}
           </div>
+
+          {/* 新增：thinking详细内容展示 */}
+          {!isUserCompat && renderThinkingDetails()}
+
+          {/* 新增：交互节点按钮 */}
+          {!isUserCompat && renderInteractiveNode()}
         </div>
         {/* 气泡底部：节点状态+操作按钮区 */}
         <div className="flex flex-row flex-wrap justify-between items-end gap-2 mt-3 pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-700">

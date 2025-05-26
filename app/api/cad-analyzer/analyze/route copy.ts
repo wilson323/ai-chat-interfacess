@@ -85,49 +85,11 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
         isPublished: true
       }
     });
-
-    // 获取配置文件中的API端点
-    const safeConfig = await getSafeConfig();
-
-    if (!cadAgent) {
-      console.log('未找到已发布的CAD解读智能体配置，使用默认返回');
-      // 返回默认结构化JSON，确保接口兼容性
-      return {
-        devices: [
-          { type: "摄像机", count: 2, coordinates: [{ x: 100, y: 200 }, { x: 300, y: 400 }] },
-          { type: "门禁", count: 1, coordinates: [{ x: 500, y: 600 }] },
-        ],
-        summary: "检测到摄像机2台、门禁1台，布局合理，无明显异常。布线信息正常。"
-      };
-    }
-
-    // 检查必要的API配置是否存在，优先使用配置文件中的API端点和密钥
-    const apiUrl = safeConfig.apiEndpoint || cadAgent.apiUrl;
-    const apiKey = safeConfig.apiKey || cadAgent.apiKey;
-
-    if (!apiUrl || !apiKey) {
-      console.error('CAD解读智能体API配置不完整');
-      return {
-        devices: [
-          { type: "摄像机", count: 2, coordinates: [{ x: 100, y: 200 }, { x: 300, y: 400 }] },
-          { type: "门禁", count: 1, coordinates: [{ x: 500, y: 600 }] },
-        ],
-        summary: "API配置不完整，无法进行实时分析。这是默认返回结果。"
-      };
-    }
-
     // 读取文件内容
     const fileBuffer = await fs.readFile(filePath);
     const isImageFile = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext);
     // 构建请求体
     let requestMessages = [];
-
-    // 添加系统提示词
-    requestMessages.push({
-      role: "system",
-      content: cadAgent.systemPrompt || CAD_ANALYSIS_PROMPT
-    });
-
     // 添加用户消息，根据文件类型构建不同的请求
     if (isImageFile) {
       // 图片文件使用多模态模型处理
@@ -139,286 +101,38 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
           { type: "image_url", image_url: { url: `data:image/${ext};base64,${fileBase64}` } }
         ]
       });
-    } else if (ext === "dxf") {
-      try {
-        let dxfData;
-        let parseSuccess = false;
-
-        try {
-          // 尝试UTF-8编码
-          const fileText = fileBuffer.toString('utf-8');
-          const parser = new DxfParser();
-          dxfData = parser.parseSync(fileText);
-          parseSuccess = true;
-          console.log("DXF文件解析成功 (UTF-8编码)");
-        } catch (error: any) {
-          console.error("UTF-8编码解析失败:", error?.message || '未知错误');
-        }
-
-        // 如果解析失败，抛出错误
-        if (!parseSuccess || !dxfData) {
-          throw new Error("DXF文件解析失败，无法获取有效数据");
-        }
-
-        // 获取所有图层
-        const layers: string[] = [];
-        if (dxfData?.tables?.layer?.layers) {
-          Object.keys(dxfData.tables.layer.layers).forEach(layerName => {
-            layers.push(layerName);
-          });
-        }
-
-        // 获取单位信息
-        const units = dxfData?.header?.$INSUNITS || 0;
-
-        // 限制处理的实体数量，避免过大文件导致性能问题
-        const MAX_ENTITIES = 3000;
-        const allEntities = dxfData?.entities || [];
-        const entitiesCount = allEntities.length;
-        const limitedEntities = allEntities.slice(0, MAX_ENTITIES);
-
-        // 安防设备专用数据结构，参考Python代码
-        const securityData: Record<string, any> = {
-          metadata: {
-            layers: layers,
-            units: units,
-            total_entities: entitiesCount,
-            processed_entities: Math.min(entitiesCount, MAX_ENTITIES)
-          },
-          security_devices: [],
-          text_annotations: [],
-          dimensions: [],
-          wiring: []
-        };
-
-        // 统计实体类型
-        const entityTypes: Record<string, number> = {};
-
-        // 判断是否与安防相关的函数
-        const isSecurityRelated = (text: string): boolean => {
-          if (!text) return false;
-
-          const lowerText = text.toLowerCase();
-          const securityKeywords = ['考勤','门禁','消费机','道闸','摄像机','读卡器','电锁','门磁','闸机','访客机','指纹机','人脸机','车位锁','巡更点','报警'];
-
-          return securityKeywords.some(keyword => lowerText.includes(keyword));
-        };
-
-        // 将坐标转换为数组
-        const vecToList = (vec: any): number[] => {
-          if (!vec) return [0, 0, 0];
-          return [
-            vec.x !== undefined ? vec.x : 0,
-            vec.y !== undefined ? vec.y : 0,
-            vec.z !== undefined ? vec.z : 0
-          ];
-        };
-
-        // 第一遍扫描：识别安防设备
-        limitedEntities.forEach((entity: any) => {
-          // 统计实体类型
-          if (entity.type) {
-            entityTypes[entity.type] = (entityTypes[entity.type] || 0) + 1;
-          }
-
-          // 识别块引用（可能是安防设备）
-          if (entity.type === 'INSERT') {
-            const blockName = entity.name || '';
-            if (blockName && isSecurityRelated(blockName)) {
-              securityData.security_devices.push({
-                type: "block_reference",
-                name: blockName,
-                layer: entity.layer || 'default',
-                position: vecToList(entity.position),
-                rotation: entity.rotation || 0
-              });
-            }
-          }
-
-          // 识别文本标注（可能包含设备信息）
-          else if (entity.type === 'TEXT' || entity.type === 'MTEXT') {
-            const textContent = entity.text || '';
-            if (textContent) {
-              // 如果文本内容与安防相关
-              if (isSecurityRelated(textContent)) {
-                securityData.text_annotations.push({
-                  type: entity.type,
-                  text: textContent,
-                  layer: entity.layer || 'default',
-                  position: vecToList(entity.position || entity.startPoint)
-                });
-              }
-
-              // 如果是线缆标注
-              if (textContent.toLowerCase().includes('线') ||
-                  textContent.toLowerCase().includes('缆') ||
-                  textContent.toLowerCase().includes('rvvp') ||
-                  textContent.toLowerCase().includes('rvv')) {
-                securityData.wiring.push({
-                  text: textContent,
-                  position: vecToList(entity.position || entity.startPoint),
-                  layer: entity.layer || 'default'
-                });
-              }
-            }
-          }
-
-          // 识别线条和多段线（可能是连接线）
-          else if (entity.type === 'LINE') {
-            securityData.wiring.push({
-              type: entity.type,
-              points: [
-                vecToList(entity.vertices?.[0] || entity.start),
-                vecToList(entity.vertices?.[1] || entity.end)
-              ],
-              layer: entity.layer || 'default'
-            });
-          }
-          else if (entity.type === 'LWPOLYLINE' || entity.type === 'POLYLINE') {
-            const points = entity.vertices?.map((vertex: any) =>
-              vecToList(vertex)
-            ) || [];
-
-            if (points.length > 0) {
-              securityData.wiring.push({
-                type: entity.type,
-                points: points,
-                layer: entity.layer || 'default'
-              });
-            }
-          }
-        });
-
-        // 构建解析结果
-        const parsedDxfData: Record<string, any> = {
-          fileName: path.basename(filePath),
-          fileSize: fileBuffer.length,
-          fileType: "DXF",
-          entityTypes: entityTypes,
-          securityData: securityData
-        };
-
-        // 构建请求消息
-        requestMessages.push({
-          role: "user",
-          content: `请分析这个CAD文件(${ext}格式)，按照以下JSON格式输出结果：\n${CAD_ANALYSIS_PROMPT}\n\n以下是使用dxf-parser解析后的文件内容：\n${JSON.stringify(parsedDxfData, null, 2)}\n\n请基于解析数据进行分析，重点识别安防设备的类型、数量和位置。`
-        });
-      } catch (parseError: any) {
-        console.error("DXF文件解析失败:", parseError);
-
-        // 解析失败时，提供基本文件信息
-        const fileInfo = {
-          fileName: path.basename(filePath),
-          fileSize: fileBuffer.length,
-          fileType: "DXF",
-          extension: ext,
-          parseError: parseError?.message || '未知错误'
-        };
-
-        // 构建请求消息
-        requestMessages.push({
-          role: "user",
-          content: `请分析这个CAD文件(${ext}格式)，按照以下JSON格式输出结果：\n${CAD_ANALYSIS_PROMPT}\n\n文件信息：\n${JSON.stringify(fileInfo, null, 2)}\n\n解析文件时出错，请基于常见CAD图纸进行分析，重点识别安防设备的类型、数量和位置。`
-        });
-      }
-    } else {
-      // 其他CAD文件类型，使用默认请求
-      requestMessages.push({
-        role: "user",
-        content: `请分析这个CAD文件(${ext}格式)，按照以下JSON格式输出结果：\n${CAD_ANALYSIS_PROMPT}\n\n文件内容过大无法直接展示，请基于常见CAD图纸进行分析。`
-      });
-    }
-    console.log('发送CAD的requestMessages--------------------=:', requestMessages);
-    const requestData = {
-        "model": cadAgent.multimodalModel,
-        "input": {
-            "messages": requestMessages
-        },
-        "response_format": "json_object"
-    }
-
-    console.log('发送CAD分析请求到模型API:', apiUrl);
-
-    // 直接调用模型API，不通过代理
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(requestData)
-    });
-    const responseData = await response.json();
-    console.log('模型API响应responseData:', responseData);
-    // 提取模型返回的内容
-    const modelResponse = responseData.output.text.replace('```json','').replace('```','').replace('\n', '');
-    // 尝试解析JSON响应
-    try {
-      console.log("模型返回的modelResponse---:", modelResponse);
-      const parsedResponse = JSON.parse(modelResponse);
-
-      // 验证返回的JSON是否符合预期格式
-      if (!parsedResponse.devices || !Array.isArray(parsedResponse.devices) || !parsedResponse.summary) {
-        console.warn("模型返回的JSON格式不完全符合预期，进行修正");
-
-        // 尝试修正格式
-        const correctedDevices = Array.isArray(parsedResponse.devices) ? parsedResponse.devices : [];
-
-        // 计算设备总数
-        const totalCorrectedDevices = correctedDevices.reduce((sum: number, device: any) => sum + (device.count || 1), 0);
-
-        const correctedResponse = {
-          devices: correctedDevices,
-          security_devices: correctedDevices, // 为了兼容前端显示
-          totalDevices: totalCorrectedDevices,
-          summary: parsedResponse.summary || "模型未返回有效的分析摘要"
-        };
-
-        return correctedResponse;
-      }
-
-      // 计算设备总数
-      const totalDevices = parsedResponse.devices.reduce((sum: number, device: any) => sum + (device.count || 1), 0);
-
-      // 添加额外字段以确保前端兼容性
-      parsedResponse.security_devices = parsedResponse.devices;
-      parsedResponse.totalDevices = totalDevices;
-
-      return parsedResponse;
-    } catch (parseError) {
-      console.error("解析模型返回的JSON失败:", parseError);
-      console.log("原始响应:", modelResponse);
-
-      // 返回默认结构，但包含模型的文本响应
-      const defaultDevices = [
-        { type: "未知设备", count: 1, coordinates: [{ x: 100, y: 100 }] }
-      ];
-
-      return {
-        devices: defaultDevices,
-        security_devices: defaultDevices, // 为了兼容前端显示
-        totalDevices: 1, // 只有一个未知设备
-        summary: "解析JSON失败，原始响应: " + modelResponse.substring(0, 200) + "..."
+    } else if (ext === "dxf" || ext === "dwg") {
+      // 调用本地 Python 服务的 /parse_dxf 接口
+      const apiUrl = "http://127.0.0.1:8000/parse_dxf";
+      const requestBody = {
+        file_path: filePath,
+        model_choice: "qwen-turbo-latest",
+        max_entities: 3000
       };
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody)
+        });
+        if (!response.ok) {
+          throw new Error(`Python服务返回错误: ${response.status}`);
+        }
+        const result = await response.json();
+        // 返回完整的result对象，包含preview_image
+        return result;
+      } catch (error) {
+        return {
+          devices: [
+            { type: "摄像机", count: 2, coordinates: [{ x: 100, y: 200 }, { x: 300, y: 400 }] },
+            { type: "门禁", count: 1, coordinates: [{ x: 500, y: 600 }] },
+          ],
+          summary: "DXF解析服务调用失败，返回默认结果。"
+        };
+      }
     }
   } catch (error) {
     console.error("CAD解读智能体分析过程中发生错误:", error);
-
-    // 确保即使出错也返回有效的结构
-    const defaultDevices = [
-      { type: "摄像机", count: 2, coordinates: [{ x: 100, y: 200 }, { x: 300, y: 400 }] },
-      { type: "门禁", count: 1, coordinates: [{ x: 500, y: 600 }] },
-    ];
-
-    // 计算默认设备总数
-    const totalDefaultDevices = defaultDevices.reduce((sum: number, device: any) => sum + (device.count || 1), 0);
-
-    return {
-      devices: defaultDevices,
-      security_devices: defaultDevices, // 为了兼容前端显示
-      totalDevices: totalDefaultDevices,
-      summary: "分析过程中发生错误: " + (error instanceof Error ? error.message : String(error)) + "。这是默认返回结果。"
-    };
   }
 }
 
@@ -438,7 +152,7 @@ export async function POST(req: NextRequest) {
     // 校验文件大小和格式
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
     // 确保supportedFormats存在且是数组
-    const supportedFormats = safeConfig.supportedFormats || ['.dwg', '.dxf', '.pdf', '.jpg', '.png']
+    const supportedFormats = ['.dwg', '.dxf', '.pdf', '.jpg', '.png', '.DWG', '.DXF']
     const supportedExtensions = supportedFormats.map(f => f.replace('.', ''))
 
     if (!supportedExtensions.includes(ext)) {
@@ -485,21 +199,8 @@ export async function POST(req: NextRequest) {
     if (imageFormats.includes(ext) || cadFormats.includes(ext)) {
       // AI大模型分析
       structured = await analyzeWithAI(filePath, ext)
-
-      // 计算设备总数
-      let totalDevices = 0;
-      if (structured.devices && Array.isArray(structured.devices)) {
-        totalDevices = structured.devices.reduce((sum: number, device: any) => sum + (device.count || 1), 0);
-      }
-
-      // 添加设备总数到结构化数据中
-      structured.totalDevices = totalDevices;
-
       // 更新分析文本，包含设备总数
-      analysis = `检测到共 ${totalDevices} 个安防设备。\n${structured.summary}\n设备清单：` + JSON.stringify(structured.devices, null, 2);
-
-      // 为了兼容前端显示，添加security_devices字段
-      structured.security_devices = structured.devices;
+      analysis = structured.analysis
     } else {
       return NextResponse.json({ error: '不支持的文件类型' }, { status: 400 })
     }
@@ -516,7 +217,24 @@ export async function POST(req: NextRequest) {
     await fs.writeFile(structuredReportPath, JSON.stringify(structured, null, 2))
     const structuredReportUrl = `/cad-analyzer/${structuredReportName}`
 
-    return NextResponse.json({ url, analysis, reportUrl, structuredReportUrl, structured })
+    // 获取preview_image字段（如果存在）
+    const preview_image = structured.preview_image || null;
+
+    // 构建返回数据
+    const responseData = {
+      url,
+      analysis,
+      reportUrl,
+      structuredReportUrl,
+      structured,
+      preview_image, // 添加preview_image字段到返回结果中
+      metadata: structured.metadata || null // 添加metadata字段
+    };
+
+    // 打印最终返回给前端的数据，用于调试
+    console.log("返回给前端的数据:", JSON.stringify(responseData, null, 2));
+
+    return NextResponse.json(responseData)
   } catch (error) {
     console.error('CAD解读智能体分析错误:', error);
     await logApiError('cad-analyzer-analyze', error)

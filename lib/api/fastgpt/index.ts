@@ -34,6 +34,7 @@ export interface StreamOptions {
   onError?: (error: Error) => void
   onFinish?: () => void
   signal?: AbortSignal
+  variables?: Record<string, any> // 新增全局变量支持
 }
 
 export interface FastGPTChatResponse {
@@ -387,6 +388,7 @@ export class FastGPTClient {
       messages: messages,
       temperature: options.temperature || this.agent.temperature || DEFAULT_AGENT_SETTINGS.temperature,
       max_tokens: options.maxTokens || this.agent.maxTokens || DEFAULT_AGENT_SETTINGS.maxTokens,
+      variables: options.variables || {}, // 添加全局变量支持
     }
 
     // 通知开始流式传输
@@ -535,6 +537,13 @@ export class FastGPTClient {
                       options.onIntermediateValue(parsed, lastEventType)
                     }
                     break;
+                  case "interactive":
+                    // 处理交互节点事件
+                    console.log("检测到交互节点事件:", parsed);
+                    if (options.onIntermediateValue) {
+                      options.onIntermediateValue(parsed, lastEventType);
+                    }
+                    break;
                   default:
                     if (options.onIntermediateValue) {
                       options.onIntermediateValue(parsed, lastEventType)
@@ -595,10 +604,18 @@ export class FastGPTClient {
       return "抱歉，我无法连接到服务器。请确保您已配置API密钥和AppID，或联系管理员获取帮助。"
     }
 
+    const requestBody = {
+      model: this.agent.appId,
+      chatId: this.agent.chatId,
+      messages,
+      variables: options.variables || {},
+      ...options
+    }
+
     const res = await fetchWithRetry(apiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.agent.apiKey}` },
-      body: JSON.stringify({ messages, ...options }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!res.ok) {

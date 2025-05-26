@@ -42,6 +42,8 @@ export async function GET() {
       multimodalModel: a.multimodalModel ?? '',
       supportsStream: a.supportsStream ?? true,
       supportsDetail: a.supportsDetail ?? true,
+      globalVariables: a.globalVariables ? JSON.parse(a.globalVariables) : [],
+      welcomeText: a.welcomeText ?? '',
     }));
     return NextResponse.json({ success: true, data: safeAgents });
   } catch (error) {
@@ -84,6 +86,8 @@ export async function POST(req: NextRequest) {
       order: typeof body.order === 'number' ? body.order : Number(body.order) || 100,
       supportsStream: typeof body.supportsStream === 'boolean' ? body.supportsStream : true,
       supportsDetail: typeof body.supportsDetail === 'boolean' ? body.supportsDetail : true,
+      globalVariables: body.globalVariables ? JSON.stringify(body.globalVariables) : null,
+      welcomeText: body.welcomeText || '',
     };
 
     console.log("POST /api/admin/agent-config - 准备保存数据:", JSON.stringify(agentData, null, 2));
@@ -158,6 +162,8 @@ export async function PUT(req: NextRequest) {
     agent.order = typeof body.order === 'number' ? body.order : Number(body.order) || agent.order;
     agent.supportsStream = typeof body.supportsStream === 'boolean' ? body.supportsStream : agent.supportsStream;
     agent.supportsDetail = typeof body.supportsDetail === 'boolean' ? body.supportsDetail : agent.supportsDetail;
+    agent.globalVariables = body.globalVariables ? JSON.stringify(body.globalVariables) : agent.globalVariables;
+    agent.welcomeText = body.welcomeText ?? agent.welcomeText;
     try {
       // 强制设置updatedAt为当前时间
       agent.updatedAt = new Date();

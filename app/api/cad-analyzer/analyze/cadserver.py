@@ -2,6 +2,7 @@ import ezdxf
 import json
 import os
 import io
+import subprocess
 import requests
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
@@ -12,6 +13,8 @@ import logging
 import asyncio
 import matplotlib.pyplot as plt
 import numpy as np
+import tempfile
+from ezdxf.addons import odafc  # 导入ODA File Converter接口
 # ======================
 # 配置区
 # ======================
@@ -22,7 +25,7 @@ MAX_ENTITIES = 3000  # 默认最大解析实体数
 
 # 安防设备关键词列表
 SECURITY_KEYWORDS = [
-    '考勤', '门禁', '消费机', '道闸', '摄像机', 
+    '考勤', '门禁', '消费机', '道闸', '摄像机',
     '读卡器', '电锁', '门磁', '闸机', '访客机',
     '指纹机', '人脸机', '车位锁', '巡更点', '报警'
 ]
@@ -33,13 +36,13 @@ CUSTOM_PROMPT = """
         - Background: 用户需要对CAD图纸中的安防设备进行详细分析，设备类型统计（考勤、门禁、消费、停车等设备的类型和数量）、摄像头信息、安装调试建议以及预估布线数据等内容的分析。这表明用户对安防系统的细节和整体规划有更深入的需求，可能用于项目规划、设备采购或施工指导。
         - Profile: 你是一位经验丰富的安防系统工程师，精通CAD图纸的解读，对安防设备的类型、安装规范、接线要求以及系统拓扑关系有深入的理解和丰富的实践经验。同时，你具备专业的技术知识，能够准确统计设备数量、分析摄像头信息，并提供专业的安装调试建议和预估布线数据。
         - Skills: 你具备CAD图纸解读能力、安防设备专业知识、系统规划与设计能力、技术参数分析能力以及工程预估能力。
-        - Goals: 
+        - Goals:
         1. 严格按照图纸标注，统计各类安防设备的数量和类型。
         2. 详细分析摄像头信息，包括型号、安装位置、监控范围等。
         3. 提供专业的安装调试建议，确保设备正常运行。
         4. 预估布线数据，包括线缆长度、敷设方式等。
         5. 用Mermaid语法清晰描述系统拓扑关系。
-        - Constrains: 
+        - Constrains:
         1. 设备名称必须与图纸标注完全一致。
         2. 技术参数需标注单位（如mm、m、Ω等）。
         3. 排除非安防相关设备（如照明、空调等）。
@@ -144,6 +147,51 @@ executor = ThreadPoolExecutor(max_workers=4)
 # ======================
 # 核心功能函数
 # ======================
+def convert_dwg_to_dxf(dwg_file_path):
+    """将DWG文件转换为DXF文件"""
+    logger.info(f"Converting DWG file to DXF: {dwg_file_path}")
+    try:
+        # 创建唯一的临时文件名
+        import uuid
+        unique_id = str(uuid.uuid4())
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        dxf_file_path = os.path.join(current_directory, "tmp", f"cad_convert_{unique_id}.dxf")
+
+        # 确保目标文件不存在
+        if os.path.exists(dxf_file_path):
+            os.remove(dxf_file_path)
+
+        # 使用ODA File Converter进行转换
+        oda_path  = os.path.join(current_directory,'ODAFileConverter', "ODAFileConverter.exe")
+        cmd = [oda_path, dwg_file_path, dxf_file_path, "ACAD2018", "DXF", "0", "1"]
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                cwd=os.path.dirname(oda_path)  # 设置工作目录为 ODAFileConverter.exe 所在目录
+            )
+            print(f"返回码: {result.returncode}")
+            print(f"标准输出: {result.stdout}")
+            print(f"错误输出: {result.stderr}")
+
+            if result.returncode == 0:
+                print(f"转换成功: {dxf_file_path}")
+            else:
+                print(f"转换失败，返回码: {result.returncode}")
+        except FileNotFoundError as e:
+            print(f"错误: {e}")
+        except Exception as e:
+            print(f"意外错误: {e}")
+
+        # 检查转换后的文件是否存在
+        if not os.path.exists(dxf_file_path):
+            raise Exception(f"转换后的DXF文件不存在: {dxf_file_path}")
+
+        return dxf_file_path
+    except Exception as e:
+        raise Exception(f"DWG转换失败: {str(e)}")
+
 def vec_to_list(vec):
     """将Vec3对象转换为列表，兼容不同版本的ezdxf"""
     try:
@@ -167,7 +215,7 @@ def enhanced_parse_dxf(file_path, max_entities=3000):
         all_entities = list(doc.modelspace())
         entities_count = len(all_entities)
         limited_entities = all_entities[:max_entities]
-        
+
         # 安防设备专用数据结构
         security_data = {
             "metadata": {
@@ -194,7 +242,7 @@ def enhanced_parse_dxf(file_path, max_entities=3000):
                         "rotation": getattr(entity.dxf, 'rotation', 0)
                     }
                     security_data["security_devices"].append(device_info)
-            
+
             elif entity.dxftype() in ('MTEXT', 'TEXT'):
                 text_content = getattr(entity, 'text', '') or getattr(entity.dxf, 'text', '')
                 if text_content and is_security_related(text_content):
@@ -205,7 +253,7 @@ def enhanced_parse_dxf(file_path, max_entities=3000):
                         "position": vec_to_list(entity.dxf.insert) if hasattr(entity.dxf, 'insert') else None
                     }
                     security_data["text_annotations"].append(annotation)
-                    
+
                     # 如果是线缆标注
                     if any(word in text_content.lower() for word in ['线', '缆', 'RVVP', 'RVV']):
                         wiring_info = {
@@ -221,7 +269,7 @@ def enhanced_parse_dxf(file_path, max_entities=3000):
                     points = [vec_to_list(entity.dxf.start), vec_to_list(entity.dxf.end)]
                 else:
                     points = [vec_to_list(point) for point in entity.get_points()]
-                
+
                 # 标记为可能的连接线
                 security_data["wiring"].append({
                     "type": entity.dxftype(),
@@ -241,28 +289,28 @@ def plot_security_layout(data):
     ax.set_aspect('equal')
     ax.grid(True)
     ax.set_title("安防设备布局图", fontproperties='SimHei')
-    
+
     # 绘制设备位置
     devices = data.get("security_devices", [])
     for device in devices:
         pos = device["position"]
         if pos and len(pos) >= 2:
             ax.plot(pos[0], pos[1], 'ro', markersize=8)
-            ax.text(pos[0], pos[1]+0.2, device["name"], 
+            ax.text(pos[0], pos[1]+0.2, device["name"],
                    fontsize=8, ha='center', fontproperties='SimHei')
-    
+
     # 绘制连接线
     wiring = data.get("wiring", [])
     for wire in wiring:
         if "points" in wire and len(wire["points"]) >= 2:
             points = np.array(wire["points"])
             ax.plot(points[:,0], points[:,1], 'b-', linewidth=1)
-    
+
     # 添加图例
     ax.plot([], [], 'ro', label='安防设备')
     ax.plot([], [], 'b-', label='连接线路')
     ax.legend(prop={'family': 'SimHei'})
-    
+
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150)
     plt.close()
@@ -276,22 +324,22 @@ def call_aliyun_model(prompt, model_name="qwen-turbo"):
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
     }
-    
+
     # 如果提示不超过最大长度，直接调用
     # if len(prompt) <= MAX_API_LENGTH:
     return [single_api_call(prompt, model_name, headers)]
-    
+
     # 分割长提示为多个块
     chunks = split_prompt_into_chunks(prompt)
     results = []
-    
+
     for chunk in chunks:
         result = single_api_call(chunk, model_name, headers)
         if result.startswith("API Error:") or result.startswith("Request Failed:"):
             logger.error(f"API call failed: {result}")
             return [result]
         results.append(result)
-    
+
     return results
 
 def single_api_call(content, model_name, headers):
@@ -306,7 +354,7 @@ def single_api_call(content, model_name, headers):
             "result_format": "message"
         }
     }
-    
+
     try:
         response = requests.post(ALIYUN_API_URL, headers=headers, json=payload)
         response.raise_for_status()
@@ -326,62 +374,95 @@ def split_prompt_into_chunks(prompt):
         chunks.append(chunk)
     return chunks
 
-def process_dxf_file(file_path, model_choice, max_entities):
-    """处理DXF文件并返回解析结果和预览"""
-    logger.info(f"Processing DXF file: {file_path}")
-    
-    # 检查文件是否存在且为DXF
+def process_cad_file(file_path, model_choice, max_entities):
+    """处理CAD文件(DXF或DWG)并返回解析结果和预览"""
+    # 检查文件是否存在
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-    if not file_path.lower().endswith('.dxf'):
-        raise HTTPException(status_code=400, detail="Only DXF files are supported")
-    
-    # 解析DXF
-    cad_data = enhanced_parse_dxf(file_path, max_entities)
-    
-    # 生成预览图
-    preview_image = plot_security_layout(cad_data)
-    preview_base64 = base64.b64encode(preview_image).decode('utf-8')
-    
-    # 调用大模型分析
-    data_json = json.dumps(cad_data, ensure_ascii=False, indent=2)
-    ai_response = call_aliyun_model(data_json, model_choice)
-    ai_response = '\n'.join(ai_response)
-    
-    # 构建结果
-    result = {
-        "filename": os.path.basename(file_path),
-        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "preview_image": f"data:image/png;base64,{preview_base64}",
-        "metadata": cad_data["metadata"],
-        "analysis": ai_response,
-        "raw_data": cad_data
-    }
-    
-    return result
+
+    # 根据文件扩展名或传入的文件类型处理
+    file_ext = os.path.splitext(file_path)[1].lower()
+    if not file_ext.startswith('.'):
+        file_ext = '.' + file_ext  # 确保扩展名以点开头
+
+    logger.info(f"File extension determined as: {file_ext}")
+    dxf_file_path = file_path
+    temp_file_created = False
+
+    try:
+        # 如果是DWG文件，先转换为DXF
+        if file_ext.lower() == '.dwg':
+            logger.info("Detected DWG file, converting to DXF")
+            try:
+                dxf_file_path = convert_dwg_to_dxf(file_path)
+                temp_file_created = True
+                logger.info(f"DWG file converted successfully to: {dxf_file_path}")
+            except Exception as e:
+                logger.error(f"Failed to convert DWG to DXF: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Failed to convert DWG to DXF: {str(e)}")
+        elif file_ext.lower() != '.dxf':
+            raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_ext}. Only DXF and DWG files are supported")
+
+        # 解析DXF
+        cad_data = enhanced_parse_dxf(dxf_file_path, max_entities)
+
+        # 生成预览图
+        preview_image = plot_security_layout(cad_data)
+        preview_base64 = base64.b64encode(preview_image).decode('utf-8')
+
+        # 调用大模型分析
+        data_json = json.dumps(cad_data, ensure_ascii=False, indent=2)
+        ai_response = call_aliyun_model(data_json, model_choice)
+        ai_response = '\n'.join(ai_response)
+
+        # 构建结果
+        result = {
+            "filename": os.path.basename(file_path),
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "preview_image": f"data:image/png;base64,{preview_base64}",
+            "metadata": cad_data["metadata"],
+            "analysis": ai_response,
+            "raw_data": cad_data
+        }
+
+        return result
+    finally:
+        # 如果创建了临时文件，清理它
+        if temp_file_created and os.path.exists(dxf_file_path):
+            try:
+                os.unlink(dxf_file_path)
+                logger.info(f"Temporary DXF file removed: {dxf_file_path}")
+            except Exception as e:
+                logger.warning(f"Failed to remove temporary file: {str(e)}")
 
 # ======================
 # FastAPI 路由
 # ======================
 @app.post("/parse_dxf")
 async def parse_dxf(request: ParseRequest):
-    """解析DXF文件并返回预览和分析结果"""
+    """解析DXF或DWG文件并返回预览和分析结果"""
     try:
         # 在线程池中执行解析任务
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
             executor,
-            process_dxf_file,
+            process_cad_file,
             request.file_path,
             request.model_choice,
             request.max_entities
         )
+
+        # 记录处理成功
+        logger.info(f"Successfully processed file: {request.file_path}")
         return result
     except HTTPException as e:
+        logger.error(f"HTTP Exception: {e.detail}")
         raise e
     except Exception as e:
-        logger.error(f"Error processing file: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+        # 返回更详细的错误信息
+        error_detail = f"Error processing file: {str(e)}"
+        logger.error(error_detail)
+        raise HTTPException(status_code=500, detail=error_detail)
 
 @app.get("/health")
 async def health_check():

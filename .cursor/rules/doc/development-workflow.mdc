@@ -1,0 +1,726 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 开发工作流程规范
+
+## 开发流程概览
+
+### 1. 整体开发流程
+
+```mermaid
+graph TD
+    A[需求分析] --> B[技术设计]
+    B --> C[开发实现]
+    C --> D[代码审查]
+    D --> E[单元测试]
+    E --> F[集成测试]
+    F --> G[E2E测试]
+    G --> H[部署上线]
+    H --> I[监控验证]
+    
+    D --> J{审查通过?}
+    J -->|否| C
+    J -->|是| E
+    
+    E --> K{测试通过?}
+    K -->|否| C
+    K -->|是| F
+    
+    F --> L{集成测试通过?}
+    L -->|否| C
+    L -->|是| G
+    
+    G --> M{E2E测试通过?}
+    M -->|否| C
+    M -->|是| H
+```
+
+### 2. Git 工作流
+
+```mermaid
+gitgraph
+    commit id: "main"
+    branch develop
+    checkout develop
+    commit id: "feat: init develop"
+    
+    branch feature/chat-ui
+    checkout feature/chat-ui
+    commit id: "feat: add chat container"
+    commit id: "feat: add message list"
+    commit id: "test: add chat tests"
+    
+    checkout develop
+    merge feature/chat-ui
+    commit id: "merge: chat ui feature"
+    
+    branch release/v1.0.0
+    checkout release/v1.0.0
+    commit id: "chore: prepare v1.0.0"
+    commit id: "fix: minor bugs"
+    
+    checkout main
+    merge release/v1.0.0
+    commit id: "release: v1.0.0"
+    
+    checkout develop
+    merge main
+```
+
+## 分支管理策略
+
+### 1. 分支类型
+
+#### 主分支
+- **main**: 生产环境分支，只包含稳定的发布版本
+- **develop**: 开发主分支，包含最新的开发功能
+
+#### 辅助分支
+- **feature/***: 功能开发分支
+- **bugfix/***: Bug修复分支
+- **hotfix/***: 紧急修复分支
+- **release/***: 发布准备分支
+
+### 2. 分支命名规范
+
+```bash
+# 功能分支
+feature/agent-management
+feature/chat-interface
+feature/file-upload
+
+# Bug修复分支
+bugfix/chat-message-display
+bugfix/api-error-handling
+
+# 热修复分支
+hotfix/security-patch
+hotfix/critical-bug-fix
+
+# 发布分支
+release/v1.0.0
+release/v1.1.0
+```
+
+### 3. 分支操作流程
+
+#### 功能开发流程
+```bash
+# 1. 从develop创建功能分支
+git checkout develop
+git pull origin develop
+git checkout -b feature/new-feature
+
+# 2. 开发功能
+git add .
+git commit -m "feat: implement new feature"
+
+# 3. 推送分支
+git push origin feature/new-feature
+
+# 4. 创建Pull Request
+# 5. 代码审查
+# 6. 合并到develop
+git checkout develop
+git merge feature/new-feature
+git push origin develop
+
+# 7. 删除功能分支
+git branch -d feature/new-feature
+git push origin --delete feature/new-feature
+```
+
+## 代码提交规范
+
+### 1. Commit Message 格式
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### 2. Type 类型说明
+
+| Type | 说明 | 示例 |
+|------|------|------|
+| feat | 新功能 | feat(chat): add message editing |
+| fix | Bug修复 | fix(api): handle null response |
+| docs | 文档更新 | docs: update API documentation |
+| style | 代码格式 | style: fix eslint warnings |
+| refactor | 代码重构 | refactor(utils): optimize helper functions |
+| test | 测试相关 | test(chat): add unit tests |
+| chore | 构建/工具 | chore: update dependencies |
+| perf | 性能优化 | perf(db): optimize query performance |
+| ci | CI/CD | ci: add github actions workflow |
+| build | 构建系统 | build: update webpack config |
+
+### 3. Scope 范围说明
+
+- **chat**: 聊天相关功能（FastGPT对话智能体）
+- **cad**: CAD解读智能体功能
+- **agent**: 智能体管理
+- **admin**: 管理员功能
+- **api**: API接口
+- **ui**: 用户界面
+- **db**: 数据库相关
+- **auth**: 认证授权
+- **file**: 文件处理
+- **monitor**: 数据监控
+- **model**: AI模型仓库
+- **test**: 测试相关
+
+### 4. 提交示例
+
+```bash
+# 好的提交示例
+git commit -m "feat(chat): add real-time message streaming
+
+- Implement SSE for real-time message delivery
+- Add message status indicators
+- Handle connection errors gracefully
+
+Closes #123"
+
+# 不好的提交示例
+git commit -m "fix bug"
+git commit -m "update code"
+git commit -m "WIP"
+```
+
+## 代码审查规范
+
+### 1. 审查检查清单
+
+#### 代码质量
+- [ ] 代码符合项目编码规范
+- [ ] 没有明显的性能问题
+- [ ] 错误处理完善
+- [ ] 代码可读性良好
+- [ ] 没有硬编码的配置
+
+#### 功能实现
+- [ ] 功能实现符合需求
+- [ ] 边界条件处理正确
+- [ ] 用户体验良好
+- [ ] 兼容性考虑充分
+
+#### 安全性
+- [ ] 输入验证完善
+- [ ] 没有安全漏洞
+- [ ] 权限控制正确
+- [ ] 敏感信息保护
+
+#### 测试覆盖
+- [ ] 单元测试覆盖关键逻辑
+- [ ] 集成测试验证功能
+- [ ] 测试用例充分
+
+### 2. 审查流程
+
+```mermaid
+sequenceDiagram
+    participant D as 开发者
+    participant R as 审查者
+    participant CI as CI/CD
+    participant M as 主分支
+    
+    D->>R: 创建Pull Request
+    R->>R: 代码审查
+    R->>CI: 触发自动化测试
+    CI->>R: 返回测试结果
+    
+    alt 审查通过
+        R->>M: 合并代码
+        M->>D: 通知合并成功
+    else 需要修改
+        R->>D: 提出修改建议
+        D->>D: 修改代码
+        D->>R: 更新Pull Request
+    end
+```
+
+### 3. 审查工具配置
+
+#### GitHub Pull Request Template
+```markdown
+## 变更描述
+简要描述本次变更的内容和目的
+
+## 变更类型
+- [ ] 新功能
+- [ ] Bug修复
+- [ ] 文档更新
+- [ ] 代码重构
+- [ ] 性能优化
+
+## 测试
+- [ ] 单元测试通过
+- [ ] 集成测试通过
+- [ ] 手动测试完成
+
+## 检查清单
+- [ ] 代码符合规范
+- [ ] 文档已更新
+- [ ] 测试覆盖充分
+- [ ] 无安全问题
+
+## 相关Issue
+Closes #issue_number
+```
+
+## 测试策略
+
+### 1. 测试金字塔
+
+```mermaid
+graph TB
+    subgraph "测试金字塔"
+        A[E2E测试<br/>少量，高价值]
+        B[集成测试<br/>适量，关键路径]
+        C[单元测试<br/>大量，快速反馈]
+    end
+    
+    A --> B
+    B --> C
+    
+    style A fill:#ff6b6b
+    style B fill:#feca57
+    style C fill:#48dbfb
+```
+
+### 2. 单元测试规范
+
+#### 测试文件命名
+```
+src/
+├── components/
+│   ├── chat-message.tsx
+│   └── chat-message.test.tsx
+├── utils/
+│   ├── validation.ts
+│   └── validation.test.ts
+└── services/
+    ├── agent-service.ts
+    └── agent-service.test.ts
+```
+
+#### 测试用例结构
+```typescript
+// chat-message.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { ChatMessage } from './chat-message';
+
+describe('ChatMessage', () => {
+  const mockMessage = {
+    id: '1',
+    role: 'user' as const,
+    content: 'Hello, AI!',
+    timestamp: new Date()
+  };
+
+  describe('渲染测试', () => {
+    it('应该正确渲染用户消息', () => {
+      render(<ChatMessage message={mockMessage} />);
+      expect(screen.getByText('Hello, AI!')).toBeInTheDocument();
+    });
+
+    it('应该显示正确的时间戳', () => {
+      render(<ChatMessage message={mockMessage} />);
+      expect(screen.getByText(/\d{2}:\d{2}/)).toBeInTheDocument();
+    });
+  });
+
+  describe('交互测试', () => {
+    it('应该在点击时触发复制功能', () => {
+      const onCopy = jest.fn();
+      render(<ChatMessage message={mockMessage} onCopy={onCopy} />);
+      
+      fireEvent.click(screen.getByRole('button', { name: /复制/i }));
+      expect(onCopy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('边界条件测试', () => {
+    it('应该处理空消息内容', () => {
+      const emptyMessage = { ...mockMessage, content: '' };
+      render(<ChatMessage message={emptyMessage} />);
+      expect(screen.getByTestId('message-container')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+### 3. 集成测试规范
+
+#### API测试示例
+```typescript
+// api/chat.test.ts
+import { NextRequest } from 'next/server';
+import { POST } from '@/app/api/chat-proxy/route';
+
+describe('/api/chat-proxy', () => {
+  beforeEach(() => {
+    // 设置测试环境
+    process.env.NODE_ENV = 'test';
+  });
+
+  describe('POST /api/chat-proxy', () => {
+    it('应该成功代理聊天请求', async () => {
+      const request = new NextRequest('http://localhost:3000/api/chat-proxy', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetUrl: 'https://api.example.com/chat',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: { message: 'Hello' }
+        })
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+    });
+
+    it('应该处理无效的目标URL', async () => {
+      const request = new NextRequest('http://localhost:3000/api/chat-proxy', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetUrl: 'invalid-url',
+          method: 'POST'
+        })
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+    });
+  });
+});
+```
+
+### 4. E2E测试规范
+
+#### Playwright测试示例
+```typescript
+// tests/chat-flow.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('聊天功能', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/user/chat');
+  });
+
+  test('用户可以发送消息并收到回复', async ({ page }) => {
+    // 选择智能体
+    await page.click('[data-testid="agent-selector"]');
+    await page.click('[data-testid="agent-fastgpt"]');
+
+    // 发送消息
+    await page.fill('[data-testid="chat-input"]', 'Hello, AI!');
+    await page.click('[data-testid="send-button"]');
+
+    // 验证消息显示
+    await expect(page.locator('[data-testid="user-message"]')).toContainText('Hello, AI!');
+    
+    // 等待AI回复
+    await expect(page.locator('[data-testid="ai-message"]')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('用户可以上传文件', async ({ page }) => {
+    // 点击文件上传按钮
+    await page.click('[data-testid="file-upload-button"]');
+
+    // 上传文件
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles('tests/fixtures/test-image.jpg');
+
+    // 验证文件上传成功
+    await expect(page.locator('[data-testid="uploaded-file"]')).toBeVisible();
+  });
+
+  test('聊天历史功能正常', async ({ page }) => {
+    // 发送几条消息
+    await page.fill('[data-testid="chat-input"]', 'First message');
+    await page.click('[data-testid="send-button"]');
+    
+    await page.fill('[data-testid="chat-input"]', 'Second message');
+    await page.click('[data-testid="send-button"]');
+
+    // 打开历史记录
+    await page.click('[data-testid="history-button"]');
+
+    // 验证历史记录显示
+    await expect(page.locator('[data-testid="chat-history"]')).toBeVisible();
+    await expect(page.locator('[data-testid="history-item"]')).toHaveCount(1);
+  });
+});
+```
+
+## 持续集成/持续部署
+
+### 1. GitHub Actions 工作流
+
+```yaml
+# .github/workflows/ci.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linting
+      run: npm run lint
+    
+    - name: Run type checking
+      run: npm run check-types
+    
+    - name: Run unit tests
+      run: npm run test:unit
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+    
+    - name: Run integration tests
+      run: npm run test:integration
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Run E2E tests
+      run: npm run test:e2e
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production..."
+        # 部署脚本
+```
+
+### 2. 部署流程
+
+#### 开发环境部署
+```bash
+# 自动部署到开发环境
+git push origin develop
+# GitHub Actions 自动触发部署
+```
+
+#### 生产环境部署
+```bash
+# 1. 创建发布分支
+git checkout develop
+git checkout -b release/v1.0.0
+
+# 2. 更新版本号
+npm version patch
+
+# 3. 合并到main
+git checkout main
+git merge release/v1.0.0
+
+# 4. 推送触发部署
+git push origin main
+git push origin --tags
+
+# 5. 清理发布分支
+git branch -d release/v1.0.0
+git push origin --delete release/v1.0.0
+```
+
+### 3. 部署检查清单
+
+#### 部署前检查
+- [ ] 所有测试通过
+- [ ] 代码审查完成
+- [ ] 文档更新完成
+- [ ] 数据库迁移脚本准备
+- [ ] 环境变量配置正确
+
+#### 部署后验证
+- [ ] 应用启动正常
+- [ ] 健康检查通过
+- [ ] 关键功能验证
+- [ ] 性能指标正常
+- [ ] 错误日志检查
+
+## 质量保证
+
+### 1. 代码质量指标
+
+#### 覆盖率要求
+- 单元测试覆盖率 ≥ 80%
+- 集成测试覆盖率 ≥ 60%
+- 关键业务逻辑覆盖率 ≥ 90%
+
+#### 代码复杂度
+- 圈复杂度 ≤ 10
+- 函数长度 ≤ 50 行
+- 文件长度 ≤ 500 行
+
+#### 性能指标
+- 页面加载时间 ≤ 2秒
+- API响应时间 ≤ 500ms
+- 内存使用率 ≤ 80%
+
+### 2. 质量门禁
+
+```typescript
+// quality-gate.config.js
+module.exports = {
+  coverage: {
+    statements: 80,
+    branches: 75,
+    functions: 80,
+    lines: 80
+  },
+  complexity: {
+    max: 10
+  },
+  duplication: {
+    max: 3
+  },
+  maintainability: {
+    min: 70
+  }
+};
+```
+
+### 3. 自动化检查
+
+#### Pre-commit Hooks
+```json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-push": "npm run test:unit"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write",
+      "git add"
+    ]
+  }
+}
+```
+
+## 发布管理
+
+### 1. 版本号规范
+
+采用语义化版本控制 (Semantic Versioning):
+
+```
+MAJOR.MINOR.PATCH
+
+例如: 1.2.3
+- MAJOR: 不兼容的API修改
+- MINOR: 向后兼容的功能性新增
+- PATCH: 向后兼容的问题修正
+```
+
+### 2. 发布流程
+
+#### 发布准备
+1. 功能冻结
+2. 全面测试
+3. 文档更新
+4. 变更日志编写
+
+#### 发布执行
+1. 创建发布分支
+2. 版本号更新
+3. 构建和打包
+4. 部署到生产环境
+5. 发布验证
+
+#### 发布后续
+1. 监控系统状态
+2. 收集用户反馈
+3. 问题快速响应
+4. 经验总结
+
+### 3. 回滚策略
+
+#### 快速回滚
+```bash
+# 数据库回滚
+npm run db:rollback
+
+# 应用回滚
+docker-compose down
+docker-compose up -d --scale app=0
+docker-compose up -d previous-version
+```
+
+#### 灰度发布
+```yaml
+# 灰度部署配置
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: ai-chat-interface
+spec:
+  strategy:
+    canary:
+      steps:
+      - setWeight: 10
+      - pause: {duration: 10m}
+      - setWeight: 50
+      - pause: {duration: 10m}
+      - setWeight: 100
+```
+
+---
+
+**注意**: 本开发工作流程规范应根据团队实际情况进行调整，确保流程的可执行性和有效性。

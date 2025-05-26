@@ -18,6 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Slider } from "@/components/ui/slider"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { updateAgent, deleteAgent } from "@/lib/services/admin-agent-service"
+import { initializeChat } from "@/lib/api/fastgpt"
+import type { GlobalVariable } from "@/types/agent"
 
 // 1. props 定义
 export interface AgentFormProps {
@@ -28,7 +30,6 @@ export interface AgentFormProps {
 
 export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
   const { t } = useLanguage()
-  const formRef = useRef<HTMLFormElement>(null)
   const { toast } = useToast()
 
   // 2. 初始化表单状态
@@ -49,9 +50,13 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
   const [supportsFileUpload, setSupportsFileUpload] = useState(true)
   const [supportsImageUpload, setSupportsImageUpload] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isGettingParams, setIsGettingParams] = useState(false)
   const [order, setOrder] = useState<number>(agent?.order ?? 100)
   const [supportsStream, setSupportsStream] = useState(true)
   const [supportsDetail, setSupportsDetail] = useState(true)
+  const [globalVariables, setGlobalVariables] = useState<GlobalVariable[]>([])
+  const [welcomeText, setWelcomeText] = useState("")
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     if (agent) {
@@ -71,6 +76,8 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       setOrder(agent.order ?? 100)
       setSupportsStream(agent.supportsStream !== undefined ? agent.supportsStream : true)
       setSupportsDetail(agent.supportsDetail !== undefined ? agent.supportsDetail : true)
+      setGlobalVariables(agent.globalVariables || [])
+      setWelcomeText(agent.welcomeText || "")
     } else {
       // 新增智能体时的默认值
       setName("")
@@ -88,6 +95,8 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       setOrder(100)
       setSupportsStream(true)
       setSupportsDetail(true)
+      setGlobalVariables([])
+      setWelcomeText("")
     }
   }, [agent])
 
@@ -99,6 +108,19 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
     } catch (e) {
       return false;
     }
+  }
+
+  // 变量类型标签映射
+  const getVariableTypeLabel = (type: string): string => {
+    const typeMap: Record<string, string> = {
+      'text': '文本',
+      'select': '选择框',
+      'custom': '自定义',
+      'number': '数字',
+      'boolean': '布尔值',
+      'option': '选项'
+    }
+    return typeMap[type] || type
   }
 
   // 3. handleSubmit 支持新增和编辑
@@ -154,6 +176,8 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
         supportsDetail: true, // 强制为 true
         ...(agentType === "image-editor" || agentType === "cad-analyzer" ? { multimodalModel: multimodalModel || "qwen-vl-max" } : {}),
         order: Number(order) || 100,
+        globalVariables: globalVariables || [],
+        welcomeText: welcomeText || "",
       }
 
       console.log("准备保存智能体数据:", JSON.stringify(agentData, null, 2));
@@ -204,6 +228,92 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
       } catch (error) {
         toast({ title: "错误", description: "删除智能体失败", variant: "destructive" });
       }
+    }
+  };
+
+  // 获取参数处理函数
+  const handleGetParameters = async () => {
+    if (!apiKey || !appId) {
+      toast({
+        title: "参数不完整",
+        description: "请先输入 API 密钥和 App ID",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGettingParams(true);
+    try {
+      toast({ title: "正在获取参数...", description: "请稍候" });
+
+      // 构造临时智能体对象用于调用初始化接口
+      const tempAgent = {
+        apiKey,
+        appId,
+        apiUrl: apiUrl || "https://zktecoaihub.com/api/v1/chat/completions",
+        name: name || "临时智能体",
+        type: "fastgpt" as const
+      };
+
+      // 调用 FastGPT 初始化接口
+      const response = await initializeChat(tempAgent);
+
+      if (response.code === 200 && response.data) {
+        const { app } = response.data;
+
+        // 自动回填字段
+        if (app.name && !name) {
+          setName(app.name);
+        }
+
+        if (app.intro && !description) {
+          setDescription(app.intro);
+        }
+
+        if (app.chatConfig?.welcomeText) {
+          setWelcomeText(app.chatConfig.welcomeText);
+          if (!systemPrompt) {
+            setSystemPrompt(app.chatConfig.welcomeText);
+          }
+        }
+
+        // 处理全局变量
+        if (app.chatConfig?.variables && Array.isArray(app.chatConfig.variables)) {
+          setGlobalVariables(app.chatConfig.variables);
+        }
+
+        // 如果有模型信息，设置多模态模型
+        if (app.chatModels && app.chatModels.length > 0) {
+          setMultimodalModel(app.chatModels[0]);
+        }
+
+        // 设置文件上传支持
+        if (app.chatConfig?.fileSelectConfig) {
+          setSupportsFileUpload(app.chatConfig.fileSelectConfig.canSelectFile || false);
+          setSupportsImageUpload(app.chatConfig.fileSelectConfig.canSelectImg || false);
+        }
+
+        toast({
+          title: "参数获取成功",
+          description: "已自动回填相关配置信息",
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "获取参数失败",
+          description: "无法从 FastGPT 获取配置信息，请检查 API 密钥和 App ID 是否正确",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("获取参数失败:", error);
+      toast({
+        title: "获取参数失败",
+        description: String(error),
+        variant: "destructive"
+      });
+    } finally {
+      setIsGettingParams(false);
     }
   };
 
@@ -407,6 +517,39 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
                 <p className="text-xs text-muted-foreground">{t("appIdDescription")}</p>
               </div>
 
+              {/* 获取参数按钮 - 仅对FastGPT智能体显示 */}
+              {type === 'fastgpt' && apiKey && appId && (
+                <div className="flex justify-center">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="bg-pantone369-50 hover:bg-pantone369-100 border-pantone369-200 text-pantone369-700"
+                    onClick={handleGetParameters}
+                    disabled={isGettingParams}
+                  >
+                    {isGettingParams ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pantone369-500 mr-2"></div>
+                        获取参数中...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4 4m4-4v12" />
+                        </svg>
+                        获取参数
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+              {type === 'fastgpt' && (!apiKey || !appId) && (
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">请先输入 API 密钥和 App ID 后点击"获取参数"按钮</p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between p-3 rounded-md bg-pantone369-50/50 dark:bg-pantone369-900/10">
                 <Label htmlFor="supportsFileUpload" className="flex items-center gap-2 font-medium">
                   <span>允许文件上传</span>
@@ -463,6 +606,46 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
                 />
                 <p className="text-xs text-muted-foreground">用于控制智能体在列表中的显示顺序，数值越小越靠前</p>
               </div>
+
+              {/* 全局变量显示区域 - 仅对FastGPT智能体显示 */}
+              {type === 'fastgpt' && (
+                <div className="space-y-2">
+                  <Label className="text-pantone369-700 dark:text-pantone369-300">
+                    全局变量
+                  </Label>
+                  <div className="border rounded-md p-4 space-y-2 bg-pantone369-50/30 dark:bg-pantone369-900/10">
+                    {globalVariables.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-4 gap-2 font-medium text-sm text-pantone369-600 dark:text-pantone369-400 pb-1 border-b border-pantone369-200 dark:border-pantone369-800">
+                          <div>变量名</div>
+                          <div>类型</div>
+                          <div>是否必填</div>
+                          <div>描述</div>
+                        </div>
+                        {globalVariables.map((variable, index) => (
+                          <div key={variable.id || index} className="grid grid-cols-4 gap-2 items-center text-sm py-1 border-b border-pantone369-100 dark:border-pantone369-800/30">
+                            <div className="font-medium text-pantone369-700 dark:text-pantone369-300">{variable.label || variable.key}</div>
+                            <div className="text-pantone369-600 dark:text-pantone369-400">{getVariableTypeLabel(variable.type)}</div>
+                            <div className={variable.required ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}>
+                              {variable.required ? "必填" : "选填"}
+                            </div>
+                            <div className="truncate text-pantone369-600 dark:text-pantone369-400" title={variable.description}>
+                              {variable.description || "-"}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-pantone369-500 dark:text-pantone369-400 text-center py-4">
+                        {apiKey && appId ? "暂无全局变量，点击\"获取参数\"按钮从FastGPT获取" : "请先输入API密钥和App ID，然后点击\"获取参数\"按钮"}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    全局变量由FastGPT应用配置决定，用于在对话中传递特定参数。点击\"获取参数\"按钮可自动获取最新配置。
+                  </p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="model" className="space-y-4">

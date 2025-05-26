@@ -1,0 +1,1280 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 安全指导规范
+
+## 安全架构概览
+
+### 1. 安全防护层次
+
+```mermaid
+graph TB
+    subgraph "网络安全层"
+        A[HTTPS/TLS]
+        B[防火墙]
+        C[DDoS防护]
+    end
+    
+    subgraph "应用安全层"
+        D[身份认证]
+        E[权限控制]
+        F[输入验证]
+        G[输出编码]
+    end
+    
+    subgraph "数据安全层"
+        H[数据加密]
+        I[敏感信息脱敏]
+        J[数据备份]
+    end
+    
+    subgraph "基础设施安全层"
+        K[容器安全]
+        L[系统加固]
+        M[日志审计]
+    end
+    
+    A --> D
+    B --> E
+    C --> F
+    D --> H
+    E --> I
+    F --> J
+    G --> K
+    H --> L
+    I --> M
+```
+
+### 2. 威胁模型分析
+
+#### 主要威胁类型
+- **注入攻击**: SQL注入、XSS、命令注入
+- **身份认证绕过**: 弱密码、会话劫持
+- **权限提升**: 垂直/水平权限提升
+- **敏感数据泄露**: 数据库泄露、API泄露
+- **拒绝服务**: DDoS、资源耗尽
+- **恶意文件上传**: 病毒、木马、脚本
+
+#### 风险评估矩阵
+
+| 威胁类型 | 可能性 | 影响程度 | 风险等级 | 防护措施 |
+|---------|--------|----------|----------|----------|
+| SQL注入 | 中 | 高 | 高 | 参数化查询、ORM |
+| XSS攻击 | 高 | 中 | 高 | 输入验证、输出编码 |
+| CSRF攻击 | 中 | 中 | 中 | CSRF Token |
+| 文件上传漏洞 | 中 | 高 | 高 | 文件类型检查、沙箱 |
+| 权限绕过 | 低 | 高 | 中 | 严格权限控制 |
+
+## 身份认证与授权
+
+### 1. 认证机制
+
+#### JWT认证实现
+```typescript
+// lib/auth/jwt.ts
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+
+interface JWTPayload {
+  userId: string;
+  role: UserRole;
+  permissions: Permission[];
+  exp: number;
+  iat: number;
+}
+
+export class AuthService {
+  private readonly JWT_SECRET = process.env.JWT_SECRET!;
+  private readonly JWT_EXPIRES_IN = '24h';
+  
+  async generateToken(user: User): Promise<string> {
+    const payload: JWTPayload = {
+      userId: user.id,
+      role: user.role,
+      permissions: user.permissions,
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24小时
+      iat: Math.floor(Date.now() / 1000)
+    };
+    
+    return jwt.sign(payload, this.JWT_SECRET, {
+      expiresIn: this.JWT_EXPIRES_IN,
+      algorithm: 'HS256'
+    });
+  }
+  
+  async verifyToken(token: string): Promise<JWTPayload | null> {
+    try {
+      const decoded = jwt.verify(token, this.JWT_SECRET) as JWTPayload;
+      
+      // 检查token是否即将过期（提前30分钟刷新）
+      const now = Math.floor(Date.now() / 1000);
+      if (decoded.exp - now < 30 * 60) {
+        // 触发token刷新逻辑
+        this.scheduleTokenRefresh(decoded.userId);
+      }
+      
+      return decoded;
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      return null;
+    }
+  }
+  
+  async hashPassword(password: string): Promise<string> {
+    const saltRounds = 12;
+    return bcrypt.hash(password, saltRounds);
+  }
+  
+  async verifyPassword(password: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(password, hash);
+  }
+  
+  private scheduleTokenRefresh(userId: string): void {
+    // 实现token刷新逻辑
+  }
+}
+```
+
+#### 密码安全策略
+```typescript
+// lib/auth/password-policy.ts
+export class PasswordPolicy {
+  private static readonly MIN_LENGTH = 8;
+  private static readonly MAX_LENGTH = 128;
+  private static readonly REQUIRED_PATTERNS = [
+    /[a-z]/, // 小写字母
+    /[A-Z]/, // 大写字母
+    /[0-9]/, // 数字
+    /[!@#$%^&*(),.?":{}|<>]/ // 特殊字符
+  ];
+  
+  static validate(password: string): ValidationResult {
+    const errors: string[] = [];
+    
+    // 长度检查
+    if (password.length < this.MIN_LENGTH) {
+      errors.push(`密码长度至少${this.MIN_LENGTH}位`);
+    }
+    
+    if (password.length > this.MAX_LENGTH) {
+      errors.push(`密码长度不能超过${this.MAX_LENGTH}位`);
+    }
+    
+    // 复杂度检查
+    let patternCount = 0;
+    for (const pattern of this.REQUIRED_PATTERNS) {
+      if (pattern.test(password)) {
+        patternCount++;
+      }
+    }
+    
+    if (patternCount < 3) {
+      errors.push('密码必须包含至少3种字符类型（大写字母、小写字母、数字、特殊字符）');
+    }
+    
+    // 常见密码检查
+    if (this.isCommonPassword(password)) {
+      errors.push('不能使用常见密码');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+  
+  private static isCommonPassword(password: string): boolean {
+    const commonPasswords = [
+      'password', '123456', 'admin', 'root', 'user',
+      'qwerty', 'abc123', 'password123'
+    ];
+    
+    return commonPasswords.includes(password.toLowerCase());
+  }
+}
+```
+
+### 2. 权限控制
+
+#### RBAC权限模型
+```typescript
+// lib/auth/rbac.ts
+export enum Role {
+  SUPER_ADMIN = 'super_admin',
+  ADMIN = 'admin',
+  USER = 'user',
+  GUEST = 'guest'
+}
+
+export enum Permission {
+  // 智能体管理
+  AGENT_CREATE = 'agent:create',
+  AGENT_READ = 'agent:read',
+  AGENT_UPDATE = 'agent:update',
+  AGENT_DELETE = 'agent:delete',
+  
+  // 用户管理
+  USER_CREATE = 'user:create',
+  USER_READ = 'user:read',
+  USER_UPDATE = 'user:update',
+  USER_DELETE = 'user:delete',
+  
+  // 系统管理
+  SYSTEM_CONFIG = 'system:config',
+  SYSTEM_MONITOR = 'system:monitor',
+  SYSTEM_BACKUP = 'system:backup'
+}
+
+export class RBACService {
+  private static readonly ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+    [Role.SUPER_ADMIN]: Object.values(Permission),
+    [Role.ADMIN]: [
+      Permission.AGENT_CREATE,
+      Permission.AGENT_READ,
+      Permission.AGENT_UPDATE,
+      Permission.AGENT_DELETE,
+      Permission.USER_READ,
+      Permission.SYSTEM_MONITOR
+    ],
+    [Role.USER]: [
+      Permission.AGENT_READ
+    ],
+    [Role.GUEST]: []
+  };
+  
+  static hasPermission(userRole: Role, requiredPermission: Permission): boolean {
+    const userPermissions = this.ROLE_PERMISSIONS[userRole] || [];
+    return userPermissions.includes(requiredPermission);
+  }
+  
+  static hasAnyPermission(userRole: Role, permissions: Permission[]): boolean {
+    return permissions.some(permission => this.hasPermission(userRole, permission));
+  }
+  
+  static hasAllPermissions(userRole: Role, permissions: Permission[]): boolean {
+    return permissions.every(permission => this.hasPermission(userRole, permission));
+  }
+}
+
+// 权限检查装饰器
+export function RequirePermission(permission: Permission) {
+  return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = function(...args: any[]) {
+      const user = this.getCurrentUser(); // 获取当前用户
+      
+      if (!user || !RBACService.hasPermission(user.role, permission)) {
+        throw new Error('权限不足');
+      }
+      
+      return originalMethod.apply(this, args);
+    };
+    
+    return descriptor;
+  };
+}
+```
+
+## 输入验证与输出编码
+
+### 1. 输入验证
+
+#### 通用验证函数
+```typescript
+// lib/security/validation.ts
+export class InputValidator {
+  // XSS防护
+  static sanitizeHtml(input: string): string {
+    return input
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
+  }
+  
+  // SQL注入防护
+  static validateSqlInput(input: string): boolean {
+    const sqlPatterns = [
+      /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/i,
+      /(--|\/\*|\*\/|;)/,
+      /(\b(OR|AND)\b.*=.*)/i
+    ];
+    
+    return !sqlPatterns.some(pattern => pattern.test(input));
+  }
+  
+  // 文件名验证
+  static validateFileName(filename: string): boolean {
+    const invalidChars = /[<>:"/\\|?*\x00-\x1f]/;
+    const reservedNames = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
+    
+    return !invalidChars.test(filename) && 
+           !reservedNames.test(filename) && 
+           filename.length > 0 && 
+           filename.length <= 255;
+  }
+  
+  // URL验证
+  static validateUrl(url: string): boolean {
+    try {
+      const urlObj = new URL(url);
+      const allowedProtocols = ['http:', 'https:'];
+      return allowedProtocols.includes(urlObj.protocol);
+    } catch {
+      return false;
+    }
+  }
+  
+  // 邮箱验证
+  static validateEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) && email.length <= 254;
+  }
+  
+  // 手机号验证
+  static validatePhone(phone: string): boolean {
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    return phoneRegex.test(phone);
+  }
+}
+```
+
+#### API输入验证中间件
+```typescript
+// lib/middleware/validation.ts
+import { z } from 'zod';
+import { NextRequest, NextResponse } from 'next/server';
+
+export function validateRequest(schema: z.ZodSchema) {
+  return async (req: NextRequest) => {
+    try {
+      const body = await req.json();
+      const validatedData = schema.parse(body);
+      
+      // 将验证后的数据附加到请求对象
+      (req as any).validatedData = validatedData;
+      
+      return null; // 验证通过
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '输入数据验证失败',
+            details: error.errors
+          }
+        }, { status: 400 });
+      }
+      
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        }
+      }, { status: 500 });
+    }
+  };
+}
+
+// 使用示例
+export const chatMessageSchema = z.object({
+  message: z.string()
+    .min(1, '消息不能为空')
+    .max(4000, '消息长度不能超过4000字符')
+    .refine(val => InputValidator.sanitizeHtml(val) === val, '消息包含非法字符'),
+  agentId: z.string().uuid('智能体ID格式错误'),
+  chatId: z.string().uuid('聊天ID格式错误').optional()
+});
+```
+
+### 2. 文件上传安全
+
+#### 文件上传验证
+```typescript
+// lib/security/file-upload.ts
+export class FileUploadSecurity {
+  private static readonly ALLOWED_MIME_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'application/pdf',
+    'text/plain'
+  ];
+  
+  private static readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  
+  private static readonly DANGEROUS_EXTENSIONS = [
+    '.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js',
+    '.jar', '.php', '.asp', '.aspx', '.jsp', '.sh', '.ps1'
+  ];
+  
+  static validateFile(file: File): ValidationResult {
+    const errors: string[] = [];
+    
+    // 文件大小检查
+    if (file.size > this.MAX_FILE_SIZE) {
+      errors.push(`文件大小不能超过${this.MAX_FILE_SIZE / 1024 / 1024}MB`);
+    }
+    
+    // MIME类型检查
+    if (!this.ALLOWED_MIME_TYPES.includes(file.type)) {
+      errors.push('不支持的文件类型');
+    }
+    
+    // 文件扩展名检查
+    const extension = this.getFileExtension(file.name);
+    if (this.DANGEROUS_EXTENSIONS.includes(extension.toLowerCase())) {
+      errors.push('危险的文件扩展名');
+    }
+    
+    // 文件名检查
+    if (!InputValidator.validateFileName(file.name)) {
+      errors.push('无效的文件名');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+  
+  static async scanFileContent(buffer: Buffer): Promise<boolean> {
+    // 检查文件头部魔数
+    const magicNumbers = {
+      'image/jpeg': [0xFF, 0xD8, 0xFF],
+      'image/png': [0x89, 0x50, 0x4E, 0x47],
+      'image/gif': [0x47, 0x49, 0x46],
+      'application/pdf': [0x25, 0x50, 0x44, 0x46]
+    };
+    
+    // 检查是否包含恶意脚本
+    const maliciousPatterns = [
+      /<script/i,
+      /javascript:/i,
+      /vbscript:/i,
+      /onload=/i,
+      /onerror=/i
+    ];
+    
+    const content = buffer.toString('utf8');
+    return !maliciousPatterns.some(pattern => pattern.test(content));
+  }
+  
+  private static getFileExtension(filename: string): string {
+    return filename.substring(filename.lastIndexOf('.'));
+  }
+}
+```
+
+## 数据安全
+
+### 1. 数据加密
+
+#### 敏感数据加密
+```typescript
+// lib/security/encryption.ts
+import crypto from 'crypto';
+
+export class EncryptionService {
+  private static readonly ALGORITHM = 'aes-256-gcm';
+  private static readonly KEY_LENGTH = 32;
+  private static readonly IV_LENGTH = 16;
+  private static readonly TAG_LENGTH = 16;
+  
+  private readonly encryptionKey: Buffer;
+  
+  constructor(secretKey: string) {
+    this.encryptionKey = crypto.scryptSync(secretKey, 'salt', EncryptionService.KEY_LENGTH);
+  }
+  
+  encrypt(plaintext: string): string {
+    const iv = crypto.randomBytes(EncryptionService.IV_LENGTH);
+    const cipher = crypto.createCipher(EncryptionService.ALGORITHM, this.encryptionKey);
+    cipher.setAAD(Buffer.from('additional-data'));
+    
+    let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    const tag = cipher.getAuthTag();
+    
+    // 组合IV、tag和加密数据
+    return iv.toString('hex') + ':' + tag.toString('hex') + ':' + encrypted;
+  }
+  
+  decrypt(encryptedData: string): string {
+    const parts = encryptedData.split(':');
+    if (parts.length !== 3) {
+      throw new Error('Invalid encrypted data format');
+    }
+    
+    const iv = Buffer.from(parts[0], 'hex');
+    const tag = Buffer.from(parts[1], 'hex');
+    const encrypted = parts[2];
+    
+    const decipher = crypto.createDecipher(EncryptionService.ALGORITHM, this.encryptionKey);
+    decipher.setAAD(Buffer.from('additional-data'));
+    decipher.setAuthTag(tag);
+    
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
+  }
+  
+  // 生成安全的随机密钥
+  static generateSecretKey(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+  
+  // 哈希函数（用于密码等）
+  static hash(data: string, salt?: string): string {
+    const actualSalt = salt || crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(data, actualSalt, 100000, 64, 'sha512');
+    return actualSalt + ':' + hash.toString('hex');
+  }
+  
+  static verifyHash(data: string, hashedData: string): boolean {
+    const [salt, hash] = hashedData.split(':');
+    const newHash = crypto.pbkdf2Sync(data, salt, 100000, 64, 'sha512');
+    return hash === newHash.toString('hex');
+  }
+}
+```
+
+### 2. 数据脱敏
+
+#### 敏感信息脱敏
+```typescript
+// lib/security/data-masking.ts
+export class DataMasking {
+  // 手机号脱敏
+  static maskPhone(phone: string): string {
+    if (phone.length !== 11) return phone;
+    return phone.substring(0, 3) + '****' + phone.substring(7);
+  }
+  
+  // 邮箱脱敏
+  static maskEmail(email: string): string {
+    const [username, domain] = email.split('@');
+    if (username.length <= 2) return email;
+    
+    const maskedUsername = username.substring(0, 2) + 
+                          '*'.repeat(username.length - 2);
+    return maskedUsername + '@' + domain;
+  }
+  
+  // 身份证脱敏
+  static maskIdCard(idCard: string): string {
+    if (idCard.length !== 18) return idCard;
+    return idCard.substring(0, 6) + '********' + idCard.substring(14);
+  }
+  
+  // API密钥脱敏
+  static maskApiKey(apiKey: string): string {
+    if (apiKey.length <= 8) return '*'.repeat(apiKey.length);
+    return apiKey.substring(0, 4) + '*'.repeat(apiKey.length - 8) + 
+           apiKey.substring(apiKey.length - 4);
+  }
+  
+  // 通用脱敏
+  static maskString(str: string, visibleStart: number = 2, visibleEnd: number = 2): string {
+    if (str.length <= visibleStart + visibleEnd) {
+      return '*'.repeat(str.length);
+    }
+    
+    return str.substring(0, visibleStart) + 
+           '*'.repeat(str.length - visibleStart - visibleEnd) + 
+           str.substring(str.length - visibleEnd);
+  }
+}
+```
+
+## API安全
+
+### 1. 速率限制
+
+#### 请求频率限制
+```typescript
+// lib/security/rate-limit.ts
+export class RateLimiter {
+  private static readonly requests = new Map<string, RequestInfo[]>();
+  
+  private static readonly LIMITS = {
+    '/api/chat-proxy': { requests: 60, window: 60 * 1000 }, // 60次/分钟
+    '/api/upload': { requests: 10, window: 60 * 1000 },     // 10次/分钟
+    '/api/admin': { requests: 100, window: 60 * 1000 },     // 100次/分钟
+    'default': { requests: 30, window: 60 * 1000 }          // 30次/分钟
+  };
+  
+  static checkLimit(clientId: string, endpoint: string): boolean {
+    const now = Date.now();
+    const limit = this.LIMITS[endpoint] || this.LIMITS.default;
+    
+    // 获取客户端请求历史
+    let clientRequests = this.requests.get(clientId) || [];
+    
+    // 清理过期请求
+    clientRequests = clientRequests.filter(
+      req => now - req.timestamp < limit.window
+    );
+    
+    // 检查是否超过限制
+    if (clientRequests.length >= limit.requests) {
+      return false;
+    }
+    
+    // 记录新请求
+    clientRequests.push({ timestamp: now, endpoint });
+    this.requests.set(clientId, clientRequests);
+    
+    return true;
+  }
+  
+  static getRemainingRequests(clientId: string, endpoint: string): number {
+    const now = Date.now();
+    const limit = this.LIMITS[endpoint] || this.LIMITS.default;
+    
+    const clientRequests = this.requests.get(clientId) || [];
+    const recentRequests = clientRequests.filter(
+      req => now - req.timestamp < limit.window
+    );
+    
+    return Math.max(0, limit.requests - recentRequests.length);
+  }
+}
+
+// 中间件实现
+export function rateLimitMiddleware(req: NextRequest): NextResponse | null {
+  const clientId = req.ip || req.headers.get('x-forwarded-for') || 'unknown';
+  const endpoint = req.nextUrl.pathname;
+  
+  if (!RateLimiter.checkLimit(clientId, endpoint)) {
+    return NextResponse.json({
+      success: false,
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: '请求频率过高，请稍后再试'
+      }
+    }, { 
+      status: 429,
+      headers: {
+        'Retry-After': '60'
+      }
+    });
+  }
+  
+  return null;
+}
+```
+
+### 2. CSRF防护
+
+#### CSRF Token实现
+```typescript
+// lib/security/csrf.ts
+export class CSRFProtection {
+  private static readonly TOKEN_LENGTH = 32;
+  private static readonly tokens = new Map<string, TokenInfo>();
+  
+  static generateToken(sessionId: string): string {
+    const token = crypto.randomBytes(this.TOKEN_LENGTH).toString('hex');
+    const expiry = Date.now() + (30 * 60 * 1000); // 30分钟过期
+    
+    this.tokens.set(sessionId, { token, expiry });
+    
+    return token;
+  }
+  
+  static validateToken(sessionId: string, token: string): boolean {
+    const tokenInfo = this.tokens.get(sessionId);
+    
+    if (!tokenInfo) {
+      return false;
+    }
+    
+    if (Date.now() > tokenInfo.expiry) {
+      this.tokens.delete(sessionId);
+      return false;
+    }
+    
+    return tokenInfo.token === token;
+  }
+  
+  static cleanExpiredTokens(): void {
+    const now = Date.now();
+    for (const [sessionId, tokenInfo] of this.tokens.entries()) {
+      if (now > tokenInfo.expiry) {
+        this.tokens.delete(sessionId);
+      }
+    }
+  }
+}
+
+// CSRF中间件
+export function csrfMiddleware(req: NextRequest): NextResponse | null {
+  // 只对状态改变的请求进行CSRF检查
+  const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+  if (safeMethods.includes(req.method)) {
+    return null;
+  }
+  
+  const sessionId = req.cookies.get('sessionId')?.value;
+  const csrfToken = req.headers.get('x-csrf-token');
+  
+  if (!sessionId || !csrfToken) {
+    return NextResponse.json({
+      success: false,
+      error: {
+        code: 'CSRF_TOKEN_MISSING',
+        message: 'CSRF token缺失'
+      }
+    }, { status: 403 });
+  }
+  
+  if (!CSRFProtection.validateToken(sessionId, csrfToken)) {
+    return NextResponse.json({
+      success: false,
+      error: {
+        code: 'CSRF_TOKEN_INVALID',
+        message: 'CSRF token无效'
+      }
+    }, { status: 403 });
+  }
+  
+  return null;
+}
+```
+
+## 日志与监控
+
+### 1. 安全日志
+
+#### 安全事件记录
+```typescript
+// lib/security/audit-log.ts
+export enum SecurityEventType {
+  LOGIN_SUCCESS = 'login_success',
+  LOGIN_FAILURE = 'login_failure',
+  PERMISSION_DENIED = 'permission_denied',
+  SUSPICIOUS_ACTIVITY = 'suspicious_activity',
+  DATA_ACCESS = 'data_access',
+  CONFIGURATION_CHANGE = 'configuration_change'
+}
+
+export interface SecurityEvent {
+  type: SecurityEventType;
+  userId?: string;
+  ip: string;
+  userAgent: string;
+  resource?: string;
+  details: any;
+  timestamp: Date;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export class SecurityLogger {
+  static async logEvent(event: SecurityEvent): Promise<void> {
+    // 记录到数据库
+    await this.saveToDatabase(event);
+    
+    // 记录到文件
+    await this.saveToFile(event);
+    
+    // 高危事件实时告警
+    if (event.severity === 'critical' || event.severity === 'high') {
+      await this.sendAlert(event);
+    }
+  }
+  
+  private static async saveToDatabase(event: SecurityEvent): Promise<void> {
+    // 实现数据库保存逻辑
+    console.log('Security event saved to database:', event);
+  }
+  
+  private static async saveToFile(event: SecurityEvent): Promise<void> {
+    const logEntry = {
+      timestamp: event.timestamp.toISOString(),
+      type: event.type,
+      severity: event.severity,
+      userId: event.userId,
+      ip: event.ip,
+      userAgent: event.userAgent,
+      resource: event.resource,
+      details: event.details
+    };
+    
+    console.log('SECURITY_LOG:', JSON.stringify(logEntry));
+  }
+  
+  private static async sendAlert(event: SecurityEvent): Promise<void> {
+    // 实现告警逻辑（邮件、短信、钉钉等）
+    console.log('SECURITY_ALERT:', event);
+  }
+  
+  // 记录登录成功
+  static logLoginSuccess(userId: string, ip: string, userAgent: string): void {
+    this.logEvent({
+      type: SecurityEventType.LOGIN_SUCCESS,
+      userId,
+      ip,
+      userAgent,
+      details: { success: true },
+      timestamp: new Date(),
+      severity: 'low'
+    });
+  }
+  
+  // 记录登录失败
+  static logLoginFailure(username: string, ip: string, userAgent: string, reason: string): void {
+    this.logEvent({
+      type: SecurityEventType.LOGIN_FAILURE,
+      ip,
+      userAgent,
+      details: { username, reason },
+      timestamp: new Date(),
+      severity: 'medium'
+    });
+  }
+  
+  // 记录权限拒绝
+  static logPermissionDenied(userId: string, resource: string, ip: string, userAgent: string): void {
+    this.logEvent({
+      type: SecurityEventType.PERMISSION_DENIED,
+      userId,
+      ip,
+      userAgent,
+      resource,
+      details: { attempted_access: resource },
+      timestamp: new Date(),
+      severity: 'medium'
+    });
+  }
+}
+```
+
+### 2. 异常检测
+
+#### 异常行为监控
+```typescript
+// lib/security/anomaly-detection.ts
+export class AnomalyDetector {
+  private static readonly THRESHOLDS = {
+    MAX_LOGIN_ATTEMPTS: 5,
+    MAX_REQUESTS_PER_MINUTE: 100,
+    SUSPICIOUS_IP_PATTERNS: [
+      /^10\./, // 内网IP从外部访问
+      /^192\.168\./, // 内网IP从外部访问
+    ]
+  };
+  
+  static detectSuspiciousLogin(ip: string, username: string): boolean {
+    // 检查短时间内多次登录失败
+    const recentFailures = this.getRecentLoginFailures(ip, username);
+    if (recentFailures >= this.THRESHOLDS.MAX_LOGIN_ATTEMPTS) {
+      SecurityLogger.logEvent({
+        type: SecurityEventType.SUSPICIOUS_ACTIVITY,
+        ip,
+        userAgent: '',
+        details: { 
+          reason: 'multiple_login_failures',
+          attempts: recentFailures,
+          username 
+        },
+        timestamp: new Date(),
+        severity: 'high'
+      });
+      return true;
+    }
+    
+    return false;
+  }
+  
+  static detectSuspiciousIP(ip: string): boolean {
+    // 检查可疑IP模式
+    for (const pattern of this.THRESHOLDS.SUSPICIOUS_IP_PATTERNS) {
+      if (pattern.test(ip)) {
+        SecurityLogger.logEvent({
+          type: SecurityEventType.SUSPICIOUS_ACTIVITY,
+          ip,
+          userAgent: '',
+          details: { reason: 'suspicious_ip_pattern' },
+          timestamp: new Date(),
+          severity: 'medium'
+        });
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  static detectHighRequestRate(ip: string): boolean {
+    const requestCount = this.getRequestCount(ip, 60 * 1000); // 1分钟内
+    if (requestCount > this.THRESHOLDS.MAX_REQUESTS_PER_MINUTE) {
+      SecurityLogger.logEvent({
+        type: SecurityEventType.SUSPICIOUS_ACTIVITY,
+        ip,
+        userAgent: '',
+        details: { 
+          reason: 'high_request_rate',
+          requests_per_minute: requestCount 
+        },
+        timestamp: new Date(),
+        severity: 'high'
+      });
+      return true;
+    }
+    
+    return false;
+  }
+  
+  private static getRecentLoginFailures(ip: string, username: string): number {
+    // 实现获取最近登录失败次数的逻辑
+    return 0;
+  }
+  
+  private static getRequestCount(ip: string, timeWindow: number): number {
+    // 实现获取请求次数的逻辑
+    return 0;
+  }
+}
+```
+
+## 安全配置
+
+### 1. 环境变量安全
+
+#### 敏感配置管理
+```typescript
+// lib/config/security-config.ts
+export class SecurityConfig {
+  private static instance: SecurityConfig;
+  private config: Map<string, string> = new Map();
+  
+  private constructor() {
+    this.loadConfig();
+  }
+  
+  static getInstance(): SecurityConfig {
+    if (!SecurityConfig.instance) {
+      SecurityConfig.instance = new SecurityConfig();
+    }
+    return SecurityConfig.instance;
+  }
+  
+  private loadConfig(): void {
+    // 必需的安全配置
+    const requiredConfigs = [
+      'JWT_SECRET',
+      'ENCRYPTION_KEY',
+      'DATABASE_PASSWORD',
+      'ADMIN_PASSWORD_HASH'
+    ];
+    
+    for (const key of requiredConfigs) {
+      const value = process.env[key];
+      if (!value) {
+        throw new Error(`Missing required security config: ${key}`);
+      }
+      
+      // 验证配置强度
+      this.validateConfigStrength(key, value);
+      this.config.set(key, value);
+    }
+  }
+  
+  private validateConfigStrength(key: string, value: string): void {
+    switch (key) {
+      case 'JWT_SECRET':
+      case 'ENCRYPTION_KEY':
+        if (value.length < 32) {
+          throw new Error(`${key} must be at least 32 characters long`);
+        }
+        break;
+      
+      case 'DATABASE_PASSWORD':
+        if (value.length < 12) {
+          throw new Error('Database password must be at least 12 characters long');
+        }
+        break;
+    }
+  }
+  
+  get(key: string): string {
+    const value = this.config.get(key);
+    if (!value) {
+      throw new Error(`Security config not found: ${key}`);
+    }
+    return value;
+  }
+  
+  // 安全地显示配置（脱敏）
+  getMasked(key: string): string {
+    const value = this.get(key);
+    return DataMasking.maskString(value, 4, 4);
+  }
+}
+```
+
+### 2. HTTPS配置
+
+#### TLS安全配置
+```typescript
+// lib/config/tls-config.ts
+export const TLSConfig = {
+  // 最小TLS版本
+  minVersion: 'TLSv1.2',
+  
+  // 推荐的密码套件
+  ciphers: [
+    'ECDHE-RSA-AES128-GCM-SHA256',
+    'ECDHE-RSA-AES256-GCM-SHA384',
+    'ECDHE-RSA-AES128-SHA256',
+    'ECDHE-RSA-AES256-SHA384'
+  ].join(':'),
+  
+  // 安全头部
+  securityHeaders: {
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https:",
+      "font-src 'self'",
+      "connect-src 'self' https://zktecoaihub.com",
+      "frame-ancestors 'none'"
+    ].join('; ')
+  }
+};
+```
+
+## 应急响应
+
+### 1. 安全事件响应
+
+#### 事件响应流程
+```typescript
+// lib/security/incident-response.ts
+export enum IncidentSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
+}
+
+export interface SecurityIncident {
+  id: string;
+  type: string;
+  severity: IncidentSeverity;
+  description: string;
+  affectedSystems: string[];
+  detectedAt: Date;
+  status: 'open' | 'investigating' | 'contained' | 'resolved';
+  assignee?: string;
+  actions: IncidentAction[];
+}
+
+export interface IncidentAction {
+  timestamp: Date;
+  action: string;
+  performer: string;
+  result: string;
+}
+
+export class IncidentResponseManager {
+  private static incidents = new Map<string, SecurityIncident>();
+  
+  static async createIncident(
+    type: string,
+    severity: IncidentSeverity,
+    description: string,
+    affectedSystems: string[]
+  ): Promise<string> {
+    const incident: SecurityIncident = {
+      id: crypto.randomUUID(),
+      type,
+      severity,
+      description,
+      affectedSystems,
+      detectedAt: new Date(),
+      status: 'open',
+      actions: []
+    };
+    
+    this.incidents.set(incident.id, incident);
+    
+    // 根据严重程度自动执行响应
+    await this.autoResponse(incident);
+    
+    return incident.id;
+  }
+  
+  private static async autoResponse(incident: SecurityIncident): Promise<void> {
+    switch (incident.severity) {
+      case IncidentSeverity.CRITICAL:
+        await this.criticalResponse(incident);
+        break;
+      case IncidentSeverity.HIGH:
+        await this.highResponse(incident);
+        break;
+      case IncidentSeverity.MEDIUM:
+        await this.mediumResponse(incident);
+        break;
+      case IncidentSeverity.LOW:
+        await this.lowResponse(incident);
+        break;
+    }
+  }
+  
+  private static async criticalResponse(incident: SecurityIncident): Promise<void> {
+    // 立即通知管理员
+    await this.notifyAdministrators(incident);
+    
+    // 自动隔离受影响的系统
+    await this.isolateAffectedSystems(incident.affectedSystems);
+    
+    // 启动应急响应团队
+    await this.activateResponseTeam(incident);
+    
+    this.addAction(incident.id, 'auto_critical_response', 'system', 'Critical incident response activated');
+  }
+  
+  private static async highResponse(incident: SecurityIncident): Promise<void> {
+    // 通知安全团队
+    await this.notifySecurityTeam(incident);
+    
+    // 增强监控
+    await this.enhanceMonitoring(incident.affectedSystems);
+    
+    this.addAction(incident.id, 'auto_high_response', 'system', 'High severity response activated');
+  }
+  
+  private static async mediumResponse(incident: SecurityIncident): Promise<void> {
+    // 记录事件
+    await this.logIncident(incident);
+    
+    // 通知相关人员
+    await this.notifyRelevantPersonnel(incident);
+    
+    this.addAction(incident.id, 'auto_medium_response', 'system', 'Medium severity response activated');
+  }
+  
+  private static async lowResponse(incident: SecurityIncident): Promise<void> {
+    // 仅记录事件
+    await this.logIncident(incident);
+    
+    this.addAction(incident.id, 'auto_low_response', 'system', 'Low severity response activated');
+  }
+  
+  static addAction(incidentId: string, action: string, performer: string, result: string): void {
+    const incident = this.incidents.get(incidentId);
+    if (incident) {
+      incident.actions.push({
+        timestamp: new Date(),
+        action,
+        performer,
+        result
+      });
+    }
+  }
+  
+  private static async notifyAdministrators(incident: SecurityIncident): Promise<void> {
+    // 实现管理员通知逻辑
+    console.log('CRITICAL SECURITY INCIDENT:', incident);
+  }
+  
+  private static async isolateAffectedSystems(systems: string[]): Promise<void> {
+    // 实现系统隔离逻辑
+    console.log('Isolating systems:', systems);
+  }
+  
+  private static async activateResponseTeam(incident: SecurityIncident): Promise<void> {
+    // 实现应急响应团队激活逻辑
+    console.log('Activating response team for incident:', incident.id);
+  }
+  
+  private static async notifySecurityTeam(incident: SecurityIncident): Promise<void> {
+    // 实现安全团队通知逻辑
+    console.log('Notifying security team:', incident);
+  }
+  
+  private static async enhanceMonitoring(systems: string[]): Promise<void> {
+    // 实现增强监控逻辑
+    console.log('Enhancing monitoring for systems:', systems);
+  }
+  
+  private static async logIncident(incident: SecurityIncident): Promise<void> {
+    // 实现事件记录逻辑
+    SecurityLogger.logEvent({
+      type: SecurityEventType.SUSPICIOUS_ACTIVITY,
+      ip: '',
+      userAgent: '',
+      details: incident,
+      timestamp: new Date(),
+      severity: incident.severity as any
+    });
+  }
+  
+  private static async notifyRelevantPersonnel(incident: SecurityIncident): Promise<void> {
+    // 实现相关人员通知逻辑
+    console.log('Notifying relevant personnel:', incident);
+  }
+}
+```
+
+## 安全检查清单
+
+### 1. 开发阶段检查
+
+- [ ] 所有用户输入都经过验证和清理
+- [ ] 使用参数化查询防止SQL注入
+- [ ] 实现适当的身份认证和授权
+- [ ] 敏感数据已加密存储
+- [ ] 实现CSRF防护
+- [ ] 配置安全的HTTP头部
+- [ ] 实现速率限制
+- [ ] 文件上传安全检查
+- [ ] 错误信息不泄露敏感信息
+- [ ] 日志记录安全事件
+
+### 2. 部署阶段检查
+
+- [ ] 使用HTTPS加密传输
+- [ ] 配置防火墙规则
+- [ ] 定期更新依赖包
+- [ ] 移除调试信息和测试代码
+- [ ] 配置安全的数据库连接
+- [ ] 实现备份和恢复机制
+- [ ] 配置监控和告警
+- [ ] 进行安全扫描
+- [ ] 制定应急响应计划
+- [ ] 培训相关人员
+
+### 3. 运维阶段检查
+
+- [ ] 定期安全审计
+- [ ] 监控异常活动
+- [ ] 及时应用安全补丁
+- [ ] 定期备份数据
+- [ ] 测试恢复流程
+- [ ] 更新安全策略
+- [ ] 进行渗透测试
+- [ ] 审查访问权限
+- [ ] 更新应急响应计划
+- [ ] 安全意识培训
+
+---
+
+**注意**: 安全是一个持续的过程，需要定期评估和更新安全措施，确保系统始终处于安全状态。

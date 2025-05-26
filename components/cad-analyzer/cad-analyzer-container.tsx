@@ -166,42 +166,10 @@ export function CADAnalyzerContainer() {
           continue
         }
         setFileType(isImageFile ? "image" : "cad")
-
-        // === 使用dxf-parser解析DXF文件 ===
-        let dxfData = null;
-        if (fileExtension === "dxf") {
-          try {
-            console.log("开始解析DXF文件...");
-            const fileContent = await readFileAsArrayBuffer(file);
-
-            // 对于大文件，可能需要分块处理
-            if (file.size > 50 * 1024 * 1024) { // 如果文件大于50MB
-              console.log("DXF文件过大，跳过前端解析，将由后端处理");
-            } else {
-              try {
-                const fileText = new TextDecoder().decode(fileContent);
-                const parser = new DxfParser();
-                dxfData = parser.parseSync(fileText);
-                console.log("DXF文件解析成功");
-              } catch (textDecodeError) {
-                console.error("DXF文件文本解码失败:", textDecodeError);
-              }
-            }
-          } catch (parseError) {
-            console.error("DXF文件解析失败:", parseError);
-          }
-        }
-
         // === 后端API分析 ===
         console.log(`开始上传文件: ${file.name}, 大小: ${file.size} 字节`);
         const formData = new FormData()
         formData.append('file', file)
-
-        // 如果有DXF解析数据，添加到formData
-        if (dxfData) {
-          formData.append('dxfData', JSON.stringify(dxfData));
-        }
-
         // 添加管理员token头，确保API调用成功
         console.log("发送API请求...");
 
@@ -219,7 +187,6 @@ export function CADAnalyzerContainer() {
             // 尝试解析响应为JSON
             data = await res.json();
             console.log("API响应数据:", data);
-
             // 检查是否有错误
             if (!res.ok || data.error) {
               const errorMessage = data.error || `API请求失败: ${res.status} ${res.statusText}`;
@@ -268,12 +235,6 @@ export function CADAnalyzerContainer() {
             imageData: isImageFile ? data.url : undefined,
             reportUrl: data.reportUrl,
           }
-
-          // 打印构建的结果数据，用于调试
-          console.log("构建的结果数据:", resultData);
-          console.log("预览图URL:", resultData.preview);
-
-          console.log("创建结果数据:", resultData);
 
           // 更新状态
           setAnalysisResults((prev) => {
@@ -772,9 +733,6 @@ export function CADAnalyzerContainer() {
                             <p className="text-sm sm:text-lg font-medium mb-1 sm:mb-2">{t("dragAndDrop")}</p>
                             <p className="text-xs sm:text-sm text-muted-foreground">
                               {t("supportedFormats")}: DXF, DWG
-                            </p>
-                            <p className="text-xs sm:text-sm text-muted-foreground">
-                              {t("supportedFormats")}: JPG, PNG
                             </p>
                           </div>
                           <Button

@@ -101,7 +101,7 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
           { type: "image_url", image_url: { url: `data:image/${ext};base64,${fileBase64}` } }
         ]
       });
-    } else if (ext === "dxf") {
+    } else if (ext === "dxf" || ext === "dwg") {
       // 调用本地 Python 服务的 /parse_dxf 接口
       const apiUrl = "http://127.0.0.1:8000/parse_dxf";
       const requestBody = {
@@ -119,7 +119,6 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
           throw new Error(`Python服务返回错误: ${response.status}`);
         }
         const result = await response.json();
-        console.log('result----------------=:', result.analysis);
         // 返回完整的result对象，包含preview_image
         return result;
       } catch (error) {
@@ -153,7 +152,7 @@ export async function POST(req: NextRequest) {
     // 校验文件大小和格式
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
     // 确保supportedFormats存在且是数组
-    const supportedFormats = safeConfig.supportedFormats || ['.dwg', '.dxf', '.pdf', '.jpg', '.png']
+    const supportedFormats = ['.dwg', '.dxf', '.pdf', '.jpg', '.png', '.DWG', '.DXF']
     const supportedExtensions = supportedFormats.map(f => f.replace('.', ''))
 
     if (!supportedExtensions.includes(ext)) {

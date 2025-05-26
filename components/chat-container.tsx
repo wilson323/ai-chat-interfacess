@@ -3,7 +3,7 @@
 import type React from "react"
 import type { UploadedFile } from "@/components/file-uploader"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -39,6 +39,8 @@ import { QuestionSuggestions } from "@/components/question-suggestions"
 import VoiceRecorder from "@/components/ui/voice-recorder"
 import { useLanguage } from "@/context/language-context"
 import type { ConversationAgentType } from "@/types/agent"
+import { InteractiveNode } from "@/components/interactive-node"
+import { GlobalVariablesForm } from "@/components/global-variables-form"
 
 const createNewConversation = () => {
   window.dispatchEvent(new CustomEvent("new-conversation"))
@@ -53,7 +55,15 @@ function debounce<T extends (...args: any[]) => void>(fn: T, delay = 200) {
 }
 
 export function ChatContainer() {
-  const { selectedAgent, toggleHistorySidebar, selectAgent } = useAgent()
+  const {
+    selectedAgent,
+    toggleHistorySidebar,
+    selectAgent,
+    showGlobalVariablesForm,
+    setShowGlobalVariablesForm,
+    globalVariables,
+    setGlobalVariables
+  } = useAgent()
   const { t } = useLanguage()
   const [input, setInput] = useState("")
   const [isRecording, setIsRecording] = useState(false)
@@ -97,6 +107,15 @@ export function ChatContainer() {
 
   // 新增 currentNodeName 状态
   const [currentNodeName, setCurrentNodeName] = useState<string>("")
+
+  // 新增状态管理交互节点
+  const [interactiveNode, setInteractiveNode] = useState<{
+    type: string;
+    params: {
+      description: string;
+      userSelectOptions: Array<{ value: string; key: string }>;
+    };
+  } | null>(null)
 
   // 定义toggleHistory函数
   const toggleHistory = () => {
@@ -399,6 +418,40 @@ export function ChatContainer() {
     }, 24); // 打字速度可调
   };
 
+  // 处理全局变量表单提交
+  const handleGlobalVariablesSubmit = (variables: Record<string, any>) => {
+    setGlobalVariables(variables)
+    console.log('全局变量已设置:', variables)
+  }
+
+  // 处理交互节点选择
+  const handleInteractiveNodeSelect = useCallback(async (messageId: string, selectedOption: any) => {
+    try {
+      // 调用交互节点继续运行接口
+      const response = await fetch('/api/interactive-node/continue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId,
+          selectedOption,
+          chatId: selectedAgent?.chatId,
+          agentId: selectedAgent?.id
+        })
+      })
+
+      if (response.ok) {
+        // 继续对话流程
+        const result = await response.json()
+        // 这里可以根据需要处理后续消息
+        console.log('交互节点处理成功:', result)
+      } else {
+        console.error('交互节点处理失败:', response.statusText)
+      }
+    } catch (error) {
+      console.error('交互节点处理失败:', error)
+    }
+  }, [selectedAgent?.chatId, selectedAgent?.id])
+
   // 处理文件上传完成
   const handleFileUpload = (files: UploadedFile[]) => {
     setUploadedFiles(files)
@@ -556,6 +609,7 @@ export function ChatContainer() {
                 temperature: selectedAgent?.temperature,
                 maxTokens: selectedAgent?.maxTokens,
                 detail: true,
+                variables: globalVariables, // 传递全局变量
                 onStart: () => {
                   console.log('[streamChat] onStart');
                   setProcessingSteps([])
@@ -614,6 +668,20 @@ export function ChatContainer() {
                 },
                 onIntermediateValue: (value: any, eventType: string) => {
                   console.log('[onIntermediateValue] 事件类型:', eventType, '内容:', value);
+
+                  // 处理交互节点
+                  if (eventType === "interactive") {
+                    console.log('检测到交互节点:', value);
+                    if (value && value.type === "userSelect" && Array.isArray(value.params?.userSelectOptions)) {
+                      setInteractiveNode(value);
+                      // 移除 typing 消息
+                      setMessages((prev: Message[]) => prev.filter(msg => msg.id !== 'typing'));
+                      setIsTyping(false);
+                      return;
+                    }
+                  }
+
+                  // 其他中间值处理逻辑保持不变
                   // 字段兼容处理
                   const nodeId = value?.nodeId || value?.id || value?.moduleId || `step-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
                   const nodeName = value?.name || value?.moduleName || value?.toolName || eventType;
@@ -835,6 +903,7 @@ export function ChatContainer() {
                 temperature: selectedAgent?.temperature,
                 maxTokens: selectedAgent?.maxTokens,
                 detail: true,
+                variables: globalVariables, // 传递全局变量
                 onResponseData: (responseData: any) => {
                   console.log("收到非流式响应数据:", responseData);
 
@@ -1527,6 +1596,354 @@ export function ChatContainer() {
     )
   }
 
+  // 处理交互节点选择
+  const handleInteractiveSelect = async (value: string) => {
+    try {
+      console.log('[handleInteractiveSelect] 用户选择:', value);
+
+      // 清除当前的交互节点状态
+      setInteractiveNode(null);
+
+      // 创建用户选择消息
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        type: MessageType.Text,
+        role: "user" as MessageRole,
+        content: value,
+        timestamp: new Date(),
+        metadata: {
+          deviceId: deviceId,
+          agentId: selectedAgent?.id,
+          apiKey: selectedAgent?.apiKey,
+          appId: selectedAgent?.appId,
+          isInteractiveResponse: true,
+        },
+      };
+
+      // 添加用户消息到消息列表
+      setMessages((prev: Message[]) => [...prev, userMessage]);
+
+      // 保存消息到本地存储
+      if (chatId) {
+        const updatedMessages = [...messages, userMessage];
+        useMessageStore.getState().saveMessages(chatId as ConversationAgentType, updatedMessages);
+        console.log(`Saved ${updatedMessages.length} messages to storage for chat ID: ${chatId}`);
+      }
+
+      // 设置为正在输入状态
+      setIsTyping(true);
+
+      // 继续工作流程处理
+      try {
+        // 创建包含新用户消息的消息副本
+        const currentMessages = [...messages, userMessage];
+
+        // 格式化消息以适应 FastGPT API
+        const formattedMessages = currentMessages.map((msg) => ({
+          role: msg.role,
+          content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+        }));
+
+        // 如果有系统提示词且尚未包含，则将系统提示作为第一条消息添加
+        if (systemPrompt && !formattedMessages.some((msg) => msg.role === "system")) {
+          formattedMessages.unshift({
+            role: "system" as MessageRole,
+            content: systemPrompt,
+          });
+        } else if (selectedAgent?.systemPrompt && !formattedMessages.some((msg) => msg.role === "system")) {
+          formattedMessages.unshift({
+            role: "system" as MessageRole,
+            content: selectedAgent.systemPrompt,
+          });
+        }
+
+        if (fastGPTClient) {
+          // 创建AbortController
+          abortControllerRef.current = new AbortController();
+
+          // 使用 FastGPT 客户端进行流式传输
+          await fastGPTClient.streamChat(formattedMessages, {
+            temperature: selectedAgent?.temperature,
+            maxTokens: selectedAgent?.maxTokens,
+            detail: true,
+            onStart: () => {
+              console.log('[streamChat] onStart');
+              setProcessingSteps([]);
+              // 立即创建 AI typing 消息，带头像和空内容
+              setMessages((prev: Message[]) => {
+                // 如果已存在 typing 消息则不重复添加
+                if (prev.some(msg => msg.id === 'typing' && msg.role === 'assistant')) return prev;
+                return [
+                  ...prev,
+                  {
+                    id: 'typing',
+                    type: MessageType.Text,
+                    role: 'assistant',
+                    content: '',
+                    timestamp: new Date(),
+                    metadata: {
+                      agentId: selectedAgent?.id,
+                      apiKey: selectedAgent?.apiKey,
+                      appId: selectedAgent?.appId,
+                    },
+                  },
+                ];
+              });
+            },
+            onChunk: (chunk: string) => {
+              console.log('[streamChat] onChunk:', chunk);
+              setCurrentNodeName("");
+              setMessages((prev: Message[]) => {
+                console.log('[streamChat] onChunk setMessages, prev:', prev);
+                // 移除 node-status 气泡
+                const filtered = prev.filter(msg => msg.id !== 'node-status');
+                // 后续逻辑同原来
+                const lastMessage = filtered[filtered.length - 1];
+                if (lastMessage && lastMessage.role === "assistant" && lastMessage.id === "typing") {
+                  return filtered.map((msg) =>
+                    msg.id === "typing" ? { ...msg, content: (msg.content as string) + chunk } : msg,
+                  );
+                } else {
+                  return [
+                    ...filtered,
+                    {
+                      id: "typing",
+                      type: MessageType.Text,
+                      role: "assistant" as MessageRole,
+                      content: chunk,
+                      timestamp: new Date(),
+                      metadata: {
+                        agentId: selectedAgent?.id,
+                        apiKey: selectedAgent?.apiKey,
+                        appId: selectedAgent?.appId,
+                      },
+                    },
+                  ];
+                }
+              });
+            },
+            onIntermediateValue: (value: any, eventType: string) => {
+              console.log('[onIntermediateValue] 事件类型:', eventType, '内容:', value);
+
+              // 处理交互节点
+              if (eventType === "interactive") {
+                console.log('检测到交互节点:', value);
+                if (value && value.type === "userSelect" && Array.isArray(value.params?.userSelectOptions)) {
+                  setInteractiveNode(value);
+                  // 移除 typing 消息
+                  setMessages((prev: Message[]) => prev.filter(msg => msg.id !== 'typing'));
+                  setIsTyping(false);
+                  return;
+                }
+              }
+
+              // 其他中间值处理逻辑保持不变
+              // 字段兼容处理
+              const nodeId = value?.nodeId || value?.id || value?.moduleId || `step-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+              const nodeName = value?.name || value?.moduleName || value?.toolName || eventType;
+              const nodeStatus = value?.status || value?.state || "running";
+              const step = {
+                id: nodeId,
+                type: eventType,
+                name: nodeName,
+                status: nodeStatus,
+                content: value?.content || value?.text || value?.message || undefined,
+                timestamp: new Date(),
+                details: value,
+                isNew: true,
+              };
+              // 日志：setMessages 前后打印 typing 消息的 processingSteps
+              setMessages((prev: Message[]) => {
+                // 新增：只显示一个节点气泡，内容为当前节点名称
+                if (
+                  eventType === "flowNodeStatus" ||
+                  eventType === "moduleStatus" ||
+                  eventType === "moduleStart" ||
+                  eventType === "moduleEnd" ||
+                  eventType === "thinking" ||
+                  eventType === "thinkingStart" ||
+                  eventType === "thinkingEnd" ||
+                  eventType === "toolCall" ||
+                  eventType === "toolParams" ||
+                  eventType === "toolResponse"
+                ) {
+                  const filtered = prev.filter(msg => msg.id !== 'node-status');
+                  return [
+                    ...filtered,
+                    {
+                      id: 'node-status',
+                      type: MessageType.Text,
+                      role: 'assistant',
+                      content: `🤖 AI正在处理：${nodeName}`,
+                      timestamp: new Date(),
+                      metadata: { isNodeStatus: true },
+                    }
+                  ];
+                }
+                // 原有逻辑
+                const before = prev.find(msg => msg.id === "typing" && msg.role === "assistant");
+                console.log('[onIntermediateValue][before] typing:', before);
+                const next = prev.map((msg) => {
+                  if (msg.id === "typing" && msg.role === "assistant") {
+                    const prevSteps = Array.isArray(msg.metadata?.processingSteps) ? msg.metadata.processingSteps : [];
+                    return {
+                      ...msg,
+                      metadata: {
+                        ...msg.metadata,
+                        processingSteps: [...prevSteps, step],
+                      },
+                    };
+                  }
+                  return msg;
+                });
+                const after = next.find(msg => msg.id === "typing" && msg.role === "assistant");
+                console.log('[onIntermediateValue][after] typing:', after);
+                return next;
+              });
+              // 捕获API响应的id字段 - 更全面的事件和id字段处理
+              if (value && (value.id || value.chatCompletionId)) {
+                const responseId = value.id || value.chatCompletionId;
+                console.log(`捕获到响应ID: ${responseId} (事件类型: ${eventType})`, value);
+                setMessages((prev: Message[]) => {
+                  const lastMessage = prev[prev.length - 1]
+                  if (lastMessage && lastMessage.role === "assistant" && lastMessage.id === "typing") {
+                    return prev.map((msg) =>
+                      msg.id === "typing" ? {
+                        ...msg,
+                        metadata: {
+                          ...msg.metadata,
+                          responseId: responseId
+                        }
+                      } : msg,
+                    )
+                  }
+                  return prev
+                })
+              }
+              // 只维护 processingSteps
+              if (
+                eventType === "flowNodeStatus" ||
+                eventType === "moduleStatus" ||
+                eventType === "moduleStart" ||
+                eventType === "moduleEnd" ||
+                eventType === "thinking" ||
+                eventType === "thinkingStart" ||
+                eventType === "thinkingEnd" ||
+                eventType === "toolCall" ||
+                eventType === "toolParams" ||
+                eventType === "toolResponse"
+              ) {
+                setProcessingSteps((prev: ProcessingStep[]) => [
+                  ...prev,
+                  {
+                    id: nodeId,
+                    type: eventType,
+                    name: nodeName,
+                    status: nodeStatus,
+                    content: value?.content || value?.text || value?.message || undefined,
+                    timestamp: new Date(),
+                    details: value,
+                    isNew: true,
+                  },
+                ])
+              }
+              // 遇到节点事件时 setCurrentNodeName
+              if (
+                eventType === "flowNodeStatus" ||
+                eventType === "moduleStatus" ||
+                eventType === "moduleStart" ||
+                eventType === "moduleEnd" ||
+                eventType === "thinking" ||
+                eventType === "thinkingStart" ||
+                eventType === "thinkingEnd" ||
+                eventType === "toolCall" ||
+                eventType === "toolParams" ||
+                eventType === "toolResponse"
+              ) {
+                setCurrentNodeName(nodeName);
+              }
+            },
+            onProcessingStep: (step: ProcessingStep) => {
+              console.log('[onProcessingStep]', step);
+              setProcessingSteps((prev: ProcessingStep[]) => [...prev, step]);
+            },
+            onError: (error: Error) => {
+              console.error('[streamChat] onError:', error);
+              setIsTyping(false);
+
+              // 设置离线模式
+              setIsOfflineMode(true)
+
+              // 添加错误消息
+              setMessages((prev: Message[]) => {
+                // 查找是否已有响应消息
+                const lastMessage = prev[prev.length - 1]
+                if (lastMessage.role === "assistant" && lastMessage.id === "typing") {
+                  // 更新现有消息
+                  return prev.map((msg) =>
+                    msg.id === "typing"
+                      ? {
+                          ...msg,
+                          id: Date.now().toString(),
+                          content:
+                            (msg.content as string) || "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
+                        }
+                      : msg,
+                  )
+                } else {
+                  // 创建新的助手消息
+                  return [
+                    ...prev,
+                    {
+                      id: Date.now().toString(),
+                      type: MessageType.Text,
+                      role: "assistant" as MessageRole,
+                      content: "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
+                      timestamp: new Date(),
+                      metadata: {
+                        agentId: selectedAgent?.id, // 添加智能体ID
+                        apiKey: selectedAgent?.apiKey, // 添加API密钥
+                        appId: selectedAgent?.appId, // 添加应用ID
+                      },
+                    },
+                  ]
+                }
+              })
+
+              toast({
+                title: "网络连接错误",
+                description: "已切换到离线模式",
+                variant: "destructive",
+              })
+            },
+            onFinish: () => {
+              console.log('[streamChat] onFinish');
+              setIsTyping(false)
+              // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
+              setMessages((prev: Message[]) => {
+                return prev.map((msg) =>
+                  msg.id === "typing"
+                    ? {
+                        ...msg,
+                        id: Date.now().toString(),
+                        metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
+                      }
+                    : msg
+                );
+              });
+            },
+            signal: abortControllerRef.current.signal
+          });
+        }
+      } catch (error) {
+        console.error("交互节点选择后处理错误:", error);
+        setIsTyping(false);
+      }
+    } catch (error) {
+      console.error("处理交互节点选择时出错:", error);
+    }
+  };
+
   return (
     <div className={cn(
       "relative flex flex-col h-full w-full mx-auto",
@@ -1637,6 +2054,7 @@ export function ChatContainer() {
               onCopy={handleCopy}
               onDelete={deleteMessage}
               onEdit={editMessage}
+              onInteractiveSelect={handleInteractiveNodeSelect}
               chatId={chatId || undefined}
               isTyping={isTyping}
             />
@@ -1657,6 +2075,17 @@ export function ChatContainer() {
           )}
 
           <div ref={messagesEndRef} />
+
+          {/* 渲染交互节点 */}
+          {interactiveNode && selectedAgent?.name === "熵犇犇定制需求分析" && (
+            <div className="my-4">
+              <InteractiveNode
+                options={interactiveNode.params.userSelectOptions}
+                description={interactiveNode.params.description}
+                onSelect={handleInteractiveSelect}
+              />
+            </div>
+          )}
         </div>
       </ScrollArea>
 
@@ -1833,6 +2262,16 @@ export function ChatContainer() {
           )}
         </div>
       </div>
+
+      {/* 全局变量表单 */}
+      {selectedAgent && (
+        <GlobalVariablesForm
+          agent={selectedAgent}
+          isOpen={showGlobalVariablesForm}
+          onClose={() => setShowGlobalVariablesForm(false)}
+          onSubmit={handleGlobalVariablesSubmit}
+        />
+      )}
     </div>
   )
 }

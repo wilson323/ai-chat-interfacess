@@ -27,6 +27,8 @@ export interface AgentConfigAttributes {
   order: number;
   supportsStream: boolean;
   supportsDetail: boolean;
+  globalVariables?: string; // JSON字符串存储全局变量
+  welcomeText?: string; // 欢迎语
 }
 
 export interface AgentConfigCreationAttributes extends Optional<AgentConfigAttributes, 'id' | 'multimodalModel' | 'updatedAt'> {}
@@ -48,6 +50,8 @@ export class AgentConfig extends Model<AgentConfigAttributes, AgentConfigCreatio
   public order!: number;
   public supportsStream!: boolean;
   public supportsDetail!: boolean;
+  public globalVariables?: string;
+  public welcomeText?: string;
 }
 
 AgentConfig.init(
@@ -127,6 +131,16 @@ AgentConfig.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    globalVariables: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
+    },
+    welcomeText: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
     },
   },
   {

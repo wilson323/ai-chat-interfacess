@@ -26,6 +26,8 @@ export async function GET() {
       temperature: a.temperature ?? 0.7,
       maxTokens: a.maxTokens ?? 2000,
       multimodalModel: a.multimodalModel ?? '',
+      globalVariables: a.globalVariables ? JSON.parse(a.globalVariables) : [],
+      welcomeText: a.welcomeText ?? '',
     }));
 
     return NextResponse.json({ success: true, data: safeAgents });
