@@ -30,9 +30,7 @@ import { FastGPTClient, generateFallbackChatId, initializeChat } from "@/lib/api
 // 导入统一存储服务
 import { HistoryManager } from "@/components/history-manager"
 
-import { ProcessingFlowDisplay } from "./processing-flow-display"
 import type { ProcessingStep } from "@/types/message"
-import { FastGPTFlowDisplay } from "@/components/fastgpt-flow-display"
 
 import { useMessageStore } from "@/lib/store/messageStore"
 import { QuestionSuggestions } from "@/components/question-suggestions"
@@ -108,12 +106,19 @@ export function ChatContainer() {
   // 新增 currentNodeName 状态
   const [currentNodeName, setCurrentNodeName] = useState<string>("")
 
-  // 新增状态管理交互节点
+  // 新增状态管理交互节点 - 支持标准接口格式
   const [interactiveNode, setInteractiveNode] = useState<{
-    type: string;
+    type: "userSelect" | "userInput";
     params: {
-      description: string;
-      userSelectOptions: Array<{ value: string; key: string }>;
+      description?: string;
+      userSelectOptions?: Array<{ value: string; key: string }>;
+      inputForm?: Array<{
+        type: string;
+        key: string;
+        label: string;
+        valueType: string;
+        required: boolean;
+      }>;
     };
   } | null>(null)
 
@@ -424,33 +429,7 @@ export function ChatContainer() {
     console.log('全局变量已设置:', variables)
   }
 
-  // 处理交互节点选择
-  const handleInteractiveNodeSelect = useCallback(async (messageId: string, selectedOption: any) => {
-    try {
-      // 调用交互节点继续运行接口
-      const response = await fetch('/api/interactive-node/continue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messageId,
-          selectedOption,
-          chatId: selectedAgent?.chatId,
-          agentId: selectedAgent?.id
-        })
-      })
 
-      if (response.ok) {
-        // 继续对话流程
-        const result = await response.json()
-        // 这里可以根据需要处理后续消息
-        console.log('交互节点处理成功:', result)
-      } else {
-        console.error('交互节点处理失败:', response.statusText)
-      }
-    } catch (error) {
-      console.error('交互节点处理失败:', error)
-    }
-  }, [selectedAgent?.chatId, selectedAgent?.id])
 
   // 处理文件上传完成
   const handleFileUpload = (files: UploadedFile[]) => {
@@ -667,17 +646,35 @@ export function ChatContainer() {
                   })
                 },
                 onIntermediateValue: (value: any, eventType: string) => {
-                  console.log('[onIntermediateValue] 事件类型:', eventType, '内容:', value);
+                  console.log('[onIntermediateValue1] 事件类型:', eventType, '内容:', value);
 
-                  // 处理交互节点
+                  // 处理交互节点 - 支持标准接口格式
                   if (eventType === "interactive") {
                     console.log('检测到交互节点:', value);
-                    if (value && value.type === "userSelect" && Array.isArray(value.params?.userSelectOptions)) {
-                      setInteractiveNode(value);
-                      // 移除 typing 消息
-                      setMessages((prev: Message[]) => prev.filter(msg => msg.id !== 'typing'));
-                      setIsTyping(false);
-                      return;
+                    console.log('交互节点数据结构检查:', {
+                      hasInteractive: !!value?.interactive,
+                      type: value?.interactive?.type,
+                      hasUserSelectOptions: Array.isArray(value?.interactive?.params?.userSelectOptions),
+                      userSelectOptionsLength: value?.interactive?.params?.userSelectOptions?.length,
+                      hasInputForm: Array.isArray(value?.interactive?.params?.inputForm),
+                      inputFormLength: value?.interactive?.params?.inputForm?.length
+                    });
+                    // 检查是否为有效的交互节点格式
+                    if (value?.interactive &&
+                        ((value.interactive.type === "userSelect" && Array.isArray(value.interactive.params?.userSelectOptions) && value.interactive.params.userSelectOptions.length > 0) ||
+                         (value.interactive.type === "userInput" && Array.isArray(value.interactive.params?.inputForm) && value.interactive.params.inputForm.length > 0))) {
+                      console.log('✅ 交互节点验证通过，设置状态:', value.interactive);
+                      setInteractiveNode(value.interactive);
+                      console.log('🔄 交互节点已设置，继续流式处理...');
+                    } else {
+                      console.log('❌ 交互节点验证失败，数据结构:', {
+                        hasInteractive: !!value?.interactive,
+                        type: value?.interactive?.type,
+                        hasUserSelectOptions: Array.isArray(value?.interactive?.params?.userSelectOptions),
+                        userSelectOptionsLength: value?.interactive?.params?.userSelectOptions?.length,
+                        hasInputForm: Array.isArray(value?.interactive?.params?.inputForm),
+                        inputFormLength: value?.interactive?.params?.inputForm?.length
+                      });
                     }
                   }
 
@@ -863,18 +860,27 @@ export function ChatContainer() {
                 onFinish: () => {
                   console.log('[streamChat] onFinish');
                   setIsTyping(false)
-                  // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
-                  setMessages((prev: Message[]) => {
-                    return prev.map((msg) =>
-                      msg.id === "typing"
-                        ? {
-                            ...msg,
-                            id: Date.now().toString(),
-                            metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
-                          }
-                        : msg
-                    );
-                  });
+
+                  // 检查是否有交互节点需要处理
+                  if (interactiveNode) {
+                    console.log('🎯 流式处理完成，存在交互节点，移除typing消息');
+                    // 如果有交互节点，移除typing消息但不创建新的助手消息
+                    setMessages((prev: Message[]) => prev.filter(msg => msg.id !== 'typing'));
+                  } else {
+                    console.log('📝 流式处理完成，无交互节点，转换typing消息为永久消息');
+                    // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
+                    setMessages((prev: Message[]) => {
+                      return prev.map((msg) =>
+                        msg.id === "typing"
+                          ? {
+                              ...msg,
+                              id: Date.now().toString(),
+                              metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
+                            }
+                          : msg
+                      );
+                    });
+                  }
                 },
                 signal: abortControllerRef.current.signal
               })
@@ -1073,7 +1079,7 @@ export function ChatContainer() {
                 setProcessingSteps([])
               },
               onIntermediateValue: (value: any, eventType: string) => {
-                console.log('[重新生成][onIntermediateValue] 事件类型:', eventType, '内容:', value);
+                console.log('[重新生成][onIntermediateValue0] 事件类型:', eventType, '内容:', value);
                 // 字段兼容处理
                 const nodeId = value?.nodeId || value?.id || value?.moduleId || `step-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
                 const nodeName = value?.name || value?.moduleName || value?.toolName || eventType;
@@ -1635,39 +1641,33 @@ export function ChatContainer() {
 
       // 继续工作流程处理
       try {
-        // 创建包含新用户消息的消息副本
-        const currentMessages = [...messages, userMessage];
+        // ✅ 交互节点继续运行：根据FastGPT API文档，只传递用户选择的单条消息
+        console.log('🔄 交互节点继续运行，只传递用户选择消息:', value);
+        const formattedMessages = [{
+          role: userMessage.role,
+          content: userMessage.content,
+        }];
 
-        // 格式化消息以适应 FastGPT API
-        const formattedMessages = currentMessages.map((msg) => ({
-          role: msg.role,
-          content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
-        }));
-
-        // 如果有系统提示词且尚未包含，则将系统提示作为第一条消息添加
-        if (systemPrompt && !formattedMessages.some((msg) => msg.role === "system")) {
-          formattedMessages.unshift({
-            role: "system" as MessageRole,
-            content: systemPrompt,
-          });
-        } else if (selectedAgent?.systemPrompt && !formattedMessages.some((msg) => msg.role === "system")) {
-          formattedMessages.unshift({
-            role: "system" as MessageRole,
-            content: selectedAgent.systemPrompt,
-          });
-        }
+        console.log('📤 交互节点继续运行的请求消息:', formattedMessages);
 
         if (fastGPTClient) {
           // 创建AbortController
           abortControllerRef.current = new AbortController();
 
           // 使用 FastGPT 客户端进行流式传输
+          console.log('🚀 开始交互节点继续运行，参数:', {
+            messages: formattedMessages,
+            variables: globalVariables,
+            chatId: chatId
+          });
+
           await fastGPTClient.streamChat(formattedMessages, {
             temperature: selectedAgent?.temperature,
             maxTokens: selectedAgent?.maxTokens,
             detail: true,
+            variables: globalVariables, // 传递全局变量
             onStart: () => {
-              console.log('[streamChat] onStart');
+              console.log('[streamChat] 交互节点继续运行 onStart');
               setProcessingSteps([]);
               // 立即创建 AI typing 消息，带头像和空内容
               setMessages((prev: Message[]) => {
@@ -1723,17 +1723,27 @@ export function ChatContainer() {
               });
             },
             onIntermediateValue: (value: any, eventType: string) => {
-              console.log('[onIntermediateValue] 事件类型:', eventType, '内容:', value);
+              console.log('[onIntermediateValue2] 事件类型:', eventType, '内容:', value);
 
-              // 处理交互节点
+              // 处理交互节点 - 支持标准接口格式
               if (eventType === "interactive") {
-                console.log('检测到交互节点:', value);
-                if (value && value.type === "userSelect" && Array.isArray(value.params?.userSelectOptions)) {
-                  setInteractiveNode(value);
-                  // 移除 typing 消息
-                  setMessages((prev: Message[]) => prev.filter(msg => msg.id !== 'typing'));
-                  setIsTyping(false);
-                  return;
+                console.log('🎯 [交互节点继续运行] 检测到交互节点:', value);
+                // 检查是否为有效的交互节点格式
+                if (value?.interactive &&
+                    ((value.interactive.type === "userSelect" && Array.isArray(value.interactive.params?.userSelectOptions) && value.interactive.params.userSelectOptions.length > 0) ||
+                     (value.interactive.type === "userInput" && Array.isArray(value.interactive.params?.inputForm) && value.interactive.params.inputForm.length > 0))) {
+                  console.log('✅ [交互节点继续运行] 交互节点验证通过，设置状态:', value.interactive);
+                  setInteractiveNode(value.interactive);
+                  console.log('🔄 [交互节点继续运行] 交互节点已设置，继续流式处理...');
+                } else {
+                  console.log('❌ [交互节点继续运行] 交互节点验证失败，数据结构:', {
+                    hasInteractive: !!value?.interactive,
+                    type: value?.interactive?.type,
+                    hasUserSelectOptions: Array.isArray(value?.interactive?.params?.userSelectOptions),
+                    userSelectOptionsLength: value?.interactive?.params?.userSelectOptions?.length,
+                    hasInputForm: Array.isArray(value?.interactive?.params?.inputForm),
+                    inputFormLength: value?.interactive?.params?.inputForm?.length
+                  });
                 }
               }
 
@@ -1917,20 +1927,30 @@ export function ChatContainer() {
               })
             },
             onFinish: () => {
-              console.log('[streamChat] onFinish');
+              console.log('[streamChat] 交互节点继续运行 onFinish');
               setIsTyping(false)
-              // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
-              setMessages((prev: Message[]) => {
-                return prev.map((msg) =>
-                  msg.id === "typing"
-                    ? {
-                        ...msg,
-                        id: Date.now().toString(),
-                        metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
-                      }
-                    : msg
-                );
-              });
+
+              // 检查是否有交互节点需要处理
+              if (interactiveNode) {
+                console.log('🎯 [交互节点继续运行] 流式处理完成，存在交互节点，移除typing消息');
+                console.log('🎯 [交互节点继续运行] 当前交互节点:', interactiveNode);
+                // 如果有交互节点，移除typing消息但不创建新的助手消息
+                setMessages((prev: Message[]) => prev.filter(msg => msg.id !== 'typing'));
+              } else {
+                console.log('📝 [交互节点继续运行] 流式处理完成，无交互节点，转换typing消息为永久消息');
+                // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
+                setMessages((prev: Message[]) => {
+                  return prev.map((msg) =>
+                    msg.id === "typing"
+                      ? {
+                          ...msg,
+                          id: Date.now().toString(),
+                          metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
+                        }
+                      : msg
+                  );
+                });
+              }
             },
             signal: abortControllerRef.current.signal
           });
@@ -2054,7 +2074,6 @@ export function ChatContainer() {
               onCopy={handleCopy}
               onDelete={deleteMessage}
               onEdit={editMessage}
-              onInteractiveSelect={handleInteractiveNodeSelect}
               chatId={chatId || undefined}
               isTyping={isTyping}
             />
@@ -2076,14 +2095,67 @@ export function ChatContainer() {
 
           <div ref={messagesEndRef} />
 
-          {/* 渲染交互节点 */}
-          {interactiveNode && selectedAgent?.name === "熵犇犇定制需求分析" && (
+          {/* 渲染交互节点 - 根据标准接口字段判断 */}
+          {(() => {
+            console.log('🎨 渲染检查 - 交互节点状态:', {
+              hasInteractiveNode: !!interactiveNode,
+              type: interactiveNode?.type,
+              hasUserSelectOptions: Array.isArray(interactiveNode?.params?.userSelectOptions),
+              userSelectOptionsLength: interactiveNode?.params?.userSelectOptions?.length,
+              hasInputForm: Array.isArray(interactiveNode?.params?.inputForm),
+              inputFormLength: interactiveNode?.params?.inputForm?.length,
+              fullInteractiveNode: interactiveNode
+            });
+            return null;
+          })()}
+          {interactiveNode && (
             <div className="my-4">
-              <InteractiveNode
-                options={interactiveNode.params.userSelectOptions}
-                description={interactiveNode.params.description}
-                onSelect={handleInteractiveSelect}
-              />
+              {/* 用户选择节点 */}
+              {(() => {
+                const isUserSelect = interactiveNode.type === "userSelect";
+                const hasOptions = Array.isArray(interactiveNode.params?.userSelectOptions);
+                const options = interactiveNode.params?.userSelectOptions;
+                const hasValidOptions = hasOptions && options && options.length > 0;
+
+                console.log('🎨 [交互节点继续运行] 用户选择节点渲染条件检查:', {
+                  isUserSelect,
+                  hasOptions,
+                  hasValidOptions,
+                  optionsData: options,
+                  description: interactiveNode.params?.description
+                });
+
+                if (isUserSelect && hasValidOptions && options) {
+                  console.log('🎨 [交互节点继续运行] 渲染用户选择节点:', options);
+                  return (
+                    <InteractiveNode
+                      options={options}
+                      description={interactiveNode.params.description}
+                      onSelect={handleInteractiveSelect}
+                    />
+                  );
+                } else {
+                  console.log('❌ [交互节点继续运行] 用户选择节点渲染条件不满足');
+                  return null;
+                }
+              })()}
+
+              {/* 表单输入节点 - 待实现 */}
+              {interactiveNode.type === "userInput" &&
+               Array.isArray(interactiveNode.params?.inputForm) &&
+               interactiveNode.params.inputForm.length > 0 && (
+                <>
+                  {console.log('🎨 渲染表单输入节点:', interactiveNode.params.inputForm)}
+                  <div className="p-4 border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 rounded-lg">
+                    <div className="mb-3 text-sm font-medium">
+                      {interactiveNode.params.description || "请填写表单信息:"}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      表单输入节点功能待实现...
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -2270,6 +2342,7 @@ export function ChatContainer() {
           isOpen={showGlobalVariablesForm}
           onClose={() => setShowGlobalVariablesForm(false)}
           onSubmit={handleGlobalVariablesSubmit}
+          initialValues={globalVariables}
         />
       )}
     </div>

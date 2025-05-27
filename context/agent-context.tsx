@@ -60,7 +60,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     }
   }, [agents]);
 
-  // 检查智能体是否有必填的全局变量
+  // 检查智能体是否有必填的全局变量（用于判断是否需要弹出配置表单）
   const checkRequiredVariables = useCallback((agent: Agent): boolean => {
     if (agent.type !== 'fastgpt' || !agent.globalVariables) {
       return true // 非FastGPT智能体或无全局变量，直接通过
@@ -71,22 +71,9 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       return true // 无必填变量，直接通过
     }
 
-    // 检查是否已有保存的变量值
-    const savedValues = localStorage.getItem(`agent-variables-${agent.id}`)
-    if (!savedValues) {
-      return false // 无保存值，需要填写
-    }
-
-    try {
-      const parsedValues = JSON.parse(savedValues)
-      // 检查所有必填变量是否都有值
-      return requiredVars.every(variable => {
-        const value = parsedValues[variable.key]
-        return value !== undefined && value !== null && value.toString().trim() !== ""
-      })
-    } catch {
-      return false // 解析失败，需要重新填写
-    }
+    // 修改：每次切换智能体时都需要弹出配置表单（如果有必填变量）
+    // 不再检查localStorage中的保存值，始终返回false以触发表单弹出
+    return false
   }, [])
 
   const selectAgent = useCallback((agent: Agent) => {
@@ -103,9 +90,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
 
     if (needsVariables) {
       // 需要填写全局变量，显示表单
-      setShowGlobalVariablesForm(true)
-    } else {
-      // 不需要填写或已填写完成，加载已保存的变量值
+      // 同时加载已保存的变量值（如果有的话），用于表单预填充
       const savedValues = localStorage.getItem(`agent-variables-${agent.id}`)
       if (savedValues) {
         try {
@@ -117,6 +102,10 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       } else {
         setGlobalVariables({})
       }
+      setShowGlobalVariablesForm(true)
+    } else {
+      // 不需要填写全局变量的情况（非FastGPT或无必填变量）
+      setGlobalVariables({})
     }
   }, [selectedAgent?.id, checkRequiredVariables])
 

@@ -17,9 +17,10 @@ interface GlobalVariablesFormProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (variables: Record<string, any>) => void
+  initialValues?: Record<string, any> // 新增：初始值
 }
 
-export function GlobalVariablesForm({ agent, isOpen, onClose, onSubmit }: GlobalVariablesFormProps) {
+export function GlobalVariablesForm({ agent, isOpen, onClose, onSubmit, initialValues }: GlobalVariablesFormProps) {
   const [variables, setVariables] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -30,21 +31,24 @@ export function GlobalVariablesForm({ agent, isOpen, onClose, onSubmit }: Global
   // 初始化变量值
   useEffect(() => {
     if (isOpen && requiredVariables.length > 0) {
-      const initialValues: Record<string, any> = {}
+      const formInitialValues: Record<string, any> = {}
 
-      // 尝试从localStorage加载之前保存的值
+      // 优先级：传入的初始值 > localStorage保存的值 > 变量默认值 > 空值
       const savedValues = localStorage.getItem(`agent-variables-${agent.id}`)
       const parsedSavedValues = savedValues ? JSON.parse(savedValues) : {}
 
       requiredVariables.forEach(variable => {
-        // 优先使用保存的值，然后是默认值，最后是空值
-        initialValues[variable.key] = parsedSavedValues[variable.key] || variable.defaultValue || ""
+        formInitialValues[variable.key] =
+          initialValues?.[variable.key] ||
+          parsedSavedValues[variable.key] ||
+          variable.defaultValue ||
+          ""
       })
 
-      setVariables(initialValues)
+      setVariables(formInitialValues)
       setErrors({})
     }
-  }, [isOpen, agent.id]) // 移除requiredVariables依赖，避免无限循环
+  }, [isOpen, agent.id, initialValues]) // 添加initialValues依赖
 
   // 验证单个变量
   const validateVariable = (variable: GlobalVariable, value: any): string | null => {

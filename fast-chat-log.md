@@ -51,10 +51,64 @@
    - 集成交互节点继续运行API调用
 
 7. **代码重复消除**
-   - 删除冗余组件：`ThinkingDisplay`、`ModuleStatusDisplay`
+   - 删除冗余组件：`ThinkingDisplay`、`ModuleStatusDisplay`、`ProcessingFlowDisplay`、`FastGPTFlowDisplay`
    - 从 `components/index.ts` 中移除已删除组件的导出
-   - 保留 `ProcessingFlowDisplay` 作为详细历史查看组件
    - 统一在 `ChatMessage` 中处理所有状态显示
+   - 将思考详情显示移动到消息气泡底部状态栏区域
+
+### 2024-12-19 - 阶段三：思考流程组件优化
+
+#### ✅ 组件结构优化
+
+8. **思考流程显示重构**
+   - 将 `renderThinkingDetails` 从消息内容区移动到底部状态栏区域
+   - 调整思考详情的样式，使其更适合底部显示（减小字体、间距等）
+   - 保持琥珀色主题但优化了尺寸和布局
+
+9. **冗余组件清理**
+   - 完全删除 `ProcessingFlowDisplay` 组件文件
+   - 完全删除 `FastGPTFlowDisplay` 组件文件
+   - 从 `components/index.ts` 中移除相关导出
+   - 从 `chat-container.tsx` 中移除相关导入
+   - 消除了功能重叠和代码冗余
+
+10. **界面布局优化**
+    - 统一所有思考流程和节点状态显示在消息气泡底部
+    - 采用垂直布局：思考详情在上，节点状态和操作按钮在下
+    - 保持了清晰的信息层次结构
+
+11. **实时处理状态显示重构**
+    - 将实时处理状态从消息内容区移动到底部状态栏区域
+    - 移除了原有的历史节点状态显示（processingSteps显示）
+    - 统一使用 `isNodeStatus` 标识的实时状态显示
+    - 调整了样式以适应底部显示：减小内边距、字体大小等
+    - 保持蓝色主题和动画效果，确保状态清晰可见
+
+12. **交互节点标准化改造**
+    - 移除基于智能体名称"熵犇犇定制需求分析"的硬编码判断
+    - 改为根据5.1交互节点响应标准接口字段进行判断
+    - 扩展交互节点类型定义，支持 `userSelect` 和 `userInput` 两种类型
+    - 更新交互节点检测逻辑，支持标准的 `interactive` 事件格式
+    - 重构渲染逻辑，根据 `type` 字段区分不同的交互节点类型
+    - 为表单输入节点预留了实现框架（当前显示待实现提示）
+
+13. **交互节点组件重叠问题解决**
+    - 采用方案1：统一到独立组件，避免组件重叠
+    - 移除 `ChatMessage` 组件中的 `renderInteractiveNode` 函数
+    - 移除 `ChatMessage` 组件中的 `handleInteractiveSelect` 函数
+    - 移除 `onInteractiveSelect` 属性和相关处理逻辑
+    - 统一使用 `chat-container.tsx` 中的独立 `InteractiveNode` 组件
+    - 简化数据流：API → 全局状态 → 独立组件渲染
+
+14. **交互节点数据结构访问问题修复**
+    - **问题根因**：代码期望访问 `value.type`，但实际数据在 `value.interactive.type`
+    - **修复内容**：
+      - 修正两处 `onIntermediateValue` 中的数据结构访问路径
+      - 从 `value.type` 改为 `value.interactive.type`
+      - 从 `value.params` 改为 `value.interactive.params`
+      - 存储 `value.interactive` 而不是 `value` 到状态中
+    - **调试增强**：添加详细的数据结构检查和验证日志
+    - **验证机制**：在渲染阶段添加状态检查日志
 
 #### ✅ 已完成的工作（阶段一）
 

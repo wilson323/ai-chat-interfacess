@@ -53,12 +53,11 @@ interface ChatMessageProps {
   onCopy?: () => void
   onDelete?: (messageId: string) => void
   onEdit?: (messageId: string, newContent: string) => void
-  onInteractiveSelect?: (messageId: string, selectedOption: any) => void
   chatId?: string
   isTyping?: boolean
 }
 
-export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, onInteractiveSelect, chatId, isTyping }: ChatMessageProps) {
+export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, chatId, isTyping }: ChatMessageProps) {
   const { t } = useLanguage()
   const [copied, setCopied] = useState(false)
   const [liked, setLiked] = useState(false)
@@ -285,12 +284,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
     }
   }, [isUser, message.content])
 
-  // 处理交互节点选择
-  const handleInteractiveSelect = useCallback(async (selectedOption: any) => {
-    if (onInteractiveSelect) {
-      await onInteractiveSelect(message.id, selectedOption)
-    }
-  }, [onInteractiveSelect, message.id])
+
 
   // 渲染thinking详细内容
   const renderThinkingDetails = () => {
@@ -301,17 +295,17 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
     if (thinkingSteps.length === 0) return null
 
     return (
-      <div className="mt-3 space-y-2">
+      <div className="space-y-2">
         {thinkingSteps.map((step: any) => (
-          <div key={step.id} className="bg-amber-50/50 dark:bg-amber-900/10 rounded-lg p-3 border border-amber-200 dark:border-amber-800/30">
-            <div className="flex items-center gap-2 mb-2">
-              <Brain className="h-4 w-4 text-amber-500" />
-              <span className="text-sm font-medium text-amber-700 dark:text-amber-300">思考过程</span>
-              <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/30">
+          <div key={step.id} className="bg-amber-50/50 dark:bg-amber-900/10 rounded-lg p-2 border border-amber-200 dark:border-amber-800/30">
+            <div className="flex items-center gap-2 mb-1">
+              <Brain className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">思考过程</span>
+              <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/30">
                 {step.timestamp ? new Date(step.timestamp).toLocaleTimeString() : ''}
               </Badge>
             </div>
-            <div className="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap">
+            <div className="text-xs text-amber-900 dark:text-amber-200 whitespace-pre-wrap">
               {step.content}
             </div>
           </div>
@@ -320,32 +314,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
     )
   }
 
-  // 渲染交互节点按钮
-  const renderInteractiveNode = () => {
-    if (!message.metadata?.interactive || !message.metadata?.userSelectOptions) return null
 
-    return (
-      <div className="mt-3 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800/30">
-        <div className="flex items-center gap-2 mb-3">
-          <MessageSquare className="h-4 w-4 text-blue-500" />
-          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">请选择您的回答</span>
-        </div>
-        <div className="grid gap-2">
-          {message.metadata.userSelectOptions.map((option: any, index: number) => (
-            <Button
-              key={index}
-              variant="outline"
-              className="justify-start text-left h-auto p-3 hover:bg-blue-100 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800/30"
-              onClick={() => handleInteractiveSelect(option)}
-            >
-              <span className="font-medium mr-2">{index + 1}.</span>
-              {option.label || option.value}
-            </Button>
-          ))}
-        </div>
-      </div>
-    )
-  }
 
   // 头像渲染
   const userAvatar = (
@@ -431,55 +400,29 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                 </div>
               </div>
             ) : (
-              message.metadata?.isNodeStatus ? (
-                <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 px-4 py-3 rounded-xl font-medium animate-pulse shadow border border-blue-200 dark:border-blue-700">
-                  <span role="img" aria-label="AI"></span>
-                  <span>{message.content}</span>
-                  <span className="ml-2 animate-spin">⏳</span>
-                </div>
-              ) : (
+              !message.metadata?.isNodeStatus && (
                 <MarkdownMessage content={typeof message.content === 'string' ? message.content : ''} />
               )
             )}
           </div>
 
-          {/* 新增：thinking详细内容展示 */}
+
+        </div>
+        {/* 气泡底部：节点状态+思考详情+操作按钮区 */}
+        <div className="flex flex-col gap-2 mt-3 pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-700">
+          {/* 思考详情展示区域 */}
           {!isUserCompat && renderThinkingDetails()}
 
-          {/* 新增：交互节点按钮 */}
-          {!isUserCompat && renderInteractiveNode()}
-        </div>
-        {/* 气泡底部：节点状态+操作按钮区 */}
-        <div className="flex flex-row flex-wrap justify-between items-end gap-2 mt-3 pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-700">
-          {/* 节点状态区（如有） - 已隐藏updateVariables和flowResponses */}
-          {message.metadata?.processingSteps && Array.isArray(message.metadata.processingSteps) &&
-           message.metadata.processingSteps.length > 0 &&
-           message.metadata.processingSteps.some((step: any) =>
-             step.name !== 'updateVariables' && step.name !== 'flowResponses'
-           ) ? (
-            <div className="flex flex-row flex-wrap gap-2 items-center min-w-0">
-              {message.metadata.processingSteps
-                .filter((step: any) => step.name !== 'updateVariables' && step.name !== 'flowResponses')
-                .map((step: any, idx: number) => (
-                  <div key={step.id || idx} className="text-xs flex items-center gap-1 min-w-0">
-                    <span className="font-semibold truncate max-w-[80px]">
-                      {/* 使用中文映射，如果没有对应的映射则使用原名称 */}
-                      {nodeNameMap[step.name] || step.name}
-                    </span>
-                    <span className={
-                      step.status === 'success' ? 'text-green-500'
-                      : step.status === 'failed' ? 'text-red-500'
-                      : step.status === 'running' ? 'text-blue-500 animate-pulse'
-                      : 'text-zinc-400'
-                    }>
-                      {/* 使用中文映射，如果没有对应的映射则使用原状态 */}
-                      {statusMap[step.status] || step.status}
-                    </span>
-                    {step.content && <span className="truncate max-w-[120px]">{step.content}</span>}
-                  </div>
-                ))}
-            </div>
-          ) : <div className="min-w-[40px]"></div>}
+          {/* 实时处理状态和操作按钮行 */}
+          <div className="flex flex-row flex-wrap justify-between items-end gap-2">
+            {/* 实时处理状态区域 */}
+            {message.metadata?.isNodeStatus ? (
+              <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 px-3 py-2 rounded-lg text-xs font-medium animate-pulse border border-blue-200 dark:border-blue-700">
+                <span role="img" aria-label="AI"></span>
+                <span>{message.content}</span>
+                <span className="ml-1 animate-spin">⏳</span>
+              </div>
+            ) : <div className="min-w-[40px]"></div>}
           {/* 操作按钮区 */}
           <div className={cn(
             "flex gap-1 flex-shrink-0",
@@ -626,6 +569,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                 </Tooltip>
               </TooltipProvider>
             )}
+          </div>
           </div>
         </div>
         {/* 离线模式指示器 */}
