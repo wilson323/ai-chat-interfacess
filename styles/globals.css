@@ -272,3 +272,107 @@ html {
   border-radius: 0.5rem !important;
   padding: 0.5rem 1rem !important;
 }
+
+/* 气泡内交互按钮样式 */
+.bubble-interactive-ai {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(120, 180, 120, 0.25) !important;
+  color: #1a1a1a !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(120, 180, 120, 0.1) !important;
+}
+
+.bubble-interactive-ai:hover {
+  background: rgba(120, 180, 120, 0.15) !important;
+  border-color: rgba(120, 180, 120, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(120, 180, 120, 0.2) !important;
+}
+
+.bubble-interactive-user {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(120, 230, 170, 0.25) !important;
+  color: #1a1a1a !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(120, 230, 170, 0.1) !important;
+}
+
+.bubble-interactive-user:hover {
+  background: rgba(120, 230, 170, 0.15) !important;
+  border-color: rgba(120, 230, 170, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(120, 230, 170, 0.2) !important;
+}
+
+/* 选中状态的交互按钮 */
+.bubble-interactive-selected {
+  background: #6cb33f !important;
+  border: 1px solid #6cb33f !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(108, 179, 63, 0.3) !important;
+}
+
+.bubble-interactive-selected:hover {
+  background: #6cb33f !important;
+  border: 1px solid #6cb33f !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(108, 179, 63, 0.3) !important;
+}
+
+/* 禁用状态的交互按钮 */
+.bubble-interactive-disabled {
+  background: rgba(200, 200, 200, 0.3) !important;
+  border: 1px solid rgba(200, 200, 200, 0.5) !important;
+  color: #999 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.bubble-interactive-disabled:hover {
+  background: rgba(200, 200, 200, 0.3) !important;
+  border: 1px solid rgba(200, 200, 200, 0.5) !important;
+  color: #999 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* 夜间模式下的气泡内交互按钮 */
+@media (prefers-color-scheme: dark) {
+  .bubble-interactive-ai {
+    background: rgba(60, 80, 60, 0.4) !important;
+    border: 1px solid rgba(120, 180, 120, 0.3) !important;
+    color: #e6f7ff !important;
+    box-shadow: 0 2px 8px rgba(120, 180, 120, 0.15) !important;
+  }
+
+  .bubble-interactive-ai:hover {
+    background: rgba(120, 180, 120, 0.25) !important;
+    border-color: rgba(120, 180, 120, 0.5) !important;
+    box-shadow: 0 4px 12px rgba(120, 180, 120, 0.25) !important;
+  }
+
+  .bubble-interactive-user {
+    background: rgba(80, 200, 120, 0.2) !important;
+    border: 1px solid rgba(80, 200, 120, 0.3) !important;
+    color: #e6ffe6 !important;
+    box-shadow: 0 2px 8px rgba(80, 200, 120, 0.15) !important;
+  }
+
+  .bubble-interactive-user:hover {
+    background: rgba(80, 200, 120, 0.3) !important;
+    border-color: rgba(80, 200, 120, 0.5) !important;
+    box-shadow: 0 4px 12px rgba(80, 200, 120, 0.25) !important;
+  }
+
+  /* 夜间模式下的选中状态 */
+  .dark .bubble-interactive-selected {
+    background: #6cb33f !important;
+    border: 1px solid #6cb33f !important;
+    color: white !important;
+  }
+
+  /* 夜间模式下的禁用状态 */
+  .dark .bubble-interactive-disabled {
+    background: rgba(100, 100, 100, 0.3) !important;
+    border: 1px solid rgba(100, 100, 100, 0.5) !important;
+    color: #666 !important;
+  }
+}

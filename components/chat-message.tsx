@@ -32,6 +32,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useResponsive } from "@/hooks/use-responsive"
 import { formatDistanceToNow } from "date-fns"
 import { zhCN } from "date-fns/locale"
+import { InlineBubbleInteractive } from "./inline-bubble-interactive"
+import { EnhancedThinkingBubble } from "./enhanced-thinking-bubble"
 
 // 添加autoSize支持
 const TextareaWithAutoSize = ({ autoSize, ...props }: any) => {
@@ -53,11 +55,12 @@ interface ChatMessageProps {
   onCopy?: () => void
   onDelete?: (messageId: string) => void
   onEdit?: (messageId: string, newContent: string) => void
+  onInteractiveSelect?: (value: string, key: string) => void
   chatId?: string
   isTyping?: boolean
 }
 
-export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, chatId, isTyping }: ChatMessageProps) {
+export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, onInteractiveSelect, chatId, isTyping }: ChatMessageProps) {
   const { t } = useLanguage()
   const [copied, setCopied] = useState(false)
   const [liked, setLiked] = useState(false)
@@ -105,7 +108,18 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
     "flowNodeStatus": "流程节点",
     "toolCall": "工具调用",
     "toolParams": "工具参数",
-    "toolResponse": "工具响应"
+    "toolResponse": "工具响应",
+    // 新增更多节点类型映射
+    "userSelect": "用户选择",
+    "textOutput": "文本输出",
+    "httpRequest": "HTTP请求",
+    "dataProcess": "数据处理",
+    "conditionalBranch": "条件分支",
+    "knowledgeBase": "知识库检索",
+    "codeExecution": "代码执行",
+    "imageGeneration": "图像生成",
+    "speechSynthesis": "语音合成",
+    "textAnalysis": "文本分析"
   }
 
   // 状态的中文映射
@@ -400,18 +414,68 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, c
                 </div>
               </div>
             ) : (
-              !message.metadata?.isNodeStatus && (
-                <MarkdownMessage content={typeof message.content === 'string' ? message.content : ''} />
-              )
+              <>
+                {/* 文字内容渲染 - 只要不是节点状态消息就显示 */}
+                {!message.metadata?.isNodeStatus && message.content && (
+                  <MarkdownMessage content={typeof message.content === 'string' ? message.content : ''} />
+                )}
+
+                {/* 交互节点现在统一在增强思考流程组件中处理，这里不再单独渲染 */}
+              </>
             )}
           </div>
 
 
         </div>
-        {/* 气泡底部：节点状态+思考详情+操作按钮区 */}
+        {/* 气泡底部：增强的思考流程气泡（包含交互节点） */}
         <div className="flex flex-col gap-2 mt-3 pt-2 border-t border-dashed border-zinc-200 dark:border-zinc-700">
-          {/* 思考详情展示区域 */}
-          {!isUserCompat && renderThinkingDetails()}
+          {/* 使用增强的思考流程组件，统一处理思考流程和交互节点 */}
+          {!isUserCompat && (() => {
+            // 🔥 修复：扩展过滤条件，包含所有处理步骤类型
+            const allProcessingSteps = message.metadata?.processingSteps || [];
+            const thinkingSteps = allProcessingSteps.filter((step: any) => {
+              // 包含思考相关的事件类型
+              const isThinkingType = step.type.includes('thinking');
+              // 包含流程处理相关的事件类型
+              const isProcessingType = [
+                'flowNodeStatus', 'moduleStatus', 'moduleStart', 'moduleEnd',
+                'toolCall', 'toolParams', 'toolResponse'
+              ].includes(step.type);
+              // 必须有内容才显示
+              const hasContent = step.content || step.name;
+
+              return (isThinkingType || isProcessingType) && hasContent;
+            });
+
+            const hasThinkingSteps = thinkingSteps.length > 0;
+            const hasInteractiveData = !!message.metadata?.interactiveData;
+
+            console.log('🎨 ChatMessage 渲染增强思考流程组件:', {
+              messageId: message.id,
+              hasThinkingSteps,
+              hasInteractiveData,
+              thinkingStepsCount: thinkingSteps.length,
+              allProcessingStepsCount: allProcessingSteps.length,
+              thinkingStatus: message.metadata?.thinkingStatus,
+              interactionStatus: message.metadata?.interactionStatus,
+              processingStepsTypes: allProcessingSteps.map(s => s.type),
+              filteredStepsTypes: thinkingSteps.map(s => s.type)
+            });
+
+            // 只有当有思考流程或交互数据时才显示
+            if (hasThinkingSteps || hasInteractiveData) {
+              return (
+                <EnhancedThinkingBubble
+                  thinkingSteps={message.metadata?.processingSteps || []}
+                  interactiveData={message.metadata?.interactiveData}
+                  onInteractiveSelect={onInteractiveSelect}
+                  thinkingStatus={message.metadata?.thinkingStatus || "in-progress"}
+                  interactionStatus={message.metadata?.interactionStatus || "none"}
+                />
+              );
+            }
+            return null;
+          })()}
 
           {/* 实时处理状态和操作按钮行 */}
           <div className="flex flex-row flex-wrap justify-between items-end gap-2">

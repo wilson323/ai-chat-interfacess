@@ -37,7 +37,7 @@ import { QuestionSuggestions } from "@/components/question-suggestions"
 import VoiceRecorder from "@/components/ui/voice-recorder"
 import { useLanguage } from "@/context/language-context"
 import type { ConversationAgentType } from "@/types/agent"
-import { InteractiveNode } from "@/components/interactive-node"
+// InteractiveNode 组件已移除，现在使用气泡内的 InlineBubbleInteractive
 import { GlobalVariablesForm } from "@/components/global-variables-form"
 
 const createNewConversation = () => {
@@ -106,21 +106,7 @@ export function ChatContainer() {
   // 新增 currentNodeName 状态
   const [currentNodeName, setCurrentNodeName] = useState<string>("")
 
-  // 新增状态管理交互节点 - 支持标准接口格式
-  const [interactiveNode, setInteractiveNode] = useState<{
-    type: "userSelect" | "userInput";
-    params: {
-      description?: string;
-      userSelectOptions?: Array<{ value: string; key: string }>;
-      inputForm?: Array<{
-        type: string;
-        key: string;
-        label: string;
-        valueType: string;
-        required: boolean;
-      }>;
-    };
-  } | null>(null)
+  // 交互节点状态已移除，现在使用消息内的 interactiveData 字段
 
   // 定义toggleHistory函数
   const toggleHistory = () => {
@@ -608,6 +594,8 @@ export function ChatContainer() {
                           agentId: selectedAgent?.id,
                           apiKey: selectedAgent?.apiKey,
                           appId: selectedAgent?.appId,
+                          thinkingStatus: "in-progress", // 初始思考状态
+                          interactionStatus: "none",     // 初始交互状态
                         },
                       },
                     ];
@@ -648,9 +636,9 @@ export function ChatContainer() {
                 onIntermediateValue: (value: any, eventType: string) => {
                   console.log('[onIntermediateValue1] 事件类型:', eventType, '内容:', value);
 
-                  // 处理交互节点 - 支持标准接口格式
+                  // 处理交互节点 - 将交互数据附加到typing消息，不立即创建新消息
                   if (eventType === "interactive") {
-                    console.log('检测到交互节点:', value);
+                    console.log('🎯 检测到交互节点:', value);
                     console.log('交互节点数据结构检查:', {
                       hasInteractive: !!value?.interactive,
                       type: value?.interactive?.type,
@@ -663,9 +651,60 @@ export function ChatContainer() {
                     if (value?.interactive &&
                         ((value.interactive.type === "userSelect" && Array.isArray(value.interactive.params?.userSelectOptions) && value.interactive.params.userSelectOptions.length > 0) ||
                          (value.interactive.type === "userInput" && Array.isArray(value.interactive.params?.inputForm) && value.interactive.params.inputForm.length > 0))) {
-                      console.log('✅ 交互节点验证通过，设置状态:', value.interactive);
-                      setInteractiveNode(value.interactive);
-                      console.log('🔄 交互节点已设置，继续流式处理...');
+                      console.log('✅ 交互节点验证通过，将交互数据附加到typing消息:', value.interactive);
+
+                      // 将交互数据附加到现有的typing消息，如果不存在则创建
+                      setMessages((prev: Message[]) => {
+                        console.log('🔄 准备附加交互数据，当前消息列表:', prev.map(m => ({ id: m.id, role: m.role, hasInteractive: !!m.metadata?.interactiveData })));
+
+                        let typingMsg = prev.find(msg => msg.id === "typing" && msg.role === "assistant");
+
+                        if (!typingMsg) {
+                          console.log('⚠️ typing消息不存在，创建新的typing消息');
+                          // 如果 typing 消息不存在，先创建它
+                          typingMsg = {
+                            id: "typing",
+                            type: MessageType.Text,
+                            role: "assistant" as MessageRole,
+                            content: "",
+                            timestamp: new Date(),
+                            metadata: {
+                              agentId: selectedAgent?.id,
+                              apiKey: selectedAgent?.apiKey,
+                              appId: selectedAgent?.appId,
+                              thinkingStatus: "completed", // 交互节点出现时，思考已完成
+                              interactionStatus: "ready",  // 交互准备就绪
+                            },
+                          };
+                          prev = [...prev, typingMsg];
+                        }
+
+                        // 然后附加交互数据
+                        const result = prev.map((msg) => {
+                          if (msg.id === "typing" && msg.role === "assistant") {
+                            const updatedMsg = {
+                              ...msg,
+                              metadata: {
+                                ...msg.metadata,
+                                interactiveData: {
+                                  ...value.interactive,
+                                  processed: false
+                                },
+                                thinkingStatus: "completed", // 思考完成
+                                interactionStatus: "ready",  // 交互准备就绪
+                              }
+                            };
+                            console.log('✅ 交互数据已附加到消息:', updatedMsg.id, updatedMsg.metadata.interactiveData);
+                            return updatedMsg;
+                          }
+                          return msg;
+                        });
+
+                        console.log('🔄 附加交互数据后的消息列表:', result.map(m => ({ id: m.id, role: m.role, hasInteractive: !!m.metadata?.interactiveData })));
+                        return result;
+                      });
+
+                      console.log('🔄 交互数据已附加到typing消息，继续流式处理...');
                     } else {
                       console.log('❌ 交互节点验证失败，数据结构:', {
                         hasInteractive: !!value?.interactive,
@@ -695,9 +734,10 @@ export function ChatContainer() {
                   };
                   // 日志：setMessages 前后打印 typing 消息的 processingSteps
                   setMessages((prev: Message[]) => {
-                    // 新增：只显示一个节点气泡，内容为当前节点名称
+                    // 🔥 优化：减少 node-status 消息创建，避免与 typing 消息冲突
+                    // 只有在没有 typing 消息时才创建 node-status 消息
                     if (
-                      eventType === "flowNodeStatus" ||
+                      (eventType === "flowNodeStatus" ||
                       eventType === "moduleStatus" ||
                       eventType === "moduleStart" ||
                       eventType === "moduleEnd" ||
@@ -706,8 +746,10 @@ export function ChatContainer() {
                       eventType === "thinkingEnd" ||
                       eventType === "toolCall" ||
                       eventType === "toolParams" ||
-                      eventType === "toolResponse"
+                      eventType === "toolResponse") &&
+                      !prev.find(msg => msg.id === "typing" && msg.role === "assistant")
                     ) {
+                      console.log('🔄 创建 node-status 消息，因为没有 typing 消息:', nodeName);
                       const filtered = prev.filter(msg => msg.id !== 'node-status');
                       return [
                         ...filtered,
@@ -720,6 +762,8 @@ export function ChatContainer() {
                           metadata: { isNodeStatus: true },
                         }
                       ];
+                    } else if (prev.find(msg => msg.id === "typing" && msg.role === "assistant")) {
+                      console.log('🛡️ 跳过 node-status 消息创建，因为存在 typing 消息');
                     }
                     // 原有逻辑
                     const before = prev.find(msg => msg.id === "typing" && msg.role === "assistant");
@@ -727,11 +771,19 @@ export function ChatContainer() {
                     const next = prev.map((msg) => {
                       if (msg.id === "typing" && msg.role === "assistant") {
                         const prevSteps = Array.isArray(msg.metadata?.processingSteps) ? msg.metadata.processingSteps : [];
+                        const isThinkingEvent = eventType.includes('thinking');
+                        const isThinkingEnd = eventType === 'thinkingEnd';
+
                         return {
                           ...msg,
                           metadata: {
                             ...msg.metadata,
                             processingSteps: [...prevSteps, step],
+                            // 更新思考状态
+                            thinkingStatus: isThinkingEnd ? "completed" :
+                                          (isThinkingEvent ? "in-progress" : msg.metadata?.thinkingStatus),
+                            // 如果还没有交互状态，设置为none
+                            interactionStatus: msg.metadata?.interactionStatus || "none",
                           },
                         };
                       }
@@ -861,26 +913,23 @@ export function ChatContainer() {
                   console.log('[streamChat] onFinish');
                   setIsTyping(false)
 
-                  // 检查是否有交互节点需要处理
-                  if (interactiveNode) {
-                    console.log('🎯 流式处理完成，存在交互节点，移除typing消息');
-                    // 如果有交互节点，移除typing消息但不创建新的助手消息
-                    setMessages((prev: Message[]) => prev.filter(msg => msg.id !== 'typing'));
-                  } else {
-                    console.log('📝 流式处理完成，无交互节点，转换typing消息为永久消息');
-                    // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
-                    setMessages((prev: Message[]) => {
-                      return prev.map((msg) =>
-                        msg.id === "typing"
-                          ? {
-                              ...msg,
-                              id: Date.now().toString(),
-                              metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
+                  // 统一处理：将typing消息转换为永久消息（可能包含文字内容和/或交互数据）
+                  setMessages((prev: Message[]) => {
+                    console.log('📝 流式处理完成，转换typing消息为永久消息');
+                    return prev.map((msg) =>
+                      msg.id === "typing"
+                        ? {
+                            ...msg,
+                            id: Date.now().toString(),
+                            metadata: {
+                              ...msg.metadata,
+                              // 确保思考状态设置为完成
+                              thinkingStatus: "completed"
                             }
-                          : msg
-                      );
-                    });
-                  }
+                          }
+                        : msg
+                    );
+                  });
                 },
                 signal: abortControllerRef.current.signal
               })
@@ -1097,9 +1146,10 @@ export function ChatContainer() {
 
                 // 日志：setMessages 前后打印 typing 消息的 processingSteps
                 setMessages((prev: Message[]) => {
-                  // 新增：只显示一个节点气泡，内容为当前节点名称
+                  // 🔥 优化：减少 node-status 消息创建，只在必要时显示
+                  // 只有在没有 typing 消息时才创建 node-status 消息
                   if (
-                    eventType === "flowNodeStatus" ||
+                    (eventType === "flowNodeStatus" ||
                     eventType === "moduleStatus" ||
                     eventType === "moduleStart" ||
                     eventType === "moduleEnd" ||
@@ -1108,7 +1158,8 @@ export function ChatContainer() {
                     eventType === "thinkingEnd" ||
                     eventType === "toolCall" ||
                     eventType === "toolParams" ||
-                    eventType === "toolResponse"
+                    eventType === "toolResponse") &&
+                    !prev.find(msg => msg.id === "typing" && msg.role === "assistant")
                   ) {
                     const filtered = prev.filter(msg => msg.id !== 'node-status');
                     return [
@@ -1129,11 +1180,19 @@ export function ChatContainer() {
                   const next = prev.map((msg) => {
                     if (msg.id === "typing" && msg.role === "assistant") {
                       const prevSteps = Array.isArray(msg.metadata?.processingSteps) ? msg.metadata.processingSteps : [];
+                      const isThinkingEvent = eventType.includes('thinking');
+                      const isThinkingEnd = eventType === 'thinkingEnd';
+
                       return {
                         ...msg,
                         metadata: {
                           ...msg.metadata,
                           processingSteps: [...prevSteps, step],
+                          // 更新思考状态
+                          thinkingStatus: isThinkingEnd ? "completed" :
+                                        (isThinkingEvent ? "in-progress" : msg.metadata?.thinkingStatus),
+                          // 如果还没有交互状态，设置为none
+                          interactionStatus: msg.metadata?.interactionStatus || "none",
                         },
                       };
                     }
@@ -1234,6 +1293,8 @@ export function ChatContainer() {
                           agentId: selectedAgent?.id, // 添加智能体ID
                           apiKey: selectedAgent?.apiKey, // 添加API密钥
                           appId: selectedAgent?.appId, // 添加应用ID
+                          thinkingStatus: "in-progress", // 初始思考状态
+                          interactionStatus: "none",     // 初始交互状态
                         },
                       },
                     ]
@@ -1258,7 +1319,11 @@ export function ChatContainer() {
                       ? {
                           ...msg,
                           id: Date.now().toString(),
-                          metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
+                          metadata: {
+                            ...msg.metadata,
+                            // 确保思考状态设置为完成
+                            thinkingStatus: "completed"
+                          }
                         }
                       : msg
                   );
@@ -1281,6 +1346,8 @@ export function ChatContainer() {
                   agentId: selectedAgent?.id,
                   apiKey: selectedAgent?.apiKey,
                   appId: selectedAgent?.appId,
+                  thinkingStatus: "in-progress", // 初始思考状态
+                  interactionStatus: "none",     // 初始交互状态
                 },
               },
             ]);
@@ -1603,12 +1670,31 @@ export function ChatContainer() {
   }
 
   // 处理交互节点选择
-  const handleInteractiveSelect = async (value: string) => {
+  const handleInteractiveSelect = async (value: string, key: string) => {
     try {
-      console.log('[handleInteractiveSelect] 用户选择:', value);
+      console.log('[handleInteractiveSelect] 用户选择:', { value, key });
 
-      // 清除当前的交互节点状态
-      setInteractiveNode(null);
+      // 标记交互消息为已处理，并记录选择信息，更新交互状态
+      setMessages((prev: Message[]) =>
+        prev.map(msg =>
+          msg.metadata?.interactiveData && !msg.metadata.interactiveData.processed
+            ? {
+                ...msg,
+                metadata: {
+                  ...msg.metadata,
+                  interactiveData: {
+                    ...msg.metadata.interactiveData,
+                    processed: true,
+                    selectedValue: value,
+                    selectedKey: key,
+                    selectedAt: new Date()
+                  },
+                  interactionStatus: "completed", // 交互完成
+                }
+              }
+            : msg
+        )
+      );
 
       // 创建用户选择消息
       const userMessage: Message = {
@@ -1685,6 +1771,8 @@ export function ChatContainer() {
                       agentId: selectedAgent?.id,
                       apiKey: selectedAgent?.apiKey,
                       appId: selectedAgent?.appId,
+                      thinkingStatus: "in-progress", // 初始思考状态
+                      interactionStatus: "none",     // 初始交互状态
                     },
                   },
                 ];
@@ -1716,6 +1804,8 @@ export function ChatContainer() {
                         agentId: selectedAgent?.id,
                         apiKey: selectedAgent?.apiKey,
                         appId: selectedAgent?.appId,
+                        thinkingStatus: "in-progress", // 初始思考状态
+                        interactionStatus: "none",     // 初始交互状态
                       },
                     },
                   ];
@@ -1725,16 +1815,67 @@ export function ChatContainer() {
             onIntermediateValue: (value: any, eventType: string) => {
               console.log('[onIntermediateValue2] 事件类型:', eventType, '内容:', value);
 
-              // 处理交互节点 - 支持标准接口格式
+              // 处理交互节点 - 将交互数据附加到typing消息，不立即创建新消息
               if (eventType === "interactive") {
                 console.log('🎯 [交互节点继续运行] 检测到交互节点:', value);
                 // 检查是否为有效的交互节点格式
                 if (value?.interactive &&
                     ((value.interactive.type === "userSelect" && Array.isArray(value.interactive.params?.userSelectOptions) && value.interactive.params.userSelectOptions.length > 0) ||
                      (value.interactive.type === "userInput" && Array.isArray(value.interactive.params?.inputForm) && value.interactive.params.inputForm.length > 0))) {
-                  console.log('✅ [交互节点继续运行] 交互节点验证通过，设置状态:', value.interactive);
-                  setInteractiveNode(value.interactive);
-                  console.log('🔄 [交互节点继续运行] 交互节点已设置，继续流式处理...');
+                  console.log('✅ [交互节点继续运行] 交互节点验证通过，将交互数据附加到typing消息:', value.interactive);
+
+                  // 将交互数据附加到现有的typing消息，如果不存在则创建
+                  setMessages((prev: Message[]) => {
+                    console.log('🔄 [交互节点继续运行] 准备附加交互数据，当前消息列表:', prev.map(m => ({ id: m.id, role: m.role, hasInteractive: !!m.metadata?.interactiveData })));
+
+                    let typingMsg = prev.find(msg => msg.id === "typing" && msg.role === "assistant");
+
+                    if (!typingMsg) {
+                      console.log('⚠️ [交互节点继续运行] typing消息不存在，创建新的typing消息');
+                      // 如果 typing 消息不存在，先创建它
+                      typingMsg = {
+                        id: "typing",
+                        type: MessageType.Text,
+                        role: "assistant" as MessageRole,
+                        content: "",
+                        timestamp: new Date(),
+                        metadata: {
+                          agentId: selectedAgent?.id,
+                          apiKey: selectedAgent?.apiKey,
+                          appId: selectedAgent?.appId,
+                          thinkingStatus: "completed", // 交互节点出现时，思考已完成
+                          interactionStatus: "ready",  // 交互准备就绪
+                        },
+                      };
+                      prev = [...prev, typingMsg];
+                    }
+
+                    // 然后附加交互数据
+                    const result = prev.map((msg) => {
+                      if (msg.id === "typing" && msg.role === "assistant") {
+                        const updatedMsg = {
+                          ...msg,
+                          metadata: {
+                            ...msg.metadata,
+                            interactiveData: {
+                              ...value.interactive,
+                              processed: false
+                            },
+                            thinkingStatus: "completed", // 思考完成
+                            interactionStatus: "ready",  // 交互准备就绪
+                          }
+                        };
+                        console.log('✅ [交互节点继续运行] 交互数据已附加到消息:', updatedMsg.id, updatedMsg.metadata.interactiveData);
+                        return updatedMsg;
+                      }
+                      return msg;
+                    });
+
+                    console.log('🔄 [交互节点继续运行] 附加交互数据后的消息列表:', result.map(m => ({ id: m.id, role: m.role, hasInteractive: !!m.metadata?.interactiveData })));
+                    return result;
+                  });
+
+                  console.log('🔄 [交互节点继续运行] 交互数据已附加到typing消息，继续流式处理...');
                 } else {
                   console.log('❌ [交互节点继续运行] 交互节点验证失败，数据结构:', {
                     hasInteractive: !!value?.interactive,
@@ -1764,9 +1905,10 @@ export function ChatContainer() {
               };
               // 日志：setMessages 前后打印 typing 消息的 processingSteps
               setMessages((prev: Message[]) => {
-                // 新增：只显示一个节点气泡，内容为当前节点名称
+                // 🔥 优化：减少 node-status 消息创建，避免与 typing 消息冲突
+                // 只有在没有 typing 消息时才创建 node-status 消息
                 if (
-                  eventType === "flowNodeStatus" ||
+                  (eventType === "flowNodeStatus" ||
                   eventType === "moduleStatus" ||
                   eventType === "moduleStart" ||
                   eventType === "moduleEnd" ||
@@ -1775,8 +1917,10 @@ export function ChatContainer() {
                   eventType === "thinkingEnd" ||
                   eventType === "toolCall" ||
                   eventType === "toolParams" ||
-                  eventType === "toolResponse"
+                  eventType === "toolResponse") &&
+                  !prev.find(msg => msg.id === "typing" && msg.role === "assistant")
                 ) {
+                  console.log('🔄 创建 node-status 消息，因为没有 typing 消息:', nodeName);
                   const filtered = prev.filter(msg => msg.id !== 'node-status');
                   return [
                     ...filtered,
@@ -1789,6 +1933,8 @@ export function ChatContainer() {
                       metadata: { isNodeStatus: true },
                     }
                   ];
+                } else if (prev.find(msg => msg.id === "typing" && msg.role === "assistant")) {
+                  console.log('🛡️ 跳过 node-status 消息创建，因为存在 typing 消息');
                 }
                 // 原有逻辑
                 const before = prev.find(msg => msg.id === "typing" && msg.role === "assistant");
@@ -1796,11 +1942,19 @@ export function ChatContainer() {
                 const next = prev.map((msg) => {
                   if (msg.id === "typing" && msg.role === "assistant") {
                     const prevSteps = Array.isArray(msg.metadata?.processingSteps) ? msg.metadata.processingSteps : [];
+                    const isThinkingEvent = eventType.includes('thinking');
+                    const isThinkingEnd = eventType === 'thinkingEnd';
+
                     return {
                       ...msg,
                       metadata: {
                         ...msg.metadata,
                         processingSteps: [...prevSteps, step],
+                        // 更新思考状态
+                        thinkingStatus: isThinkingEnd ? "completed" :
+                                      (isThinkingEvent ? "in-progress" : msg.metadata?.thinkingStatus),
+                        // 如果还没有交互状态，设置为none
+                        interactionStatus: msg.metadata?.interactionStatus || "none",
                       },
                     };
                   }
@@ -1930,27 +2084,23 @@ export function ChatContainer() {
               console.log('[streamChat] 交互节点继续运行 onFinish');
               setIsTyping(false)
 
-              // 检查是否有交互节点需要处理
-              if (interactiveNode) {
-                console.log('🎯 [交互节点继续运行] 流式处理完成，存在交互节点，移除typing消息');
-                console.log('🎯 [交互节点继续运行] 当前交互节点:', interactiveNode);
-                // 如果有交互节点，移除typing消息但不创建新的助手消息
-                setMessages((prev: Message[]) => prev.filter(msg => msg.id !== 'typing'));
-              } else {
-                console.log('📝 [交互节点继续运行] 流式处理完成，无交互节点，转换typing消息为永久消息');
-                // 将临时消息 ID 更新为永久 ID，保留 metadata.processingSteps
-                setMessages((prev: Message[]) => {
-                  return prev.map((msg) =>
-                    msg.id === "typing"
-                      ? {
-                          ...msg,
-                          id: Date.now().toString(),
-                          metadata: { ...msg.metadata } // 保证 processingSteps 不丢失
+              // 统一处理：将typing消息转换为永久消息（可能包含文字内容和/或交互数据）
+              setMessages((prev: Message[]) => {
+                console.log('📝 [交互节点继续运行] 流式处理完成，转换typing消息为永久消息');
+                return prev.map((msg) =>
+                  msg.id === "typing"
+                    ? {
+                        ...msg,
+                        id: Date.now().toString(),
+                        metadata: {
+                          ...msg.metadata,
+                          // 确保思考状态设置为完成
+                          thinkingStatus: "completed"
                         }
-                      : msg
-                  );
-                });
-              }
+                      }
+                    : msg
+                );
+              });
             },
             signal: abortControllerRef.current.signal
           });
@@ -2053,20 +2203,59 @@ export function ChatContainer() {
             </Alert>
           )}
 
-          {/* 消息列表 - 过滤掉连续的助手消息，只保留最后一个 */}
-          {messages.filter((msg, idx, arr) => {
-            // 如果不是助手消息，保留
-            if (msg.role !== 'assistant') return true;
+          {/* 消息列表 - 过滤掉连续的助手消息，只保留最后一个，但保护包含交互数据的消息 */}
+          {(() => {
+            const filteredMessages = messages.filter((msg, idx, arr) => {
+              // 如果不是助手消息，保留
+              if (msg.role !== 'assistant') return true;
 
-            // 如果是最后一条消息，保留
-            if (idx === arr.length - 1) return true;
+              // 🔥 最高优先级：如果是 typing 消息，必须保留（包含实际内容和思考数据）
+              if (msg.id === "typing") {
+                console.log('🛡️ 保护 typing 消息:', msg.id, {
+                  hasContent: !!msg.content,
+                  hasProcessingSteps: !!msg.metadata?.processingSteps?.length,
+                  hasInteractiveData: !!msg.metadata?.interactiveData,
+                  thinkingStatus: msg.metadata?.thinkingStatus,
+                  interactionStatus: msg.metadata?.interactionStatus
+                });
+                return true;
+              }
 
-            // 如果下一条消息不是助手消息，保留
-            if (idx < arr.length - 1 && arr[idx + 1].role !== 'assistant') return true;
+              // 🔥 关键修复：如果包含交互数据，必须保留
+              if (msg.metadata?.interactiveData) {
+                console.log('🛡️ 保护包含交互数据的消息:', msg.id, msg.metadata.interactiveData);
+                return true;
+              }
 
-            // 否则过滤掉（连续的助手消息中的非最后一条）
-            return false;
-          }).map((msg, idx) => (
+              // 🔥 过滤掉 node-status 消息，避免与交互节点冲突
+              if (msg.metadata?.isNodeStatus) {
+                console.log('🚫 过滤掉 node-status 消息:', msg.id);
+                return false;
+              }
+
+              // 如果是最后一条消息，保留
+              if (idx === arr.length - 1) return true;
+
+              // 如果下一条消息不是助手消息，保留
+              if (idx < arr.length - 1 && arr[idx + 1].role !== 'assistant') return true;
+
+              // 否则过滤掉（连续的助手消息中的非最后一条）
+              return false;
+            });
+
+            // 调试日志：检查过滤结果
+            const interactiveMessagesBefore = messages.filter(m => m.metadata?.interactiveData).length;
+            const interactiveMessagesAfter = filteredMessages.filter(m => m.metadata?.interactiveData).length;
+            console.log('📋 消息过滤结果:', {
+              总消息数_过滤前: messages.length,
+              总消息数_过滤后: filteredMessages.length,
+              交互消息数_过滤前: interactiveMessagesBefore,
+              交互消息数_过滤后: interactiveMessagesAfter,
+              交互消息是否丢失: interactiveMessagesBefore !== interactiveMessagesAfter
+            });
+
+            return filteredMessages;
+          })().map((msg, idx) => (
             <ChatMessage
               key={msg.id + idx}
               message={msg}
@@ -2074,6 +2263,7 @@ export function ChatContainer() {
               onCopy={handleCopy}
               onDelete={deleteMessage}
               onEdit={editMessage}
+              onInteractiveSelect={handleInteractiveSelect}
               chatId={chatId || undefined}
               isTyping={isTyping}
             />
@@ -2095,69 +2285,7 @@ export function ChatContainer() {
 
           <div ref={messagesEndRef} />
 
-          {/* 渲染交互节点 - 根据标准接口字段判断 */}
-          {(() => {
-            console.log('🎨 渲染检查 - 交互节点状态:', {
-              hasInteractiveNode: !!interactiveNode,
-              type: interactiveNode?.type,
-              hasUserSelectOptions: Array.isArray(interactiveNode?.params?.userSelectOptions),
-              userSelectOptionsLength: interactiveNode?.params?.userSelectOptions?.length,
-              hasInputForm: Array.isArray(interactiveNode?.params?.inputForm),
-              inputFormLength: interactiveNode?.params?.inputForm?.length,
-              fullInteractiveNode: interactiveNode
-            });
-            return null;
-          })()}
-          {interactiveNode && (
-            <div className="my-4">
-              {/* 用户选择节点 */}
-              {(() => {
-                const isUserSelect = interactiveNode.type === "userSelect";
-                const hasOptions = Array.isArray(interactiveNode.params?.userSelectOptions);
-                const options = interactiveNode.params?.userSelectOptions;
-                const hasValidOptions = hasOptions && options && options.length > 0;
-
-                console.log('🎨 [交互节点继续运行] 用户选择节点渲染条件检查:', {
-                  isUserSelect,
-                  hasOptions,
-                  hasValidOptions,
-                  optionsData: options,
-                  description: interactiveNode.params?.description
-                });
-
-                if (isUserSelect && hasValidOptions && options) {
-                  console.log('🎨 [交互节点继续运行] 渲染用户选择节点:', options);
-                  return (
-                    <InteractiveNode
-                      options={options}
-                      description={interactiveNode.params.description}
-                      onSelect={handleInteractiveSelect}
-                    />
-                  );
-                } else {
-                  console.log('❌ [交互节点继续运行] 用户选择节点渲染条件不满足');
-                  return null;
-                }
-              })()}
-
-              {/* 表单输入节点 - 待实现 */}
-              {interactiveNode.type === "userInput" &&
-               Array.isArray(interactiveNode.params?.inputForm) &&
-               interactiveNode.params.inputForm.length > 0 && (
-                <>
-                  {console.log('🎨 渲染表单输入节点:', interactiveNode.params.inputForm)}
-                  <div className="p-4 border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 rounded-lg">
-                    <div className="mb-3 text-sm font-medium">
-                      {interactiveNode.params.description || "请填写表单信息:"}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      表单输入节点功能待实现...
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+          {/* 旧的独立交互节点渲染逻辑已移除，现在交互节点在消息气泡内渲染 */}
         </div>
       </ScrollArea>
 
