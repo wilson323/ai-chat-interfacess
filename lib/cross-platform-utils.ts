@@ -122,7 +122,7 @@ export function validateInteractiveNodeData(data: any): InteractiveNodeValidatio
 
   if (type === 'userSelect') {
     const options = data.interactive.params.userSelectOptions;
-    
+
     if (!Array.isArray(options)) {
       result.errors.push('userSelectOptions不是数组');
       return result;
@@ -149,7 +149,7 @@ export function validateInteractiveNodeData(data: any): InteractiveNodeValidatio
     }
   } else if (type === 'userInput') {
     const inputForm = data.interactive.params.inputForm;
-    
+
     if (!Array.isArray(inputForm)) {
       result.errors.push('inputForm不是数组');
       return result;
@@ -205,6 +205,78 @@ export function isProduction(): boolean {
 }
 
 /**
+ * 检查是否为开发环境
+ */
+export function isDevelopment(): boolean {
+  return process.env.NODE_ENV === 'development';
+}
+
+/**
+ * 检查是否在Docker容器中运行
+ */
+export function isDockerEnvironment(): boolean {
+  try {
+    // 检查常见的Docker环境标识
+    return !!(
+      process.env.DOCKER_CONTAINER ||
+      process.env.KUBERNETES_SERVICE_HOST ||
+      (typeof window === 'undefined' && process.env.HOSTNAME?.includes('docker'))
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 获取运行环境信息
+ */
+export function getEnvironmentInfo() {
+  return {
+    nodeEnv: process.env.NODE_ENV,
+    isProduction: isProduction(),
+    isDevelopment: isDevelopment(),
+    isDocker: isDockerEnvironment(),
+    platform: getPlatformInfo(),
+    port: process.env.PORT || '3000',
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * 验证生产环境配置
+ */
+export function validateProductionConfig(): { isValid: boolean; issues: string[] } {
+  const issues: string[] = [];
+
+  if (!isProduction()) {
+    return { isValid: true, issues: [] }; // 非生产环境不需要验证
+  }
+
+  // 检查必要的生产环境配置
+  if (!process.env.PORT) {
+    issues.push('PORT环境变量未设置');
+  }
+
+  // 检查Next.js配置
+  if (typeof window === 'undefined') {
+    try {
+      // 服务端检查
+      const hasStandalone = process.env.NEXT_OUTPUT_MODE === 'standalone';
+      if (!hasStandalone) {
+        console.warn('建议在生产环境中使用standalone模式');
+      }
+    } catch (error) {
+      console.warn('无法检查Next.js配置:', error);
+    }
+  }
+
+  return {
+    isValid: issues.length === 0,
+    issues,
+  };
+}
+
+/**
  * 安全的控制台日志，在生产环境中可以禁用
  */
 export function safeCrossPlatformLog(level: 'log' | 'warn' | 'error', message: string, data?: any) {
@@ -213,7 +285,7 @@ export function safeCrossPlatformLog(level: 'log' | 'warn' | 'error', message: s
   }
 
   const debugInfo = createCrossPlatformDebugInfo(message, data);
-  
+
   switch (level) {
     case 'log':
       console.log(`[跨平台] ${message}`, debugInfo);

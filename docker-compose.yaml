@@ -7,6 +7,9 @@ services:
       - "3009:3009"
     environment:
       - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - DOCKER_CONTAINER=true
+      - PORT=3009
       - POSTGRES_USER=${POSTGRES_USER:-root}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ZKTeco##123}
       - POSTGRES_DB=${POSTGRES_DB:-agent_config}
@@ -15,6 +18,12 @@ services:
     depends_on:
       - db
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3009/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:14-alpine
