@@ -40,6 +40,13 @@ import type { ConversationAgentType } from "@/types/agent"
 // InteractiveNode 组件已移除，现在使用气泡内的 InlineBubbleInteractive
 import { GlobalVariablesForm } from "@/components/global-variables-form"
 import { NewConversationButton } from "@/components/new-conversation-button"
+import {
+  safeCrossPlatformJSONParse,
+  validateInteractiveNodeData,
+  safeCrossPlatformClone,
+  safeCrossPlatformLog,
+  createCrossPlatformDebugInfo
+} from "@/lib/cross-platform-utils"
 
 const createNewConversation = () => {
   window.dispatchEvent(new CustomEvent("new-conversation"))
@@ -92,6 +99,7 @@ export function ChatContainer() {
   const [messages, setMessages] = useState<Message[]>([])
   const [textareaHeight, setTextareaHeight] = useState<number>(60)
   const [isTyping, setIsTyping] = useState<boolean>(false)
+  const [isInitializing, setIsInitializing] = useState<boolean>(false) // 🔥 新增：初始化状态
   const [showHistoryManager, setShowHistoryManager] = useState(false)
 
   const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([])
@@ -388,6 +396,11 @@ export function ChatContainer() {
     if (!selectedAgent) return
 
     try {
+      console.log("🚀 开始初始化聊天会话，智能体:", selectedAgent.name)
+
+      // 🔥 设置初始化状态，禁用发送功能
+      setIsInitializing(true)
+
       // 生成本地chatId
       const localChatId = generateFallbackChatId()
       setChatId(localChatId)
@@ -432,6 +445,11 @@ export function ChatContainer() {
       }
     } catch (error) {
       console.error("Unexpected error during chat initialization:", error)
+
+      // 🔥 初始化失败时，恢复发送功能
+      setIsInitializing(false)
+      setIsTyping(false)
+
       setIsOfflineMode(true)
 
       if (error instanceof Error) {
@@ -476,13 +494,29 @@ export function ChatContainer() {
 
   // 在 initChatSession 只插入一次开场白到消息队列时，改为插入空内容并逐字动画
   const animateWelcomeMessage = (fullText: string) => {
+    console.log("🎬 开始播放欢迎消息动画:", fullText)
+
+    // 🔥 设置typing状态，禁用发送功能
+    setIsTyping(true)
+
     let index = 0;
-    setMessages([{ id: Date.now().toString(), type: MessageType.Text, role: 'system', content: '', timestamp: new Date(), metadata: {} }]);
+    const messageId = Date.now().toString();
+    setMessages([{ id: messageId, type: MessageType.Text, role: 'system', content: '', timestamp: new Date(), metadata: {} }]);
+
     const interval = setInterval(() => {
       index++;
-      setMessages([{ id: Date.now().toString(), type: MessageType.Text, role: 'system', content: fullText.slice(0, index), timestamp: new Date(), metadata: {} }]);
+      setMessages([{ id: messageId, type: MessageType.Text, role: 'system', content: fullText.slice(0, index), timestamp: new Date(), metadata: {} }]);
+
       if (index >= fullText.length) {
         clearInterval(interval);
+        console.log("✅ 欢迎消息动画播放完成")
+
+        // 🔥 动画完成后，恢复发送功能
+        setTimeout(() => {
+          setIsTyping(false)
+          setIsInitializing(false)
+          console.log("🎯 初始化完成，用户可以发送消息")
+        }, 500) // 稍微延迟一下，让用户看到完整消息
       }
     }, 24); // 打字速度可调
   };
@@ -768,19 +802,22 @@ export function ChatContainer() {
                   // 处理交互节点 - 将交互数据附加到typing消息，不立即创建新消息
                   if (eventType === "interactive") {
                     console.log('🎯 检测到交互节点:', value);
-                    console.log('交互节点数据结构检查:', {
-                      hasInteractive: !!value?.interactive,
-                      type: value?.interactive?.type,
-                      hasUserSelectOptions: Array.isArray(value?.interactive?.params?.userSelectOptions),
-                      userSelectOptionsLength: value?.interactive?.params?.userSelectOptions?.length,
-                      hasInputForm: Array.isArray(value?.interactive?.params?.inputForm),
-                      inputFormLength: value?.interactive?.params?.inputForm?.length
-                    });
-                    // 检查是否为有效的交互节点格式
-                    if (value?.interactive &&
-                        ((value.interactive.type === "userSelect" && Array.isArray(value.interactive.params?.userSelectOptions) && value.interactive.params.userSelectOptions.length > 0) ||
-                         (value.interactive.type === "userInput" && Array.isArray(value.interactive.params?.inputForm) && value.interactive.params.inputForm.length > 0))) {
-                      console.log('✅ 交互节点验证通过，将交互数据附加到typing消息:', value.interactive);
+
+                    // 🔥 跨平台兼容性修复：使用统一的安全解析函数
+                    const safeValue = safeCrossPlatformJSONParse(value);
+
+                    if (!safeValue) {
+                      safeCrossPlatformLog('warn', '交互节点数据解析失败', { originalValue: value });
+                      return;
+                    }
+
+                    // 🔥 使用统一的验证函数
+                    const validationResult = validateInteractiveNodeData(safeValue);
+
+                    safeCrossPlatformLog('log', '交互节点数据验证结果', validationResult);
+
+                    if (validationResult.isValid) {
+                      console.log('✅ 交互节点验证通过，将交互数据附加到typing消息:', (safeValue as any).interactive);
 
                       // 将交互数据附加到现有的typing消息，如果不存在则创建
                       setMessages((prev: Message[]) => {
@@ -801,26 +838,31 @@ export function ChatContainer() {
                               agentId: selectedAgent?.id,
                               apiKey: selectedAgent?.apiKey,
                               appId: selectedAgent?.appId,
-                              thinkingStatus: "completed", // 交互节点出现时，思考已完成
-                              interactionStatus: "ready",  // 交互准备就绪
+                              thinkingStatus: "completed" as const, // 交互节点出现时，思考已完成
+                              interactionStatus: "ready" as const,  // 交互准备就绪
                             },
                           };
                           prev = [...prev, typingMsg];
                         }
 
-                        // 然后附加交互数据
+                        // 然后附加交互数据 - 使用安全验证后的数据
                         const result = prev.map((msg) => {
                           if (msg.id === "typing" && msg.role === "assistant") {
+                            // 🔥 跨平台兼容性：使用安全克隆函数
+                            const interactiveDataClone = safeCrossPlatformClone((safeValue as any).interactive);
+
                             const updatedMsg = {
                               ...msg,
                               metadata: {
                                 ...msg.metadata,
                                 interactiveData: {
-                                  ...value.interactive,
-                                  processed: false
+                                  ...interactiveDataClone,
+                                  processed: false,
+                                  // 添加调试信息
+                                  _debugInfo: createCrossPlatformDebugInfo('interactive-data-attach', interactiveDataClone)
                                 },
-                                thinkingStatus: "completed", // 思考完成
-                                interactionStatus: "ready",  // 交互准备就绪
+                                thinkingStatus: "completed" as const, // 思考完成
+                                interactionStatus: "ready" as const,  // 交互准备就绪
                               }
                             };
                             console.log('✅ 交互数据已附加到消息:', updatedMsg.id, updatedMsg.metadata.interactiveData);
@@ -835,13 +877,10 @@ export function ChatContainer() {
 
                       console.log('🔄 交互数据已附加到typing消息，继续流式处理...');
                     } else {
-                      console.log('❌ 交互节点验证失败，数据结构:', {
-                        hasInteractive: !!value?.interactive,
-                        type: value?.interactive?.type,
-                        hasUserSelectOptions: Array.isArray(value?.interactive?.params?.userSelectOptions),
-                        userSelectOptionsLength: value?.interactive?.params?.userSelectOptions?.length,
-                        hasInputForm: Array.isArray(value?.interactive?.params?.inputForm),
-                        inputFormLength: value?.interactive?.params?.inputForm?.length
+                      safeCrossPlatformLog('error', '交互节点验证失败', {
+                        validationResult,
+                        originalValue: value,
+                        safeValue: safeValue
                       });
                     }
                   }
@@ -1671,8 +1710,8 @@ export function ChatContainer() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
-      // Prevent duplicate submissions by checking if we're already typing
-      if (!isTyping) {
+      // 🔥 防止在初始化或typing状态下重复提交
+      if (!isTyping && !isInitializing) {
         handleSend()
       }
     }
@@ -2013,11 +2052,22 @@ export function ChatContainer() {
               // 处理交互节点 - 将交互数据附加到typing消息，不立即创建新消息
               if (eventType === "interactive") {
                 console.log('🎯 [交互节点继续运行] 检测到交互节点:', value);
-                // 检查是否为有效的交互节点格式
-                if (value?.interactive &&
-                    ((value.interactive.type === "userSelect" && Array.isArray(value.interactive.params?.userSelectOptions) && value.interactive.params.userSelectOptions.length > 0) ||
-                     (value.interactive.type === "userInput" && Array.isArray(value.interactive.params?.inputForm) && value.interactive.params.inputForm.length > 0))) {
-                  console.log('✅ [交互节点继续运行] 交互节点验证通过，将交互数据附加到typing消息:', value.interactive);
+
+                // 🔥 跨平台兼容性修复：使用统一的安全解析函数（继续运行场景）
+                const safeValue = safeCrossPlatformJSONParse(value);
+
+                if (!safeValue) {
+                  safeCrossPlatformLog('warn', '[交互节点继续运行] 数据解析失败', { originalValue: value });
+                  return;
+                }
+
+                // 🔥 使用统一的验证函数（继续运行场景）
+                const validationResult = validateInteractiveNodeData(safeValue);
+
+                safeCrossPlatformLog('log', '[交互节点继续运行] 数据验证结果', validationResult);
+
+                if (validationResult.isValid) {
+                  console.log('✅ [交互节点继续运行] 交互节点验证通过，将交互数据附加到typing消息:', (safeValue as any).interactive);
 
                   // 将交互数据附加到现有的typing消息，如果不存在则创建
                   setMessages((prev: Message[]) => {
@@ -2038,26 +2088,31 @@ export function ChatContainer() {
                           agentId: selectedAgent?.id,
                           apiKey: selectedAgent?.apiKey,
                           appId: selectedAgent?.appId,
-                          thinkingStatus: "completed", // 交互节点出现时，思考已完成
-                          interactionStatus: "ready",  // 交互准备就绪
+                          thinkingStatus: "completed" as const, // 交互节点出现时，思考已完成
+                          interactionStatus: "ready" as const,  // 交互准备就绪
                         },
                       };
                       prev = [...prev, typingMsg];
                     }
 
-                    // 然后附加交互数据
+                    // 然后附加交互数据 - 使用安全验证后的数据（继续运行场景）
                     const result = prev.map((msg) => {
                       if (msg.id === "typing" && msg.role === "assistant") {
+                        // 🔥 跨平台兼容性：使用安全克隆函数（继续运行场景）
+                        const interactiveDataClone = safeCrossPlatformClone((safeValue as any).interactive);
+
                         const updatedMsg = {
                           ...msg,
                           metadata: {
                             ...msg.metadata,
                             interactiveData: {
-                              ...value.interactive,
-                              processed: false
+                              ...interactiveDataClone,
+                              processed: false,
+                              // 添加调试信息
+                              _debugInfo: createCrossPlatformDebugInfo('interactive-data-attach-continue', interactiveDataClone)
                             },
-                            thinkingStatus: "completed", // 思考完成
-                            interactionStatus: "ready",  // 交互准备就绪
+                            thinkingStatus: "completed" as const, // 思考完成
+                            interactionStatus: "ready" as const,  // 交互准备就绪
                           }
                         };
                         console.log('✅ [交互节点继续运行] 交互数据已附加到消息:', updatedMsg.id, updatedMsg.metadata.interactiveData);
@@ -2072,13 +2127,11 @@ export function ChatContainer() {
 
                   console.log('🔄 [交互节点继续运行] 交互数据已附加到typing消息，继续流式处理...');
                 } else {
-                  console.log('❌ [交互节点继续运行] 交互节点验证失败，数据结构:', {
-                    hasInteractive: !!value?.interactive,
-                    type: value?.interactive?.type,
-                    hasUserSelectOptions: Array.isArray(value?.interactive?.params?.userSelectOptions),
-                    userSelectOptionsLength: value?.interactive?.params?.userSelectOptions?.length,
-                    hasInputForm: Array.isArray(value?.interactive?.params?.inputForm),
-                    inputFormLength: value?.interactive?.params?.inputForm?.length
+                  safeCrossPlatformLog('error', '[交互节点继续运行] 验证失败', {
+                    validationResult,
+                    originalValue: value,
+                    safeValue: safeValue,
+                    scenario: 'continue-run'
                   });
                 }
               }
@@ -2621,15 +2674,20 @@ export function ChatContainer() {
                     handleSend()
                   }
                 }}
-                disabled={(!input.trim() && uploadedFiles.length === 0) && !isTyping}
+                disabled={(!input.trim() && uploadedFiles.length === 0) && !isTyping || isInitializing}
                 className={cn(
                   "btn-primary h-8 sm:h-9 text-xs sm:text-sm font-medium",
                   "bg-primary hover:bg-primary/90",
                   "transition-colors duration-200 shadow-none",
-                  isTyping && "opacity-50 cursor-not-allowed",
+                  (isTyping || isInitializing) && "opacity-50 cursor-not-allowed",
                 )}
               >
-                {isTyping ? (
+                {isInitializing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 sm:h-4 sm:w-4 animate-spin mr-1" />
+                    初始化中
+                  </>
+                ) : isTyping ? (
                   <>
                     <Loader2 className="h-4 w-4 sm:h-4 sm:w-4 animate-spin mr-1" />
                     取消
