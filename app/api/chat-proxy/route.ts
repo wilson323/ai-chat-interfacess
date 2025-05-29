@@ -1,4 +1,12 @@
 import { NextResponse } from "next/server"
+import {
+  createCrossPlatformTextDecoder,
+  createCrossPlatformTextEncoder,
+  isStreamingContentType,
+  processStreamLines,
+  categorizeStreamError,
+  safeCrossPlatformLog
+} from "@/lib/cross-platform-utils"
 
 // 辅助函数，验证 URL
 function isValidUrl(url: string): boolean {
@@ -186,33 +194,47 @@ export async function POST(request: Request) {
     // 确保 requestBody 不为 undefined
     const safeRequestBody = requestBody || {}
 
-    // 检查这是否是流式请求
-    const isStreaming = headers.Accept === "text/event-stream" || (safeRequestBody && safeRequestBody.stream === true)
+    // 🔥 增强流式请求检测逻辑
+    const isStreaming = headers.Accept === "text/event-stream" ||
+                       (safeRequestBody && safeRequestBody.stream === true) ||
+                       headers["Accept"]?.includes("text/event-stream")
 
     if (isStreaming) {
-      // 对于流式请求，我们需要使用不同的方法
-      // 我们将创建一个带有 TransformStream 的新 Response
+      // 🔥 增强流式请求处理逻辑
+      safeCrossPlatformLog('log', `开始处理流式请求`, {
+        targetUrl,
+        requestBodySize: JSON.stringify(safeRequestBody).length
+      })
+
+      // 创建流式响应管道
       const { readable, writable } = new TransformStream()
       const writer = writable.getWriter()
-      const encoder = new TextEncoder()
+      const encoder = createCrossPlatformTextEncoder()
 
-      // 添加超时处理
+      // 🔥 增强超时处理 - Linux环境可能需要更长时间
       const controller = new AbortController()
       const timeoutId = setTimeout(() => {
         controller.abort()
-        console.error("流式请求超时")
-      }, 30000) // 流式请求 30 秒超时
+        console.error("[流式代理] 请求超时")
+      }, 45000) // 增加到45秒超时
 
-      // 记录请求详情以便调试
-      console.log(`流式请求到: ${targetUrl}`)
+      // 🔥 增强请求头处理
+      const enhancedHeaders = {
+        ...headers,
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        // 添加用户代理以避免某些服务器拒绝请求
+        "User-Agent": "FastGPT-Proxy/1.0"
+      }
+
+      console.log(`[流式代理] 发送请求，头部:`, Object.keys(enhancedHeaders))
 
       // 向目标 URL 发出请求
       fetch(targetUrl, {
         method,
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
+        headers: enhancedHeaders,
         body: JSON.stringify(safeRequestBody),
         cache: "no-store",
         signal: controller.signal,
@@ -221,78 +243,107 @@ export async function POST(request: Request) {
           // 清除超时，因为我们已经收到响应
           clearTimeout(timeoutId)
 
-          console.log(`收到响应，状态: ${response.status}`)
+          console.log(`[流式代理] 响应状态: ${response.status}`)
+          console.log(`[流式代理] 响应头:`, Object.fromEntries(response.headers.entries()))
 
           if (!response.ok) {
             const errorText = await response.text().catch(() => "无法读取错误响应")
-            console.error(`API 请求失败: ${response.status} ${response.statusText} - ${errorText}`)
-            throw new Error(`API 请求失败: ${response.status} ${response.statusText} - ${errorText}`)
+            console.error(`[流式代理] 请求失败: ${response.status} ${response.statusText} - ${errorText}`)
+            throw new Error(`流式请求失败: ${response.status} ${response.statusText} - ${errorText}`)
+          }
+
+          // 🔥 使用跨平台兼容的内容类型检查
+          const contentType = response.headers.get("content-type") || ""
+          safeCrossPlatformLog('log', `响应内容类型检查`, { contentType })
+
+          if (!isStreamingContentType(contentType)) {
+            safeCrossPlatformLog('warn', `预期流式内容但收到非标准类型`, { contentType })
+            // 不抛出错误，继续处理，某些服务器可能返回不标准的内容类型
           }
 
           if (!response.body) {
-            console.error("响应体为空")
+            console.error("[流式代理] 响应体为空")
             throw new Error("响应体为空")
           }
 
           // 从响应体获取读取器
           const reader = response.body.getReader()
 
-          // 读取流
+          // 🔥 使用跨平台兼容的流式数据读取逻辑
           try {
             let buffer = ""
-            const decoder = new TextDecoder()
+            let lineCount = 0
+            const decoder = createCrossPlatformTextDecoder()
+
+            safeCrossPlatformLog('log', `开始读取流式数据`)
 
             while (true) {
               const { done, value } = await reader.read()
               if (done) {
-                console.log("流读取完成")
+                safeCrossPlatformLog('log', `流读取完成`, { lineCount })
                 break
               }
 
-              // 解码块并添加到缓冲区
+              // 🔥 使用跨平台兼容的解码处理
               const chunk = decoder.decode(value, { stream: true })
               buffer += chunk
 
-              // 处理缓冲区中的完整行
-              const lines = buffer.split("\n")
-              buffer = lines.pop() || "" // 保留缓冲区中的最后一个不完整行
+              // 🔥 使用跨平台兼容的行分割处理
+              const { lines, remainingBuffer } = processStreamLines(buffer)
+              buffer = remainingBuffer
 
               for (const line of lines) {
-                if (line.trim() === "") continue
+                lineCount++
 
-                // 将行转发给客户端
-                await writer.write(encoder.encode(line + "\n"))
+                // 🔥 增强数据转发，确保格式正确
+                const formattedLine = line.endsWith("\n") ? line : line + "\n"
+                await writer.write(encoder.encode(formattedLine))
+
+                // 每100行输出一次进度日志
+                if (lineCount % 100 === 0) {
+                  safeCrossPlatformLog('log', `处理进度`, { lineCount })
+                }
               }
             }
 
-            // 处理缓冲区中的任何剩余数据
+            // 🔥 处理缓冲区中的任何剩余数据
             if (buffer.trim() !== "") {
+              safeCrossPlatformLog('log', `处理剩余缓冲区数据`, { bufferLength: buffer.length })
               await writer.write(encoder.encode(buffer + "\n"))
             }
 
-            // 发送最终的 [DONE] 事件（如果未包含）
+            // 🔥 增强结束事件处理
             await writer.write(encoder.encode("data: [DONE]\n\n"))
-            console.log("向客户端发送 [DONE] 事件")
+            console.log("[流式代理] 向客户端发送 [DONE] 事件")
           } catch (readError) {
-            console.error("读取流时出错:", readError)
-            await writer.write(encoder.encode(`data: {"error": "${typeof readError === 'object' && readError && 'message' in readError ? (readError as any).message : String(readError)}"}\n\n`))
+            console.error("[流式代理] 读取流时出错:", readError)
+            // 🔥 增强错误处理，提供更详细的错误信息
+            const errorMessage = readError instanceof Error ? readError.message : String(readError)
+            const safeErrorMessage = errorMessage.replace(/"/g, '\\"')
+            await writer.write(encoder.encode(`data: {"error": "${safeErrorMessage}"}\n\n`))
+            await writer.write(encoder.encode("data: [DONE]\n\n"))
           }
         })
         .catch(async (error) => {
           // 出错时清除超时
           clearTimeout(timeoutId)
 
-          console.error("流式代理错误:", error)
-          // 以客户端期望的格式向流写入错误消息
-          const errorMessage = error instanceof Error ? error.message : "未知错误"
-          const safeErrorMessage = errorMessage.replace(/"/g, '\\"')
+          // 🔥 使用跨平台兼容的错误分类
+          const errorInfo = categorizeStreamError(error)
+          safeCrossPlatformLog('error', `流式代理错误`, {
+            errorType: errorInfo.type,
+            errorMessage: errorInfo.message,
+            shouldRetry: errorInfo.shouldRetry,
+            originalError: error
+          })
 
-          console.log(`向客户端发送错误: ${safeErrorMessage}`)
+          // 🔥 发送结构化的错误响应
+          const safeErrorMessage = errorInfo.message.replace(/"/g, '\\"')
+          const retryHint = errorInfo.shouldRetry ? "，建议重试" : ""
 
-          // 发送一个可用的回退响应
           await writer.write(
             encoder.encode(
-              `data: {"choices":[{"delta":{"content":"抱歉，连接服务器时遇到网络问题。请检查您的网络连接或稍后再试。"}}]}\n\n`,
+              `data: {"choices":[{"delta":{"content":"抱歉，连接服务器时遇到问题：${safeErrorMessage}${retryHint}。请检查网络连接或稍后再试。"}}]}\n\n`,
             ),
           )
           await writer.write(encoder.encode("data: [DONE]\n\n"))
@@ -308,12 +359,17 @@ export async function POST(request: Request) {
           }
         })
 
-      // 将可读流作为响应返回
+      // 🔥 增强响应头，确保跨平台兼容性
       return new Response(readable, {
         headers: {
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Connection": "keep-alive",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+          "X-Accel-Buffering": "no", // 禁用Nginx缓冲
+          "Transfer-Encoding": "chunked"
         },
       })
     } else {

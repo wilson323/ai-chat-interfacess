@@ -1112,66 +1112,130 @@ export function ChatContainer() {
                 console.log('流式请求被中断')
                 return
               }
-              console.warn('[handleSend] 流式请求失败，切换非流式:', streamError);
+              // 🔥 增强错误处理和分类
+              console.warn('[handleSend] 流式请求失败，分析错误:', streamError);
 
-              // 创建一个占位消息，等待非流式响应
-              setMessages((prev: Message[]) => [
-                ...prev,
-                {
-                  id: "typing",
-                  type: MessageType.Text,
-                  role: "assistant" as MessageRole,
-                  content: "",
-                  timestamp: new Date(),
-                  metadata: {
-                    agentId: selectedAgent?.id,
-                    apiKey: selectedAgent?.apiKey,
-                    appId: selectedAgent?.appId,
-                  },
-                },
-              ]);
+              let shouldRetryWithNonStream = true
+              let errorMessage = "流式连接失败"
 
-              // 切换到非流式模式
-              const content = await fastGPTClient.chat(formattedMessages, {
-                temperature: selectedAgent?.temperature,
-                maxTokens: selectedAgent?.maxTokens,
-                detail: true,
-                variables: globalVariables, // 传递全局变量
-                onResponseData: (responseData: any) => {
-                  console.log("收到非流式响应数据:", responseData);
-
-                  // 提取响应ID并保存到消息元数据中
-                  if (responseData && (responseData.id || responseData.chatCompletionId || responseData.completionId)) {
-                    const responseId = responseData.id || responseData.chatCompletionId || responseData.completionId;
-
-                    console.log(`非流式模式捕获到响应ID: ${responseId}`, responseData);
-
-                    // 更新typing消息的元数据
-                    setMessages((prev: Message[]) => {
-                      return prev.map((msg) =>
-                        msg.id === "typing" ? {
-                          ...msg,
-                          metadata: {
-                            ...msg.metadata,
-                            responseId: responseId  // 添加API响应的id字段
-                          }
-                        } : msg
-                      );
-                    });
-                  }
+              if (streamError.message) {
+                if (streamError.message.includes("content-type") ||
+                    streamError.message.includes("text/event-stream")) {
+                  errorMessage = "服务器不支持流式响应"
+                } else if (streamError.message.includes("network") ||
+                          streamError.message.includes("fetch")) {
+                  errorMessage = "网络连接问题"
+                } else if (streamError.message.includes("timeout")) {
+                  errorMessage = "请求超时"
+                  shouldRetryWithNonStream = false
                 }
-              } as any)
+              }
 
-              // 更新消息内容
-              setMessages((prev: Message[]) => {
-                return prev.map((msg) =>
-                  msg.id === "typing" ? {
-                    ...msg,
-                    id: Date.now().toString(),
-                    content: content
-                  } : msg
-                );
-              });
+              console.log(`[handleSend] 错误分析: ${errorMessage}, 是否重试: ${shouldRetryWithNonStream}`)
+
+              if (shouldRetryWithNonStream) {
+                console.log("[handleSend] 尝试降级到非流式模式")
+
+                // 🔥 确保有typing消息
+                setMessages((prev: Message[]) => {
+                  const hasTyping = prev.some(msg => msg.id === "typing" && msg.role === "assistant")
+                  if (hasTyping) return prev
+
+                  return [
+                    ...prev,
+                    {
+                      id: "typing",
+                      type: MessageType.Text,
+                      role: "assistant" as MessageRole,
+                      content: "",
+                      timestamp: new Date(),
+                      metadata: {
+                        agentId: selectedAgent?.id,
+                        apiKey: selectedAgent?.apiKey,
+                        appId: selectedAgent?.appId,
+                        fallbackMode: true,
+                      },
+                    },
+                  ]
+                });
+
+                try {
+                  // 切换到非流式模式
+                  const content = await fastGPTClient.chat(formattedMessages, {
+                    temperature: selectedAgent?.temperature,
+                    maxTokens: selectedAgent?.maxTokens,
+                    detail: true,
+                    variables: globalVariables,
+                    onResponseData: (responseData: any) => {
+                      console.log("[非流式模式] 收到响应数据:", responseData);
+
+                      if (responseData && (responseData.id || responseData.chatCompletionId || responseData.completionId)) {
+                        const responseId = responseData.id || responseData.chatCompletionId || responseData.completionId;
+                        console.log(`[非流式模式] 捕获响应ID: ${responseId}`);
+
+                        setMessages((prev: Message[]) => {
+                          return prev.map((msg) =>
+                            msg.id === "typing" ? {
+                              ...msg,
+                              metadata: {
+                                ...msg.metadata,
+                                responseId: responseId
+                              }
+                            } : msg
+                          );
+                        });
+                      }
+                    }
+                  } as any)
+
+                  // 更新消息内容
+                  setMessages((prev: Message[]) => {
+                    return prev.map((msg) =>
+                      msg.id === "typing" ? {
+                        ...msg,
+                        id: Date.now().toString(),
+                        content: content,
+                        metadata: {
+                          ...msg.metadata,
+                          fallbackMode: true
+                        }
+                      } : msg
+                    );
+                  });
+
+                  console.log("[非流式模式] 降级处理成功")
+                } catch (nonStreamError) {
+                  console.error("[非流式模式] 降级也失败:", nonStreamError)
+
+                  setMessages((prev: Message[]) => {
+                    return prev.map((msg) =>
+                      msg.id === "typing" ? {
+                        ...msg,
+                        id: Date.now().toString(),
+                        content: `抱歉，遇到连接问题：${errorMessage}。请检查网络连接或稍后再试。`,
+                        metadata: {
+                          ...msg.metadata,
+                          error: true
+                        }
+                      } : msg
+                    );
+                  });
+                }
+              } else {
+                setMessages((prev: Message[]) => {
+                  return prev.map((msg) =>
+                    msg.id === "typing" ? {
+                      ...msg,
+                      id: Date.now().toString(),
+                      content: `请求${errorMessage}，请稍后再试。`,
+                      metadata: {
+                        ...msg.metadata,
+                        error: true
+                      }
+                    } : msg
+                  );
+                });
+              }
 
               setIsTyping(false);
             }

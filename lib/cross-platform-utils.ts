@@ -298,3 +298,83 @@ export function safeCrossPlatformLog(level: 'log' | 'warn' | 'error', message: s
       break;
   }
 }
+
+// 🔥 新增：流式数据处理的跨平台兼容性函数
+export function normalizeStreamData(data: string): string {
+  // 处理不同平台的换行符差异
+  return data
+    .replace(/\r\n/g, '\n')  // Windows -> Unix
+    .replace(/\r/g, '\n')    // Mac -> Unix
+    .trim()
+}
+
+export function createCrossPlatformTextDecoder(): TextDecoder {
+  // 确保在所有平台上使用一致的文本解码器
+  return new TextDecoder("utf-8", {
+    stream: true,
+    fatal: false,  // 不因解码错误而抛出异常
+    ignoreBOM: true // 忽略字节顺序标记
+  })
+}
+
+export function createCrossPlatformTextEncoder(): TextEncoder {
+  // 确保在所有平台上使用一致的文本编码器
+  return new TextEncoder()
+}
+
+// 🔥 新增：检测流式响应的内容类型
+export function isStreamingContentType(contentType: string): boolean {
+  if (!contentType) return false
+
+  const normalizedType = contentType.toLowerCase()
+  return normalizedType.includes("text/event-stream") ||
+         normalizedType.includes("text/plain") ||
+         normalizedType.includes("application/octet-stream") ||
+         normalizedType.includes("text/stream")
+}
+
+// 🔥 新增：处理流式数据行的跨平台兼容性
+export function processStreamLines(buffer: string): { lines: string[], remainingBuffer: string } {
+  // 使用正则表达式处理所有类型的换行符
+  const lines = buffer.split(/\r?\n/)
+  const remainingBuffer = lines.pop() || "" // 保留最后一个不完整的行
+
+  return {
+    lines: lines.filter(line => line.trim() !== ""), // 过滤空行
+    remainingBuffer
+  }
+}
+
+// 🔥 新增：增强的错误处理
+export function categorizeStreamError(error: any): {
+  type: 'network' | 'timeout' | 'content-type' | 'abort' | 'unknown'
+  message: string
+  shouldRetry: boolean
+} {
+  if (!error) {
+    return { type: 'unknown', message: '未知错误', shouldRetry: false }
+  }
+
+  const errorMessage = error.message || String(error)
+
+  if (error.name === 'AbortError') {
+    return { type: 'abort', message: '请求被中断', shouldRetry: false }
+  }
+
+  if (errorMessage.includes('content-type') || errorMessage.includes('text/event-stream')) {
+    return { type: 'content-type', message: '服务器不支持流式响应', shouldRetry: true }
+  }
+
+  if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
+    return { type: 'timeout', message: '请求超时', shouldRetry: false }
+  }
+
+  if (errorMessage.includes('network') ||
+      errorMessage.includes('fetch') ||
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('ENOTFOUND')) {
+    return { type: 'network', message: '网络连接失败', shouldRetry: true }
+  }
+
+  return { type: 'unknown', message: errorMessage, shouldRetry: true }
+}

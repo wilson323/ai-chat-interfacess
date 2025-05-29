@@ -9,6 +9,14 @@ import { retry } from "../../utils/index"
 import { API_CONSTANTS, ERROR_MESSAGES } from "../../storage/shared/constants"
 import { DEFAULT_AGENT_SETTINGS } from "@/lib/storage/shared/constants"
 import { logFastGPTEvent, logProcessingStep, logApiRequest, logApiResponse, logError } from "../../debug-utils"
+import {
+  createCrossPlatformTextDecoder,
+  createCrossPlatformTextEncoder,
+  isStreamingContentType,
+  processStreamLines,
+  categorizeStreamError,
+  safeCrossPlatformLog
+} from "@/lib/cross-platform-utils"
 import type {
   ChatCompletionRequest,
   ChatCompletionResponse,
@@ -446,16 +454,51 @@ export class FastGPTClient {
       // 记录API响应
       logApiResponse(apiEndpoint, response.status, "Stream response")
 
-      // 检查响应是否为流
-      const contentType = response.headers.get("content-type")
-      if (!contentType || !contentType.includes("text/event-stream")) {
-        console.error(`预期事件流但得到: ${contentType}`)
-        const text = await response.text().catch(() => "无法读取响应体")
-        console.error(`响应体(前 200 个字符): ${text.substring(0, 200)}`)
+      // 🔥 使用跨平台兼容的内容类型检查
+      const contentType = response.headers.get("content-type") || ""
+      safeCrossPlatformLog('log', `响应内容类型检查`, { contentType })
 
-        const error = new Error(`预期事件流但得到: ${contentType || "未知内容类型"}`)
+      if (!isStreamingContentType(contentType)) {
+        safeCrossPlatformLog('warn', `预期流式内容但收到非标准类型`, { contentType })
+
+        // 🔥 不立即抛出错误，尝试读取响应体判断是否可以处理
+        try {
+          const text = await response.text()
+          safeCrossPlatformLog('log', `尝试解析非流式响应`, {
+            textLength: text.length,
+            preview: text.substring(0, 200)
+          })
+
+          // 如果响应体看起来像JSON，尝试解析
+          if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+            const jsonData = JSON.parse(text)
+            if (jsonData.choices && jsonData.choices[0] && jsonData.choices[0].message) {
+              // 这是一个完整的非流式响应，模拟流式输出
+              const content = jsonData.choices[0].message.content || ""
+              safeCrossPlatformLog('log', `模拟流式输出非流式响应`, { contentLength: content.length })
+
+              if (options.onChunk) {
+                // 分块发送内容以模拟流式效果
+                for (let i = 0; i < content.length; i += 10) {
+                  const chunk = content.slice(i, i + 10)
+                  options.onChunk(chunk)
+                  await new Promise(resolve => setTimeout(resolve, 50)) // 模拟延迟
+                }
+              }
+              if (options.onFinish) {
+                options.onFinish()
+              }
+              return
+            }
+          }
+        } catch (parseError) {
+          safeCrossPlatformLog('error', `解析非流式响应失败`, parseError)
+        }
+
+        // 如果无法处理，抛出错误
+        const error = new Error(`不支持的内容类型: ${contentType}`)
         if (options.onError) {
-          options.onError(error instanceof Error ? error : new Error(String(error)))
+          options.onError(error)
         }
         throw error
       }
@@ -469,31 +512,45 @@ export class FastGPTClient {
         throw error
       }
 
-      const decoder = new TextDecoder()
+      // 🔥 使用跨平台兼容的文本解码器
+      const decoder = createCrossPlatformTextDecoder()
       let buffer = ""
+      let processedLines = 0
+
+      safeCrossPlatformLog('log', `开始处理流式数据`)
 
       // 处理流
       let lastEventType: string | null = null;
       while (true) {
         const { done, value } = await reader.read()
-        if (done) break
+        if (done) {
+          safeCrossPlatformLog('log', `流处理完成`, { processedLines })
+          break
+        }
 
-        // 解码块并添加到缓冲区
+        // 🔥 使用跨平台兼容的解码处理
         buffer += decoder.decode(value, { stream: true })
 
-        // 处理缓冲区中的完整行
-        const lines = buffer.split(/\r?\n/)
-        buffer = lines.pop() || "" // 保留缓冲区中的最后一个不完整行
+        // 🔥 使用跨平台兼容的行分割处理
+        const { lines, remainingBuffer } = processStreamLines(buffer)
+        buffer = remainingBuffer
 
         for (const line of lines) {
-          if (line.trim() === "") continue;
+          processedLines++
+
           if (line.startsWith("event:")) {
             lastEventType = line.substring(6).trim() || "unknown";
+            safeCrossPlatformLog('log', `检测到事件类型`, { eventType: lastEventType })
             continue;
           }
+
           if (line.startsWith("data:")) {
             const data = line.substring(5).trim();
-            if (data === "[DONE]") continue;
+            if (data === "[DONE]") {
+              safeCrossPlatformLog('log', `收到流式结束标记`)
+              continue
+            }
+
             try {
               const parsed = data ? JSON.parse(data) : {};
               // 只有 eventType 存在时才处理
@@ -538,13 +595,15 @@ export class FastGPTClient {
                     }
                     break;
                   case "interactive":
-                    // 处理交互节点事件
-                    console.log("检测到交互节点事件:", parsed);
+                    // 🔥 增强交互节点事件处理
+                    safeCrossPlatformLog('log', `检测到交互节点事件`, { parsed, eventType: lastEventType });
                     if (options.onIntermediateValue) {
                       options.onIntermediateValue(parsed, lastEventType);
                     }
                     break;
                   default:
+                    // 🔥 增强默认事件处理
+                    safeCrossPlatformLog('log', `处理其他事件`, { eventType: lastEventType, parsed });
                     if (options.onIntermediateValue) {
                       options.onIntermediateValue(parsed, lastEventType)
                     }
@@ -552,11 +611,28 @@ export class FastGPTClient {
                 }
                 lastEventType = null; // 只消费一次
               } else {
-                // 没有 event:，可选择跳过或用默认类型
-                // console.warn("收到 data 但没有 event，已跳过", data);
+                // 🔥 增强无事件类型的数据处理
+                safeCrossPlatformLog('warn', `收到无事件类型的数据，尝试直接解析`, {
+                  dataPreview: data.substring(0, 100)
+                });
+                // 尝试作为普通的流式响应处理
+                if (parsed.choices && parsed.choices.length > 0 && parsed.choices[0].delta) {
+                  const textChunk = parsed.choices[0].delta.content || ""
+                  if (textChunk && options.onChunk) {
+                    options.onChunk(textChunk)
+                  }
+                }
               }
             } catch (e) {
-              console.error("解析 SSE data 行出错:", e)
+              safeCrossPlatformLog('error', `解析SSE数据行出错`, {
+                error: e,
+                dataPreview: data.substring(0, 100)
+              })
+              // 🔥 增强错误恢复，尝试作为纯文本处理
+              if (data && options.onChunk && !data.includes('{')) {
+                safeCrossPlatformLog('log', `尝试作为纯文本处理`)
+                options.onChunk(data)
+              }
             }
           }
         }
@@ -568,19 +644,37 @@ export class FastGPTClient {
       }
     } catch (error) {
       clearTimeout(timeoutId)
-      console.error("流请求错误:", error)
+
+      // 🔥 使用跨平台兼容的错误分类
+      const errorInfo = categorizeStreamError(error)
+      safeCrossPlatformLog('error', `流式聊天请求错误`, {
+        errorType: errorInfo.type,
+        errorMessage: errorInfo.message,
+        shouldRetry: errorInfo.shouldRetry,
+        originalError: error
+      })
 
       // 记录错误
       logError("FastGPT API", error instanceof Error ? error : new Error(String(error)), { apiEndpoint, requestBody })
 
-      // 如果发生错误，生成一个简单的响应
-      if (options.onChunk) {
-        options.onChunk(ERROR_MESSAGES.NETWORK_ERROR)
+      // 🔥 根据错误类型提供不同的处理
+      if (options.onError) {
+        options.onError(error instanceof Error ? error : new Error(String(error)))
+      } else {
+        // 如果没有错误处理器，生成一个简单的响应
+        if (options.onChunk) {
+          const errorMessage = errorInfo.shouldRetry ?
+            `连接问题：${errorInfo.message}，建议重试` :
+            `请求失败：${errorInfo.message}`
+          options.onChunk(errorMessage)
+        }
+
+        if (options.onFinish) {
+          options.onFinish()
+        }
       }
 
-      if (options.onFinish) {
-        options.onFinish()
-      }
+      throw error
 
       // 不抛出错误，而是静默处理，以避免中断用户体验
       console.log("使用离线模式继续服务")
