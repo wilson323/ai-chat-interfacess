@@ -1,6 +1,6 @@
 "use client"
 
-import { MessageSquare, Settings, History, Plus, Menu } from "lucide-react"
+import { MessageSquare, Settings, History, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAgent } from "@/context/agent-context"
@@ -8,7 +8,7 @@ import { useResponsive } from "@/hooks/use-responsive"
 import { useLanguage } from "@/context/language-context"
 
 export function MobileNav() {
-  const { toggleSidebar, toggleHistorySidebar, createNewChat } = useAgent()
+  const { toggleSidebar, toggleHistorySidebar } = useAgent()
   const { t } = useLanguage()
   const { isMdAndDown } = useResponsive()
 
@@ -37,18 +37,7 @@ export function MobileNav() {
           <span className="text-[10px]">{t("history")}</span>
         </Button>
 
-        <Button
-          variant="default"
-          size="icon"
-          onClick={createNewChat}
-          className={cn(
-            "flex flex-col items-center gap-1 h-auto py-2 px-4 rounded-full -mt-6",
-            "bg-pantone369-500 hover:bg-pantone369-600 text-white",
-          )}
-        >
-          <Plus className="h-5 w-5" />
-          <span className="text-[10px]">{t("new")}</span>
-        </Button>
+
 
         <Button variant="ghost" size="icon" className="flex flex-col items-center gap-1 h-auto py-2">
           <MessageSquare className="h-5 w-5" />

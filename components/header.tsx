@@ -4,7 +4,7 @@ import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 import { Button } from "@/components/ui/button"
 import { useAgent } from "@/context/agent-context"
-import { History, Plus, Check, ChevronDown, Bot, Globe } from "lucide-react"
+import { History, Check, ChevronDown, Bot, Globe } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/context/language-context"
 import { useMobile } from "@/hooks/use-mobile"
-import { generateFallbackChatId } from "@/lib/api/fastgpt"
+
 import { ThemeToggle } from "@/components/theme-toggle"
 
 // Add isAdmin prop to the component
@@ -24,25 +24,7 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
   const { language, setLanguage, availableLanguages, t } = useLanguage()
   const isMobile = useMobile()
 
-  // Function to create a new conversation with the current agent
-  const createNewConversation = () => {
-    if (selectedAgent) {
-      // Generate a new chat ID
-      const newChatId = generateFallbackChatId()
 
-      // Update the agent with the new chat ID
-      const updatedAgent = {
-        ...selectedAgent,
-        chatId: newChatId,
-      }
-
-      // Select the updated agent (which effectively creates a new conversation)
-      selectAgent(updatedAgent)
-
-      // Reload the page to clear the chat history
-      window.location.reload()
-    }
-  }
 
   return (
     <header className="h-16 border-b bg-background/80 backdrop-blur-xl flex items-center justify-between px-2 sm:px-4 fixed top-0 left-0 right-0 z-30">
@@ -95,17 +77,6 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
       </div>
 
       <div className="fixed flex items-center gap-3 top-[0.85rem] right-[0.5rem] z-30">
-        {/* 新对话按钮 */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 sm:h-9 w-8 sm:w-9 hover:bg-accent/50 hover:scale-105 transition-all duration-200"
-          onClick={createNewConversation}
-          aria-label="新对话"
-        >
-          <Plus className="h-4 sm:h-5 w-4 sm:w-5" />
-        </Button>
-
         {/* 历史按钮 */}
         <Button
           variant="ghost"

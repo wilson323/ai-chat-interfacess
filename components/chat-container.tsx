@@ -34,11 +34,12 @@ import type { ProcessingStep } from "@/types/message"
 
 import { useMessageStore } from "@/lib/store/messageStore"
 import { QuestionSuggestions } from "@/components/question-suggestions"
-import VoiceRecorder from "@/components/ui/voice-recorder"
+import { VoiceInput } from "@/components/voice/VoiceInput"
 import { useLanguage } from "@/context/language-context"
 import type { ConversationAgentType } from "@/types/agent"
 // InteractiveNode 组件已移除，现在使用气泡内的 InlineBubbleInteractive
 import { GlobalVariablesForm } from "@/components/global-variables-form"
+import { NewConversationButton } from "@/components/new-conversation-button"
 
 const createNewConversation = () => {
   window.dispatchEvent(new CustomEvent("new-conversation"))
@@ -60,7 +61,8 @@ export function ChatContainer() {
     showGlobalVariablesForm,
     setShowGlobalVariablesForm,
     globalVariables,
-    setGlobalVariables
+    setGlobalVariables,
+    setAbortController
   } = useAgent()
   const { t } = useLanguage()
   const [input, setInput] = useState("")
@@ -107,6 +109,46 @@ export function ChatContainer() {
   const [currentNodeName, setCurrentNodeName] = useState<string>("")
 
   // 交互节点状态已移除，现在使用消息内的 interactiveData 字段
+
+  // 🔥 新增：智能体验证机制
+  const currentAgentRef = useRef<string | undefined>(selectedAgent?.id)
+
+  // 更新当前智能体引用
+  useEffect(() => {
+    currentAgentRef.current = selectedAgent?.id
+  }, [selectedAgent?.id])
+
+  // 创建验证函数
+  const isCurrentAgent = useCallback((agentId?: string) => {
+    return agentId === currentAgentRef.current
+  }, [])
+
+  // 🔥 新增：请求状态跟踪
+  const [requestState, setRequestState] = useState<{
+    isActive: boolean
+    agentId?: string
+    requestId?: string
+  }>({
+    isActive: false
+  })
+
+  // 在发送请求前设置状态
+  const startRequest = useCallback((agentId: string) => {
+    const requestId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+    setRequestState({
+      isActive: true,
+      agentId,
+      requestId
+    })
+    return requestId
+  }, [])
+
+  // 在请求结束时清理状态
+  const endRequest = useCallback(() => {
+    setRequestState({
+      isActive: false
+    })
+  }, [])
 
   // 定义toggleHistory函数
   const toggleHistory = () => {
@@ -251,6 +293,42 @@ export function ChatContainer() {
 
     return () => {
       window.removeEventListener("agent-selected", handleAgentSelected as EventListener)
+    }
+  }, [])
+
+  // 🔥 新增：智能体切换监听
+  useEffect(() => {
+    const handleAgentSwitching = (event: CustomEvent) => {
+      const { fromAgent, toAgent } = event.detail
+      console.log('智能体切换:', fromAgent?.name, '->', toAgent?.name)
+
+      // 中断当前请求
+      if (abortControllerRef.current) {
+        console.log('中断流式请求')
+        try {
+          abortControllerRef.current.abort()
+        } catch (error: any) {
+          // 忽略 AbortError，这是预期的行为
+          if (error.name !== 'AbortError') {
+            console.warn('中断流式请求时发生意外错误:', error)
+          }
+        }
+        abortControllerRef.current = null
+      }
+
+      // 清理状态
+      setIsTyping(false)
+      setProcessingSteps([])
+      setCurrentNodeName("")
+
+      // 清空消息（如果需要）
+      setMessages([])
+    }
+
+    window.addEventListener('agent-switching', handleAgentSwitching as EventListener)
+
+    return () => {
+      window.removeEventListener('agent-switching', handleAgentSwitching as EventListener)
     }
   }, [])
 
@@ -415,7 +493,40 @@ export function ChatContainer() {
     console.log('全局变量已设置:', variables)
   }
 
+  // 🔥 新增：统一的 AbortController 管理函数
+  const createAbortController = useCallback(() => {
+    // 如果已有控制器，先中断
+    if (abortControllerRef.current) {
+      try {
+        abortControllerRef.current.abort()
+      } catch (error: any) {
+        // 忽略 AbortError，这是预期的行为
+        if (error.name !== 'AbortError') {
+          console.warn('中断现有控制器时发生意外错误:', error)
+        }
+      }
+    }
 
+    // 创建新的控制器
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    // 通知 AgentContext
+    if (setAbortController) {
+      setAbortController(controller)
+    }
+
+    return controller
+  }, [setAbortController])
+
+  const clearAbortController = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current = null
+      if (setAbortController) {
+        setAbortController(null)
+      }
+    }
+  }, [setAbortController])
 
   // 处理文件上传完成
   const handleFileUpload = (files: UploadedFile[]) => {
@@ -449,6 +560,9 @@ export function ChatContainer() {
         console.log('[handleSend] 输入为空，直接返回');
         return;
       }
+
+      // 🔥 新增：开始请求跟踪
+      const requestId = startRequest(selectedAgent?.id!)
 
       // 验证输入
       if (input.trim() && !validateInput(input)) {
@@ -566,8 +680,8 @@ export function ChatContainer() {
           try {
             // 优先尝试使用流式模式
             try {
-              // 创建AbortController
-              abortControllerRef.current = new AbortController()
+              // 🔥 使用统一的 AbortController 管理
+              const controller = createAbortController()
 
               // 使用 FastGPT 客户端进行流式传输
               await fastGPTClient.streamChat(formattedMessages, {
@@ -576,6 +690,11 @@ export function ChatContainer() {
                 detail: true,
                 variables: globalVariables, // 传递全局变量
                 onStart: () => {
+                  // 🔥 新增：智能体验证
+                  if (!isCurrentAgent(selectedAgent?.id)) {
+                    console.log('智能体已切换，忽略 onStart 回调')
+                    return
+                  }
                   console.log('[streamChat] onStart');
                   setProcessingSteps([])
                   // 立即创建 AI typing 消息，带头像和空内容
@@ -602,6 +721,11 @@ export function ChatContainer() {
                   });
                 },
                 onChunk: (chunk: string) => {
+                  // 🔥 新增：智能体验证
+                  if (!isCurrentAgent(selectedAgent?.id)) {
+                    console.log('智能体已切换，忽略 onChunk 回调')
+                    return
+                  }
                   console.log('[streamChat] onChunk:', chunk);
                   setCurrentNodeName("");
                   setMessages((prev: Message[]) => {
@@ -634,6 +758,11 @@ export function ChatContainer() {
                   })
                 },
                 onIntermediateValue: (value: any, eventType: string) => {
+                  // 🔥 新增：智能体验证
+                  if (!isCurrentAgent(selectedAgent?.id)) {
+                    console.log('智能体已切换，忽略 onIntermediateValue 回调')
+                    return
+                  }
                   console.log('[onIntermediateValue1] 事件类型:', eventType, '内容:', value);
 
                   // 处理交互节点 - 将交互数据附加到typing消息，不立即创建新消息
@@ -910,6 +1039,11 @@ export function ChatContainer() {
                   })
                 },
                 onFinish: () => {
+                  // 🔥 新增：智能体验证
+                  if (!isCurrentAgent(selectedAgent?.id)) {
+                    console.log('智能体已切换，忽略 onFinish 回调')
+                    return
+                  }
                   console.log('[streamChat] onFinish');
                   setIsTyping(false)
 
@@ -931,9 +1065,14 @@ export function ChatContainer() {
                     );
                   });
                 },
-                signal: abortControllerRef.current.signal
+                signal: controller.signal
               })
-            } catch (streamError) {
+            } catch (streamError: any) {
+              // 🔥 新增：处理请求中断
+              if (streamError.name === 'AbortError') {
+                console.log('流式请求被中断')
+                return
+              }
               console.warn('[handleSend] 流式请求失败，切换非流式:', streamError);
 
               // 创建一个占位消息，等待非流式响应
@@ -997,7 +1136,12 @@ export function ChatContainer() {
 
               setIsTyping(false);
             }
-          } catch (error) {
+          } catch (error: any) {
+            // 🔥 新增：处理请求中断
+            if (error.name === 'AbortError') {
+              console.log('请求被用户中断')
+              return
+            }
             console.error("聊天请求错误:", error);
 
             // 设置离线模式
@@ -1027,7 +1171,12 @@ export function ChatContainer() {
             })
           }
         }
-      } catch (error) {
+      } catch (error: any) {
+        // 🔥 新增：处理请求中断
+        if (error.name === 'AbortError') {
+          console.log('发送消息被用户中断')
+          return
+        }
         console.error("发送消息时出错:", error)
 
         // 设置离线模式
@@ -1054,7 +1203,12 @@ export function ChatContainer() {
           variant: "destructive",
         })
       }
-    } catch (error) {
+    } catch (error: any) {
+      // 🔥 新增：处理请求中断
+      if (error.name === 'AbortError') {
+        console.log('发送消息被用户中断（最外层）')
+        return
+      }
       console.error("发送消息时出错:", error)
 
       // 设置离线模式
@@ -1080,6 +1234,10 @@ export function ChatContainer() {
         description: error instanceof Error ? error.message : "发送消息失败，已切换到离线模式",
         variant: "destructive",
       })
+    } finally {
+      // 🔥 新增：清理状态
+      endRequest()
+      clearAbortController()
     }
   }
 
@@ -1126,6 +1284,28 @@ export function ChatContainer() {
               onStart: () => {
                 console.log("重新生成流开始")
                 setProcessingSteps([])
+                // 🔥 新增：立即创建 AI typing 消息，消除空白期
+                setMessages((prev: Message[]) => {
+                  // 如果已存在 typing 消息则不重复添加
+                  if (prev.some(msg => msg.id === 'typing' && msg.role === 'assistant')) return prev;
+                  return [
+                    ...prev,
+                    {
+                      id: 'typing',
+                      type: MessageType.Text,
+                      role: 'assistant',
+                      content: '',
+                      timestamp: new Date(),
+                      metadata: {
+                        agentId: selectedAgent?.id,
+                        apiKey: selectedAgent?.apiKey,
+                        appId: selectedAgent?.appId,
+                        thinkingStatus: "in-progress", // 初始思考状态
+                        interactionStatus: "none",     // 初始交互状态
+                      },
+                    },
+                  ];
+                });
               },
               onIntermediateValue: (value: any, eventType: string) => {
                 console.log('[重新生成][onIntermediateValue0] 事件类型:', eventType, '内容:', value);
@@ -1330,7 +1510,12 @@ export function ChatContainer() {
                 });
               },
             })
-          } catch (streamError) {
+          } catch (streamError: any) {
+            // 🔥 新增：处理请求中断
+            if (streamError.name === 'AbortError') {
+              console.log('重新生成流式请求被中断')
+              return
+            }
             console.warn("重新生成流式请求失败，尝试使用非流式模式:", streamError);
 
             // 创建一个占位消息，等待非流式响应
@@ -1395,7 +1580,12 @@ export function ChatContainer() {
 
             setIsTyping(false);
           }
-        } catch (error) {
+        } catch (error: any) {
+          // 🔥 新增：处理请求中断
+          if (error.name === 'AbortError') {
+            console.log('重新生成消息被用户中断')
+            return
+          }
           console.error("重新生成消息时出错:", error)
 
           // 添加错误消息
@@ -1441,7 +1631,12 @@ export function ChatContainer() {
 
         setIsTyping(false)
       }
-    } catch (error) {
+    } catch (error: any) {
+      // 🔥 新增：处理请求中断
+      if (error.name === 'AbortError') {
+        console.log('重新生成消息被用户中断（最外层）')
+        return
+      }
       console.error("重新生成消息时出错:", error)
 
       // 添加错误消息
@@ -2105,11 +2300,21 @@ export function ChatContainer() {
             signal: abortControllerRef.current.signal
           });
         }
-      } catch (error) {
+      } catch (error: any) {
+        // 🔥 新增：处理请求中断
+        if (error.name === 'AbortError') {
+          console.log('交互节点选择后处理被用户中断')
+          return
+        }
         console.error("交互节点选择后处理错误:", error);
         setIsTyping(false);
       }
-    } catch (error) {
+    } catch (error: any) {
+      // 🔥 新增：处理请求中断
+      if (error.name === 'AbortError') {
+        console.log('处理交互节点选择被用户中断')
+        return
+      }
       console.error("处理交互节点选择时出错:", error);
     }
   };
@@ -2124,15 +2329,26 @@ export function ChatContainer() {
         {/* ProcessingFlowDisplay已移除 */}
       </div>
 
+
+
       {/* 语音输入弹窗 */}
       {showVoiceRecorder && (
         <div className="absolute z-50 left-0 right-0 bottom-16 flex justify-center">
-          <VoiceRecorder
-            onResult={(text) => {
-              setShowVoiceRecorder(false)
-              if (text) setInput(text)
-            }}
-          />
+          <div className="bg-background border rounded-lg shadow-2xl p-4 max-w-sm w-full mx-4">
+            <VoiceInput
+              onTranscript={(text) => {
+                setShowVoiceRecorder(false)
+                if (text) setInput(text)
+              }}
+              placeholder="开始语音输入..."
+            />
+            <button
+              onClick={() => setShowVoiceRecorder(false)}
+              className="w-full mt-3 text-sm text-muted-foreground hover:text-foreground"
+            >
+              关闭
+            </button>
+          </div>
         </div>
       )}
       {showHistory && (
@@ -2298,6 +2514,13 @@ export function ChatContainer() {
           "mx-auto",
           isMobile ? "w-full" : "max-w-3xl"
         )}>
+          {/* 新对话按钮 - 仅在有消息时显示 */}
+          {messages.length > 0 && (
+            <div className="flex justify-center mb-3">
+              <NewConversationButton />
+            </div>
+          )}
+
           {/* 文件上传组件 - 根据智能体配置显示或隐藏 */}
           {isUploading && selectedAgent?.supportsFileUpload !== false && (
             <FileUploader onClose={() => setIsUploading(false)} onFileUpload={handleFileUpload} />
@@ -2349,46 +2572,42 @@ export function ChatContainer() {
                 "absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 sm:gap-1.5"
               )}
             >
-              {!isMobile && (
-                <>
-                  <TooltipProvider>
-                    {/* 文件上传按钮 - 根据智能体配置显示或隐藏 */}
-                    {selectedAgent?.supportsFileUpload !== false && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                            onClick={() => setIsUploading(true)}
-                          >
-                            <Paperclip className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600 dark:text-zinc-300" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{t("uploadFile")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                    {/* 语音输入按钮 */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                          onClick={toggleRecording}
-                        >
-                          <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600 dark:text-zinc-300" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{t("recording")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </>
-              )}
+              <TooltipProvider>
+                {/* 文件上传按钮 - 根据智能体配置显示或隐藏，移动端隐藏 */}
+                {!isMobile && selectedAgent?.supportsFileUpload !== false && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                        onClick={() => setIsUploading(true)}
+                      >
+                        <Paperclip className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600 dark:text-zinc-300" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("uploadFile")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {/* 语音输入按钮 - 移除移动端限制，所有设备都可以使用 */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      onClick={toggleRecording}
+                    >
+                      <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600 dark:text-zinc-300" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t("recording")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
               <Button
                 onClick={() => {

@@ -9,7 +9,7 @@ import { SendHorizonal, Mic, Paperclip, Settings, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useResponsive } from "@/hooks/use-responsive"
 import { ChatOptions } from "./chat-options"
-import VoiceRecorder from "@/components/ui/voice-recorder"
+import { CompactVoiceInput } from "@/components/voice/VoiceInput"
 
 interface ChatInputProps {
   onSend: (message: string) => void
@@ -20,7 +20,6 @@ interface ChatInputProps {
 export function ChatInput({ onSend, isLoading = false, placeholder = "发送消息..." }: ChatInputProps) {
   const [message, setMessage] = useState("")
   const [showOptions, setShowOptions] = useState(false)
-  const [showRecorder, setShowRecorder] = useState(false)
   const [voiceInputEnabled, setVoiceInputEnabled] = useState(true)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { isMdAndDown } = useResponsive()
@@ -58,19 +57,13 @@ export function ChatInput({ onSend, isLoading = false, placeholder = "发送消�
     }
   }
 
+  const handleVoiceTranscript = (text: string) => {
+    setMessage(prev => prev + text)
+  }
+
   return (
     <div className="relative">
       {showOptions && <ChatOptions onClose={() => setShowOptions(false)} />}
-      {showRecorder && (
-        <div className="absolute bottom-16 left-0 right-0 z-20 flex justify-center">
-          <VoiceRecorder
-            onResult={(text) => {
-              setShowRecorder(false)
-              if (text) onSend(text)
-            }}
-          />
-        </div>
-      )}
       <div
         className={cn(
           "flex items-end gap-2 bg-background/80 backdrop-blur-sm p-3 sm:p-4 rounded-xl border",
@@ -109,24 +102,28 @@ export function ChatInput({ onSend, isLoading = false, placeholder = "发送消�
             </Button>
           )}
 
-          {!isMdAndDown && voiceInputEnabled && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0 rounded-full"
-              onClick={() => setShowRecorder(true)}
-            >
-              <Mic className="h-5 w-5" />
-            </Button>
+          {/* 新的语音输入组件 */}
+          {voiceInputEnabled && (
+            <CompactVoiceInput
+              onTranscript={handleVoiceTranscript}
+              disabled={isLoading}
+              className={cn(
+                "shrink-0",
+                isMdAndDown ? "h-8 w-8" : "h-9 w-9"
+              )}
+            />
           )}
 
           <Button
             onClick={handleSend}
             disabled={!message.trim() || isLoading}
             size="icon"
-            className={cn("h-9 w-9 shrink-0 rounded-full", "bg-pantone369-500 hover:bg-pantone369-600 text-white")}
+            className={cn(
+              "shrink-0 rounded-full bg-pantone369-500 hover:bg-pantone369-600 text-white",
+              isMdAndDown ? "h-8 w-8" : "h-9 w-9"
+            )}
           >
-            <SendHorizonal className="h-5 w-5" />
+            <SendHorizonal className={cn(isMdAndDown ? "h-4 w-4" : "h-5 w-5")} />
           </Button>
         </div>
       </div>

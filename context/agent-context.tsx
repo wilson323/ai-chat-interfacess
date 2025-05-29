@@ -1,5 +1,5 @@
 "use client"
-import { createContext, useState, type ReactNode, useContext, useEffect, useCallback } from "react"
+import { createContext, useState, type ReactNode, useContext, useEffect, useCallback, useRef } from "react"
 import type { Agent, GlobalVariable } from "../types/agent"
 import { fetchAgents } from "@/lib/services/agent-service" // 用户端专用，如有管理端 context 需切换为 admin-agent-service
 
@@ -21,6 +21,10 @@ interface AgentContextType {
   globalVariables: Record<string, any>
   setGlobalVariables: (variables: Record<string, any>) => void
   checkRequiredVariables: (agent: Agent) => boolean
+  // 请求中断相关
+  abortCurrentRequest: () => void
+  setAbortController: (controller: AbortController | null) => void
+  isRequestActive: boolean
 }
 
 const AgentContext = createContext<AgentContextType | undefined>(undefined)
@@ -34,6 +38,10 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   // 全局变量相关状态
   const [showGlobalVariablesForm, setShowGlobalVariablesForm] = useState(false)
   const [globalVariables, setGlobalVariables] = useState<Record<string, any>>({})
+
+  // 请求中断相关状态
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const [isRequestActive, setIsRequestActive] = useState(false)
 
   // 初始化智能体（只用API，不用本地store）
   useEffect(() => {
@@ -76,11 +84,44 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     return false
   }, [])
 
+  // 请求中断相关函数
+  const abortCurrentRequest = useCallback(() => {
+    if (abortControllerRef.current && isRequestActive) {
+      console.log('中断当前请求')
+      try {
+        abortControllerRef.current.abort()
+      } catch (error: any) {
+        // 忽略 AbortError，这是预期的行为
+        if (error.name !== 'AbortError') {
+          console.warn('中断请求时发生意外错误:', error)
+        }
+      }
+      abortControllerRef.current = null
+      setIsRequestActive(false)
+    }
+  }, [isRequestActive])
+
+  const setAbortController = useCallback((controller: AbortController | null) => {
+    abortControllerRef.current = controller
+    setIsRequestActive(!!controller)
+  }, [])
+
   const selectAgent = useCallback((agent: Agent) => {
     // 避免重复设置相同的智能体
     if (selectedAgent?.id === agent.id) {
       return
     }
+
+    // 🔥 新增：中断当前请求
+    abortCurrentRequest()
+
+    // 🔥 新增：发送智能体切换事件，通知 ChatContainer 清理状态
+    window.dispatchEvent(new CustomEvent('agent-switching', {
+      detail: {
+        fromAgent: selectedAgent,
+        toAgent: agent
+      }
+    }))
 
     // 先设置智能体
     setSelectedAgent(agent)
@@ -107,7 +148,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       // 不需要填写全局变量的情况（非FastGPT或无必填变量）
       setGlobalVariables({})
     }
-  }, [selectedAgent?.id, checkRequiredVariables])
+  }, [selectedAgent?.id, checkRequiredVariables, abortCurrentRequest])
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev)
@@ -157,6 +198,10 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     globalVariables,
     setGlobalVariables,
     checkRequiredVariables,
+    // 请求中断相关
+    abortCurrentRequest,
+    setAbortController,
+    isRequestActive,
   }
 
   return <AgentContext.Provider value={value}>{children}</AgentContext.Provider>

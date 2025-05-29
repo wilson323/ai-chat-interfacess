@@ -443,6 +443,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     saveAsNote: "保存为笔记",
     disclaimer: "AI 可能会产生关于人物、地点或事实的不准确信息。",
     newChat: "新对话",
+    newConversation: "开启新对话",
     settings: "设置",
     apiSettings: "API 设置",
     apiEndpoint: "API 端点",

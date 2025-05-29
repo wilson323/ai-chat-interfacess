@@ -291,17 +291,23 @@ NeuroGlass 是一个功能强大的跨平台 AI 对话系统，集成了多种�
 
 #### 功能简介
 - 支持用户通过语音录音输入，自动识别为文本并发送给智能体。
-- 适配移动端与桌面端，支持暗色/亮色主题。
-- 识别失败、网络异常等均有友好提示，支持重试。
+- **全平台支持**：移动端与桌面端均可使用，支持暗色/亮色主题。
+- **智能录音**：自动录音质量优化，支持最长60秒录音，实时显示录音进度。
+- **友好提示**：识别失败、网络异常等均有详细的错误提示和解决建议。
 
 #### 技术实现
 - 前端：`components/ui/voice-recorder.tsx` 负责录音、上传、识别、UI反馈。
 - 对话输入集成：`components/chat-input.tsx`，点击麦克风按钮弹出录音UI。
-- 后端API：`app/api/voice-to-text/route.ts`，调用阿里云ASR接口。
+- 后端API：`app/api/voice-to-text/route.ts`，调用 OpenAI 兼容的语音识别接口。
 - 环境变量：
-  - `ALIYUN_APP_KEY`
-  - `ALIYUN_ACCESS_KEY_ID`
-  - `ALIYUN_ACCESS_KEY_SECRET`
+  - `OPENAI_AUDIO_API_URL` - 语音识别API地址
+  - `OPENAI_AUDIO_API_KEY` - API密钥
+
+#### 新特性
+- **移动端支持**：移除了移动端限制，所有设备都可以使用语音功能
+- **录音质量优化**：自动选择最佳音频编码格式（Opus/WebM）
+- **时长控制**：最大录音时长60秒，带进度条显示
+- **统一接口**：使用 OpenAI 标准接口，简化配置和维护
 
 #### 响应式与主题适配
 - 采用 Tailwind CSS 响应式类，自动适配桌面与移动端。
@@ -376,7 +382,7 @@ NeuroGlass 是一个功能强大的跨平台 AI 对话系统，集成了多种�
   - `ui/voice-recorder.tsx`：语音录音组件
   - `settings-dialog.tsx`：管理员设置面板，ASR厂商切换
 - `app/api/`
-  - `voice-to-text/route.ts`：语音识别API，支持多厂商
+  - `voice-to-text/route.ts`：语音识别API，使用 OpenAI 兼容接口
   - `image-editor/save/route.ts`：图片编辑保存API
   - `cad-analyzer/analyze/route.ts`：CAD分析API
   - `message-feedback/route.ts`：消息反馈API

@@ -13,13 +13,15 @@ import { FileUploader } from "@/components/file-uploader"
 // 添加 useLanguage 导入
 import { useLanguage } from "@/context/language-context"
 import axios from 'axios'
+// 添加语音录制组件导入
+import { CompactVoiceInput } from "@/components/voice/VoiceInput"
 
 const { TextArea } = Input
 
 export default function InputArea() {
   const [message, setMessage] = useState("")
-  const [isRecording, setIsRecording] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+
   const textAreaRef = useRef<any>(null)
   const { selectedAgent } = useAgent()
 
@@ -58,9 +60,16 @@ export default function InputArea() {
     }
   }
 
-  const toggleVoiceRecording = () => {
-    setIsRecording(!isRecording)
-    // Here you would implement actual voice recording functionality
+  // 处理语音识别结果
+  const handleVoiceTranscript = (text: string) => {
+    setMessage(prev => prev + text)
+    // 自动调整文本区域大小
+    if (textAreaRef.current) {
+      setTimeout(() => {
+        textAreaRef.current.resizableTextArea.textArea.style.height = "auto"
+        textAreaRef.current.resizableTextArea.textArea.style.height = `${textAreaRef.current.resizableTextArea.textArea.scrollHeight}px`
+      }, 0)
+    }
   }
 
   const toggleFileUpload = () => {
@@ -124,6 +133,8 @@ export default function InputArea() {
       {/* 显示文件上传组件 */}
       {isUploading && <FileUploader onClose={() => setIsUploading(false)} />}
 
+
+
       <div
         className={cn(
           "flex items-center bg-card-bg rounded-2xl p-3.5 shadow-lg", // 增加阴影
@@ -145,17 +156,10 @@ export default function InputArea() {
           />
         )}
 
-        {/* 语音输入按钮 */}
-        <Button
-          type="text"
-          icon={<AudioOutlined />}
-          className={cn(
-            "flex items-center justify-center p-2.5 rounded-full",
-            "bg-white/10 backdrop-blur-sm text-light-text",
-            "hover:text-primary-color hover:bg-primary-color/20 hover:scale-110",
-            isRecording && "text-red-500 animate-pulse",
-          )}
-          onClick={toggleVoiceRecording}
+        {/* 语音输入组件 */}
+        <CompactVoiceInput
+          onTranscript={handleVoiceTranscript}
+          className="mr-1"
         />
 
         <TextArea

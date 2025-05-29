@@ -10,87 +10,165 @@ async function logApiError(api: string, error: any) {
   await fs.appendFile(filePath, msg)
 }
 
+// OpenAI 兼容的错误处理
+interface VoiceError {
+  code: string
+  message: string
+  suggestion?: string
+}
+
+const handleVoiceError = (error: any): VoiceError => {
+  if (error.name === 'AbortError') {
+    return {
+      code: 'REQUEST_TIMEOUT',
+      message: '请求超时，请重试',
+      suggestion: '检查网络连接或稍后重试'
+    }
+  }
+
+  if (error.status === 401) {
+    return {
+      code: 'AUTH_ERROR',
+      message: '认证失败',
+      suggestion: '请检查API密钥配置'
+    }
+  }
+
+  if (error.status === 413) {
+    return {
+      code: 'FILE_TOO_LARGE',
+      message: '音频文件过大',
+      suggestion: '请录制较短的音频或降低音质'
+    }
+  }
+
+  return {
+    code: 'UNKNOWN_ERROR',
+    message: '识别失败，请重试',
+    suggestion: '如问题持续，请联系技术支持'
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File
-    let asrProvider = formData.get('asrProvider') as string | undefined
-    if (!asrProvider) asrProvider = 'aliyun'
+
     if (!file) {
-      return NextResponse.json({ error: '未检测到音频文件' }, { status: 400 })
+      return NextResponse.json({
+        error: '未检测到音频文件',
+        code: 'NO_FILE'
+      }, { status: 400 })
     }
-    if (asrProvider === 'aliyun') {
-      return await aliyunASR(file)
-    } else if (asrProvider === 'siliconbase') {
-      return await siliconbaseASR(file)
-    } else {
-      return NextResponse.json({ error: '不支持的ASR服务类型' }, { status: 400 })
+
+    // 文件大小检查 (25MB 限制)
+    if (file.size > 25 * 1024 * 1024) {
+      return NextResponse.json({
+        error: '音频文件过大，请录制较短的音频',
+        code: 'FILE_TOO_LARGE'
+      }, { status: 413 })
     }
+
+    // 文件类型检查
+    const allowedTypes = ['audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/webm', 'audio/ogg']
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(wav|mp3|mp4|webm|ogg|m4a)$/i)) {
+      return NextResponse.json({
+        error: '不支持的音频格式',
+        code: 'UNSUPPORTED_FORMAT'
+      }, { status: 400 })
+    }
+
+    return await openaiASR(file)
   } catch (error) {
     await logApiError('voice-to-text', error)
-    return NextResponse.json({ error: '服务异常，请稍后重试' }, { status: 500 })
+    const voiceError = handleVoiceError(error)
+    return NextResponse.json({
+      error: voiceError.message,
+      code: voiceError.code,
+      suggestion: voiceError.suggestion
+    }, { status: 500 })
   }
 }
 
-// 阿里云ASR实现
-async function aliyunASR(file: File) {
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  const appKey = process.env.ALIYUN_APP_KEY
-  const accessKeyId = process.env.ALIYUN_ACCESS_KEY_ID
-  const accessKeySecret = process.env.ALIYUN_ACCESS_KEY_SECRET
-  if (!appKey || !accessKeyId || !accessKeySecret) {
-    return NextResponse.json({ error: '阿里云ASR配置缺失' }, { status: 500 })
+// OpenAI 兼容的 ASR 实现
+async function openaiASR(file: File) {
+  const apiUrl = process.env.OPENAI_AUDIO_API_URL || 'http://112.48.22.44:38082/v1/audio/transcriptions'
+  const apiKey = process.env.OPENAI_AUDIO_API_KEY || 'sk-xx'
+
+  if (!apiKey || apiKey === 'sk-xx') {
+    return NextResponse.json({
+      error: 'OpenAI Audio API 配置缺失',
+      code: 'CONFIG_MISSING'
+    }, { status: 500 })
   }
-  const aliyunRes = await fetch(`https://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/asr?appkey=${appKey}&format=wav&sample_rate=16000`, {
-    method: 'POST',
-    headers: {
-      'X-NLS-Token': await getAliyunToken(accessKeyId, accessKeySecret),
-      'Content-Type': 'application/octet-stream',
-    },
-    body: buffer,
-  })
-  const data = await aliyunRes.json()
-  if (data.status === 200 && data.result) {
-    return NextResponse.json({ text: data.result })
-  } else {
-    return NextResponse.json({ error: data.message || '识别失败' }, { status: 500 })
+
+  try {
+    // 创建 FormData，遵循 OpenAI API 规范
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('model', 'whisper-1')
+    formData.append('language', 'zh') // 中文识别
+    formData.append('response_format', 'json')
+
+    // 添加超时控制
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30秒超时
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: formData,
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        status: response.status,
+        message: errorData.error?.message || `HTTP ${response.status}`,
+        code: errorData.error?.code || 'API_ERROR'
+      }
+    }
+
+    const data = await response.json()
+
+    // 检查返回数据格式
+    if (data.text) {
+      return NextResponse.json({
+        text: data.text.trim(),
+        duration: data.duration || null,
+        language: data.language || 'zh'
+      })
+    } else {
+      throw {
+        status: 500,
+        message: '识别结果为空',
+        code: 'EMPTY_RESULT'
+      }
+    }
+
+  } catch (error: any) {
+    // 处理网络错误
+    if (error.name === 'AbortError') {
+      return NextResponse.json({
+        error: '请求超时，请重试',
+        code: 'REQUEST_TIMEOUT'
+      }, { status: 408 })
+    }
+
+    // 处理 API 错误
+    if (error.status) {
+      return NextResponse.json({
+        error: error.message || '识别失败',
+        code: error.code || 'API_ERROR'
+      }, { status: error.status })
+    }
+
+    // 处理其他错误
+    throw error
   }
 }
-
-// 硅基流动ASR实现（示例，需替换为真实API）
-async function siliconbaseASR(file: File) {
-  // 假设硅基流动API为 https://api.siliconbase.com/asr
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  const apiKey = process.env.SILICONBASE_API_KEY
-  if (!apiKey) {
-    return NextResponse.json({ error: '硅基流动ASR配置缺失' }, { status: 500 })
-  }
-  const res = await fetch('https://api.siliconbase.com/asr', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/octet-stream',
-    },
-    body: buffer,
-  })
-  const data = await res.json()
-  if (data.text) {
-    return NextResponse.json({ text: data.text })
-  } else {
-    return NextResponse.json({ error: data.error || '识别失败' }, { status: 500 })
-  }
-}
-
-// 获取阿里云Token（需实现缓存，简化为每次获取）
-async function getAliyunToken(accessKeyId: string, accessKeySecret: string): Promise<string> {
-  const res = await fetch('https://nls-meta.cn-shanghai.aliyuncs.com/pop/2018-05-18/tokens', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ AccessKeyId: accessKeyId, AccessKeySecret: accessKeySecret }),
-  })
-  const data = await res.json()
-  if (data && data.Token) return data.Token.Id
-  throw new Error('获取阿里云Token失败')
-} 
