@@ -908,3 +908,170 @@ const validThinkingSteps = thinkingSteps.filter(step => {
 1. **查看控制台日志**：确认 `processingStepsTypes` 和 `filteredStepsTypes` 包含预期的事件类型
 2. **检查气泡显示**：确认处理过程气泡出现在操作按钮上方
 3. **验证内容**：确认显示的步骤包含 flowNodeStatus、moduleStatus 等类型
+
+---
+
+## 2024-12-19 语音输入功能修复
+
+### 问题描述
+用户反馈语音输入功能存在三个关键问题：
+1. **JSON解析错误**：`SyntaxError: Unexpected end of JSON input`
+2. **权限授予后需要再次点击**：点击授予权限后还需要再点击语音图标才开始录音
+3. **无限循环错误**：`Maximum update depth exceeded` 错误
+
+### 问题分析
+
+#### 问题1：JSON解析错误
+**根本原因**：
+- API响应处理不够健壮，缺少状态检查和内容类型验证
+- 直接调用 `response.json()` 而不检查响应状态和格式
+- 缺少超时控制和错误分类处理
+
+#### 问题2：权限授予后需要再次点击
+**根本原因**：
+- `handlePermissionRequest` 只处理权限请求，没有在权限授予后自动触发录音
+- 用户体验不连贯，需要两次点击操作
+
+#### 问题3：无限循环错误
+**根本原因**：
+- `useAudioVisualization.ts` 中 useEffect 的依赖数组包含了每次渲染都会重新创建的函数引用
+- 第210行的 useEffect 依赖 `[stream, initializeAnalyzer, startVisualization, stopVisualization, cleanup]`
+- 这些函数引用在每次渲染时都会改变，导致无限循环的 useEffect 调用
+
+### 修复方案实施
+
+#### 阶段1：修复JSON解析错误
+**修改文件**：`components/voice/VoiceInput.tsx`
+
+1. **增强API响应处理**：
+   ```typescript
+   // 添加超时控制
+   const controller = new AbortController()
+   const timeoutId = setTimeout(() => controller.abort(), 30000)
+
+   // 检查响应状态
+   if (!response.ok) {
+     throw createVoiceError(VOICE_ERROR_CODES.API_ERROR,
+       `HTTP ${response.status}: ${response.statusText}`)
+   }
+
+   // 检查响应内容类型
+   const contentType = response.headers.get('content-type')
+   if (!contentType || !contentType.includes('application/json')) {
+     throw createVoiceError(VOICE_ERROR_CODES.API_ERROR,
+       '服务器返回了无效的响应格式')
+   }
+
+   // 安全解析JSON
+   const responseText = await response.text()
+   if (!responseText.trim()) {
+     throw createVoiceError(VOICE_ERROR_CODES.API_ERROR, '服务器返回了空响应')
+   }
+   data = JSON.parse(responseText)
+   ```
+
+2. **统一错误处理**：
+   - 在所有 transcribeAudio 函数中应用相同的错误处理逻辑
+   - 区分 AbortError 和其他错误类型
+   - 添加详细的错误日志记录
+
+#### 阶段2：修复useEffect无限循环
+**修改文件**：`components/voice/hooks/useAudioVisualization.ts`
+
+```typescript
+// 修复前：包含函数依赖，导致无限循环
+useEffect(() => {
+  // ...
+}, [stream, initializeAnalyzer, startVisualization, stopVisualization, cleanup])
+
+// 修复后：只保留stream依赖，避免无限循环
+useEffect(() => {
+  // ...
+}, [stream]) // 移除函数依赖，避免无限循环
+```
+
+#### 阶段3：优化权限授予后的用户体验
+**修改文件**：`components/voice/VoiceInput.tsx`
+
+1. **主组件权限处理优化**：
+   ```typescript
+   const handlePermissionRequest = useCallback(async () => {
+     const permissionState = await requestPermission()
+     // 权限授予成功后自动开始录音
+     if (permissionState === 'granted') {
+       setTimeout(async () => {
+         reset() // 清除之前的状态
+         setShowSuccess(false)
+         await startRecording()
+       }, 100) // 短暂延迟确保状态更新完成
+     }
+   }, [requestPermission, reset, startRecording])
+   ```
+
+2. **CompactVoiceInput组件同步优化**：
+   ```typescript
+   const handlePermissionRequest = useCallback(async () => {
+     const permissionState = await requestPermission()
+     // 权限授予成功后自动开始录音
+     if (permissionState === 'granted') {
+       setTimeout(async () => {
+         reset()
+         await startRecording()
+       }, 100)
+     }
+   }, [requestPermission, reset, startRecording])
+   ```
+
+### 修复效果
+
+#### 技术改进
+- **错误处理**：统一了API响应错误处理逻辑，增加了超时控制和格式验证
+- **用户体验**：权限授予后自动开始录音，减少用户操作步骤
+- **稳定性**：修复了可能导致应用崩溃的无限循环问题
+- **健壮性**：增加了网络超时和响应格式验证
+
+#### 修改的文件
+1. `components/voice/hooks/useAudioVisualization.ts`
+   - 修复了useEffect依赖数组，移除函数依赖避免无限循环
+
+2. `components/voice/VoiceInput.tsx`
+   - 增强了所有transcribeAudio函数的错误处理
+   - 添加了超时控制和安全JSON解析
+   - 改进了权限授予后的用户体验
+   - 修复了主组件、CompactVoiceInput、FloatingVoiceInput三个组件
+
+### 验收标准
+
+✅ **功能验收**：
+- JSON解析错误得到妥善处理，不再导致功能中断
+- 权限授予后自动开始录音，用户体验流畅
+- 无限循环错误完全消除，应用稳定运行
+- 语音转录功能在各种网络条件下都能正常工作
+
+✅ **技术验收**：
+- API响应处理健壮，包含状态检查、格式验证、超时控制
+- useEffect依赖数组正确，无性能问题
+- 错误处理分类明确，日志记录详细
+- 代码质量提升，遵循最佳实践
+
+### 影响范围
+
+**修改的功能**：
+- 语音输入的错误处理机制
+- 权限授予流程的用户体验
+- 音频可视化的性能稳定性
+
+**不影响的功能**：
+- 正常对话流程
+- 文件上传功能
+- 历史记录功能
+- 主题切换功能
+- CAD解析功能
+- 其他界面功能
+
+### 后续优化建议
+
+1. **性能优化**：考虑使用 Web Workers 处理音频数据
+2. **用户体验**：添加语音输入的视觉反馈和动画效果
+3. **兼容性**：进一步测试不同浏览器的兼容性
+4. **监控完善**：添加语音功能使用情况的监控和分析

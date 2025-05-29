@@ -4,9 +4,9 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { 
-  AudioVisualizationData, 
-  UseAudioVisualizationReturn 
+import {
+  AudioVisualizationData,
+  UseAudioVisualizationReturn
 } from '@/types/voice'
 
 /**
@@ -144,7 +144,7 @@ export function useAudioVisualization(
     const waveformSampleCount = 32
     const waveformData: number[] = []
     const step = Math.floor(bufferLength / waveformSampleCount)
-    
+
     for (let i = 0; i < waveformSampleCount; i++) {
       const index = i * step
       if (index < dataArray.length) {
@@ -207,7 +207,7 @@ export function useAudioVisualization(
       stopVisualization()
       cleanup()
     }
-  }, [stream, initializeAnalyzer, startVisualization, stopVisualization, cleanup])
+  }, [stream]) // 移除函数依赖，避免无限循环
 
   return {
     data,

@@ -1,26 +1,26 @@
 {
   "development": {
-    "username": "root",
-    "password": "ZKTeco##123",
+    "username": "username",
+    "password": "password",
     "database": "agent_config",
-    "host": "192.168.10.111",
-    "port": 5442,
+    "host": "171.43.138.237",
+    "port": 5433,
     "dialect": "postgres"
   },
   "test": {
-    "username": "root",
-    "password": "ZKTeco##123",
+    "username": "username",
+    "password": "password",
     "database": "agent_config",
-    "host": "192.168.10.111",
-    "port": 5442,
+    "host": "171.43.138.237",
+    "port": 5433,
     "dialect": "postgres"
   },
   "production": {
-    "username": "root",
-    "password": "ZKTeco##123",
+    "username": "username",
+    "password": "password",
     "database": "agent_config",
-    "host": "192.168.10.111",
-    "port": 5442,
+    "host": "171.43.138.237",
+    "port": 5433,
     "dialect": "postgres"
   }
 }
