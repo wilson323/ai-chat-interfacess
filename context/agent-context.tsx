@@ -2,6 +2,7 @@
 import { createContext, useState, type ReactNode, useContext, useEffect, useCallback, useRef } from "react"
 import type { Agent, GlobalVariable } from "../types/agent"
 import { fetchAgents } from "@/lib/services/agent-service" // 用户端专用，如有管理端 context 需切换为 admin-agent-service
+import { saveSelectedAgent, loadSelectedAgentId } from "@/lib/storage/index"
 
 // AgentContextType 接口
 interface AgentContextType {
@@ -51,8 +52,17 @@ export function AgentProvider({ children }: { children: ReactNode }) {
         const agentList = await fetchAgents()
         console.log("前端拉取到 agents 数量:", agentList.length, agentList.map(a => a.name));
         setAgents(agentList)
-        // 初始化时直接设置第一个智能体，不触发全局变量检查
-        if (agentList.length > 0) setSelectedAgent(agentList[0])
+
+        // 🔥 修复：尝试恢复之前选中的智能体，如果没有则使用第一个
+        if (agentList.length > 0) {
+          const savedAgentId = loadSelectedAgentId()
+          const targetAgent = savedAgentId
+            ? agentList.find(a => a.id === savedAgentId) || agentList[0]
+            : agentList[0]
+
+          console.log("恢复选中的智能体:", savedAgentId ? `从缓存恢复: ${targetAgent.name}` : `默认选择: ${targetAgent.name}`)
+          setSelectedAgent(targetAgent)
+        }
       } catch (error) {
         console.error("初始化智能体时出错:", error)
       } finally {
@@ -128,6 +138,9 @@ export function AgentProvider({ children }: { children: ReactNode }) {
 
     // 🔥 修复：在事件发送后设置智能体，确保事件处理器能获取到正确的toAgent
     setSelectedAgent(agent)
+
+    // 🔥 新增：持久化选中的智能体ID，修复页面刷新后恢复错误的问题
+    saveSelectedAgent(agent.id)
 
     // 检查是否需要填写全局变量
     const needsVariables = !checkRequiredVariables(agent)
