@@ -36,7 +36,7 @@ import { useMessageStore } from "@/lib/store/messageStore"
 import { QuestionSuggestions } from "@/components/question-suggestions"
 import { VoiceInput } from "@/components/voice/VoiceInput"
 import { useLanguage } from "@/context/language-context"
-import type { ConversationAgentType } from "@/types/agent"
+import type { ConversationAgentType, Agent } from "@/types/agent"
 // InteractiveNode 组件已移除，现在使用气泡内的 InlineBubbleInteractive
 import { GlobalVariablesForm } from "@/components/global-variables-form"
 import { NewConversationButton } from "@/components/new-conversation-button"
@@ -146,6 +146,7 @@ export function ChatContainer() {
     enabled: true, // 示例配置
     sampleRate: 16000,
     maxDuration: 60,
+    language: 'zh-CN', // 添加缺失的language属性
     // 根据您的 VoiceConfig 类型和 useVoiceRecorder 的需求填写其他字段
   };
 
@@ -352,95 +353,8 @@ export function ChatContainer() {
     }
   }, [])
 
-  // 🔥 新增：智能体切换监听
-  useEffect(() => {
-    const handleAgentSwitching = (event: CustomEvent) => {
-      const { fromAgent, toAgent } = event.detail
-      console.log('智能体切换:', fromAgent?.name, '->', toAgent?.name)
-
-      // 中断当前请求
-      if (abortControllerRef.current) {
-        console.log('中断流式请求')
-        try {
-          abortControllerRef.current.abort()
-        } catch (error: any) {
-          // 忽略 AbortError，这是预期的行为
-          if (error.name !== 'AbortError') {
-            console.warn('中断流式请求时发生意外错误:', error)
-          }
-        }
-        abortControllerRef.current = null
-      }
-
-      // 清理状态
-      setIsTyping(false)
-      setProcessingSteps([])
-      setCurrentNodeName("")
-
-      // 清空消息（如果需要）
-      setMessages([])
-    }
-
-    window.addEventListener('agent-switching', handleAgentSwitching as EventListener)
-
-    return () => {
-      window.removeEventListener('agent-switching', handleAgentSwitching as EventListener)
-    }
-  }, [])
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  // 自动调整文本区域大小
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"
-      const newHeight = Math.min(textareaRef.current.scrollHeight, 200)
-      textareaRef.current.style.height = `${newHeight}px`
-      setTextareaHeight(newHeight)
-    }
-  }, [input])
-
-  // 在useEffect中添加网络检查
-  useEffect(() => {
-    // 定期检查网络连接
-    const checkNetwork = async () => {
-      const isOnline = await checkNetworkConnection()
-      if (isOnline !== !isOfflineMode) {
-        setIsOfflineMode(!isOnline)
-
-        if (isOnline && isOfflineMode) {
-          toast({
-            title: "网络已恢复",
-            description: "已切换到在线模式",
-            variant: "default",
-          })
-        } else if (!isOnline && !isOfflineMode) {
-          toast({
-            title: "网络连接丢失",
-            description: "已切换到离线模式",
-            variant: "destructive",
-          })
-        }
-      }
-    }
-
-    // 初始检查
-    checkNetwork()
-
-    // 设置定期检查
-    const intervalId = setInterval(checkNetwork, 30000) // 每30秒检查一次
-
-    return () => clearInterval(intervalId)
-  }, [isOfflineMode, toast])
-
   // Update the initChatSession function to properly handle welcome messages
-  const initChatSession = async () => {
+  const initChatSession = useCallback(async () => {
     if (!selectedAgent) return
 
     try {
@@ -538,7 +452,224 @@ export function ChatContainer() {
         }
       }
     }
+  }, [selectedAgent, deviceId]) // 🔥 新增：添加useCallback依赖
+
+  // 🔥 新增：专门用于智能体切换的初始化函数，接受智能体参数避免闭包陷阱
+  const initChatSessionWithAgent = useCallback(async (targetAgent: Agent) => {
+    if (!targetAgent) return
+
+    try {
+      console.log("🚀 使用指定智能体初始化聊天会话:", targetAgent.name, "ID:", targetAgent.id)
+
+      // 🔥 设置初始化状态，禁用发送功能
+      setIsInitializing(true)
+
+      // 确保使用目标智能体的chatId
+      if (!targetAgent.chatId) {
+        const localChatId = generateFallbackChatId()
+        targetAgent.chatId = localChatId
+        setChatId(localChatId)
+      } else {
+        setChatId(targetAgent.chatId)
+      }
+
+      // 清空消息队列，避免重复开场白
+      setMessages([])
+
+      setConnectionError(null)
+
+      // 🔥 关键修复：使用传入的targetAgent参数调用API，确保参数正确
+      console.log("🔗 调用initializeChat，智能体:", targetAgent.name, "appId:", targetAgent.appId)
+      const initResponse = await initializeChat(targetAgent)
+
+      // 优先级：FastGPT API 返回 > 管理员配置 > 默认
+      let welcomeText = initResponse?.data?.app?.chatConfig?.welcomeText
+      if (!welcomeText || typeof welcomeText !== 'string') {
+        welcomeText = targetAgent?.welcomeText || "你好！我是智能助手，有什么可以帮您？"
+      }
+      const welcomeMessage = (initResponse as any)?.welcome_message || welcomeText
+      setWelcomeMessage(welcomeMessage)
+
+      // 设置系统提示词
+      const systemPromptText = (initResponse as any)?.system_prompt || targetAgent?.systemPrompt || null
+      setSystemPrompt(systemPromptText)
+
+      // 设置交互选项
+      const interactOptions = Array.isArray((initResponse as any)?.interacts)
+        ? (initResponse as any).interacts
+        : Array.isArray(initResponse?.data?.interacts)
+          ? initResponse.data.interacts
+          : []
+      setInteracts(interactOptions)
+
+      // 只插入一次开场白到消息队列
+      console.log("🎬 播放欢迎消息，智能体:", targetAgent.name, "消息:", welcomeMessage)
+      animateWelcomeMessage(welcomeMessage)
+
+      // 保存初始化信息到localStorage
+      if (targetAgent) {
+        localStorage.setItem(`agent_${targetAgent.id}_welcome_message`, welcomeMessage);
+        localStorage.setItem(`agent_${targetAgent.id}_system_prompt`, systemPromptText || '');
+        localStorage.setItem(`agent_${targetAgent.id}_interacts`, JSON.stringify(interactOptions));
+      }
+    } catch (error) {
+      console.error("使用指定智能体初始化聊天会话时出错:", error, "智能体:", targetAgent?.name)
+
+      // 🔥 初始化失败时，恢复发送功能
+      setIsInitializing(false)
+      setIsTyping(false)
+
+      setIsOfflineMode(true)
+
+      if (error instanceof Error) {
+        setConnectionError(error.message)
+      } else {
+        setConnectionError("Unexpected error during initialization")
+      }
+
+      // Generate a new emergency fallback ID
+      const emergencyFallbackId = `emergency_${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${deviceId}`
+      setChatId(emergencyFallbackId)
+
+      if (targetAgent) {
+        targetAgent.chatId = emergencyFallbackId
+      }
+
+      // 尝试从localStorage恢复初始化信息
+      if (targetAgent) {
+        const savedWelcomeMessage = localStorage.getItem(`agent_${targetAgent.id}_welcome_message`);
+        const savedSystemPrompt = localStorage.getItem(`agent_${targetAgent.id}_system_prompt`);
+        const savedInteracts = localStorage.getItem(`agent_${targetAgent.id}_interacts`);
+
+        if (savedWelcomeMessage) {
+          setWelcomeMessage(savedWelcomeMessage);
+        }
+
+        if (savedSystemPrompt) {
+          setSystemPrompt(savedSystemPrompt);
+        }
+
+        if (savedInteracts) {
+          try {
+            setInteracts(JSON.parse(savedInteracts));
+          } catch (e) {
+            console.error("解析保存的交互选项时出错:", e);
+            setInteracts([]);
+          }
+        }
+      }
+    }
+  }, [deviceId]) // 🔥 只依赖deviceId，避免智能体状态依赖
+
+  // 🔥 新增：智能体切换监听
+  useEffect(() => {
+    const handleAgentSwitching = (event: CustomEvent) => {
+      const { fromAgent, toAgent, startNewConversation } = event.detail
+      console.log('智能体切换:', fromAgent?.name, '->', toAgent?.name, '开始新对话:', startNewConversation)
+
+      // 中断当前请求
+      if (abortControllerRef.current) {
+        console.log('中断流式请求')
+        try {
+          abortControllerRef.current.abort()
+        } catch (error: any) {
+          // 忽略 AbortError，这是预期的行为
+          if (error.name !== 'AbortError') {
+            console.warn('中断流式请求时发生意外错误:', error)
+          }
+        }
+        abortControllerRef.current = null
+      }
+
+      // 清理状态
+      setIsTyping(false)
+      setProcessingSteps([])
+      setCurrentNodeName("")
+
+      // 🔥 新增：清空消息并重置聊天状态
+      setMessages([])
+
+      // 🔥 新增：如果需要开始新对话，重新初始化聊天会话
+      if (startNewConversation && toAgent) {
+        console.log('🔄 开始新对话，重新初始化聊天会话，目标智能体:', toAgent.name)
+
+        // 生成新的chatId
+        const newChatId = generateFallbackChatId()
+        setChatId(newChatId)
+        toAgent.chatId = newChatId
+
+        // 清理其他状态
+        setWelcomeMessage("")
+        setSystemPrompt("")
+        setInteracts([])
+        setConnectionError(null)
+
+        // 🔥 修复：直接使用toAgent参数调用初始化，避免闭包陷阱
+        setTimeout(() => {
+          initChatSessionWithAgent(toAgent)
+        }, 100)
+      }
+    }
+
+    window.addEventListener('agent-switching', handleAgentSwitching as EventListener)
+
+    return () => {
+      window.removeEventListener('agent-switching', handleAgentSwitching as EventListener)
+    }
+  }, []) // 🔥 修复：移除initChatSession依赖，避免闭包问题
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  // 自动调整文本区域大小
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+      const newHeight = Math.min(textareaRef.current.scrollHeight, 200)
+      textareaRef.current.style.height = `${newHeight}px`
+      setTextareaHeight(newHeight)
+    }
+  }, [input])
+
+  // 在useEffect中添加网络检查
+  useEffect(() => {
+    // 定期检查网络连接
+    const checkNetwork = async () => {
+      const isOnline = await checkNetworkConnection()
+      if (isOnline !== !isOfflineMode) {
+        setIsOfflineMode(!isOnline)
+
+        if (isOnline && isOfflineMode) {
+          toast({
+            title: "网络已恢复",
+            description: "已切换到在线模式",
+            variant: "default",
+          })
+        } else if (!isOnline && !isOfflineMode) {
+          toast({
+            title: "网络连接丢失",
+            description: "已切换到离线模式",
+            variant: "destructive",
+          })
+        }
+      }
+    }
+
+    // 初始检查
+    checkNetwork()
+
+    // 设置定期检查
+    const intervalId = setInterval(checkNetwork, 30000) // 每30秒检查一次
+
+    return () => clearInterval(intervalId)
+  }, [isOfflineMode, toast])
+
+
 
   // 在 initChatSession 只插入一次开场白到消息队列时，改为插入空内容并逐字动画
   const animateWelcomeMessage = (fullText: string) => {

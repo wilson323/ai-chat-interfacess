@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from 'react'
 import ImageEditor from '@/components/image-editor/image-editor'
 

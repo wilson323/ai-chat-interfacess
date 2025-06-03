@@ -1,3 +1,5 @@
+"use client"
+
 import React from "react";
 import { HistoryList } from "../../../components/history/history-list";
 import { useRouter } from "next/navigation";

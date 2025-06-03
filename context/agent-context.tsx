@@ -112,18 +112,21 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    console.log('🔄 智能体切换开始:', selectedAgent?.name, '->', agent.name)
+
     // 🔥 新增：中断当前请求
     abortCurrentRequest()
 
-    // 🔥 新增：发送智能体切换事件，通知 ChatContainer 清理状态
+    // 🔥 修复：在状态更新前发送事件，确保事件中的toAgent是正确的
     window.dispatchEvent(new CustomEvent('agent-switching', {
       detail: {
         fromAgent: selectedAgent,
-        toAgent: agent
+        toAgent: agent, // 🔥 关键：直接传递目标智能体对象
+        startNewConversation: true // 🔥 新增：标识需要开始新对话
       }
     }))
 
-    // 先设置智能体
+    // 🔥 修复：在事件发送后设置智能体，确保事件处理器能获取到正确的toAgent
     setSelectedAgent(agent)
 
     // 检查是否需要填写全局变量
