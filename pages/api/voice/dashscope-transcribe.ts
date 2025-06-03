@@ -225,10 +225,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             }
                         });
                     } else if (header?.event === 'result-generated') {
-                        const text = message.payload?.output?.sentence?.text;
-                        console.log(`Backend (Task ID: ${TASK_ID}): result-generated event, text: "${text || ''}"`);
-                        if (text) {
+                        const sentence = message.payload?.output?.sentence;
+                        const text = sentence?.text;
+                        const endTime = sentence?.end_time;
+
+                        console.log(`Backend (Task ID: ${TASK_ID}): result-generated event, text: "${text || ''}", end_time: ${endTime}`);
+
+                        // 只处理最终结果（end_time 不为 null）
+                        if (text && endTime !== null && endTime !== undefined) {
                             accumulatedTranscript += text + " ";
+                            console.log(`Backend (Task ID: ${TASK_ID}): Final result added: "${text}"`);
+                        } else if (text) {
+                            console.log(`Backend (Task ID: ${TASK_ID}): Intermediate result ignored: "${text}"`);
                         }
                     } else if (header?.event === 'task-finished') {
                         console.log(`Backend (Task ID: ${TASK_ID}): DashScope task finished.`);
