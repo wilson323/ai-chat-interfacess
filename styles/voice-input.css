@@ -1,0 +1,56 @@
+/* 确保语音控件的唯一性和正确布局 */
+.voice-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  color: #6b7280;
+}
+
+.voice-toggle-btn:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.voice-toggle-btn:active {
+  background-color: #e5e7eb;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .voice-toggle-btn {
+    padding: 12px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* 确保错误提示在移动端正确显示 */
+.voice-error-message {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

@@ -9,211 +9,119 @@ import {
   UseAudioVisualizationReturn
 } from '@/types/voice'
 
+interface UseAudioVisualizationProps {
+  mediaStream?: MediaStream | null;
+  isActive: boolean;
+}
+
 /**
  * 音频可视化 Hook
  */
-export function useAudioVisualization(
-  stream: MediaStream | null,
-  options: {
-    fftSize?: number
-    smoothingTimeConstant?: number
-    minDecibels?: number
-    maxDecibels?: number
-    updateInterval?: number
-  } = {}
-): UseAudioVisualizationReturn {
-  const {
-    fftSize = 256,
-    smoothingTimeConstant = 0.8,
-    minDecibels = -90,
-    maxDecibels = -10,
-    updateInterval = 16, // ~60fps
-  } = options
+export const useAudioVisualization = ({ mediaStream, isActive }: UseAudioVisualizationProps): UseAudioVisualizationReturn => {
+  const [isVisualizing, setIsVisualizing] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
-  const [data, setData] = useState<AudioVisualizationData>({
-    audioLevel: 0,
-    waveformData: [],
-    frequencyData: undefined,
-  })
-
-  const [isActive, setIsActive] = useState(false)
-
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const analyserRef = useRef<AnalyserNode | null>(null)
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
-  const animationRef = useRef<number | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  /**
-   * 清理音频上下文和相关资源
-   */
-  const cleanup = useCallback(() => {
-    // 停止动画
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current)
-      animationRef.current = null
-    }
-
-    // 停止定时器
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-
-    // 断开音频源
-    if (sourceRef.current) {
-      sourceRef.current.disconnect()
-      sourceRef.current = null
-    }
-
-    // 关闭音频上下文
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close()
-      audioContextRef.current = null
-    }
-
-    analyserRef.current = null
-    setIsActive(false)
-  }, [])
-
-  /**
-   * 初始化音频分析器
-   */
-  const initializeAnalyzer = useCallback(async (mediaStream: MediaStream) => {
-    try {
-      // 创建音频上下文
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext
-      if (!AudioContext) {
-        console.warn('AudioContext not supported')
-        return false
-      }
-
-      const audioContext = new AudioContext()
-      audioContextRef.current = audioContext
-
-      // 创建分析器节点
-      const analyser = audioContext.createAnalyser()
-      analyser.fftSize = fftSize
-      analyser.smoothingTimeConstant = smoothingTimeConstant
-      analyser.minDecibels = minDecibels
-      analyser.maxDecibels = maxDecibels
-
-      analyserRef.current = analyser
-
-      // 创建媒体流源
-      const source = audioContext.createMediaStreamSource(mediaStream)
-      sourceRef.current = source
-
-      // 连接节点
-      source.connect(analyser)
-
-      return true
-    } catch (error) {
-      console.warn('Failed to initialize audio analyzer:', error)
-      cleanup()
-      return false
-    }
-  }, [fftSize, smoothingTimeConstant, minDecibels, maxDecibels, cleanup])
-
-  /**
-   * 更新可视化数据
-   */
-  const updateVisualization = useCallback(() => {
-    if (!analyserRef.current) return
-
-    const analyser = analyserRef.current
-    const bufferLength = analyser.frequencyBinCount
-    const dataArray = new Uint8Array(bufferLength)
-    const timeDataArray = new Uint8Array(bufferLength)
-
-    // 获取频域数据
-    analyser.getByteFrequencyData(dataArray)
-    // 获取时域数据
-    analyser.getByteTimeDomainData(timeDataArray)
-
-    // 计算音频级别（RMS）
-    let sum = 0
-    for (let i = 0; i < timeDataArray.length; i++) {
-      const sample = (timeDataArray[i] - 128) / 128
-      sum += sample * sample
-    }
-    const rms = Math.sqrt(sum / timeDataArray.length)
-    const audioLevel = Math.min(rms * 3, 1) // 放大并限制在0-1范围
-
-    // 生成波形数据（取样）
-    const waveformSampleCount = 32
-    const waveformData: number[] = []
-    const step = Math.floor(bufferLength / waveformSampleCount)
-
-    for (let i = 0; i < waveformSampleCount; i++) {
-      const index = i * step
-      if (index < dataArray.length) {
-        waveformData.push(dataArray[index] / 255) // 归一化到0-1
-      }
-    }
-
-    setData({
-      audioLevel,
-      waveformData,
-      frequencyData: dataArray,
-    })
-  }, [])
-
-  /**
-   * 开始可视化
-   */
-  const startVisualization = useCallback(() => {
-    if (!analyserRef.current) return
-
-    setIsActive(true)
-
-    // 使用定时器而不是 requestAnimationFrame 以获得更稳定的更新频率
-    intervalRef.current = setInterval(updateVisualization, updateInterval)
-  }, [updateVisualization, updateInterval])
-
-  /**
-   * 停止可视化
-   */
+  // 使用useCallback避免函数重新创建导致的无限循环
   const stopVisualization = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
+    
+    if (sourceRef.current) {
+      sourceRef.current.disconnect();
+      sourceRef.current = null;
+    }
+    
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    analyserRef.current = null;
+    setAudioLevel(0);
+    setIsVisualizing(false);
+  }, []); // 空依赖数组，函数不会重新创建
 
-    setIsActive(false)
-    setData({
-      audioLevel: 0,
-      waveformData: [],
-      frequencyData: undefined,
-    })
-  }, [])
+  const startVisualization = useCallback(() => {
+    if (!mediaStream || isVisualizing) return;
 
-  /**
-   * 处理媒体流变化
-   */
-  useEffect(() => {
-    if (stream) {
-      initializeAnalyzer(stream).then((success) => {
-        if (success) {
-          startVisualization()
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(mediaStream);
+      
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      sourceRef.current = source;
+      
+      setIsVisualizing(true);
+      
+      const updateAudioLevel = () => {
+        if (!analyserRef.current || !isVisualizing) return;
+        
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(dataArray);
+        
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+        const normalizedLevel = Math.min(average / 128, 1);
+        
+        setAudioLevel(normalizedLevel);
+        
+        if (isVisualizing) {
+          animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
         }
-      })
-    } else {
-      stopVisualization()
-      cleanup()
+      };
+      
+      updateAudioLevel();
+    } catch (error) {
+      console.error('Audio visualization error:', error);
+      stopVisualization();
     }
+  }, [mediaStream, isVisualizing, stopVisualization]);
 
-    return () => {
-      stopVisualization()
-      cleanup()
+  // 修复useEffect，避免无限循环
+  useEffect(() => {
+    if (isActive && mediaStream && !isVisualizing) {
+      startVisualization();
+    } else if (!isActive && isVisualizing) {
+      stopVisualization();
     }
-  }, [stream]) // 移除函数依赖，避免无限循环
+    
+    // 组件卸载时清理资源
+    return () => {
+      if (isVisualizing) {
+        stopVisualization();
+      }
+    };
+  }, [isActive, mediaStream]); // 移除isVisualizing从依赖数组，避免循环
+
+  // 确保在组件卸载时清理资源
+  useEffect(() => {
+    return () => {
+      stopVisualization();
+    };
+  }, [stopVisualization]);
 
   return {
-    data,
-    isActive,
-  }
-}
+    audioLevel,
+    isVisualizing: isVisualizing && isActive,
+    data: {
+      audioLevel,
+      waveformData: [],
+      frequencyData: undefined,
+    },
+    isActive: isVisualizing && isActive
+  };
+};
 
 /**
  * 简化的音频级别 Hook
@@ -223,13 +131,14 @@ export function useAudioLevel(stream: MediaStream | null): {
   audioLevel: number
   isActive: boolean
 } {
-  const { data, isActive } = useAudioVisualization(stream, {
-    fftSize: 128, // 更小的 FFT 大小以提高性能
-    updateInterval: 50, // 更低的更新频率
-  })
+  // 修复：正确调用useAudioVisualization
+  const { audioLevel, isActive } = useAudioVisualization({ 
+    mediaStream: stream, 
+    isActive: !!stream 
+  });
 
   return {
-    audioLevel: data.audioLevel,
+    audioLevel,
     isActive,
   }
 }

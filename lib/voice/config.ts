@@ -5,14 +5,24 @@
 
 import { VoiceConfig, VOICE_CONSTANTS } from '@/types/voice'
 
+// 检查 VOICE_CONSTANTS 是否已定义
+if (VOICE_CONSTANTS === undefined) {
+  console.error(
+    "CRITICAL ERROR: VOICE_CONSTANTS is undefined in lib/voice/config.ts at the time of defining voiceConfigDefaults. " +
+    "This is likely due to a circular dependency or an import issue. " +
+    "Please check the import chain. Falling back to hardcoded defaults for now."
+  );
+}
+
 // 默认配置
 const DEFAULT_CONFIG: VoiceConfig = {
   apiUrl: process.env.NEXT_PUBLIC_OPENAI_AUDIO_API_URL || 'http://112.48.22.44:38082/v1/audio/transcriptions',
   apiKey: process.env.NEXT_PUBLIC_OPENAI_AUDIO_API_KEY || 'sk-xx',
-  maxDuration: VOICE_CONSTANTS.DEFAULT_MAX_DURATION,
-  sampleRate: VOICE_CONSTANTS.DEFAULT_SAMPLE_RATE,
-  language: VOICE_CONSTANTS.DEFAULT_LANGUAGE,
+  maxDuration: VOICE_CONSTANTS?.DEFAULT_MAX_DURATION ?? 60000,
+  sampleRate: VOICE_CONSTANTS?.DEFAULT_SAMPLE_RATE ?? 16000,
+  language: VOICE_CONSTANTS?.DEFAULT_LANGUAGE || 'en-US',
   enabled: true,
+  autoStart: false,
 }
 
 // 本地存储键名
@@ -21,22 +31,25 @@ const STORAGE_KEY = 'voice-config'
 /**
  * 获取语音配置
  */
-export function getVoiceConfig(): VoiceConfig {
-  if (typeof window === 'undefined') {
-    return DEFAULT_CONFIG
+export function getVoiceConfig(userConfig?: Partial<VoiceConfig>): VoiceConfig {
+  if (VOICE_CONSTANTS === undefined) {
+    // 这里的日志可能重复，但为了确保覆盖所有使用场景
+    console.warn(
+        "WARNING: VOICE_CONSTANTS is undefined when calling getVoiceConfig. " +
+        "Using fallback defaults for maxDuration and sampleRate."
+    );
   }
-
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const config = JSON.parse(stored)
-      return { ...DEFAULT_CONFIG, ...config }
-    }
-  } catch (error) {
-    console.warn('Failed to load voice config from localStorage:', error)
-  }
-
-  return DEFAULT_CONFIG
+  const defaults = {
+    enabled: true,
+    autoStart: false,
+    maxDuration: VOICE_CONSTANTS?.DEFAULT_MAX_DURATION ?? 60000,
+    sampleRate: VOICE_CONSTANTS?.DEFAULT_SAMPLE_RATE ?? 16000,
+    // ... 其他默认值
+  };
+  return {
+    ...defaults,
+    ...userConfig,
+  };
 }
 
 /**

@@ -33,6 +33,7 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
     audioLevel: 0,
     error: null,
     isReady: false,
+    stream: null
   })
 
   // 引用管理
@@ -43,6 +44,8 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const animationRef = useRef<number | null>(null)
+  const startTimeRef = useRef<number>(0)
+  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   /**
    * 清理资源
@@ -81,6 +84,16 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
     mediaRecorderRef.current = null
     analyserRef.current = null
     chunksRef.current = []
+
+    // 清理录音时长定时器
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current)
+      durationIntervalRef.current = null
+    }
+
+    // 清理流
+    mediaStreamRef.current = null
+    state.stream = null
   }, [])
 
   /**
@@ -111,6 +124,8 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
    */
   const startRecording = useCallback(async (): Promise<void> => {
     try {
+      console.log('🎤 开始录音...')
+      
       setState(prev => ({
         ...prev,
         error: null,
@@ -129,15 +144,16 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
       // 获取媒体流
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: config.sampleRate,
-          channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-        },
+          sampleRate: config.sampleRate || 16000,
+          channelCount: 1
+        }
       })
 
       mediaStreamRef.current = stream
+      chunksRef.current = []
 
       // 创建音频上下文用于可视化
       try {
@@ -157,67 +173,68 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
       }
 
       // 创建 MediaRecorder
-      const options = getRecordingOptions(config)
-      const mediaRecorder = new MediaRecorder(stream, options)
-      
-      mediaRecorderRef.current = mediaRecorder
-      chunksRef.current = []
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      })
 
-      // 设置事件处理器
+      mediaRecorderRef.current = mediaRecorder
+
+      // 设置事件监听器
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data)
+          console.log('📦 录音数据块:', event.data.size, 'bytes')
         }
       }
 
       mediaRecorder.onstop = () => {
-        setState(prev => ({
-          ...prev,
-          isRecording: false,
-          isProcessing: false,
-        }))
+        console.log('⏹️ 录音停止')
+        // 清理定时器
+        if (durationIntervalRef.current) {
+          clearInterval(durationIntervalRef.current)
+          durationIntervalRef.current = null
+        }
       }
 
       mediaRecorder.onerror = (event) => {
-        const error = handleRecorderError(event.error)
+        console.error('❌ 录音错误:', event)
         setState(prev => ({
           ...prev,
-          error: error.message,
-          isRecording: false,
-          isProcessing: false,
+          error: '录音过程中发生错误',
+          isRecording: false
         }))
       }
 
       // 开始录音
       mediaRecorder.start(100) // 每100ms收集一次数据
+      startTimeRef.current = Date.now()
+
+      // 开始计时
+      durationIntervalRef.current = setInterval(() => {
+        const duration = Math.floor((Date.now() - startTimeRef.current) / 1000)
+        setState(prev => ({ ...prev, duration }))
+
+        // 检查最大录音时长
+        if (duration >= (config.maxDuration || 60)) {
+          console.log('⏰ 达到最大录音时长，自动停止')
+          stopRecording()
+        }
+      }, 1000)
 
       setState(prev => ({
         ...prev,
         isRecording: true,
-        isReady: true,
-        duration: 0,
+        error: null,
+        stream: stream,
+        duration: 0
       }))
-
-      // 开始计时器
-      timerRef.current = setInterval(() => {
-        setState(prev => {
-          const newDuration = prev.duration + 1
-          
-          // 检查是否达到最大时长
-          if (newDuration >= config.maxDuration) {
-            stopRecording()
-            return { ...prev, duration: config.maxDuration }
-          }
-          
-          return { ...prev, duration: newDuration }
-        })
-      }, 1000)
 
       // 开始音频可视化
       if (analyserRef.current) {
         updateAudioLevel()
       }
 
+      console.log('✅ 录音开始成功')
     } catch (error: any) {
       const voiceError = handleMediaError(error)
       setState(prev => ({
@@ -236,74 +253,54 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
    */
   const stopRecording = useCallback(async (): Promise<Blob | null> => {
     try {
-      setState(prev => ({
-        ...prev,
-        isProcessing: true,
-      }))
+      console.log('🛑 停止录音...')
 
-      // 停止录音
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop()
+      if (!mediaRecorderRef.current || !mediaStreamRef.current) {
+        console.warn('⚠️ 没有活动的录音会话')
+        return null
       }
 
-      // 等待数据收集完成
-      await new Promise<void>((resolve) => {
-        if (mediaRecorderRef.current) {
-          mediaRecorderRef.current.onstop = () => {
-            resolve()
-          }
-        } else {
-          resolve()
+      return new Promise<Blob | null>((resolve) => {
+        const mediaRecorder = mediaRecorderRef.current!
+
+        // 设置停止事件监听器
+        mediaRecorder.onstop = () => {
+          console.log('📁 处理录音数据...')
+          
+          // 创建音频 Blob
+          const audioBlob = new Blob(chunksRef.current, { 
+            type: 'audio/webm;codecs=opus' 
+          })
+          
+          console.log('✅ 录音数据处理完成:', audioBlob.size, 'bytes')
+
+          // 清理资源
+          cleanup()
+          
+          resolve(audioBlob)
         }
+
+        // 停止录音
+        if (mediaRecorder.state === 'recording') {
+          mediaRecorder.stop()
+        }
+
+        // 更新状态
+        setState(prev => ({
+          ...prev,
+          isRecording: false,
+          stream: null
+        }))
       })
-
-      // 检查是否有录音数据
-      if (chunksRef.current.length === 0) {
-        throw createVoiceError(
-          VOICE_ERROR_CODES.NO_AUDIO_DATA,
-          '未捕获到录音数据',
-          '请重新录音'
-        )
-      }
-
-      // 创建音频 Blob
-      const mimeType = getBestAudioFormat()
-      const blob = new Blob(chunksRef.current, { type: mimeType })
-
-      // 检查文件大小
-      if (blob.size === 0) {
-        throw createVoiceError(
-          VOICE_ERROR_CODES.NO_AUDIO_DATA,
-          '录音文件为空',
-          '请重新录音'
-        )
-      }
-
-      if (blob.size > VOICE_CONSTANTS.MAX_FILE_SIZE) {
-        throw createVoiceError(
-          VOICE_ERROR_CODES.FILE_TOO_LARGE,
-          '录音文件过大',
-          '请录制较短的音频'
-        )
-      }
-
+    } catch (error) {
+      console.error('❌ 停止录音失败:', error)
+      cleanup()
       setState(prev => ({
         ...prev,
-        isProcessing: false,
-        error: null,
-      }))
-
-      return blob
-
-    } catch (error: any) {
-      setState(prev => ({
-        ...prev,
-        error: error.message || '停止录音失败',
-        isProcessing: false,
+        error: error instanceof Error ? error.message : '停止录音失败',
+        isRecording: false
       }))
       return null
-    } finally {
-      cleanup()
     }
   }, [cleanup])
 
@@ -311,6 +308,7 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
    * 重置状态
    */
   const reset = useCallback(() => {
+    console.log('🔄 重置录音状态...')
     cleanup()
     setState({
       isRecording: false,
@@ -319,6 +317,7 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
       audioLevel: 0,
       error: null,
       isReady: false,
+      stream: null
     })
   }, [cleanup])
 
@@ -332,6 +331,7 @@ export function useVoiceRecorder(config: VoiceConfig): UseVoiceRecorderReturn {
     startRecording,
     stopRecording,
     reset,
+    cleanup
   }
 }
 

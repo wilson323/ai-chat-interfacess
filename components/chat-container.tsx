@@ -47,6 +47,9 @@ import {
   safeCrossPlatformLog,
   createCrossPlatformDebugInfo
 } from "@/lib/cross-platform-utils"
+import { useVoiceRecorder } from './voice/hooks/useVoiceRecorder'
+// 确保 VoiceConfig 类型被导入或定义
+import type { VoiceConfig } from '@/types/voice' // 假设 VoiceConfig 类型路径
 
 const createNewConversation = () => {
   window.dispatchEvent(new CustomEvent("new-conversation"))
@@ -109,6 +112,7 @@ export function ChatContainer() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
 
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false)
+  const [voiceInputVisible, setVoiceInputVisible] = useState(false)
 
   // 新增流式请求abort控制
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -121,6 +125,71 @@ export function ChatContainer() {
   // 🔥 新增：智能体验证机制
   const currentAgentRef = useRef<string | undefined>(selectedAgent?.id)
 
+  // 🔥 新增：请求状态跟踪
+  const [requestState, setRequestState] = useState<{
+    isActive: boolean
+    agentId?: string
+    requestId?: string
+  }>({
+    isActive: false
+  })
+
+  // Get the device ID for user tracking
+  const [deviceId] = useState<string>(() => generateFallbackChatId())
+
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // 1. 定义 voiceConfig
+  // 您可能需要根据 selectedAgent 或其他逻辑来动态配置它
+  const voiceConfig: VoiceConfig = {
+    enabled: true, // 示例配置
+    sampleRate: 16000,
+    maxDuration: 60,
+    // 根据您的 VoiceConfig 类型和 useVoiceRecorder 的需求填写其他字段
+  };
+
+  // 2. 调用 useVoiceRecorder 并移到顶层
+  const {
+    state: voiceState, // 假设 useVoiceRecorder 返回 state 对象
+    startRecording: startRecordingVoice,
+    stopRecording: stopRecordingVoice,
+    // cleanup: cleanupVoice, // cleanupVoice 似乎未在 ChatContainer 中直接使用，如果需要，请解开注释
+    // audioBlob, // audioBlob 现在应该从 voiceState 中获取，例如 voiceState.audioBlob
+  } = useVoiceRecorder(voiceConfig); // 传递 config
+
+  // 从 voiceState 中获取 audioBlob 和 isRecording
+  const audioBlob = voiceState.audioBlob;
+  const isRecordingVoice = voiceState.isRecording;
+  // const voiceError = voiceState.error; // 如果需要处理错误
+
+  // 🔥 将 handleVoiceTranscript 移动到所有 useState 之后，但在其他 useCallback 之前
+  // 处理语音转录
+  const handleVoiceTranscript = useCallback((text: string) => {
+    if (text.trim()) {
+      setInput(prev => prev + text)
+      setVoiceInputVisible(false)
+    }
+  }, []) // setInput 和 setVoiceInputVisible 是 state setters，它们是稳定的，不需要作为依赖
+
+  // 3. 将 handleVoiceInput 移到顶层
+  const handleVoiceInput = useCallback(async () => {
+    if (isRecordingVoice) {
+      await stopRecordingVoice() // 确保 stopRecordingVoice 是 async 并且正确 await
+    } else {
+      await startRecordingVoice()
+    }
+  }, [isRecordingVoice, startRecordingVoice, stopRecordingVoice])
+
+  // 4. 将处理 audioBlob 的 useEffect 移到顶层
+  useEffect(() => {
+    if (audioBlob) {
+      // 这里可以添加音频转文字的逻辑
+      console.log('收到音频数据:', audioBlob)
+      // 可以调用语音识别API或其他处理逻辑
+    }
+  }, [audioBlob])
+
   // 更新当前智能体引用
   useEffect(() => {
     currentAgentRef.current = selectedAgent?.id
@@ -130,15 +199,6 @@ export function ChatContainer() {
   const isCurrentAgent = useCallback((agentId?: string) => {
     return agentId === currentAgentRef.current
   }, [])
-
-  // 🔥 新增：请求状态跟踪
-  const [requestState, setRequestState] = useState<{
-    isActive: boolean
-    agentId?: string
-    requestId?: string
-  }>({
-    isActive: false
-  })
 
   // 在发送请求前设置状态
   const startRequest = useCallback((agentId: string) => {
@@ -174,18 +234,6 @@ export function ChatContainer() {
     // const storageState = debugStorageState()
     // console.log("Storage state when opening history:", storageState)
   }
-
-  // Get the device ID for user tracking
-  const [deviceId] = useState<string>(() => generateFallbackChatId())
-
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  // Log the device ID when the component mounts
-  useEffect(() => {
-    console.log("Device ID for tracking:", deviceId)
-    // You can use this deviceId to fetch chat history for this specific device
-  }, [deviceId])
 
   // 当智能体变化时初始化聊天会话
   useEffect(() => {
@@ -2446,21 +2494,16 @@ export function ChatContainer() {
         {/* ProcessingFlowDisplay已移除 */}
       </div>
 
-
-
-      {/* 语音输入弹窗 */}
-      {showVoiceRecorder && (
+      {/* 语音输入弹窗 - 统一的语音输入控制 */}
+      {voiceInputVisible && (
         <div className="absolute z-50 left-0 right-0 bottom-16 flex justify-center">
           <div className="bg-background border rounded-lg shadow-2xl p-4 max-w-sm w-full mx-4">
             <VoiceInput
-              onTranscript={(text) => {
-                setShowVoiceRecorder(false)
-                if (text) setInput(text)
-              }}
+              onTranscript={handleVoiceTranscript}
               placeholder="开始语音输入..."
             />
             <button
-              onClick={() => setShowVoiceRecorder(false)}
+              onClick={() => setVoiceInputVisible(false)}
               className="w-full mt-3 text-sm text-muted-foreground hover:text-foreground"
             >
               关闭
@@ -2658,12 +2701,12 @@ export function ChatContainer() {
                     <Paperclip className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
                   </Button>
                 )}
-                {/* 语音输入按钮 */}
+                {/* 统一的语音输入按钮 */}
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                  onClick={toggleRecording}
+                  onClick={() => setVoiceInputVisible(true)}
                 >
                   <Mic className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
                 </Button>
@@ -2708,22 +2751,24 @@ export function ChatContainer() {
                     </TooltipContent>
                   </Tooltip>
                 )}
-                {/* 语音输入按钮 - 移除移动端限制，所有设备都可以使用 */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                      onClick={toggleRecording}
-                    >
-                      <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600 dark:text-zinc-300" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("recording")}</p>
-                  </TooltipContent>
-                </Tooltip>
+                {/* 统一的语音输入按钮 - 桌面端 */}
+                {!isMobile && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                        onClick={() => setVoiceInputVisible(true)}
+                      >
+                        <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600 dark:text-zinc-300" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("recording")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </TooltipProvider>
 
               <Button

@@ -1,12 +1,18 @@
 "use client"
-import React from "react";
+import React, { useEffect } from "react";
 import { ChatContainer } from "../../../components/chat-container";
 
 export default function UserChatPage() {
+  // 页面级别的清理逻辑
+  useEffect(() => {
+    return () => {
+      // 页面卸载时的清理工作
+    }
+  }, [])
+
   return (
-    <>
-      <div className="chat-bg-effect"></div>
+    <div className="h-screen flex flex-col">
       <ChatContainer />
-    </>
+    </div>
   );
 } 
