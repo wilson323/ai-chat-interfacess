@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,8 @@ interface FormErrors {
   confirmPassword: string
 }
 
-export default function NewPassword() {
+// 分离出使用 useSearchParams 的组件
+function NewPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [password, setPassword] = useState("")
@@ -180,4 +181,24 @@ export default function NewPassword() {
       </Card>
     </div>
   )
-} 
+}
+
+// 主导出组件，用 Suspense 包装
+export default function NewPassword() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Card className="w-[400px]">
+          <CardHeader>
+            <CardTitle className="text-2xl">设置新密码</CardTitle>
+            <CardDescription>
+              正在加载...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <NewPasswordForm />
+    </Suspense>
+  )
+}

@@ -3,7 +3,6 @@ import { Client } from 'pg';
 import pg from 'pg';
 import fs from 'fs';
 import path from 'path';
-import AgentConfig from './models/agent-config';
 
 console.log('Sequelize loaded, cwd:', process.cwd());
 try {
@@ -66,15 +65,12 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   },
 });
 
-export const sequelizeInitPromise = (async () => {
-  await ensureDatabaseExists();
+// 初始化数据的函数，避免循环依赖
+async function initializeDefaultData() {
   try {
-    await sequelize.authenticate();
-    console.log('数据库连接成功');
-    await sequelize.sync({ alter: true });
-    console.log('所有表结构已自动同步');
+    // 动态导入模型以避免循环依赖
+    const { default: AgentConfig } = await import('./models/agent-config');
 
-    // 自动初始化数据
     const agentCount = await AgentConfig.count();
     if (agentCount === 0) {
       await AgentConfig.bulkCreate([
@@ -95,6 +91,21 @@ export const sequelizeInitPromise = (async () => {
       ]);
       console.log('已自动初始化默认智能体数据');
     }
+  } catch (err) {
+    console.error('初始化默认数据失败:', err);
+  }
+}
+
+export const sequelizeInitPromise = (async () => {
+  await ensureDatabaseExists();
+  try {
+    await sequelize.authenticate();
+    console.log('数据库连接成功');
+    await sequelize.sync({ alter: true });
+    console.log('所有表结构已自动同步');
+
+    // 延迟初始化数据，避免循环依赖
+    await initializeDefaultData();
   } catch (err) {
     console.error('数据库连接失败:', err);
     console.error('连接信息:', {

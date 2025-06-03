@@ -117,6 +117,9 @@ export function ChatContainer() {
   // 新增流式请求abort控制
   const abortControllerRef = useRef<AbortController | null>(null)
 
+  // 🔥 新增：欢迎消息动画控制
+  const welcomeAnimationRef = useRef<NodeJS.Timeout | null>(null)
+
   // 新增 currentNodeName 状态
   const [currentNodeName, setCurrentNodeName] = useState<string>("")
 
@@ -353,6 +356,46 @@ export function ChatContainer() {
     }
   }, [])
 
+  // 🔥 新增：缓存管理函数
+  const getCacheKey = useCallback((agentId: string, type: 'welcome' | 'system' | 'interacts') => {
+    return `agent_${agentId}_${type}_v2` // 添加版本号避免旧缓存冲突
+  }, [])
+
+  const clearAgentCache = useCallback((agentId: string) => {
+    try {
+      localStorage.removeItem(getCacheKey(agentId, 'welcome'))
+      localStorage.removeItem(getCacheKey(agentId, 'system'))
+      localStorage.removeItem(getCacheKey(agentId, 'interacts'))
+      console.log(`已清理智能体 ${agentId} 的缓存`)
+    } catch (error) {
+      console.error('清理智能体缓存失败:', error)
+    }
+  }, [getCacheKey])
+
+  const saveAgentCache = useCallback((agent: Agent, welcomeText: string, systemPrompt: string, interacts: any[]) => {
+    try {
+      localStorage.setItem(getCacheKey(agent.id, 'welcome'), welcomeText)
+      localStorage.setItem(getCacheKey(agent.id, 'system'), systemPrompt)
+      localStorage.setItem(getCacheKey(agent.id, 'interacts'), JSON.stringify(interacts))
+      console.log(`已保存智能体 ${agent.id} 的缓存`)
+    } catch (error) {
+      console.error('保存智能体缓存失败:', error)
+    }
+  }, [getCacheKey])
+
+  const loadAgentCache = useCallback((agentId: string) => {
+    try {
+      return {
+        welcomeMessage: localStorage.getItem(getCacheKey(agentId, 'welcome')),
+        systemPrompt: localStorage.getItem(getCacheKey(agentId, 'system')),
+        interacts: localStorage.getItem(getCacheKey(agentId, 'interacts'))
+      }
+    } catch (error) {
+      console.error('加载智能体缓存失败:', error)
+      return { welcomeMessage: null, systemPrompt: null, interacts: null }
+    }
+  }, [getCacheKey])
+
   // Update the initChatSession function to properly handle welcome messages
   const initChatSession = useCallback(async () => {
     if (!selectedAgent) return
@@ -399,11 +442,9 @@ export function ChatContainer() {
       // 只插入一次开场白到消息队列
       animateWelcomeMessage(welcomeMessage)
 
-      // 保存初始化信息到localStorage
+      // 🔥 修改：使用新的缓存接口保存
       if (selectedAgent) {
-        localStorage.setItem(`agent_${selectedAgent.id}_welcome_message`, welcomeMessage);
-        localStorage.setItem(`agent_${selectedAgent.id}_system_prompt`, systemPromptText || '');
-        localStorage.setItem(`agent_${selectedAgent.id}_interacts`, JSON.stringify(interactOptions));
+        saveAgentCache(selectedAgent, welcomeMessage, systemPromptText || '', interactOptions)
       }
     } catch (error) {
       console.error("Unexpected error during chat initialization:", error)
@@ -428,23 +469,21 @@ export function ChatContainer() {
         selectedAgent.chatId = emergencyFallbackId
       }
 
-      // 尝试从localStorage恢复初始化信息
+      // 🔥 修改：尝试从新缓存接口恢复初始化信息
       if (selectedAgent) {
-        const savedWelcomeMessage = localStorage.getItem(`agent_${selectedAgent.id}_welcome_message`);
-        const savedSystemPrompt = localStorage.getItem(`agent_${selectedAgent.id}_system_prompt`);
-        const savedInteracts = localStorage.getItem(`agent_${selectedAgent.id}_interacts`);
+        const cache = loadAgentCache(selectedAgent.id)
 
-        if (savedWelcomeMessage) {
-          setWelcomeMessage(savedWelcomeMessage);
+        if (cache.welcomeMessage) {
+          setWelcomeMessage(cache.welcomeMessage);
         }
 
-        if (savedSystemPrompt) {
-          setSystemPrompt(savedSystemPrompt);
+        if (cache.systemPrompt) {
+          setSystemPrompt(cache.systemPrompt);
         }
 
-        if (savedInteracts) {
+        if (cache.interacts) {
           try {
-            setInteracts(JSON.parse(savedInteracts));
+            setInteracts(JSON.parse(cache.interacts));
           } catch (e) {
             console.error("解析保存的交互选项时出错:", e);
             setInteracts([]);
@@ -452,17 +491,25 @@ export function ChatContainer() {
         }
       }
     }
-  }, [selectedAgent, deviceId]) // 🔥 新增：添加useCallback依赖
+  }, [selectedAgent, deviceId, saveAgentCache, loadAgentCache]) // 🔥 修改：添加缓存函数依赖
 
   // 🔥 新增：专门用于智能体切换的初始化函数，接受智能体参数避免闭包陷阱
   const initChatSessionWithAgent = useCallback(async (targetAgent: Agent) => {
     if (!targetAgent) return
 
     try {
-      console.log("🚀 使用指定智能体初始化聊天会话:", targetAgent.name, "ID:", targetAgent.id)
+      console.log("🚀 立即对话模式：初始化智能体", targetAgent.name, "ID:", targetAgent.id)
 
-      // 🔥 设置初始化状态，禁用发送功能
+      // 🔥 新增：立即清理目标智能体的旧缓存，避免污染
+      clearAgentCache(targetAgent.id)
+
+      // 🔥 立即对话：快速设置初始化状态
       setIsInitializing(true)
+
+      // 🔥 立即设置占位符，防止显示其他智能体内容
+      setWelcomeMessage("正在初始化...")
+      setSystemPrompt("")
+      setInteracts([])
 
       // 确保使用目标智能体的chatId
       if (!targetAgent.chatId) {
@@ -473,13 +520,12 @@ export function ChatContainer() {
         setChatId(targetAgent.chatId)
       }
 
-      // 清空消息队列，避免重复开场白
+      // 🔥 立即对话：确保消息队列为空
       setMessages([])
-
       setConnectionError(null)
 
-      // 🔥 关键修复：使用传入的targetAgent参数调用API，确保参数正确
-      console.log("🔗 调用initializeChat，智能体:", targetAgent.name, "appId:", targetAgent.appId)
+      // 🔥 立即对话：并行处理初始化和UI更新
+      console.log("🔗 立即对话：调用initializeChat，智能体:", targetAgent.name, "appId:", targetAgent.appId)
       const initResponse = await initializeChat(targetAgent)
 
       // 优先级：FastGPT API 返回 > 管理员配置 > 默认
@@ -502,18 +548,17 @@ export function ChatContainer() {
           : []
       setInteracts(interactOptions)
 
-      // 只插入一次开场白到消息队列
-      console.log("🎬 播放欢迎消息，智能体:", targetAgent.name, "消息:", welcomeMessage)
-      animateWelcomeMessage(welcomeMessage)
+      // 🔥 修改：使用新的缓存接口保存
+      saveAgentCache(targetAgent, welcomeMessage, systemPromptText || '', interactOptions)
 
-      // 保存初始化信息到localStorage
-      if (targetAgent) {
-        localStorage.setItem(`agent_${targetAgent.id}_welcome_message`, welcomeMessage);
-        localStorage.setItem(`agent_${targetAgent.id}_system_prompt`, systemPromptText || '');
-        localStorage.setItem(`agent_${targetAgent.id}_interacts`, JSON.stringify(interactOptions));
-      }
+      // 🔥 立即对话：快速播放欢迎消息
+      console.log("🎬 立即对话：播放欢迎消息", targetAgent.name, "消息:", welcomeMessage)
+      animateWelcomeMessage(welcomeMessage)
     } catch (error) {
       console.error("使用指定智能体初始化聊天会话时出错:", error, "智能体:", targetAgent?.name)
+
+      // 🔥 新增：失败时也要清理缓存，避免显示错误内容
+      clearAgentCache(targetAgent.id)
 
       // 🔥 初始化失败时，恢复发送功能
       setIsInitializing(false)
@@ -524,7 +569,7 @@ export function ChatContainer() {
       if (error instanceof Error) {
         setConnectionError(error.message)
       } else {
-        setConnectionError("Unexpected error during initialization")
+        setConnectionError("初始化失败")
       }
 
       // Generate a new emergency fallback ID
@@ -535,41 +580,22 @@ export function ChatContainer() {
         targetAgent.chatId = emergencyFallbackId
       }
 
-      // 尝试从localStorage恢复初始化信息
-      if (targetAgent) {
-        const savedWelcomeMessage = localStorage.getItem(`agent_${targetAgent.id}_welcome_message`);
-        const savedSystemPrompt = localStorage.getItem(`agent_${targetAgent.id}_system_prompt`);
-        const savedInteracts = localStorage.getItem(`agent_${targetAgent.id}_interacts`);
-
-        if (savedWelcomeMessage) {
-          setWelcomeMessage(savedWelcomeMessage);
-        }
-
-        if (savedSystemPrompt) {
-          setSystemPrompt(savedSystemPrompt);
-        }
-
-        if (savedInteracts) {
-          try {
-            setInteracts(JSON.parse(savedInteracts));
-          } catch (e) {
-            console.error("解析保存的交互选项时出错:", e);
-            setInteracts([]);
-          }
-        }
-      }
+      // 🔥 修改：失败时不从缓存恢复，使用默认值
+      setWelcomeMessage(targetAgent.welcomeText || "初始化失败，请重试")
+      setSystemPrompt("")
+      setInteracts([])
     }
-  }, [deviceId]) // 🔥 只依赖deviceId，避免智能体状态依赖
+  }, [deviceId, clearAgentCache, saveAgentCache]) // 🔥 修改：添加缓存函数依赖
 
   // 🔥 新增：智能体切换监听
   useEffect(() => {
     const handleAgentSwitching = (event: CustomEvent) => {
       const { fromAgent, toAgent, startNewConversation } = event.detail
-      console.log('智能体切换:', fromAgent?.name, '->', toAgent?.name, '开始新对话:', startNewConversation)
+      console.log('🚀 智能体切换开始:', fromAgent?.name, '->', toAgent?.name, '开始新对话:', startNewConversation)
 
-      // 中断当前请求
+      // 🔥 立即中断当前流式输出
       if (abortControllerRef.current) {
-        console.log('中断流式请求')
+        console.log('⚡ 立即中断流式请求')
         try {
           abortControllerRef.current.abort()
         } catch (error: any) {
@@ -581,33 +607,53 @@ export function ChatContainer() {
         abortControllerRef.current = null
       }
 
-      // 清理状态
+      // 🔥 立即中断欢迎消息动画
+      if (welcomeAnimationRef.current) {
+        console.log('⚡ 立即中断欢迎消息动画')
+        clearInterval(welcomeAnimationRef.current)
+        welcomeAnimationRef.current = null
+      }
+
+      // 🔥 立即清理所有状态
       setIsTyping(false)
       setProcessingSteps([])
       setCurrentNodeName("")
+      setIsInitializing(false) // 重置初始化状态
 
-      // 🔥 新增：清空消息并重置聊天状态
+      // 🔥 立即清空所有对话记录
       setMessages([])
 
-      // 🔥 新增：如果需要开始新对话，重新初始化聊天会话
+      // 🔥 清理消息存储
+      if (fromAgent?.chatId) {
+        useMessageStore.getState().clearMessages(fromAgent.chatId as ConversationAgentType)
+      }
+
+      // 🔥 立即清理前一个智能体的所有状态
+      setWelcomeMessage("")
+      setSystemPrompt("")
+      setInteracts([])
+      setConnectionError(null)
+      setIsOfflineMode(false) // 重置离线模式
+
+      // 🔥 清理FastGPT客户端状态
+      setFastGPTClient(null)
+
+      // 🔥 清理前一个智能体的localStorage缓存，避免污染
+      if (fromAgent) {
+        clearAgentCache(fromAgent.id)
+      }
+
+      // 🔥 立即对话：无延迟初始化新智能体
       if (startNewConversation && toAgent) {
-        console.log('🔄 开始新对话，重新初始化聊天会话，目标智能体:', toAgent.name)
+        console.log('🚀 立即对话模式：初始化新智能体', toAgent.name)
 
         // 生成新的chatId
         const newChatId = generateFallbackChatId()
         setChatId(newChatId)
         toAgent.chatId = newChatId
 
-        // 清理其他状态
-        setWelcomeMessage("")
-        setSystemPrompt("")
-        setInteracts([])
-        setConnectionError(null)
-
-        // 🔥 修复：直接使用toAgent参数调用初始化，避免闭包陷阱
-        setTimeout(() => {
-          initChatSessionWithAgent(toAgent)
-        }, 100)
+        // 🔥 立即初始化，无延迟
+        initChatSessionWithAgent(toAgent)
       }
     }
 
@@ -615,8 +661,14 @@ export function ChatContainer() {
 
     return () => {
       window.removeEventListener('agent-switching', handleAgentSwitching as EventListener)
+
+      // 🔥 清理欢迎消息动画
+      if (welcomeAnimationRef.current) {
+        clearInterval(welcomeAnimationRef.current)
+        welcomeAnimationRef.current = null
+      }
     }
-  }, []) // 🔥 修复：移除initChatSession依赖，避免闭包问题
+  }, [clearAgentCache]) // 🔥 修复：添加clearAgentCache依赖
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -671,33 +723,44 @@ export function ChatContainer() {
 
 
 
-  // 在 initChatSession 只插入一次开场白到消息队列时，改为插入空内容并逐字动画
+  // 🔥 立即对话：优化欢迎消息动画，支持快速模式和中断控制
   const animateWelcomeMessage = (fullText: string) => {
-    console.log("🎬 开始播放欢迎消息动画:", fullText)
+    console.log("🎬 立即对话：开始播放欢迎消息动画:", fullText)
 
-    // 🔥 设置typing状态，禁用发送功能
+    // 🔥 清理之前的动画（如果存在）
+    if (welcomeAnimationRef.current) {
+      clearInterval(welcomeAnimationRef.current)
+      welcomeAnimationRef.current = null
+    }
+
+    // 🔥 立即对话：设置typing状态，但允许快速完成
     setIsTyping(true)
 
     let index = 0;
     const messageId = Date.now().toString();
     setMessages([{ id: messageId, type: MessageType.Text, role: 'system', content: '', timestamp: new Date(), metadata: {} }]);
 
+    // 🔥 使用 ref 管理 interval，便于在智能体切换时清理
     const interval = setInterval(() => {
       index++;
       setMessages([{ id: messageId, type: MessageType.Text, role: 'system', content: fullText.slice(0, index), timestamp: new Date(), metadata: {} }]);
 
       if (index >= fullText.length) {
         clearInterval(interval);
-        console.log("✅ 欢迎消息动画播放完成")
+        welcomeAnimationRef.current = null; // 清理 ref
+        console.log("✅ 立即对话：欢迎消息动画播放完成")
 
-        // 🔥 动画完成后，恢复发送功能
+        // 🔥 立即对话：快速恢复发送功能，减少延迟
         setTimeout(() => {
           setIsTyping(false)
           setIsInitializing(false)
-          console.log("🎯 初始化完成，用户可以发送消息")
-        }, 500) // 稍微延迟一下，让用户看到完整消息
+          console.log("🎯 立即对话：初始化完成，用户可以立即发送消息")
+        }, 200) // 🔥 减少延迟从500ms到200ms
       }
-    }, 24); // 打字速度可调
+    }, 16); // 🔥 加快打字速度从24ms到16ms
+
+    // 🔥 保存 interval 引用，便于在智能体切换时清理
+    welcomeAnimationRef.current = interval
   };
 
   // 处理全局变量表单提交
@@ -2074,12 +2137,19 @@ export function ChatContainer() {
 
   useEffect(() => {
     if (selectedAgent?.type === "fastgpt") {
-      // 检查是否有保存的欢迎消息
-      const savedWelcomeMessage = localStorage.getItem(`agent_${selectedAgent.id}_welcome_message`);
+      // 🔥 新增：检查是否正在初始化，如果是则不从缓存恢复
+      if (isInitializing) {
+        console.log('正在初始化，跳过缓存恢复')
+        return
+      }
 
-      if (savedWelcomeMessage) {
+      // 🔥 修改：使用新的缓存键获取保存的欢迎消息
+      const cache = loadAgentCache(selectedAgent.id);
+
+      if (cache.welcomeMessage) {
         // 优先使用保存的欢迎消息
-        setWelcomeMessage(savedWelcomeMessage);
+        console.log(`从缓存恢复智能体 ${selectedAgent.id} 的欢迎消息`)
+        setWelcomeMessage(cache.welcomeMessage);
       } else {
         // 如果没有保存的欢迎消息，使用智能体配置的欢迎消息
         setWelcomeMessage(selectedAgent.welcomeText || "你好！我是智能助手，有什么可以帮您？");
@@ -2087,7 +2157,7 @@ export function ChatContainer() {
     } else {
       setWelcomeMessage("")
     }
-  }, [selectedAgent])
+  }, [selectedAgent, isInitializing, loadAgentCache]) // 🔥 新增：添加isInitializing和loadAgentCache依赖
 
   // 日志：组件渲染
   console.log('[ChatContainer] 渲染，messages:', messages, 'isTyping:', isTyping, 'chatId:', chatId);
