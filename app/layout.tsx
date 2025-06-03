@@ -17,7 +17,7 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: "FastGPT Interface",
+  title: "熵犇犇智能体",
   description: "A cross-platform interface for FastGPT API",
     generator: 'v0.dev'
 }
