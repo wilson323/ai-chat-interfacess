@@ -2713,7 +2713,10 @@ export function ChatContainer() {
         </div>
       )}
       {showHistory && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" data-testid="chat-history-modal">
+        <div className={cn(
+          "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center overflow-y-auto",
+          isMobile ? "p-2" : "p-4"
+        )} data-testid="chat-history-modal">
           <ChatHistory
             onClose={() => setShowHistory(false)}
             onSelect={(messages, chatId) => handleHistorySelect(messages, chatId)}
@@ -2749,7 +2752,8 @@ export function ChatContainer() {
         <div className={cn(
           "mx-auto space-y-4 sm:space-y-6 pb-32",
           // 增加更多顶部间距，确保初始化信息的AI头像完整显示，不被header遮盖
-          "mt-12 sm:mt-16",
+          // 移动端使用mt-24（96px）确保头像完全不被64px高的header遮挡，桌面端保持mt-16
+          "mt-24 sm:mt-16",
           isMobile ? "w-full px-2" : "max-w-3xl"
         )}>
           {/* 离线模式警告 */}

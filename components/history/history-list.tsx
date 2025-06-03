@@ -9,6 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
+import { useResponsive } from "@/hooks/use-responsive";
 import type { Message } from "@/types/message";
 import type { ChatSessionIndexItem } from "@/lib/storage/index";
 import {
@@ -39,6 +40,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 }) => {
   const { t } = useLanguage();
   const { selectedAgent } = useAgent();
+  const { isMdAndDown, isSmAndDown } = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
   const [sessions, setSessions] = useState<ChatSessionIndexItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,56 +122,119 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   };
 
   return (
-    <div className={cn("w-full", viewType === "sidebar" ? "p-2" : "p-4")}>
-      <div className="mb-2 flex items-center gap-2">
+    <div className={cn(
+      "w-full",
+      viewType === "sidebar" ? "p-2" : (isMdAndDown ? "p-3" : "p-4")
+    )}>
+      <div className={cn(
+        "mb-3 flex items-center gap-2",
+        isSmAndDown && "flex-col gap-2"
+      )}>
         <Input
           placeholder={t("searchHistory")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1"
+          className={cn(
+            "flex-1",
+            isMdAndDown ? "text-sm h-9" : "h-10"
+          )}
         />
         {onNewChat && (
-          <Button size="sm" onClick={onNewChat}>
+          <Button
+            size={isMdAndDown ? "sm" : "sm"}
+            className={cn(
+              isSmAndDown && "w-full min-h-[40px]",
+              isMdAndDown && "text-xs px-3 min-h-[36px]",
+              "touch-manipulation active:scale-95 transition-transform"
+            )}
+            onClick={onNewChat}
+          >
             {t("newChat")}
           </Button>
         )}
       </div>
-      <ScrollArea className="h-[300px]">
+      <ScrollArea className={cn(
+        isMdAndDown ? "h-[calc(90vh-140px)]" : "h-[calc(80vh-120px)]"
+      )}>
         {isLoading ? (
-          <div className="text-center text-muted-foreground py-8">{t("loading" as any)}</div>
+          <div className={cn(
+            "text-center text-muted-foreground py-8",
+            isMdAndDown ? "text-sm py-6" : ""
+          )}>{t("loading" as any)}</div>
         ) : sessions.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">{t("noConversations" as any)}</div>
+          <div className={cn(
+            "text-center text-muted-foreground py-8",
+            isMdAndDown ? "text-sm py-6" : ""
+          )}>{t("noConversations" as any)}</div>
         ) : (
-          <div className="space-y-2">
+          <div className={cn(
+            "space-y-2",
+            isMdAndDown && "space-y-1.5"
+          )}>
             {sessions.map((chat) => (
               <Card
                 key={chat.id}
                 className={cn(
-                  "p-3 cursor-pointer border transition-colors group",
+                  "cursor-pointer border transition-colors group",
+                  isMdAndDown ? "p-2.5 min-h-[48px]" : "p-3 min-h-[52px]",
                   selectedSessionId === chat.id && "border-primary bg-accent/30",
-                  "hover:border-primary/60 hover:bg-accent/10"
+                  "hover:border-primary/60 hover:bg-accent/10",
+                  "active:bg-accent/20 touch-manipulation"
                 )}
                 onClick={() => handleSelect(chat)}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-sm truncate flex-1">{chat.title}</span>
-                  <span className="text-xs text-muted-foreground">
-                    <Calendar className="inline h-3 w-3 mr-1" />
-                    {chat.timestamp && !isNaN(chat.timestamp)
-                      ? formatDistanceToNow(new Date(chat.timestamp), { addSuffix: true, locale: zhCN })
-                      : "无时间"}
-                  </span>
+                <div className={cn(
+                  "flex items-center gap-2 mb-1",
+                  isSmAndDown && "flex-wrap"
+                )}>
+                  <MessageSquare className={cn(
+                    "text-primary flex-shrink-0",
+                    isMdAndDown ? "h-3.5 w-3.5" : "h-4 w-4"
+                  )} />
+                  <span className={cn(
+                    "font-medium truncate flex-1 min-w-0",
+                    isMdAndDown ? "text-xs" : "text-sm"
+                  )}>{chat.title}</span>
+                  {!isSmAndDown && (
+                    <span className={cn(
+                      "text-muted-foreground flex-shrink-0",
+                      isMdAndDown ? "text-xs" : "text-xs"
+                    )}>
+                      <Calendar className={cn(
+                        "inline mr-1",
+                        isMdAndDown ? "h-2.5 w-2.5" : "h-3 w-3"
+                      )} />
+                      {chat.timestamp && !isNaN(chat.timestamp)
+                        ? formatDistanceToNow(new Date(chat.timestamp), { addSuffix: true, locale: zhCN })
+                        : "无时间"}
+                    </span>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 ml-1 group-hover:bg-destructive/10"
+                    className={cn(
+                      "ml-1 group-hover:bg-destructive/10 flex-shrink-0 touch-manipulation",
+                      isMdAndDown ? "h-8 w-8 min-h-[32px] min-w-[32px]" : "h-6 w-6",
+                      "active:bg-destructive/20"
+                    )}
                     onClick={(e) => handleDelete(chat.id, e)}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className={cn(
+                      "text-destructive",
+                      isMdAndDown ? "h-3.5 w-3.5" : "h-4 w-4"
+                    )} />
                   </Button>
                 </div>
-                <div className="text-xs text-muted-foreground line-clamp-2">{chat.preview || ""}</div>
+                {isSmAndDown && chat.timestamp && !isNaN(chat.timestamp) && (
+                  <div className="text-xs text-muted-foreground mb-1 flex items-center">
+                    <Calendar className="inline h-2.5 w-2.5 mr-1" />
+                    {formatDistanceToNow(new Date(chat.timestamp), { addSuffix: true, locale: zhCN })}
+                  </div>
+                )}
+                <div className={cn(
+                  "text-muted-foreground line-clamp-2",
+                  isMdAndDown ? "text-xs" : "text-xs"
+                )}>{chat.preview || ""}</div>
               </Card>
             ))}
           </div>
