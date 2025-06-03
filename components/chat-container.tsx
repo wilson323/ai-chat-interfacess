@@ -2747,7 +2747,9 @@ export function ChatContainer() {
         isMobile ? "px-0" : "px-2 sm:px-4"
       )}>
         <div className={cn(
-          "mx-auto space-y-4 sm:space-y-6 pb-32 mt-4",
+          "mx-auto space-y-4 sm:space-y-6 pb-32",
+          // 增加更多顶部间距，确保初始化信息的AI头像完整显示，不被header遮盖
+          "mt-12 sm:mt-16",
           isMobile ? "w-full px-2" : "max-w-3xl"
         )}>
           {/* 离线模式警告 */}
