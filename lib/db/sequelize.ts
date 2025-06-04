@@ -101,8 +101,10 @@ export const sequelizeInitPromise = (async () => {
   try {
     await sequelize.authenticate();
     console.log('数据库连接成功');
-    await sequelize.sync({ alter: true });
-    console.log('所有表结构已自动同步');
+
+    // 生产环境：不自动同步表结构，只验证连接
+    // 表结构同步请使用管理员界面手动操作
+    console.log('数据库连接验证完成（生产环境模式）');
 
     // 延迟初始化数据，避免循环依赖
     await initializeDefaultData();

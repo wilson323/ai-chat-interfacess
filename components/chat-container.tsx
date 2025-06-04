@@ -8,20 +8,20 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAgent } from "@/context/agent-context"
-import { Paperclip, Mic, StopCircle, WifiOff, SendHorizonal, Loader2, ImageIcon, FileIcon, X, History, AlertCircle } from "lucide-react"
+import { Paperclip, Mic, SendHorizonal, Loader2, ImageIcon, FileIcon, X } from "lucide-react"
 import { type Message, MessageType, MessageRole } from "@/types/message"
 import { ChatMessage } from "@/components/chat-message"
 import { FileUploader } from "@/components/file-uploader"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils" // 移除 getDeviceId 导入，因为我们现在从 storage 导入它
 import { useToast } from "@/components/ui/use-toast"
-import { Bot } from "lucide-react"
+
 import { ChatOptions } from "@/components/chat-options"
 import { ChatHistory } from "@/components/chat-history"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { WelcomeMessage } from "@/components/welcome-message"
+
+
 import { useMobile } from "@/hooks/use-mobile"
-import { generateOfflineResponse, checkNetworkConnection } from "@/lib/offline-mode"
+
 import { validateInput, sanitizeInput } from "@/lib/security"
 
 // 导入新的统一API模块
@@ -33,7 +33,7 @@ import { HistoryManager } from "@/components/history-manager"
 import type { ProcessingStep } from "@/types/message"
 
 import { useMessageStore } from "@/lib/store/messageStore"
-import { QuestionSuggestions } from "@/components/question-suggestions"
+
 import { VoiceInput } from "@/components/voice/VoiceInput"
 import { useLanguage } from "@/context/language-context"
 import type { ConversationAgentType, Agent } from "@/types/agent"
@@ -87,7 +87,6 @@ export function ChatContainer() {
 
   const [chatId, setChatId] = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState(false)
-  const [isOfflineMode, setIsOfflineMode] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
   const { toast } = useToast()
 
@@ -453,8 +452,6 @@ export function ChatContainer() {
       setIsInitializing(false)
       setIsTyping(false)
 
-      setIsOfflineMode(true)
-
       if (error instanceof Error) {
         setConnectionError(error.message)
       } else {
@@ -564,8 +561,6 @@ export function ChatContainer() {
       setIsInitializing(false)
       setIsTyping(false)
 
-      setIsOfflineMode(true)
-
       if (error instanceof Error) {
         setConnectionError(error.message)
       } else {
@@ -633,7 +628,7 @@ export function ChatContainer() {
       setSystemPrompt("")
       setInteracts([])
       setConnectionError(null)
-      setIsOfflineMode(false) // 重置离线模式
+
 
       // 🔥 清理FastGPT客户端状态
       setFastGPTClient(null)
@@ -688,38 +683,7 @@ export function ChatContainer() {
     }
   }, [input])
 
-  // 在useEffect中添加网络检查
-  useEffect(() => {
-    // 定期检查网络连接
-    const checkNetwork = async () => {
-      const isOnline = await checkNetworkConnection()
-      if (isOnline !== !isOfflineMode) {
-        setIsOfflineMode(!isOnline)
 
-        if (isOnline && isOfflineMode) {
-          toast({
-            title: "网络已恢复",
-            description: "已切换到在线模式",
-            variant: "default",
-          })
-        } else if (!isOnline && !isOfflineMode) {
-          toast({
-            title: "网络连接丢失",
-            description: "已切换到离线模式",
-            variant: "destructive",
-          })
-        }
-      }
-    }
-
-    // 初始检查
-    checkNetwork()
-
-    // 设置定期检查
-    const intervalId = setInterval(checkNetwork, 30000) // 每30秒检查一次
-
-    return () => clearInterval(intervalId)
-  }, [isOfflineMode, toast])
 
 
 
@@ -893,41 +857,7 @@ export function ChatContainer() {
         textareaRef.current.style.height = "auto"
       }
 
-      // 如果处于离线模式，生成离线响应
-      if (isOfflineMode) {
-        console.log('[handleSend] 离线模式，生成离线响应');
-        // 延迟一下，模拟思考时间
-        setTimeout(() => {
-          const offlineResponse = generateOfflineResponse(input)
 
-          // 添加助手消息
-          const assistantMessage = {
-            id: Date.now().toString(),
-            type: MessageType.Text,
-            role: "assistant" as MessageRole,
-            content: offlineResponse,
-            timestamp: new Date(),
-            metadata: {
-              offline: true,
-              agentId: selectedAgent?.id, // 添加智能体ID
-              apiKey: selectedAgent?.apiKey, // 添加API密钥
-              appId: selectedAgent?.appId, // 添加应用ID
-            },
-          }
-
-          setMessages((prev: Message[]) => [...prev, assistantMessage])
-          setIsTyping(false)
-
-          // 保存消息到本地存储
-          if (chatId) {
-            const updatedMessages = [...messages, userMessage, assistantMessage]
-            useMessageStore.getState().saveMessages(chatId as ConversationAgentType, updatedMessages)
-            console.log(`Saved offline response to storage for chat ID: ${chatId}`)
-          }
-        }, 1000)
-
-        return
-      }
 
       try {
         // 创建包含新用户消息的消息副本
@@ -1274,9 +1204,6 @@ export function ChatContainer() {
                   console.error('[streamChat] onError:', error);
                   setIsTyping(false);
 
-                  // 设置离线模式
-                  setIsOfflineMode(true)
-
                   // 添加错误消息
                   setMessages((prev: Message[]) => {
                     // 查找是否已有响应消息
@@ -1289,7 +1216,7 @@ export function ChatContainer() {
                               ...msg,
                               id: Date.now().toString(),
                               content:
-                                (msg.content as string) || "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
+                                (msg.content as string) || "抱歉，连接服务器时遇到网络问题，请稍后重试。",
                             }
                           : msg,
                       )
@@ -1301,7 +1228,7 @@ export function ChatContainer() {
                           id: Date.now().toString(),
                           type: MessageType.Text,
                           role: "assistant" as MessageRole,
-                          content: "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
+                          content: "抱歉，连接服务器时遇到网络问题，请稍后重试。",
                           timestamp: new Date(),
                           metadata: {
                             agentId: selectedAgent?.id, // 添加智能体ID
@@ -1315,7 +1242,7 @@ export function ChatContainer() {
 
                   toast({
                     title: "网络连接错误",
-                    description: "已切换到离线模式",
+                    description: "请检查网络连接后重试",
                     variant: "destructive",
                   })
                 },
@@ -1489,15 +1416,12 @@ export function ChatContainer() {
             }
             console.error("聊天请求错误:", error);
 
-            // 设置离线模式
-            setIsOfflineMode(true)
-
             // 添加来自助手的错误消息
             const errorMessage: Message = {
               id: Date.now().toString(),
               type: MessageType.Text,
               role: "assistant" as MessageRole,
-              content: "抱歉，处理您的请求时遇到错误。我将以离线模式为您服务。",
+              content: "抱歉，处理您的请求时遇到错误，请稍后重试。",
               timestamp: new Date(),
               metadata: {
                 agentId: selectedAgent?.id, // 添加智能体ID
@@ -1511,7 +1435,7 @@ export function ChatContainer() {
 
             toast({
               title: "错误",
-              description: error instanceof Error ? error.message : "发送消息失败，已切换到离线模式",
+              description: error instanceof Error ? error.message : "发送消息失败，请稍后重试",
               variant: "destructive",
             })
           }
@@ -1524,15 +1448,12 @@ export function ChatContainer() {
         }
         console.error("发送消息时出错:", error)
 
-        // 设置离线模式
-        setIsOfflineMode(true)
-
         // 添加来自助手的错误消息
         const errorMessage: Message = {
           id: Date.now().toString(),
           type: MessageType.Text,
           role: "assistant" as MessageRole,
-          content: "抱歉，处理您的请求时遇到错误。我将以离线模式为您服务。",
+          content: "抱歉，处理您的请求时遇到错误，请稍后重试。",
           timestamp: new Date(),
           metadata: {
             agentId: selectedAgent?.id, // 添加智能体ID
@@ -1544,7 +1465,7 @@ export function ChatContainer() {
 
         toast({
           title: "错误",
-          description: error instanceof Error ? error.message : "发送消息失败，已切换到离线模式",
+          description: error instanceof Error ? error.message : "发送消息失败，请稍后重试",
           variant: "destructive",
         })
       }
@@ -1556,15 +1477,12 @@ export function ChatContainer() {
       }
       console.error("发送消息时出错:", error)
 
-      // 设置离线模式
-      setIsOfflineMode(true)
-
       // 添加来自助手的错误消息
       const errorMessage: Message = {
         id: Date.now().toString(),
         type: MessageType.Text,
         role: "assistant" as MessageRole,
-        content: "抱歉，处理您的请求时遇到错误。我将以离线模式为您服务。",
+        content: "抱歉，处理您的请求时遇到错误，请稍后重试。",
         timestamp: new Date(),
         metadata: {
           agentId: selectedAgent?.id, // 添加智能体ID
@@ -1576,7 +1494,7 @@ export function ChatContainer() {
 
       toast({
         title: "错误",
-        description: error instanceof Error ? error.message : "发送消息失败，已切换到离线模式",
+        description: error instanceof Error ? error.message : "发送消息失败，请稍后重试",
         variant: "destructive",
       })
     } finally {
@@ -2596,9 +2514,6 @@ export function ChatContainer() {
               console.error('[streamChat] onError:', error);
               setIsTyping(false);
 
-              // 设置离线模式
-              setIsOfflineMode(true)
-
               // 添加错误消息
               setMessages((prev: Message[]) => {
                 // 查找是否已有响应消息
@@ -2611,7 +2526,7 @@ export function ChatContainer() {
                           ...msg,
                           id: Date.now().toString(),
                           content:
-                            (msg.content as string) || "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
+                            (msg.content as string) || "抱歉，连接服务器时遇到网络问题，请稍后重试。",
                         }
                       : msg,
                   )
@@ -2623,7 +2538,7 @@ export function ChatContainer() {
                       id: Date.now().toString(),
                       type: MessageType.Text,
                       role: "assistant" as MessageRole,
-                      content: "抱歉，连接服务器时遇到网络问题。我将以离线模式为您服务。",
+                      content: "抱歉，连接服务器时遇到网络问题，请稍后重试。",
                       timestamp: new Date(),
                       metadata: {
                         agentId: selectedAgent?.id, // 添加智能体ID
@@ -2637,7 +2552,7 @@ export function ChatContainer() {
 
               toast({
                 title: "网络连接错误",
-                description: "已切换到离线模式",
+                description: "请检查网络连接后重试",
                 variant: "destructive",
               })
             },
@@ -2756,35 +2671,7 @@ export function ChatContainer() {
           "mt-24 sm:mt-16",
           isMobile ? "w-full px-2" : "max-w-3xl"
         )}>
-          {/* 离线模式警告 */}
-          {isOfflineMode && (
-            <Alert
-              variant="destructive"
-              className="bg-[#fff3cd] dark:bg-amber-950/30 border-[#ffeeba] dark:border-amber-800/50 mb-4 rounded-lg"
-            >
-              <WifiOff className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <AlertTitle>{t("offlineMode")}</AlertTitle>
-              <AlertDescription>
-                {connectionError ? (
-                  <>
-                    <p className="mb-2 text-sm">
-                      {t("connectionError")}: {connectionError}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleRetryConnection}
-                      className="mt-2 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50"
-                    >
-                      {t("retryConnection")}
-                    </Button>
-                  </>
-                ) : (
-                  <p className="text-sm">{t("offlineModeDescription")}</p>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
+
 
           {/* 消息列表 - 过滤掉连续的助手消息，只保留最后一个，但保护包含交互数据的消息 */}
           {(() => {
@@ -2925,7 +2812,7 @@ export function ChatContainer() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e: React.KeyboardEvent) => handleKeyDown(e)}
-              placeholder={isOfflineMode ? t("offlineInputPlaceholder") : t("inputPlaceholder")}
+              placeholder={t("inputPlaceholder")}
               className={cn(
                 "min-h-[60px] resize-none py-4 text-sm sm:text-base shadow-none focus:shadow-none transition-colors duration-200",
                 "border-[#e9ecef] dark:border-zinc-700 focus:border-primary focus:ring-1 focus:ring-primary/20",
@@ -2986,6 +2873,11 @@ export function ChatContainer() {
                       abortControllerRef.current = null
                     }
                     setIsTyping(false)
+                    // 清理相关状态
+                    setProcessingSteps([])
+                    setCurrentNodeName("")
+                    // 移除typing消息
+                    setMessages(prev => prev.filter(msg => msg.id !== 'typing'))
                   } else {
                     handleSend()
                   }

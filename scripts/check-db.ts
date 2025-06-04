@@ -49,8 +49,10 @@ const agentsToEnsure = [
 ];
 
 (async () => {
+  console.log('开始数据库连接验证和数据初始化...');
   await sequelizeInitPromise;
 
+  console.log('检查并初始化必要的智能体数据...');
   for (const agent of agentsToEnsure) {
     const exists = await AgentConfig.findOne({ where: { name: agent.name } });
     if (!exists) {
@@ -61,6 +63,7 @@ const agentsToEnsure = [
     }
   }
 
-  console.log('数据库和表结构检测/同步完成');
+  console.log('数据库连接验证和数据初始化完成（生产环境模式）');
+  console.log('注意：表结构同步已禁用，如需同步请使用管理员界面手动操作');
   process.exit(0);
-})(); 
+})();
