@@ -95,7 +95,10 @@ export function InlineBubbleInteractive({
 
       {/* 描述文字 */}
       {description && (
-        <div className="mb-3 text-sm font-medium text-muted-foreground">
+        <div className={cn(
+          "mb-3 text-sm font-medium",
+          bubbleType === "user" ? "text-white dark:text-white" : "text-muted-foreground"
+        )}>
           {description}
         </div>
       )}
@@ -135,7 +138,10 @@ export function InlineBubbleInteractive({
 
       {/* 选择时间显示 */}
       {isProcessed && selectedAt && (
-        <div className="mt-2 text-xs text-muted-foreground">
+        <div className={cn(
+          "mt-2 text-xs",
+          bubbleType === "user" ? "text-white dark:text-white" : "text-muted-foreground"
+        )}>
           选择于 {formatDistanceToNow(selectedAt, { addSuffix: true, locale: zhCN })}
         </div>
       )}

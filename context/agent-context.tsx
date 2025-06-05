@@ -44,6 +44,9 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   const abortControllerRef = useRef<AbortController | null>(null)
   const [isRequestActive, setIsRequestActive] = useState(false)
 
+  // 页面刷新后参数检查标志位
+  const [hasCheckedAfterRefresh, setHasCheckedAfterRefresh] = useState(false)
+
   // 初始化智能体（只用API，不用本地store）
   useEffect(() => {
     async function initialize() {
@@ -94,6 +97,40 @@ export function AgentProvider({ children }: { children: ReactNode }) {
     return false
   }, [])
 
+  // 🔥 新增：页面刷新完成后检查智能体参数
+  useEffect(() => {
+    // 只在页面刷新完成后（isLoading变为false）且智能体已恢复时执行一次检查
+    if (!isLoading && selectedAgent && !hasCheckedAfterRefresh) {
+      console.log('🔍 页面刷新完成，检查智能体参数:', selectedAgent.name)
+
+      // 检查是否需要填写全局变量
+      const needsVariables = !checkRequiredVariables(selectedAgent)
+
+      if (needsVariables) {
+        console.log('📋 页面刷新后需要配置智能体参数:', selectedAgent.name)
+
+        // 加载已保存的变量值（如果有的话），用于表单预填充
+        const savedValues = localStorage.getItem(`agent-variables-${selectedAgent.id}`)
+        if (savedValues) {
+          try {
+            const parsed = JSON.parse(savedValues)
+            setGlobalVariables(parsed)
+          } catch {
+            setGlobalVariables({})
+          }
+        } else {
+          setGlobalVariables({})
+        }
+
+        // 显示配置表单
+        setShowGlobalVariablesForm(true)
+      }
+
+      // 标记已检查，避免重复检查
+      setHasCheckedAfterRefresh(true)
+    }
+  }, [isLoading, selectedAgent, hasCheckedAfterRefresh, checkRequiredVariables])
+
   // 请求中断相关函数
   const abortCurrentRequest = useCallback(() => {
     if (abortControllerRef.current && isRequestActive) {
@@ -141,6 +178,9 @@ export function AgentProvider({ children }: { children: ReactNode }) {
 
     // 🔥 新增：持久化选中的智能体ID，修复页面刷新后恢复错误的问题
     saveSelectedAgent(agent.id)
+
+    // 🔥 重置页面刷新检查标志位，确保主动切换智能体时能正常检查参数
+    setHasCheckedAfterRefresh(false)
 
     // 检查是否需要填写全局变量
     const needsVariables = !checkRequiredVariables(agent)

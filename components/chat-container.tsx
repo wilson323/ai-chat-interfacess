@@ -122,6 +122,9 @@ export function ChatContainer() {
   // 新增 currentNodeName 状态
   const [currentNodeName, setCurrentNodeName] = useState<string>("")
 
+  // 🔥 新增：交互节点输入框禁用状态
+  const [isInteractionPending, setIsInteractionPending] = useState(false)
+
   // 交互节点状态已移除，现在使用消息内的 interactiveData 字段
 
   // 🔥 新增：智能体验证机制
@@ -614,6 +617,7 @@ export function ChatContainer() {
       setProcessingSteps([])
       setCurrentNodeName("")
       setIsInitializing(false) // 重置初始化状态
+      setIsInteractionPending(false) // 🔥 重置交互节点状态
 
       // 🔥 立即清空所有对话记录
       setMessages([])
@@ -988,6 +992,10 @@ export function ChatContainer() {
 
                     safeCrossPlatformLog('log', '交互节点数据验证结果', validationResult);
 
+                    // 🔥 新增：禁用输入框，等待用户选择
+                    console.log('🔒 交互节点出现，禁用输入框');
+                    setIsInteractionPending(true);
+
                     if (validationResult.isValid) {
                       console.log('✅ 交互节点验证通过，将交互数据附加到typing消息:', (safeValue as any).interactive);
 
@@ -1203,6 +1211,8 @@ export function ChatContainer() {
                 onError: (error: Error) => {
                   console.error('[streamChat] onError:', error);
                   setIsTyping(false);
+                  // 🔥 新增：错误时重置交互状态，允许用户重新输入
+                  setIsInteractionPending(false);
 
                   // 添加错误消息
                   setMessages((prev: Message[]) => {
@@ -1255,8 +1265,20 @@ export function ChatContainer() {
                   console.log('[streamChat] onFinish');
                   setIsTyping(false)
 
-                  // 统一处理：将typing消息转换为永久消息（可能包含文字内容和/或交互数据）
+                  // 🔥 新增：流式响应结束时，检查是否有未处理的交互节点
                   setMessages((prev: Message[]) => {
+                    const hasUnprocessedInteraction = prev.some(msg =>
+                      msg.id === "typing" && msg.metadata?.interactiveData && !msg.metadata.interactiveData.processed
+                    );
+
+                    if (!hasUnprocessedInteraction) {
+                      console.log('🔓 流式响应结束且无未处理交互节点，启用输入框');
+                      setIsInteractionPending(false);
+                    } else {
+                      console.log('🔒 流式响应结束但存在未处理交互节点，保持输入框禁用');
+                    }
+
+                    // 统一处理：将typing消息转换为永久消息（可能包含文字内容和/或交互数据）
                     console.log('📝 流式处理完成，转换typing消息为永久消息');
                     return prev.map((msg) =>
                       msg.id === "typing"
@@ -1746,6 +1768,8 @@ export function ChatContainer() {
               },
               onError: (error: Error) => {
                 console.error("重新生成流错误:", error)
+                // 🔥 新增：重新生成错误时重置交互状态
+                setIsInteractionPending(false);
                 toast({
                   title: "错误",
                   description: error.message,
@@ -2139,6 +2163,10 @@ export function ChatContainer() {
     try {
       console.log('[handleInteractiveSelect] 用户选择:', { value, key });
 
+      // 🔥 立即启用输入框，允许用户继续输入
+      console.log('🔓 用户已选择，启用输入框');
+      setIsInteractionPending(false);
+
       // 标记交互消息为已处理，并记录选择信息，更新交互状态
       setMessages((prev: Message[]) =>
         prev.map(msg =>
@@ -2296,6 +2324,10 @@ export function ChatContainer() {
                 const validationResult = validateInteractiveNodeData(safeValue);
 
                 safeCrossPlatformLog('log', '[交互节点继续运行] 数据验证结果', validationResult);
+
+                // 🔥 新增：再次禁用输入框，等待用户选择（处理连续交互节点）
+                console.log('🔒 [交互节点继续运行] 交互节点出现，禁用输入框');
+                setIsInteractionPending(true);
 
                 if (validationResult.isValid) {
                   console.log('✅ [交互节点继续运行] 交互节点验证通过，将交互数据附加到typing消息:', (safeValue as any).interactive);
@@ -2513,6 +2545,8 @@ export function ChatContainer() {
             onError: (error: Error) => {
               console.error('[streamChat] onError:', error);
               setIsTyping(false);
+              // 🔥 新增：错误时重置交互状态，允许用户重新输入
+              setIsInteractionPending(false);
 
               // 添加错误消息
               setMessages((prev: Message[]) => {
@@ -2560,8 +2594,20 @@ export function ChatContainer() {
               console.log('[streamChat] 交互节点继续运行 onFinish');
               setIsTyping(false)
 
-              // 统一处理：将typing消息转换为永久消息（可能包含文字内容和/或交互数据）
+              // 🔥 新增：交互节点继续运行结束时，检查是否有新的未处理交互节点
               setMessages((prev: Message[]) => {
+                const hasUnprocessedInteraction = prev.some(msg =>
+                  msg.id === "typing" && msg.metadata?.interactiveData && !msg.metadata.interactiveData.processed
+                );
+
+                if (!hasUnprocessedInteraction) {
+                  console.log('🔓 [交互节点继续运行] 流式响应结束且无未处理交互节点，启用输入框');
+                  setIsInteractionPending(false);
+                } else {
+                  console.log('🔒 [交互节点继续运行] 流式响应结束但存在未处理交互节点，保持输入框禁用');
+                }
+
+                // 统一处理：将typing消息转换为永久消息（可能包含文字内容和/或交互数据）
                 console.log('📝 [交互节点继续运行] 流式处理完成，转换typing消息为永久消息');
                 return prev.map((msg) =>
                   msg.id === "typing"
@@ -2812,11 +2858,13 @@ export function ChatContainer() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e: React.KeyboardEvent) => handleKeyDown(e)}
-              placeholder={t("inputPlaceholder")}
+              placeholder={isInteractionPending ? "请先选择上方的选项..." : t("inputPlaceholder")}
+              disabled={isInteractionPending}
               className={cn(
                 "min-h-[60px] resize-none py-4 text-sm sm:text-base shadow-none focus:shadow-none transition-colors duration-200",
                 "border-[#e9ecef] dark:border-zinc-700 focus:border-primary focus:ring-1 focus:ring-primary/20",
                 isMobile ? "rounded-lg pl-[130px] pr-[70px]" : "rounded-lg pl-4 pr-32",
+                isInteractionPending && "opacity-50 cursor-not-allowed bg-muted",
               )}
               rows={1}
             />
@@ -2876,13 +2924,15 @@ export function ChatContainer() {
                     // 清理相关状态
                     setProcessingSteps([])
                     setCurrentNodeName("")
+                    // 🔥 新增：取消时重置交互状态，允许用户重新输入
+                    setIsInteractionPending(false)
                     // 移除typing消息
                     setMessages(prev => prev.filter(msg => msg.id !== 'typing'))
                   } else {
                     handleSend()
                   }
                 }}
-                disabled={(!input.trim() && uploadedFiles.length === 0) && !isTyping || isInitializing}
+                disabled={(!input.trim() && uploadedFiles.length === 0) && !isTyping || isInitializing || isInteractionPending}
                 className={cn(
                   "btn-primary h-8 sm:h-9 text-xs sm:text-sm font-medium",
                   "bg-primary hover:bg-primary/90",

@@ -144,9 +144,6 @@ export function GlobalVariablesForm({ agent, isOpen, onClose, onSubmit, initialV
                 ))}
               </SelectContent>
             </Select>
-            {variable.description && (
-              <p className="text-xs text-muted-foreground">{variable.description}</p>
-            )}
             {error && (
               <p className="text-xs text-red-500 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />

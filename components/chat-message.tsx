@@ -362,7 +362,10 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
         {/* 内容区 */}
         <div className="flex-1 flex flex-col">
           {/* Message header with timestamp */}
-          <div className="flex items-center mb-1 text-xs text-muted-foreground">
+          <div className={cn(
+            "flex items-center mb-1 text-xs",
+            isUserCompat ? "text-white dark:text-white" : "text-muted-foreground"
+          )}>
             <span className="font-medium">{isUserCompat ? t("you") : message.metadata?.botName || t("assistant")}</span>
             <span className="mx-1.5">•</span>
             <span>{formatDistanceToNow(timestamp, { addSuffix: true, locale: zhCN })}</span>
@@ -498,7 +501,10 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 text-muted-foreground hover:text-primary"
+                    className={cn(
+                      "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 hover:text-primary",
+                      isUserCompat ? "text-white dark:text-white" : "text-muted-foreground"
+                    )}
                     onClick={handleCopy}
                   >
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -516,7 +522,10 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 text-muted-foreground hover:text-primary"
+                      className={cn(
+                        "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 hover:text-primary",
+                        isUserCompat ? "text-white dark:text-white" : "text-muted-foreground"
+                      )}
                       onClick={handleEdit}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -536,7 +545,10 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 text-muted-foreground hover:text-destructive"
+                      className={cn(
+                        "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 hover:text-destructive",
+                        isUserCompat ? "text-white dark:text-white" : "text-muted-foreground"
+                      )}
                       onClick={handleDelete}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -555,7 +567,10 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 text-muted-foreground hover:text-primary"
+                      className={cn(
+                        "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 hover:text-primary",
+                        isUserCompat ? "text-white dark:text-white" : "text-muted-foreground"
+                      )}
                       onClick={onRegenerate}
                       disabled={isTyping}
                     >
@@ -578,7 +593,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                         size="icon"
                         className={cn(
                           "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0",
-                          liked ? "text-green-500" : "text-muted-foreground hover:text-green-500",
+                          liked ? "text-green-500" : isUserCompat ? "text-white dark:text-white hover:text-green-500" : "text-muted-foreground hover:text-green-500",
                         )}
                         onClick={(e) => handleFeedback('like', e)}
                         disabled={feedbackLoading}
@@ -599,7 +614,7 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                         size="icon"
                         className={cn(
                           "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0",
-                          disliked ? "text-red-500" : "text-muted-foreground hover:text-red-500",
+                          disliked ? "text-red-500" : isUserCompat ? "text-white dark:text-white hover:text-red-500" : "text-muted-foreground hover:text-red-500",
                         )}
                         onClick={(e) => handleFeedback('dislike', e)}
                         disabled={feedbackLoading}
@@ -621,7 +636,10 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 text-muted-foreground hover:text-primary"
+                      className={cn(
+                        "h-7 w-7 rounded-full bg-transparent hover:bg-accent/50 p-0 hover:text-primary",
+                        isUserCompat ? "text-white dark:text-white" : "text-muted-foreground"
+                      )}
                       onClick={handleTTS}
                     >
                       <Volume2 className="h-3.5 w-3.5" />
