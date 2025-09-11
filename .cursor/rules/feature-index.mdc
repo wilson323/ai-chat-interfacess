@@ -1,9 +1,6 @@
 ---
-description: 功能索引和API文档
-globs: ["**/*.{ts,tsx,js,jsx}"]
-alwaysApply: false
+alwaysApply: true
 ---
-
 # 功能索引和API文档
 
 ## 🎯 核心功能模块

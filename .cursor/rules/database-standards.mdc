@@ -1,0 +1,1157 @@
+---
+alwaysApply: true
+---
+
+# 数据库处理规范
+
+## 🎯 数据库架构原则
+
+### 1. 技术栈选择
+- **ORM**: Sequelize (当前) / Prisma (推荐升级)
+- **数据库**: PostgreSQL (企业级)
+- **连接池**: 已配置，需要优化
+- **缓存**: Redis (已配置，需要充分利用)
+
+### 2. 数据库设计原则
+- **规范化**: 遵循第三范式，避免数据冗余
+- **性能优先**: 合理索引设计，查询优化
+- **数据完整性**: 外键约束，数据类型严格
+- **可扩展性**: 支持水平扩展和垂直扩展
+
+## 📊 当前数据库方案分析
+
+### 现有配置评估
+```typescript
+// lib/db/sequelize.ts - 当前配置
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  port: DB_PORT,
+  dialect: 'postgres',
+  pool: {
+    max: 10,        // 最大连接数
+    min: 0,         // 最小连接数
+    acquire: 30000, // 获取连接超时
+    idle: 10000,    // 空闲连接超时
+  },
+  define: {
+    freezeTableName: true,
+    underscored: true,
+  },
+});
+```
+
+**问题识别**:
+- ❌ 连接池配置偏保守
+- ❌ 缺少查询性能监控
+- ❌ 缺少连接池监控
+- ❌ 缺少重试机制
+
+## 🚀 优化方案
+
+### 1. 连接池优化
+
+#### 推荐配置
+```typescript
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  port: DB_PORT,
+  dialect: 'postgres',
+  dialectModule: pg,
+  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  
+  // 优化连接池配置
+  pool: {
+    max: 20,        // 增加最大连接数
+    min: 5,         // 增加最小连接数
+    acquire: 30000, // 获取连接超时
+    idle: 10000,    // 空闲连接超时
+    evict: 1000,    // 清理间隔
+    handleDisconnects: true, // 处理断开连接
+  },
+  
+  // 添加重试机制
+  retry: {
+    max: 3,         // 最大重试次数
+    timeout: 60000, // 重试超时
+    match: [
+      /ETIMEDOUT/,
+      /EHOSTUNREACH/,
+      /ECONNRESET/,
+      /ECONNREFUSED/,
+      /ETIMEDOUT/,
+      /ESOCKETTIMEDOUT/,
+      /EHOSTUNREACH/,
+      /EPIPE/,
+      /EAI_AGAIN/,
+      /SequelizeConnectionError/,
+      /SequelizeConnectionRefusedError/,
+      /SequelizeHostNotFoundError/,
+      /SequelizeHostNotReachableError/,
+      /SequelizeInvalidConnectionError/,
+      /SequelizeConnectionTimedOutError/
+    ]
+  },
+  
+  // 性能监控
+  benchmark: true,
+  
+  // 查询优化
+  define: {
+    freezeTableName: true,
+    underscored: true,
+    timestamps: true,
+    paranoid: false, // 软删除
+  },
+  
+  // 查询优化配置
+  query: {
+    raw: false,
+    nest: true,
+    plain: false
+  }
+});
+```
+
+### 2. 使用成熟的数据库解决方案
+
+#### 推荐升级到 Prisma
+```typescript
+// 优势对比
+// Sequelize: 成熟稳定，但类型支持有限
+// Prisma: 类型安全，自动生成客户端，更好的开发体验
+
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AgentConfig {
+  id            Int      @id @default(autoincrement())
+  name          String
+  type          String
+  apiKey        String
+  appId         String
+  apiUrl        String?
+  systemPrompt  String
+  temperature   Float    @default(0.7)
+  maxTokens     Int      @default(2000)
+  isPublished   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("agent_config")
+}
+```
+
+#### 数据库连接管理
+```typescript
+// lib/db/connection.ts
+import { PrismaClient } from '@prisma/client'
+
+class DatabaseManager {
+  private static instance: PrismaClient
+  private static isConnected = false
+
+  static getInstance(): PrismaClient {
+    if (!DatabaseManager.instance) {
+      DatabaseManager.instance = new PrismaClient({
+        log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+        errorFormat: 'pretty',
+      })
+    }
+    return DatabaseManager.instance
+  }
+
+  static async connect(): Promise<void> {
+    if (!DatabaseManager.isConnected) {
+      try {
+        await DatabaseManager.getInstance().$connect()
+        DatabaseManager.isConnected = true
+        console.log('数据库连接成功')
+      } catch (error) {
+        console.error('数据库连接失败:', error)
+        throw error
+      }
+    }
+  }
+
+  static async disconnect(): Promise<void> {
+    if (DatabaseManager.isConnected) {
+      await DatabaseManager.getInstance().$disconnect()
+      DatabaseManager.isConnected = false
+      console.log('数据库连接已断开')
+    }
+  }
+}
+
+export default DatabaseManager
+```
+
+### 3. 查询优化策略
+
+#### 索引优化
+```sql
+-- 为常用查询字段添加索引
+CREATE INDEX idx_agent_config_type ON agent_config(type);
+CREATE INDEX idx_agent_config_published ON agent_config(is_published);
+CREATE INDEX idx_chat_history_session_id ON chat_history(session_id);
+CREATE INDEX idx_chat_history_created_at ON chat_history(created_at);
+
+-- 复合索引
+CREATE INDEX idx_agent_config_type_published ON agent_config(type, is_published);
+```
+
+#### 查询优化示例
+```typescript
+// ❌ 不好的查询
+const agents = await AgentConfig.findAll({
+  where: { isPublished: true },
+  order: [['order', 'ASC']]
+})
+
+// ✅ 好的查询 - 使用索引，限制字段
+const agents = await AgentConfig.findAll({
+  attributes: ['id', 'name', 'type', 'description', 'order'],
+  where: { isPublished: true },
+  order: [['order', 'ASC']],
+  limit: 100
+})
+
+// ✅ 好的查询 - 使用原始SQL优化
+const agents = await sequelize.query(`
+  SELECT id, name, type, description, "order"
+  FROM agent_config 
+  WHERE is_published = true 
+  ORDER BY "order" ASC 
+  LIMIT 100
+`, {
+  type: QueryTypes.SELECT,
+  raw: true
+})
+```
+
+### 4. 缓存策略优化
+
+#### Redis缓存配置
+```typescript
+// lib/cache/redis.ts
+import Redis from 'ioredis'
+
+class CacheManager {
+  private redis: Redis
+
+  constructor() {
+    this.redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD,
+      db: parseInt(process.env.REDIS_DB || '0'),
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+    })
+
+    this.redis.on('error', (err) => {
+      console.error('Redis连接错误:', err)
+    })
+  }
+
+  // 智能体配置缓存
+  async getAgentConfigs(): Promise<AgentConfig[] | null> {
+    const cached = await this.redis.get('agent_configs')
+    return cached ? JSON.parse(cached) : null
+  }
+
+  async setAgentConfigs(configs: AgentConfig[], ttl = 300): Promise<void> {
+    await this.redis.setex('agent_configs', ttl, JSON.stringify(configs))
+  }
+
+  // 用户会话缓存
+  async getSession(sessionId: string): Promise<any> {
+    const cached = await this.redis.get(`session:${sessionId}`)
+    return cached ? JSON.parse(cached) : null
+  }
+
+  async setSession(sessionId: string, data: any, ttl = 3600): Promise<void> {
+    await this.redis.setex(`session:${sessionId}`, ttl, JSON.stringify(data))
+  }
+
+  // 缓存失效
+  async invalidateAgentConfigs(): Promise<void> {
+    await this.redis.del('agent_configs')
+  }
+}
+
+export default new CacheManager()
+```
+
+### 5. 数据库监控
+
+#### 性能监控
+```typescript
+// lib/monitoring/database.ts
+export class DatabaseMonitor {
+  private static queryTimes: number[] = []
+  private static errorCount = 0
+
+  static async monitorQuery<T>(
+    queryName: string,
+    queryFn: () => Promise<T>
+  ): Promise<T> {
+    const startTime = Date.now()
+    
+    try {
+      const result = await queryFn()
+      const duration = Date.now() - startTime
+      
+      // 记录查询时间
+      this.queryTimes.push(duration)
+      
+      // 如果查询时间超过1秒，记录警告
+      if (duration > 1000) {
+        console.warn(`慢查询警告: ${queryName} 耗时 ${duration}ms`)
+      }
+      
+      return result
+    } catch (error) {
+      this.errorCount++
+      console.error(`数据库查询错误 [${queryName}]:`, error)
+      throw error
+    }
+  }
+
+  static getStats() {
+    return {
+      averageQueryTime: this.queryTimes.reduce((a, b) => a + b, 0) / this.queryTimes.length,
+      maxQueryTime: Math.max(...this.queryTimes),
+      errorCount: this.errorCount,
+      totalQueries: this.queryTimes.length
+    }
+  }
+}
+```
+
+## 📋 数据库操作规范
+
+### 1. 查询规范
+
+#### 基础查询
+```typescript
+// ✅ 好的查询 - 使用类型安全
+interface GetAgentConfigsParams {
+  type?: string
+  isPublished?: boolean
+  limit?: number
+  offset?: number
+}
+
+async function getAgentConfigs(params: GetAgentConfigsParams = {}) {
+  const { type, isPublished = true, limit = 100, offset = 0 } = params
+  
+  return await DatabaseMonitor.monitorQuery('getAgentConfigs', async () => {
+    return await AgentConfig.findAll({
+      attributes: ['id', 'name', 'type', 'description', 'order'],
+      where: {
+        ...(type && { type }),
+        isPublished
+      },
+      order: [['order', 'ASC']],
+      limit,
+      offset
+    })
+  })
+}
+```
+
+#### 事务处理
+```typescript
+// ✅ 好的事务处理
+async function createAgentWithValidation(agentData: AgentConfigCreationAttributes) {
+  const transaction = await sequelize.transaction()
+  
+  try {
+    // 验证数据
+    const validationResult = await validateAgentData(agentData)
+    if (!validationResult.isValid) {
+      throw new ValidationError(validationResult.errors)
+    }
+    
+    // 创建智能体
+    const agent = await AgentConfig.create(agentData, { transaction })
+    
+    // 创建相关配置
+    await createAgentSettings(agent.id, agentData.settings, { transaction })
+    
+    await transaction.commit()
+    return agent
+  } catch (error) {
+    await transaction.rollback()
+    throw error
+  }
+}
+```
+
+### 2. 错误处理规范
+
+#### 统一错误处理
+```typescript
+// lib/errors/database-errors.ts
+export class DatabaseError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public originalError?: Error
+  ) {
+    super(message)
+    this.name = 'DatabaseError'
+  }
+}
+
+export class ValidationError extends DatabaseError {
+  constructor(public errors: string[]) {
+    super('数据验证失败', 'VALIDATION_ERROR')
+    this.name = 'ValidationError'
+  }
+}
+
+export class ConnectionError extends DatabaseError {
+  constructor(message: string, originalError?: Error) {
+    super(message, 'CONNECTION_ERROR', originalError)
+    this.name = 'ConnectionError'
+  }
+}
+
+// 错误处理中间件
+export function handleDatabaseError(error: unknown): never {
+  if (error instanceof ValidationError) {
+    throw error
+  }
+  
+  if (error instanceof DatabaseError) {
+    throw error
+  }
+  
+  // Sequelize错误处理
+  if (error instanceof Error && 'parent' in error) {
+    const sequelizeError = error as any
+    if (sequelizeError.parent?.code === '23505') {
+      throw new DatabaseError('数据已存在', 'DUPLICATE_ENTRY', error)
+    }
+    if (sequelizeError.parent?.code === '23503') {
+      throw new DatabaseError('外键约束错误', 'FOREIGN_KEY_CONSTRAINT', error)
+    }
+  }
+  
+  throw new DatabaseError('数据库操作失败', 'UNKNOWN_ERROR', error)
+}
+```
+
+### 3. 数据迁移规范
+
+#### 迁移文件结构
+```typescript
+// migrations/20241212000000-optimize-agent-config-indexes.js
+'use strict';
+
+module.exports = {
+  up: async (queryInterface, Sequelize) => {
+    // 添加索引
+    await queryInterface.addIndex('agent_config', ['type', 'is_published'], {
+      name: 'idx_agent_config_type_published'
+    })
+    
+    await queryInterface.addIndex('agent_config', ['order'], {
+      name: 'idx_agent_config_order'
+    })
+  },
+
+  down: async (queryInterface, Sequelize) => {
+    // 删除索引
+    await queryInterface.removeIndex('agent_config', 'idx_agent_config_type_published')
+    await queryInterface.removeIndex('agent_config', 'idx_agent_config_order')
+  }
+};
+```
+
+## 🛠️ 工具配置
+
+### 1. 数据库连接检查脚本
+```typescript
+// scripts/check-db.ts
+import DatabaseManager from '../lib/db/connection'
+
+async function checkDatabaseConnection() {
+  try {
+    await DatabaseManager.connect()
+    
+    // 测试查询
+    const result = await DatabaseManager.getInstance().$queryRaw`SELECT 1 as test`
+    console.log('✅ 数据库连接正常')
+    
+    // 检查表结构
+    const tables = await DatabaseManager.getInstance().$queryRaw`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `
+    console.log('📊 数据库表:', tables)
+    
+  } catch (error) {
+    console.error('❌ 数据库连接失败:', error)
+    process.exit(1)
+  } finally {
+    await DatabaseManager.disconnect()
+  }
+}
+
+checkDatabaseConnection()
+```
+
+### 2. 性能测试脚本
+```typescript
+// scripts/benchmark-db.ts
+import DatabaseManager from '../lib/db/connection'
+import { performance } from 'perf_hooks'
+
+async function benchmarkQueries() {
+  const iterations = 1000
+  const times: number[] = []
+  
+  for (let i = 0; i < iterations; i++) {
+    const start = performance.now()
+    
+    await DatabaseManager.getInstance().agentConfig.findMany({
+      where: { isPublished: true },
+      take: 10
+    })
+    
+    const end = performance.now()
+    times.push(end - start)
+  }
+  
+  const avgTime = times.reduce((a, b) => a + b, 0) / times.length
+  const maxTime = Math.max(...times)
+  const minTime = Math.min(...times)
+  
+  console.log(`📊 查询性能统计 (${iterations}次):`)
+  console.log(`平均时间: ${avgTime.toFixed(2)}ms`)
+  console.log(`最大时间: ${maxTime.toFixed(2)}ms`)
+  console.log(`最小时间: ${minTime.toFixed(2)}ms`)
+}
+
+benchmarkQueries()
+```
+
+## 📊 质量指标
+
+### 数据库性能指标
+- **查询响应时间**: 目标 < 50ms
+- **连接池使用率**: 目标 < 80%
+- **缓存命中率**: 目标 > 90%
+- **错误率**: 目标 < 0.1%
+
+### 监控命令
+```bash
+# 数据库连接检查
+npm run db:check
+
+# 性能测试
+npm run db:benchmark
+
+# 索引分析
+npm run db:analyze
+
+# 缓存状态检查
+npm run cache:status
+```
+
+## ⚠️ 重要提醒
+
+1. **严格遵循**: 所有数据库操作必须遵循本规范
+2. **性能优先**: 查询优化和索引设计是重点
+3. **监控告警**: 建立完善的数据库监控体系
+4. **备份恢复**: 定期备份，测试恢复流程
+5. **安全防护**: 防止SQL注入，保护敏感数据
+
+**记住: 数据库是系统的核心，必须确保高性能、高可用、高安全。**# 数据库处理规范
+
+## 🎯 数据库架构原则
+
+### 1. 技术栈选择
+- **ORM**: Sequelize (当前) / Prisma (推荐升级)
+- **数据库**: PostgreSQL (企业级)
+- **连接池**: 已配置，需要优化
+- **缓存**: Redis (已配置，需要充分利用)
+
+### 2. 数据库设计原则
+- **规范化**: 遵循第三范式，避免数据冗余
+- **性能优先**: 合理索引设计，查询优化
+- **数据完整性**: 外键约束，数据类型严格
+- **可扩展性**: 支持水平扩展和垂直扩展
+
+## 📊 当前数据库方案分析
+
+### 现有配置评估
+```typescript
+// lib/db/sequelize.ts - 当前配置
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  port: DB_PORT,
+  dialect: 'postgres',
+  pool: {
+    max: 10,        // 最大连接数
+    min: 0,         // 最小连接数
+    acquire: 30000, // 获取连接超时
+    idle: 10000,    // 空闲连接超时
+  },
+  define: {
+    freezeTableName: true,
+    underscored: true,
+  },
+});
+```
+
+**问题识别**:
+- ❌ 连接池配置偏保守
+- ❌ 缺少查询性能监控
+- ❌ 缺少连接池监控
+- ❌ 缺少重试机制
+
+## 🚀 优化方案
+
+### 1. 连接池优化
+
+#### 推荐配置
+```typescript
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  host: DB_HOST,
+  port: DB_PORT,
+  dialect: 'postgres',
+  dialectModule: pg,
+  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  
+  // 优化连接池配置
+  pool: {
+    max: 20,        // 增加最大连接数
+    min: 5,         // 增加最小连接数
+    acquire: 30000, // 获取连接超时
+    idle: 10000,    // 空闲连接超时
+    evict: 1000,    // 清理间隔
+    handleDisconnects: true, // 处理断开连接
+  },
+  
+  // 添加重试机制
+  retry: {
+    max: 3,         // 最大重试次数
+    timeout: 60000, // 重试超时
+    match: [
+      /ETIMEDOUT/,
+      /EHOSTUNREACH/,
+      /ECONNRESET/,
+      /ECONNREFUSED/,
+      /ETIMEDOUT/,
+      /ESOCKETTIMEDOUT/,
+      /EHOSTUNREACH/,
+      /EPIPE/,
+      /EAI_AGAIN/,
+      /SequelizeConnectionError/,
+      /SequelizeConnectionRefusedError/,
+      /SequelizeHostNotFoundError/,
+      /SequelizeHostNotReachableError/,
+      /SequelizeInvalidConnectionError/,
+      /SequelizeConnectionTimedOutError/
+    ]
+  },
+  
+  // 性能监控
+  benchmark: true,
+  
+  // 查询优化
+  define: {
+    freezeTableName: true,
+    underscored: true,
+    timestamps: true,
+    paranoid: false, // 软删除
+  },
+  
+  // 查询优化配置
+  query: {
+    raw: false,
+    nest: true,
+    plain: false
+  }
+});
+```
+
+### 2. 使用成熟的数据库解决方案
+
+#### 推荐升级到 Prisma
+```typescript
+// 优势对比
+// Sequelize: 成熟稳定，但类型支持有限
+// Prisma: 类型安全，自动生成客户端，更好的开发体验
+
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AgentConfig {
+  id            Int      @id @default(autoincrement())
+  name          String
+  type          String
+  apiKey        String
+  appId         String
+  apiUrl        String?
+  systemPrompt  String
+  temperature   Float    @default(0.7)
+  maxTokens     Int      @default(2000)
+  isPublished   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("agent_config")
+}
+```
+
+#### 数据库连接管理
+```typescript
+// lib/db/connection.ts
+import { PrismaClient } from '@prisma/client'
+
+class DatabaseManager {
+  private static instance: PrismaClient
+  private static isConnected = false
+
+  static getInstance(): PrismaClient {
+    if (!DatabaseManager.instance) {
+      DatabaseManager.instance = new PrismaClient({
+        log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+        errorFormat: 'pretty',
+      })
+    }
+    return DatabaseManager.instance
+  }
+
+  static async connect(): Promise<void> {
+    if (!DatabaseManager.isConnected) {
+      try {
+        await DatabaseManager.getInstance().$connect()
+        DatabaseManager.isConnected = true
+        console.log('数据库连接成功')
+      } catch (error) {
+        console.error('数据库连接失败:', error)
+        throw error
+      }
+    }
+  }
+
+  static async disconnect(): Promise<void> {
+    if (DatabaseManager.isConnected) {
+      await DatabaseManager.getInstance().$disconnect()
+      DatabaseManager.isConnected = false
+      console.log('数据库连接已断开')
+    }
+  }
+}
+
+export default DatabaseManager
+```
+
+### 3. 查询优化策略
+
+#### 索引优化
+```sql
+-- 为常用查询字段添加索引
+CREATE INDEX idx_agent_config_type ON agent_config(type);
+CREATE INDEX idx_agent_config_published ON agent_config(is_published);
+CREATE INDEX idx_chat_history_session_id ON chat_history(session_id);
+CREATE INDEX idx_chat_history_created_at ON chat_history(created_at);
+
+-- 复合索引
+CREATE INDEX idx_agent_config_type_published ON agent_config(type, is_published);
+```
+
+#### 查询优化示例
+```typescript
+// ❌ 不好的查询
+const agents = await AgentConfig.findAll({
+  where: { isPublished: true },
+  order: [['order', 'ASC']]
+})
+
+// ✅ 好的查询 - 使用索引，限制字段
+const agents = await AgentConfig.findAll({
+  attributes: ['id', 'name', 'type', 'description', 'order'],
+  where: { isPublished: true },
+  order: [['order', 'ASC']],
+  limit: 100
+})
+
+// ✅ 好的查询 - 使用原始SQL优化
+const agents = await sequelize.query(`
+  SELECT id, name, type, description, "order"
+  FROM agent_config 
+  WHERE is_published = true 
+  ORDER BY "order" ASC 
+  LIMIT 100
+`, {
+  type: QueryTypes.SELECT,
+  raw: true
+})
+```
+
+### 4. 缓存策略优化
+
+#### Redis缓存配置
+```typescript
+// lib/cache/redis.ts
+import Redis from 'ioredis'
+
+class CacheManager {
+  private redis: Redis
+
+  constructor() {
+    this.redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD,
+      db: parseInt(process.env.REDIS_DB || '0'),
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+    })
+
+    this.redis.on('error', (err) => {
+      console.error('Redis连接错误:', err)
+    })
+  }
+
+  // 智能体配置缓存
+  async getAgentConfigs(): Promise<AgentConfig[] | null> {
+    const cached = await this.redis.get('agent_configs')
+    return cached ? JSON.parse(cached) : null
+  }
+
+  async setAgentConfigs(configs: AgentConfig[], ttl = 300): Promise<void> {
+    await this.redis.setex('agent_configs', ttl, JSON.stringify(configs))
+  }
+
+  // 用户会话缓存
+  async getSession(sessionId: string): Promise<any> {
+    const cached = await this.redis.get(`session:${sessionId}`)
+    return cached ? JSON.parse(cached) : null
+  }
+
+  async setSession(sessionId: string, data: any, ttl = 3600): Promise<void> {
+    await this.redis.setex(`session:${sessionId}`, ttl, JSON.stringify(data))
+  }
+
+  // 缓存失效
+  async invalidateAgentConfigs(): Promise<void> {
+    await this.redis.del('agent_configs')
+  }
+}
+
+export default new CacheManager()
+```
+
+### 5. 数据库监控
+
+#### 性能监控
+```typescript
+// lib/monitoring/database.ts
+export class DatabaseMonitor {
+  private static queryTimes: number[] = []
+  private static errorCount = 0
+
+  static async monitorQuery<T>(
+    queryName: string,
+    queryFn: () => Promise<T>
+  ): Promise<T> {
+    const startTime = Date.now()
+    
+    try {
+      const result = await queryFn()
+      const duration = Date.now() - startTime
+      
+      // 记录查询时间
+      this.queryTimes.push(duration)
+      
+      // 如果查询时间超过1秒，记录警告
+      if (duration > 1000) {
+        console.warn(`慢查询警告: ${queryName} 耗时 ${duration}ms`)
+      }
+      
+      return result
+    } catch (error) {
+      this.errorCount++
+      console.error(`数据库查询错误 [${queryName}]:`, error)
+      throw error
+    }
+  }
+
+  static getStats() {
+    return {
+      averageQueryTime: this.queryTimes.reduce((a, b) => a + b, 0) / this.queryTimes.length,
+      maxQueryTime: Math.max(...this.queryTimes),
+      errorCount: this.errorCount,
+      totalQueries: this.queryTimes.length
+    }
+  }
+}
+```
+
+## 📋 数据库操作规范
+
+### 1. 查询规范
+
+#### 基础查询
+```typescript
+// ✅ 好的查询 - 使用类型安全
+interface GetAgentConfigsParams {
+  type?: string
+  isPublished?: boolean
+  limit?: number
+  offset?: number
+}
+
+async function getAgentConfigs(params: GetAgentConfigsParams = {}) {
+  const { type, isPublished = true, limit = 100, offset = 0 } = params
+  
+  return await DatabaseMonitor.monitorQuery('getAgentConfigs', async () => {
+    return await AgentConfig.findAll({
+      attributes: ['id', 'name', 'type', 'description', 'order'],
+      where: {
+        ...(type && { type }),
+        isPublished
+      },
+      order: [['order', 'ASC']],
+      limit,
+      offset
+    })
+  })
+}
+```
+
+#### 事务处理
+```typescript
+// ✅ 好的事务处理
+async function createAgentWithValidation(agentData: AgentConfigCreationAttributes) {
+  const transaction = await sequelize.transaction()
+  
+  try {
+    // 验证数据
+    const validationResult = await validateAgentData(agentData)
+    if (!validationResult.isValid) {
+      throw new ValidationError(validationResult.errors)
+    }
+    
+    // 创建智能体
+    const agent = await AgentConfig.create(agentData, { transaction })
+    
+    // 创建相关配置
+    await createAgentSettings(agent.id, agentData.settings, { transaction })
+    
+    await transaction.commit()
+    return agent
+  } catch (error) {
+    await transaction.rollback()
+    throw error
+  }
+}
+```
+
+### 2. 错误处理规范
+
+#### 统一错误处理
+```typescript
+// lib/errors/database-errors.ts
+export class DatabaseError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public originalError?: Error
+  ) {
+    super(message)
+    this.name = 'DatabaseError'
+  }
+}
+
+export class ValidationError extends DatabaseError {
+  constructor(public errors: string[]) {
+    super('数据验证失败', 'VALIDATION_ERROR')
+    this.name = 'ValidationError'
+  }
+}
+
+export class ConnectionError extends DatabaseError {
+  constructor(message: string, originalError?: Error) {
+    super(message, 'CONNECTION_ERROR', originalError)
+    this.name = 'ConnectionError'
+  }
+}
+
+// 错误处理中间件
+export function handleDatabaseError(error: unknown): never {
+  if (error instanceof ValidationError) {
+    throw error
+  }
+  
+  if (error instanceof DatabaseError) {
+    throw error
+  }
+  
+  // Sequelize错误处理
+  if (error instanceof Error && 'parent' in error) {
+    const sequelizeError = error as any
+    if (sequelizeError.parent?.code === '23505') {
+      throw new DatabaseError('数据已存在', 'DUPLICATE_ENTRY', error)
+    }
+    if (sequelizeError.parent?.code === '23503') {
+      throw new DatabaseError('外键约束错误', 'FOREIGN_KEY_CONSTRAINT', error)
+    }
+  }
+  
+  throw new DatabaseError('数据库操作失败', 'UNKNOWN_ERROR', error)
+}
+```
+
+### 3. 数据迁移规范
+
+#### 迁移文件结构
+```typescript
+// migrations/20241212000000-optimize-agent-config-indexes.js
+'use strict';
+
+module.exports = {
+  up: async (queryInterface, Sequelize) => {
+    // 添加索引
+    await queryInterface.addIndex('agent_config', ['type', 'is_published'], {
+      name: 'idx_agent_config_type_published'
+    })
+    
+    await queryInterface.addIndex('agent_config', ['order'], {
+      name: 'idx_agent_config_order'
+    })
+  },
+
+  down: async (queryInterface, Sequelize) => {
+    // 删除索引
+    await queryInterface.removeIndex('agent_config', 'idx_agent_config_type_published')
+    await queryInterface.removeIndex('agent_config', 'idx_agent_config_order')
+  }
+};
+```
+
+## 🛠️ 工具配置
+
+### 1. 数据库连接检查脚本
+```typescript
+// scripts/check-db.ts
+import DatabaseManager from '../lib/db/connection'
+
+async function checkDatabaseConnection() {
+  try {
+    await DatabaseManager.connect()
+    
+    // 测试查询
+    const result = await DatabaseManager.getInstance().$queryRaw`SELECT 1 as test`
+    console.log('✅ 数据库连接正常')
+    
+    // 检查表结构
+    const tables = await DatabaseManager.getInstance().$queryRaw`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `
+    console.log('📊 数据库表:', tables)
+    
+  } catch (error) {
+    console.error('❌ 数据库连接失败:', error)
+    process.exit(1)
+  } finally {
+    await DatabaseManager.disconnect()
+  }
+}
+
+checkDatabaseConnection()
+```
+
+### 2. 性能测试脚本
+```typescript
+// scripts/benchmark-db.ts
+import DatabaseManager from '../lib/db/connection'
+import { performance } from 'perf_hooks'
+
+async function benchmarkQueries() {
+  const iterations = 1000
+  const times: number[] = []
+  
+  for (let i = 0; i < iterations; i++) {
+    const start = performance.now()
+    
+    await DatabaseManager.getInstance().agentConfig.findMany({
+      where: { isPublished: true },
+      take: 10
+    })
+    
+    const end = performance.now()
+    times.push(end - start)
+  }
+  
+  const avgTime = times.reduce((a, b) => a + b, 0) / times.length
+  const maxTime = Math.max(...times)
+  const minTime = Math.min(...times)
+  
+  console.log(`📊 查询性能统计 (${iterations}次):`)
+  console.log(`平均时间: ${avgTime.toFixed(2)}ms`)
+  console.log(`最大时间: ${maxTime.toFixed(2)}ms`)
+  console.log(`最小时间: ${minTime.toFixed(2)}ms`)
+}
+
+benchmarkQueries()
+```
+
+## 📊 质量指标
+
+### 数据库性能指标
+- **查询响应时间**: 目标 < 50ms
+- **连接池使用率**: 目标 < 80%
+- **缓存命中率**: 目标 > 90%
+- **错误率**: 目标 < 0.1%
+
+### 监控命令
+```bash
+# 数据库连接检查
+npm run db:check
+
+# 性能测试
+npm run db:benchmark
+
+# 索引分析
+npm run db:analyze
+
+# 缓存状态检查
+npm run cache:status
+```
+
+## ⚠️ 重要提醒
+
+1. **严格遵循**: 所有数据库操作必须遵循本规范
+2. **性能优先**: 查询优化和索引设计是重点
+3. **监控告警**: 建立完善的数据库监控体系
+4. **备份恢复**: 定期备份，测试恢复流程
+5. **安全防护**: 防止SQL注入，保护敏感数据
+
+**记住: 数据库是系统的核心，必须确保高性能、高可用、高安全。**
