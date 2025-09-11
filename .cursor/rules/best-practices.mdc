@@ -1,0 +1,516 @@
+---
+description: 注意事项和最佳实践
+globs: ["**/*.{ts,tsx,js,jsx,json,md}"]
+alwaysApply: true
+---
+
+# 注意事项和最佳实践
+
+## 🚨 关键注意事项
+
+### 1. 代码质量禁止项
+- ❌ **禁止使用any类型** - 必须使用具体类型定义
+- ❌ **禁止未处理的Promise** - 所有异步操作必须有错误处理
+- ❌ **禁止硬编码配置** - 所有配置必须通过环境变量或配置文件管理
+- ❌ **禁止未注释的复杂逻辑** - 复杂业务逻辑必须有详细注释
+- ❌ **禁止重复代码** - 发现重复代码必须提取为公共函数或组件
+- ❌ **禁止功能重复** - 新增功能前必须检查是否已存在类似功能
+
+### 2. 安全禁止项
+- ❌ **禁止明文存储密码** - 密码必须加密存储
+- ❌ **禁止跳过输入验证** - 所有用户输入必须验证
+- ❌ **禁止暴露敏感信息** - 日志和错误信息不能包含敏感数据
+- ❌ **禁止使用不安全的依赖** - 定期更新依赖，扫描安全漏洞
+
+### 3. 性能禁止项
+- ❌ **禁止同步阻塞操作** - 长时间操作必须异步处理
+- ❌ **禁止内存泄漏** - 组件卸载时必须清理事件监听器和定时器
+- ❌ **禁止过大的bundle文件** - 使用代码分割和懒加载
+- ❌ **禁止未优化的图片** - 图片必须压缩和格式优化
+
+## 🎯 最佳实践
+
+### 1. 组件设计最佳实践
+
+#### 组件职责单一
+```typescript
+// ✅ 好的设计 - 单一职责
+interface UserProfileProps {
+  userId: string
+  onUpdate?: (user: User) => void
+}
+
+export function UserProfile({ userId, onUpdate }: UserProfileProps) {
+  // 只负责显示用户信息
+}
+
+// ❌ 不好的设计 - 职责过多
+export function UserProfileAndSettings({ userId }: { userId: string }) {
+  // 既显示用户信息，又处理设置，还管理状态
+}
+```
+
+#### 组件可复用性
+```typescript
+// ✅ 好的设计 - 高度可复用
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'danger'
+  size?: 'sm' | 'md' | 'lg'
+  disabled?: boolean
+  children: React.ReactNode
+  onClick?: () => void
+  className?: string
+}
+
+// ❌ 不好的设计 - 硬编码，不可复用
+export function LoginButton() {
+  return <button className="bg-blue-500 text-white px-4 py-2">Login</button>
+}
+```
+
+#### 组件可测试性
+```typescript
+// ✅ 好的设计 - 易于测试
+export function Counter({ initialValue = 0, onCountChange }: CounterProps) {
+  const [count, setCount] = useState(initialValue)
+  
+  const increment = () => {
+    const newCount = count + 1
+    setCount(newCount)
+    onCountChange?.(newCount)
+  }
+  
+  return (
+    <div>
+      <span data-testid="count">{count}</span>
+      <button data-testid="increment" onClick={increment}>+</button>
+    </div>
+  )
+}
+
+// ❌ 不好的设计 - 难以测试
+export function Counter() {
+  const [count, setCount] = useState(0)
+  
+  return (
+    <div>
+      <span>{count}</span>
+      <button onClick={() => setCount(count + 1)}>+</button>
+    </div>
+  )
+}
+```
+
+### 2. 状态管理最佳实践
+
+#### 状态提升
+```typescript
+// ✅ 好的设计 - 状态提升到合适的层级
+export function ChatContainer() {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [currentAgent, setCurrentAgent] = useState<Agent | null>(null)
+  
+  return (
+    <div>
+      <AgentSelector 
+        currentAgent={currentAgent}
+        onAgentChange={setCurrentAgent}
+      />
+      <MessageList messages={messages} />
+      <MessageInput 
+        onSendMessage={(message) => {
+          setMessages(prev => [...prev, message])
+        }}
+      />
+    </div>
+  )
+}
+
+// ❌ 不好的设计 - 状态分散
+export function MessageInput() {
+  const [messages, setMessages] = useState<Message[]>([]) // 状态应该在父组件
+  // ...
+}
+```
+
+#### 状态更新优化
+```typescript
+// ✅ 好的设计 - 使用函数式更新
+setMessages(prev => [...prev, newMessage])
+
+// ✅ 好的设计 - 使用useCallback优化
+const handleSendMessage = useCallback((message: string) => {
+  setMessages(prev => [...prev, { id: Date.now(), content: message }])
+}, [])
+
+// ❌ 不好的设计 - 直接依赖状态
+const handleSendMessage = (message: string) => {
+  setMessages([...messages, { id: Date.now(), content: message }])
+}
+```
+
+### 3. API设计最佳实践
+
+#### 统一错误处理
+```typescript
+// ✅ 好的设计 - 统一错误处理
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public statusCode: number = 500,
+    public details?: any
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+export async function apiRequest<T>(url: string, options?: RequestInit): Promise<T> {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+      }
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new ApiError(
+        errorData.error?.code || 'API_ERROR',
+        errorData.error?.message || 'Request failed',
+        response.status,
+        errorData.error?.details
+      )
+    }
+    
+    return await response.json()
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    throw new ApiError('NETWORK_ERROR', 'Network request failed', 0, error)
+  }
+}
+```
+
+#### 请求重试机制
+```typescript
+// ✅ 好的设计 - 请求重试机制
+export async function apiRequestWithRetry<T>(
+  url: string, 
+  options?: RequestInit,
+  maxRetries: number = 3
+): Promise<T> {
+  let lastError: Error
+  
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await apiRequest<T>(url, options)
+    } catch (error) {
+      lastError = error as Error
+      
+      // 如果是客户端错误，不重试
+      if (error instanceof ApiError && error.statusCode < 500) {
+        throw error
+      }
+      
+      // 等待后重试
+      if (i < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000))
+      }
+    }
+  }
+  
+  throw lastError!
+}
+```
+
+### 4. 性能优化最佳实践
+
+#### 代码分割
+```typescript
+// ✅ 好的设计 - 代码分割
+const CADAnalyzer = lazy(() => import('@/components/cad-analyzer/cad-analyzer-container'))
+const ImageEditor = lazy(() => import('@/components/image-editor/image-editor'))
+
+export function App() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        <Route path="/cad" element={<CADAnalyzer />} />
+        <Route path="/image" element={<ImageEditor />} />
+      </Routes>
+    </Suspense>
+  )
+}
+```
+
+#### 图片优化
+```typescript
+// ✅ 好的设计 - 图片优化
+export function OptimizedImage({ src, alt, ...props }: ImageProps) {
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [error, setError] = useState(false)
+  
+  return (
+    <div className="relative">
+      {!isLoaded && !error && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setError(true)}
+        className={`transition-opacity duration-300 ${
+          isLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        {...props}
+      />
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <span className="text-gray-500">图片加载失败</span>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+#### 内存泄漏防护
+```typescript
+// ✅ 好的设计 - 防止内存泄漏
+export function useWebSocket(url: string) {
+  const [socket, setSocket] = useState<WebSocket | null>(null)
+  const [isConnected, setIsConnected] = useState(false)
+  
+  useEffect(() => {
+    const ws = new WebSocket(url)
+    
+    ws.onopen = () => setIsConnected(true)
+    ws.onclose = () => setIsConnected(false)
+    ws.onerror = (error) => console.error('WebSocket error:', error)
+    
+    setSocket(ws)
+    
+    // 清理函数
+    return () => {
+      ws.close()
+      setSocket(null)
+    }
+  }, [url])
+  
+  return { socket, isConnected }
+}
+```
+
+### 5. 安全最佳实践
+
+#### 输入验证
+```typescript
+// ✅ 好的设计 - 严格的输入验证
+import { z } from 'zod'
+
+const UserInputSchema = z.object({
+  name: z.string()
+    .min(1, '姓名不能为空')
+    .max(100, '姓名不能超过100个字符')
+    .regex(/^[\u4e00-\u9fa5a-zA-Z\s]+$/, '姓名只能包含中文、英文和空格'),
+  email: z.string()
+    .email('邮箱格式不正确')
+    .max(255, '邮箱不能超过255个字符'),
+  age: z.number()
+    .int('年龄必须是整数')
+    .min(0, '年龄不能小于0')
+    .max(150, '年龄不能超过150')
+})
+
+export async function validateUserInput(input: unknown) {
+  try {
+    return UserInputSchema.parse(input)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ValidationError('输入数据验证失败', error.errors)
+    }
+    throw error
+  }
+}
+```
+
+#### XSS防护
+```typescript
+// ✅ 好的设计 - XSS防护
+import DOMPurify from 'dompurify'
+
+export function SafeHTML({ content }: { content: string }) {
+  const sanitizedContent = DOMPurify.sanitize(content, {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li'],
+    ALLOWED_ATTR: []
+  })
+  
+  return (
+    <div 
+      dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+      className="prose"
+    />
+  )
+}
+```
+
+### 6. 测试最佳实践
+
+#### 测试覆盖率
+```typescript
+// ✅ 好的设计 - 全面的测试覆盖
+describe('UserService', () => {
+  describe('createUser', () => {
+    it('should create user with valid data', async () => {
+      // 正常情况测试
+    })
+    
+    it('should throw error with invalid email', async () => {
+      // 边界条件测试
+    })
+    
+    it('should throw error with duplicate email', async () => {
+      // 异常情况测试
+    })
+    
+    it('should handle database connection error', async () => {
+      // 错误情况测试
+    })
+  })
+})
+```
+
+#### 测试数据管理
+```typescript
+// ✅ 好的设计 - 测试数据管理
+export const testData = {
+  validUser: {
+    name: 'Test User',
+    email: 'test@example.com',
+    password: 'password123'
+  },
+  invalidUser: {
+    name: '',
+    email: 'invalid-email',
+    password: '123'
+  }
+}
+
+export function createTestUser(overrides: Partial<User> = {}) {
+  return {
+    id: 'test-user-id',
+    name: 'Test User',
+    email: 'test@example.com',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides
+  }
+}
+```
+
+## 🔧 工具和配置
+
+### ESLint配置
+```json
+{
+  "extends": [
+    "next/core-web-vitals",
+    "@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": "error",
+    "prefer-const": "error",
+    "no-var": "error"
+  }
+}
+```
+
+### Prettier配置
+```json
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false
+}
+```
+
+### TypeScript配置
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}
+```
+
+## 📊 监控和调试
+
+### 错误监控
+```typescript
+// ✅ 好的设计 - 错误监控
+export function withErrorBoundary<T extends React.ComponentType<any>>(
+  Component: T
+) {
+  return function ErrorBoundaryComponent(props: React.ComponentProps<T>) {
+    return (
+      <ErrorBoundary
+        fallback={<ErrorFallback />}
+        onError={(error, errorInfo) => {
+          // 发送错误到监控服务
+          console.error('Component Error:', error, errorInfo)
+        }}
+      >
+        <Component {...props} />
+      </ErrorBoundary>
+    )
+  }
+}
+```
+
+### 性能监控
+```typescript
+// ✅ 好的设计 - 性能监控
+export function usePerformanceMonitor(componentName: string) {
+  useEffect(() => {
+    const startTime = performance.now()
+    
+    return () => {
+      const endTime = performance.now()
+      const duration = endTime - startTime
+      
+      if (duration > 100) {
+        console.warn(`${componentName} render took ${duration}ms`)
+      }
+    }
+  })
+}
+```
+
+---
+
+## ⚠️ 重要提醒
+
+1. **持续学习**: 技术栈不断更新，保持学习最新最佳实践
+2. **代码审查**: 每次代码变更都要经过同行审查
+3. **自动化测试**: 建立完善的自动化测试体系
+4. **性能监控**: 持续监控应用性能，及时优化
+5. **安全审计**: 定期进行安全审计，修复漏洞
+
+**记住: 好的代码是写出来的，不是改出来的。从设计阶段就要考虑质量、性能和安全。**

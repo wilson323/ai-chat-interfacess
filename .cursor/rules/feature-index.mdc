@@ -1,0 +1,415 @@
+---
+description: 功能索引和API文档
+globs: ["**/*.{ts,tsx,js,jsx}"]
+alwaysApply: false
+---
+
+# 功能索引和API文档
+
+## 🎯 核心功能模块
+
+### 1. 智能体管理系统
+
+#### 功能概述
+多智能体配置、路由、负载均衡和性能监控
+
+#### 核心组件
+- **AgentContext** - [context/agent-context.tsx](mdc:context/agent-context.tsx)
+- **AgentCard** - [components/agent-card.tsx](mdc:components/agent-card.tsx)
+- **AgentDialog** - [components/agent-dialog.tsx](mdc:components/agent-dialog.tsx)
+- **AgentSidebar** - [components/agent-sidebar.tsx](mdc:components/agent-sidebar.tsx)
+
+#### API接口
+```typescript
+// 获取智能体列表
+GET /api/agents
+Response: Agent[]
+
+// 获取智能体详情
+GET /api/agents/:id
+Response: Agent
+
+// 创建智能体
+POST /api/agents
+Body: CreateAgentRequest
+Response: Agent
+
+// 更新智能体
+PUT /api/agents/:id
+Body: UpdateAgentRequest
+Response: Agent
+
+// 删除智能体
+DELETE /api/agents/:id
+Response: { success: boolean }
+```
+
+#### 数据模型
+```typescript
+interface Agent {
+  id: string
+  name: string
+  description: string
+  apiEndpoint: string
+  apiKey: string
+  appId: string
+  type: 'chat' | 'image-editor' | 'cad-analyzer'
+  isPublished: boolean
+  systemPrompt: string
+  welcomeText: string
+  temperature: number
+  maxTokens: number
+  supportsFileUpload: boolean
+  supportsImageUpload: boolean
+  multimodalModel?: string
+}
+```
+
+### 2. 对话引擎
+
+#### 功能概述
+实时消息处理、上下文管理、流式响应
+
+#### 核心组件
+- **ChatContainer** - [components/chat-container.tsx](mdc:components/chat-container.tsx)
+- **ChatMessage** - [components/chat-message.tsx](mdc:components/chat-message.tsx)
+- **ChatInput** - [components/chat-input.tsx](mdc:components/chat-input.tsx)
+- **MessageList** - [components/message-list.tsx](mdc:components/message-list.tsx)
+
+#### API接口
+```typescript
+// 发送消息
+POST /api/chat/send
+Body: {
+  message: string
+  agentId: string
+  conversationId?: string
+  files?: File[]
+}
+Response: {
+  messageId: string
+  conversationId: string
+  response: string
+}
+
+// 获取对话历史
+GET /api/chat/history/:conversationId
+Response: Message[]
+
+// 流式响应
+GET /api/chat/stream/:messageId
+Response: Server-Sent Events
+
+// 中止对话
+POST /api/chat/abort/:messageId
+Response: { success: boolean }
+```
+
+#### 数据模型
+```typescript
+interface Message {
+  id: string
+  conversationId: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  timestamp: Date
+  agentId: string
+  files?: File[]
+  metadata?: Record<string, any>
+}
+```
+
+### 3. 文件处理系统
+
+#### 功能概述
+多模态文件上传、处理、存储和管理
+
+#### 核心组件
+- **FileUploader** - [components/file-uploader.tsx](mdc:components/file-uploader.tsx)
+- **LazyImage** - [components/lazy-image.tsx](mdc:components/lazy-image.tsx)
+- **CodeBlock** - [components/code-block.tsx](mdc:components/code-block.tsx)
+
+#### API接口
+```typescript
+// 上传文件
+POST /api/upload
+Body: FormData
+Response: {
+  fileId: string
+  fileName: string
+  fileSize: number
+  fileType: string
+  url: string
+}
+
+// 获取文件信息
+GET /api/upload/:fileId
+Response: FileInfo
+
+// 删除文件
+DELETE /api/upload/:fileId
+Response: { success: boolean }
+```
+
+#### 支持的文件类型
+- **图片**: jpg, jpeg, png, gif, webp
+- **文档**: pdf, doc, docx, txt, md
+- **CAD文件**: dwg, dxf, step, stp
+- **音频**: mp3, wav, m4a
+- **视频**: mp4, avi, mov
+
+### 4. 语音处理系统
+
+#### 功能概述
+语音输入、识别、合成和播放
+
+#### 核心组件
+- **VoiceRecorder** - [components/voice/voice-recorder.tsx](mdc:components/voice/voice-recorder.tsx)
+- **VoicePlayer** - [components/voice/voice-player.tsx](mdc:components/voice/voice-player.tsx)
+- **VoiceSettings** - [components/voice/voice-settings.tsx](mdc:components/voice/voice-settings.tsx)
+
+#### API接口
+```typescript
+// 语音识别
+POST /api/voice/transcribe
+Body: FormData (audio file)
+Response: {
+  text: string
+  confidence: number
+  language: string
+}
+
+// 语音合成
+POST /api/voice/synthesize
+Body: {
+  text: string
+  voice?: string
+  speed?: number
+}
+Response: {
+  audioUrl: string
+  duration: number
+}
+```
+
+### 5. CAD分析器
+
+#### 功能概述
+CAD图纸解析、安防设备识别、布局分析
+
+#### 核心组件
+- **CADAnalyzerContainer** - [components/cad-analyzer/cad-analyzer-container.tsx](mdc:components/cad-analyzer/cad-analyzer-container.tsx)
+
+#### API接口
+```typescript
+// 分析CAD文件
+POST /api/cad/analyze
+Body: {
+  fileId: string
+  analysisType: 'layout' | 'devices' | 'full'
+}
+Response: {
+  analysisId: string
+  status: 'processing' | 'completed' | 'failed'
+  result?: CADAnalysisResult
+}
+
+// 获取分析结果
+GET /api/cad/analysis/:analysisId
+Response: CADAnalysisResult
+```
+
+#### 数据模型
+```typescript
+interface CADAnalysisResult {
+  id: string
+  fileName: string
+  analysisType: string
+  devices: Device[]
+  layout: LayoutInfo
+  recommendations: string[]
+  confidence: number
+  timestamp: Date
+}
+```
+
+### 6. 图像编辑器
+
+#### 功能概述
+AI驱动的图像编辑、处理、优化
+
+#### 核心组件
+- **ImageEditor** - [components/image-editor/image-editor.tsx](mdc:components/image-editor/image-editor.tsx)
+- **ImageCanvas** - [components/image-editor/image-canvas.tsx](mdc:components/image-editor/image-canvas.tsx)
+
+#### API接口
+```typescript
+// 编辑图像
+POST /api/image/edit
+Body: {
+  imageId: string
+  operations: ImageOperation[]
+}
+Response: {
+  editedImageId: string
+  url: string
+}
+
+// 获取编辑历史
+GET /api/image/history/:imageId
+Response: ImageEditHistory[]
+```
+
+### 7. 用户管理系统
+
+#### 功能概述
+用户认证、授权、权限控制
+
+#### 核心组件
+- **UserContext** - [context/user-context.tsx](mdc:context/user-context.tsx)
+- **AuthGuard** - [components/auth-guard.tsx](mdc:components/auth-guard.tsx)
+
+#### API接口
+```typescript
+// 用户登录
+POST /api/auth/login
+Body: {
+  email: string
+  password: string
+}
+Response: {
+  token: string
+  user: User
+  expiresIn: number
+}
+
+// 用户注册
+POST /api/auth/register
+Body: {
+  email: string
+  password: string
+  name: string
+}
+Response: {
+  token: string
+  user: User
+}
+
+// 获取用户信息
+GET /api/auth/me
+Headers: { Authorization: 'Bearer <token>' }
+Response: User
+```
+
+### 8. 管理员系统
+
+#### 功能概述
+系统管理、监控、配置
+
+#### 核心组件
+- **AdminDashboard** - [app/admin/page.tsx](mdc:app/admin/page.tsx)
+- **AgentManagement** - [app/admin/agents/page.tsx](mdc:app/admin/agents/page.tsx)
+- **UserManagement** - [app/admin/users/page.tsx](mdc:app/admin/users/page.tsx)
+
+#### API接口
+```typescript
+// 获取系统统计
+GET /api/admin/stats
+Response: {
+  totalUsers: number
+  totalAgents: number
+  totalConversations: number
+  systemHealth: SystemHealth
+}
+
+// 获取系统日志
+GET /api/admin/logs
+Query: {
+  level?: 'info' | 'warn' | 'error'
+  startDate?: string
+  endDate?: string
+  limit?: number
+}
+Response: LogEntry[]
+```
+
+## 🔧 配置管理
+
+### 环境配置
+- **开发环境**: `.env.local`
+- **测试环境**: `.env.test`
+- **生产环境**: `.env.production`
+
+### 配置文件
+- **智能体配置**: [config/default-agents.ts](mdc:config/default-agents.ts)
+- **数据库配置**: [config/config.json](mdc:config/config.json)
+- **CAD分析器配置**: [config/cad-analyzer-config.json](mdc:config/cad-analyzer-config.json)
+
+## 📊 性能监控
+
+### 关键指标
+- **响应时间**: API响应时间 < 500ms
+- **并发数**: 支持1000+并发用户
+- **可用性**: 99.9%可用性
+- **错误率**: < 0.1%错误率
+
+### 监控端点
+```typescript
+// 健康检查
+GET /api/health
+Response: {
+  status: 'healthy' | 'unhealthy'
+  timestamp: string
+  services: ServiceStatus[]
+}
+
+// 性能指标
+GET /api/metrics
+Response: {
+  responseTime: number
+  memoryUsage: number
+  cpuUsage: number
+  activeConnections: number
+}
+```
+
+## 🛡️ 安全特性
+
+### 认证授权
+- **JWT令牌**: 基于JWT的用户认证
+- **角色权限**: 基于角色的访问控制
+- **API密钥**: 智能体API密钥管理
+
+### 数据保护
+- **输入验证**: 严格的输入验证和过滤
+- **输出编码**: 防止XSS攻击
+- **SQL注入防护**: 使用参数化查询
+
+## 📱 移动端支持
+
+### 响应式设计
+- **断点**: sm(640px), md(768px), lg(1024px), xl(1280px)
+- **移动优化**: 触摸友好的界面设计
+- **PWA支持**: 渐进式Web应用功能
+
+### 移动端组件
+- **MobileNav** - [components/mobile-nav.tsx](mdc:components/mobile-nav.tsx)
+- **ResponsiveContainer** - [components/responsive-container.tsx](mdc:components/responsive-container.tsx)
+
+---
+
+## 📞 技术支持
+
+### 常见问题
+1. **智能体无响应**: 检查API配置和网络连接
+2. **文件上传失败**: 检查文件大小和格式
+3. **语音识别不准确**: 检查麦克风权限和网络质量
+
+### 错误代码
+- **400**: 请求参数错误
+- **401**: 未授权访问
+- **403**: 权限不足
+- **404**: 资源不存在
+- **500**: 服务器内部错误
+
+**记住: 所有功能都必须经过充分测试才能上线！**
