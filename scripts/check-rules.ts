@@ -338,8 +338,4 @@ if (require.main === module) {
   checker.runAllChecks()
 }
 
-// 直接运行检查
-const checker = new RuleChecker()
-checker.runAllChecks()
-
 export { RuleChecker }

@@ -1,0 +1,417 @@
+---
+alwaysApply: true
+trigger: always_on
+---
+
+# 📦 组件库使用规范
+
+## 🎯 核心原则
+
+### 1. 成熟组件库优先
+- **自定义代码占比**: < 20%
+- **shadcn/ui优先**: 基于Radix UI的无障碍组件
+- **Ant Design补充**: 企业级复杂组件
+- **避免重复造轮子**: 优先使用现有解决方案
+
+## 📦 组件库优先级
+
+### 1. shadcn/ui (最高优先级)
+```typescript
+// ✅ 基础UI组件 - 必须使用shadcn/ui
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card } from '@/components/ui/card'
+import { Dialog } from '@/components/ui/dialog'
+import { AlertDialog } from '@/components/ui/alert-dialog'
+import { Select } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { RadioGroup } from '@/components/ui/radio-group'
+import { Switch } from '@/components/ui/switch'
+import { Slider } from '@/components/ui/slider'
+import { Progress } from '@/components/ui/progress'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
+import { Avatar } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
+import { Tabs } from '@/components/ui/tabs'
+import { Accordion } from '@/components/ui/accordion'
+import { Collapsible } from '@/components/ui/collapsible'
+import { Popover } from '@/components/ui/popover'
+import { Tooltip } from '@/components/ui/tooltip'
+import { DropdownMenu } from '@/components/ui/dropdown-menu'
+import { ContextMenu } from '@/components/ui/context-menu'
+import { HoverCard } from '@/components/ui/hover-card'
+import { Sheet } from '@/components/ui/sheet'
+import { Drawer } from '@/components/ui/drawer'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { Pagination } from '@/components/ui/pagination'
+import { Calendar } from '@/components/ui/calendar'
+import { Command } from '@/components/ui/command'
+import { Table } from '@/components/ui/table'
+import { Form } from '@/components/ui/form'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Toast } from '@/components/ui/toast'
+import { Sonner } from '@/components/ui/sonner'
+```
+
+### 2. Ant Design (复杂业务组件)
+```typescript
+// ✅ 复杂业务组件 - 使用Ant Design
+import { Table } from 'antd' // 复杂表格
+import { Form } from 'antd' // 复杂表单
+import { DatePicker } from 'antd' // 日期选择器
+import { TimePicker } from 'antd' // 时间选择器
+import { Upload } from 'antd' // 文件上传
+import { Tree } from 'antd' // 树形控件
+import { TreeSelect } from 'antd' // 树形选择器
+import { Cascader } from 'antd' // 级联选择器
+import { Transfer } from 'antd' // 穿梭框
+import { Steps } from 'antd' // 步骤条
+import { Timeline } from 'antd' // 时间轴
+import { Carousel } from 'antd' // 轮播图
+import { Statistic } from 'antd' // 统计数值
+import { Descriptions } from 'antd' // 描述列表
+import { List } from 'antd' // 列表
+import { Card } from 'antd' // 卡片
+import { Space } from 'antd' // 间距
+import { Divider } from 'antd' // 分割线
+import { Typography } from 'antd' // 排版
+import { Anchor } from 'antd' // 锚点
+import { BackTop } from 'antd' // 回到顶部
+import { Affix } from 'antd' // 固钉
+import { ConfigProvider } from 'antd' // 全局配置
+import { theme } from 'antd' // 主题配置
+```
+
+### 3. Radix UI (无障碍组件)
+```typescript
+// ✅ 无障碍组件 - 使用Radix UI
+import { AlertDialog } from '@radix-ui/react-alert-dialog'
+import { AspectRatio } from '@radix-ui/react-aspect-ratio'
+import { Avatar } from '@radix-ui/react-avatar'
+import { Checkbox } from '@radix-ui/react-checkbox'
+import { Collapsible } from '@radix-ui/react-collapsible'
+import { ContextMenu } from '@radix-ui/react-context-menu'
+import { Dialog } from '@radix-ui/react-dialog'
+import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
+import { HoverCard } from '@radix-ui/react-hover-card'
+import { Label } from '@radix-ui/react-label'
+import { Menubar } from '@radix-ui/react-menubar'
+import { NavigationMenu } from '@radix-ui/react-navigation-menu'
+import { Popover } from '@radix-ui/react-popover'
+import { Progress } from '@radix-ui/react-progress'
+import { RadioGroup } from '@radix-ui/react-radio-group'
+import { ScrollArea } from '@radix-ui/react-scroll-area'
+import { Select } from '@radix-ui/react-select'
+import { Separator } from '@radix-ui/react-separator'
+import { Sheet } from '@radix-ui/react-sheet'
+import { Slider } from '@radix-ui/react-slider'
+import { Switch } from '@radix-ui/react-switch'
+import { Tabs } from '@radix-ui/react-tabs'
+import { Toggle } from '@radix-ui/react-toggle'
+import { ToggleGroup } from '@radix-ui/react-toggle-group'
+import { Tooltip } from '@radix-ui/react-tooltip'
+```
+
+### 4. 其他成熟库
+```typescript
+// ✅ 图标库 - 使用Lucide React
+import { Search, User, Settings, Home, Menu } from 'lucide-react'
+
+// ✅ 动画库 - 使用Framer Motion
+import { motion, AnimatePresence } from 'framer-motion'
+
+// ✅ 表单处理 - 使用React Hook Form
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+// ✅ 数据验证 - 使用Zod
+import { z } from 'zod'
+
+// ✅ 状态管理 - 使用Zustand
+import { create } from 'zustand'
+
+// ✅ 数据获取 - 使用TanStack Query
+import { useQuery, useMutation } from '@tanstack/react-query'
+
+// ✅ 日期处理 - 使用date-fns
+import { format, parseISO, addDays } from 'date-fns'
+
+// ✅ 工具函数 - 使用clsx和tailwind-merge
+import { cn } from '@/lib/utils'
+```
+
+## 🚫 禁止自定义的组件类型
+
+### 1. 基础UI组件
+```typescript
+// ❌ 禁止自定义 - 使用shadcn/ui
+// 按钮、输入框、选择器、对话框、提示框、加载状态、空状态
+// 卡片、标签、头像、分割线、进度条、骨架屏
+// 弹出框、工具提示、下拉菜单、上下文菜单
+// 标签页、手风琴、折叠面板、轮播图
+// 面包屑、分页器、日历、命令面板
+```
+
+### 2. 复杂业务组件
+```typescript
+// ❌ 禁止自定义 - 使用Ant Design
+// 表格、表单、日期选择器、时间选择器、文件上传
+// 树形控件、级联选择器、穿梭框、步骤条、时间轴
+// 统计数值、描述列表、列表、间距、分割线
+// 排版、锚点、回到顶部、固钉
+```
+
+### 3. 无障碍组件
+```typescript
+// ❌ 禁止自定义 - 使用Radix UI
+// 所有需要无障碍支持的交互组件
+// 模态框、弹出框、下拉菜单、工具提示
+// 选择器、开关、滑块、进度条
+// 标签页、手风琴、折叠面板
+```
+
+## ✅ 允许自定义的组件类型
+
+### 1. 业务特定组件
+```typescript
+// ✅ 允许自定义 - 业务特定组件
+// 聊天消息组件
+export function ChatMessage({ message }: ChatMessageProps) {
+  // 业务特定逻辑
+}
+
+// 智能体卡片组件
+export function AgentCard({ agent }: AgentCardProps) {
+  // 业务特定逻辑
+}
+
+// CAD分析器组件
+export function CADAnalyzer({ file }: CADAnalyzerProps) {
+  // 业务特定逻辑
+}
+
+// 图像编辑器组件
+export function ImageEditor({ image }: ImageEditorProps) {
+  // 业务特定逻辑
+}
+```
+
+### 2. 复合组件
+```typescript
+// ✅ 允许自定义 - 复合组件
+// 页面布局组件
+export function PageLayout({ children }: PageLayoutProps) {
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+// 数据展示组件
+export function DataDisplay({ data }: DataDisplayProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>数据展示</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* 使用shadcn/ui组件组合 */}
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+### 3. 包装组件
+```typescript
+// ✅ 允许自定义 - 包装组件
+// 基于成熟库的包装组件
+export function ConfirmDialog(props: ConfirmDialogProps) {
+  return (
+    <AlertDialog {...props}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{props.title}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {props.description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction>确认</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+```
+
+## 📊 自定义代码占比控制
+
+### 1. 占比计算
+```typescript
+// 自定义代码占比 = 自定义组件代码行数 / 总代码行数
+// 目标: < 20%
+
+// 计算方式:
+// 1. 统计所有自定义组件代码行数
+// 2. 统计项目总代码行数
+// 3. 计算占比
+const customCodeRatio = customComponentLines / totalLines
+```
+
+### 2. 占比监控
+```bash
+# 检查自定义代码占比
+npm run check:custom-ratio
+
+# 生成代码分析报告
+npm run analyze:code-structure
+```
+
+### 3. 占比优化
+```typescript
+// 优化策略:
+// 1. 优先使用成熟组件库
+// 2. 将自定义组件重构为包装组件
+// 3. 提取可复用的业务逻辑
+// 4. 使用组合模式而非继承
+```
+
+## 🔧 组件使用最佳实践
+
+### 1. 组件选择流程
+```typescript
+// 1. 检查shadcn/ui是否有对应组件
+if (shadcnUI.hasComponent(componentName)) {
+  return useShadcnUI(componentName)
+}
+
+// 2. 检查Ant Design是否有对应组件
+if (antd.hasComponent(componentName)) {
+  return useAntd(componentName)
+}
+
+// 3. 检查Radix UI是否有对应组件
+if (radixUI.hasComponent(componentName)) {
+  return useRadixUI(componentName)
+}
+
+// 4. 最后才考虑自定义组件
+return createCustomComponent(componentName)
+```
+
+### 2. 组件组合模式
+```typescript
+// ✅ 好的组合 - 基于成熟库
+export function UserProfile({ user }: UserProfileProps) {
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <div className="flex items-center space-x-4">
+          <Avatar>
+            <AvatarImage src={user.avatar} />
+            <AvatarFallback>{user.name[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <CardTitle>{user.name}</CardTitle>
+            <CardDescription>{user.email}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">角色</span>
+            <Badge variant="secondary">{user.role}</Badge>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">状态</span>
+            <Badge variant={user.active ? 'default' : 'secondary'}>
+              {user.active ? '活跃' : '非活跃'}
+            </Badge>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button variant="outline" className="w-full">
+          编辑资料
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
+```
+
+### 3. 主题一致性
+```typescript
+// 使用统一的设计系统
+import { cn } from '@/lib/utils'
+
+// 确保所有组件使用相同的设计令牌
+const buttonVariants = cva(
+  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+```
+
+## 📋 组件使用检查清单
+
+### 组件选择检查
+- [ ] 优先使用shadcn/ui组件
+- [ ] 复杂组件使用Ant Design
+- [ ] 无障碍组件使用Radix UI
+- [ ] 避免重复造轮子
+- [ ] 自定义代码占比 < 20%
+
+### 组件实现检查
+- [ ] 使用成熟库的API
+- [ ] 保持主题一致性
+- [ ] 确保无障碍支持
+- [ ] 遵循设计系统
+- [ ] 性能优化合理
+
+### 组件测试检查
+- [ ] 单元测试覆盖
+- [ ] 集成测试覆盖
+- [ ] 无障碍测试通过
+- [ ] 性能测试通过
+- [ ] 视觉回归测试通过
+
+## ⚠️ 重要提醒
+
+1. **成熟库优先**: 优先使用成熟组件库，避免重复造轮子
+2. **自定义控制**: 自定义代码占比必须 < 20%
+3. **主题一致**: 确保所有组件使用统一的设计系统
+4. **无障碍支持**: 优先选择支持无障碍的组件库
+5. **性能优化**: 使用成熟的优化方案，避免自定义优化
+
+**记住: 好的组件是组合出来的，不是从头造出来的。优先使用成熟解决方案，确保项目高质量交付。**

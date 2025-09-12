@@ -1,641 +1,451 @@
 ---
 alwaysApply: true
+trigger: always_on
 ---
 
-# 代码质量标准规范
+# 📊 代码质量规范
 
 ## 🎯 核心原则
 
 ### 1. 代码质量至上
-- **零容忍错误**: 所有代码必须通过ESLint、Prettier、TypeScript检查
-- **严格类型安全**: 禁止使用any类型，确保100%类型安全
-- **DRY原则**: 严格禁止代码重复，优先复用现有组件
+- **TypeScript严格模式**: 禁止使用any类型
+- **零容忍错误**: 所有代码必须通过检查
+- **DRY原则**: 严格禁止代码重复
 - **单一职责**: 每个函数/组件只负责一个功能
-- **错误处理**: 所有函数必须有完整的错误处理机制
+
+## 📊 质量指标要求
+
+### 1. 代码质量指标
+- **自定义代码占比**: < 20%
+- **单元测试覆盖率**: ≥ 80%
+- **集成测试覆盖率**: ≥ 60%
+- **关键业务逻辑覆盖率**: ≥ 90%
+- **代码重复率**: < 3%
+- **圈复杂度**: < 10
+
+### 2. 性能指标
+- **首屏加载时间**: < 3秒
+- **API响应时间**: < 500ms
+- **内存使用率**: < 80%
+- **包体积增长**: < 10%
+
+## 🔧 代码规范要求
+
+### 1. TypeScript规范
+```typescript
+// ✅ 正确的类型定义
+export interface UserProps {
+  id: string
+  name: string
+  email: string
+  age?: number
+  isActive: boolean
+}
+
+// ✅ 函数类型定义
+export function createUser(userData: UserProps): Promise<User> {
+  // 实现逻辑
+}
+
+// ❌ 禁止使用any类型
+export function badFunction(data: any): any {
+  // 禁止使用any
+}
+
+// ✅ 使用泛型
+export function processData<T>(data: T[]): T[] {
+  return data.filter(item => item !== null)
+}
+```
 
 ### 2. 命名规范
-- **方法命名**: 使用camelCase，具有描述性
-- **变量命名**: 使用camelCase，避免缩写和单字母
-- **常量命名**: 使用UPPER_CASE
-- **类型命名**: 使用PascalCase
-- **文件命名**: 使用kebab-case
-
-### 3. 注释规范
-- **JSDoc注释**: 所有公共方法必须有JSDoc注释
-- **行内注释**: 复杂业务逻辑必须有行内注释
-- **类型注释**: 所有类型定义必须有详细说明
-- **示例代码**: 复杂方法必须提供使用示例
-
-## 📋 具体规范
-
-### 方法命名规范
-
-#### ✅ 好的命名示例
 ```typescript
-// 描述性命名
+// ✅ 好的命名 - 清晰表达意图
 function createNewConversation(): void
 function handleUserInput(input: string): void
 function validateMessageContent(content: string): boolean
-function processFileUpload(file: File): Promise<UploadResult>
-function initializeDatabaseConnection(): Promise<void>
+function calculateTotalPrice(items: CartItem[]): number
 
-// 业务逻辑命名
-function sendChatMessage(message: string): Promise<void>
-function loadChatHistory(chatId: string): Promise<Message[]>
-function updateAgentConfiguration(agentId: string, config: AgentConfig): Promise<void>
-```
-
-#### ❌ 不好的命名示例
-```typescript
-// 非描述性命名
+// ❌ 不好的命名 - 模糊不清
 function fn(): void
 function handle(e: Event): void
 function process(data: any): any
-function do(): void
-function run(): void
-
-// 缩写命名
-function init(): void
-function calc(): number
-function val(): boolean
-function proc(): void
+function calc(items: any[]): number
 ```
 
-### 注释规范
-
-#### JSDoc注释标准
+### 3. 函数设计规范
 ```typescript
-/**
- * 创建新的对话会话
- * @description 初始化新的聊天会话，重置相关状态，触发新对话事件
- * @returns {void}
- * @example
- * ```typescript
- * createNewConversation()
- * ```
- * @since 1.0.0
- * @author 开发团队
- */
-function createNewConversation(): void {
-  // 实现逻辑
+// ✅ 单一职责 - 每个函数只做一件事
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
 }
 
-/**
- * 验证消息内容
- * @param content - 要验证的消息内容
- * @param maxLength - 最大长度限制，默认为1000
- * @returns 验证结果，包含是否有效和错误信息
- * @throws {ValidationError} 当内容格式不正确时抛出
- * @example
- * ```typescript
- * const result = validateMessageContent("Hello world", 500)
- * if (result.isValid) {
- *   console.log("消息有效")
- * }
- * ```
- */
-function validateMessageContent(content: string, maxLength: number = 1000): ValidationResult {
-  // 实现逻辑
+export function formatUserName(firstName: string, lastName: string): string {
+  return `${firstName} ${lastName}`.trim()
+}
+
+// ❌ 多职责 - 违反单一职责原则
+export function processUserData(userData: any): any {
+  // 验证数据
+  // 格式化数据
+  // 保存数据
+  // 发送通知
+  // 太多职责！
 }
 ```
 
-#### 行内注释标准
+### 4. 组件设计规范
 ```typescript
-function processUserInput(input: string): void {
-  // 输入验证：检查是否为空或只包含空白字符
-  if (!input || input.trim().length === 0) {
-    throw new Error("输入不能为空")
+// ✅ 好的组件设计
+interface ButtonProps {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  className?: string
+}
+
+export function Button({ 
+  variant = 'default', 
+  size = 'default', 
+  children, 
+  onClick, 
+  disabled = false,
+  className 
+}: ButtonProps) {
+  return (
+    <button
+      className={cn(buttonVariants({ variant, size }), className)}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  )
+}
+
+// ❌ 不好的组件设计
+export function BadButton(props: any) {
+  // 使用any类型
+  // 没有明确的接口定义
+  // 职责不清晰
+}
+```
+
+## 🛡️ 错误处理规范
+
+### 1. 统一错误处理
+```typescript
+// ✅ 自定义错误类
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public statusCode: number = 500,
+    public details?: unknown
+  ) {
+    super(message)
+    this.name = 'ApiError'
   }
-
-  // 安全处理：清理潜在的恶意内容
-  const sanitizedInput = sanitizeInput(input)
-  
-  // 业务逻辑：处理不同类型的输入
-  if (isFileInput(sanitizedInput)) {
-    // 文件输入处理逻辑
-    handleFileInput(sanitizedInput)
-  } else if (isTextInput(sanitizedInput)) {
-    // 文本输入处理逻辑
-    handleTextInput(sanitizedInput)
-  }
 }
-```
 
-### 类型定义规范
-
-#### 接口定义标准
-```typescript
-/**
- * 智能体配置接口
- * @description 定义智能体的基本配置信息
- * @interface AgentConfig
- */
-export interface AgentConfig {
-  /** 智能体唯一标识符 */
-  id: string
-  /** 智能体显示名称 */
-  name: string
-  /** 智能体类型：fastgpt | cad-analyzer | image-editor */
-  type: AgentType
-  /** API密钥，用于身份验证 */
-  apiKey: string
-  /** 应用ID，用于API调用 */
-  appId: string
-  /** API端点URL，默认为FastGPT API */
-  apiUrl?: string
-  /** 系统提示词，定义智能体行为 */
-  systemPrompt: string
-  /** 温度参数，控制回复的随机性 (0-1) */
-  temperature: number
-  /** 最大令牌数，限制回复长度 */
-  maxTokens: number
-  /** 多模态模型名称，用于图像处理 */
-  multimodalModel?: string
-  /** 是否已发布，控制智能体可见性 */
-  isPublished: boolean
-  /** 智能体描述信息 */
-  description?: string
-  /** 显示顺序，用于排序 */
-  order: number
-  /** 是否支持流式响应 */
-  supportsStream: boolean
-  /** 是否支持详细模式 */
-  supportsDetail: boolean
-  /** 全局变量配置，JSON字符串格式 */
-  globalVariables?: string
-  /** 欢迎语，用户首次使用时的提示 */
-  welcomeText?: string
-  /** 最后更新时间 */
-  updatedAt?: Date
-}
-```
-
-### 错误处理规范
-
-#### 统一错误处理
-```typescript
-/**
- * 统一错误处理函数
- * @param error - 原始错误对象
- * @param context - 错误上下文信息
- * @returns 标准化的错误信息
- */
-function handleError(error: unknown, context: string): StandardError {
-  // 记录错误日志
-  console.error(`[${context}] 错误发生:`, error)
-  
-  // 标准化错误信息
-  if (error instanceof Error) {
+// ✅ 错误处理中间件
+export function errorHandler(error: Error) {
+  if (error instanceof ApiError) {
     return {
-      code: 'UNKNOWN_ERROR',
+      code: error.code,
       message: error.message,
-      context,
-      timestamp: new Date().toISOString()
+      statusCode: error.statusCode,
+      details: error.details
     }
   }
   
   return {
     code: 'UNKNOWN_ERROR',
     message: '未知错误',
-    context,
-    timestamp: new Date().toISOString()
+    statusCode: 500
+  }
+}
+
+// ✅ 异步函数错误处理
+export async function fetchUserData(userId: string): Promise<User> {
+  try {
+    const response = await fetch(`/api/users/${userId}`)
+    
+    if (!response.ok) {
+      throw new ApiError(
+        'USER_NOT_FOUND',
+        '用户不存在',
+        response.status
+      )
+    }
+    
+    return await response.json()
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    
+    throw new ApiError(
+      'FETCH_ERROR',
+      '获取用户数据失败',
+      500,
+      error
+    )
   }
 }
 ```
 
-### 依赖管理规范
-
-#### 导入顺序标准
+### 2. 输入验证
 ```typescript
-// 1. React相关
-import React, { useState, useEffect, useCallback } from 'react'
+// ✅ 使用Zod进行严格验证
+import { z } from 'zod'
 
-// 2. Next.js相关
-import { NextPage, GetServerSideProps } from 'next'
-import { useRouter } from 'next/router'
+const UserSchema = z.object({
+  name: z.string().min(1, '姓名不能为空').max(100, '姓名不能超过100个字符'),
+  email: z.string().email('邮箱格式不正确'),
+  age: z.number().min(0, '年龄不能小于0').max(150, '年龄不能超过150'),
+  isActive: z.boolean().default(true)
+})
 
-// 3. 第三方库 (按字母顺序)
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { toast } from 'react-hot-toast'
-
-// 4. 内部模块 (按路径深度)
-import { useAuth } from '@/hooks/useAuth'
-import { UserService } from '@/lib/services/user-service'
-import { formatDate } from '@/lib/utils/date-utils'
-
-// 5. 类型导入
-import type { User, UserProps } from '@/types/user'
-```
-
-#### 依赖清理标准
-```typescript
-// ❌ 不好的导入
-import React, { useState, useEffect, useState } from 'react' // 重复导入
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button' // 重复导入
-
-// ✅ 好的导入
-import React, { useState, useEffect } from 'react'
-import { Button, Card } from '@/components/ui'
-```
-
-## 🛠️ 工具配置
-
-### ESLint配置
-```json
-{
-  "extends": [
-    "next/core-web-vitals",
-    "@typescript-eslint/recommended",
-    "prettier"
-  ],
-  "rules": {
-    "@typescript-eslint/no-explicit-any": "error",
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/naming-convention": [
-      "error",
-      {
-        "selector": "function",
-        "format": ["camelCase"]
-      },
-      {
-        "selector": "variable",
-        "format": ["camelCase", "UPPER_CASE"]
-      },
-      {
-        "selector": "typeLike",
-        "format": ["PascalCase"]
-      }
-    ],
-    "prefer-const": "error",
-    "no-var": "error",
-    "no-unused-vars": "error"
+export function validateUser(input: unknown) {
+  try {
+    return UserSchema.parse(input)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ApiError(
+        'VALIDATION_ERROR',
+        '数据验证失败',
+        400,
+        error.errors
+      )
+    }
+    throw error
   }
 }
 ```
 
-### Prettier配置
-```json
-{
-  "semi": true,
-  "trailingComma": "es5",
-  "singleQuote": true,
-  "printWidth": 80,
-  "tabWidth": 2,
-  "useTabs": false
-}
-```
+## 📝 注释规范
 
-## 📊 质量检查
-
-### 代码质量指标
-- **方法命名规范率**: 目标 100%
-- **注释覆盖率**: 目标 90%
-- **类型安全率**: 目标 100%
-- **重复代码率**: 目标 < 2%
-- **未使用依赖率**: 目标 0%
-
-### 检查命令
-```bash
-# 代码规范检查
-npm run lint
-
-# 类型检查
-npm run type-check
-
-# 依赖清理检查
-npm run clean
-
-# 全面质量检查
-npm run analyze
-```
-
-## ⚠️ 重要提醒
-
-1. **严格遵循**: 所有代码必须遵循本规范
-2. **零容忍**: 对违反规范的行为零容忍
-3. **持续检查**: 通过自动化工具持续检查代码质量
-4. **及时修复**: 发现问题必须立即修复
-5. **文档同步**: 代码变更必须同步更新文档
-
-**记住: 好的代码是设计出来的，不是改出来的。从编码阶段就要考虑质量、性能和可维护性。**# 代码质量标准规范
-
-## 🎯 核心原则
-
-### 1. 代码质量至上
-- **零容忍错误**: 所有代码必须通过ESLint、Prettier、TypeScript检查
-- **严格类型安全**: 禁止使用any类型，确保100%类型安全
-- **DRY原则**: 严格禁止代码重复，优先复用现有组件
-- **单一职责**: 每个函数/组件只负责一个功能
-- **错误处理**: 所有函数必须有完整的错误处理机制
-
-### 2. 命名规范
-- **方法命名**: 使用camelCase，具有描述性
-- **变量命名**: 使用camelCase，避免缩写和单字母
-- **常量命名**: 使用UPPER_CASE
-- **类型命名**: 使用PascalCase
-- **文件命名**: 使用kebab-case
-
-### 3. 注释规范
-- **JSDoc注释**: 所有公共方法必须有JSDoc注释
-- **行内注释**: 复杂业务逻辑必须有行内注释
-- **类型注释**: 所有类型定义必须有详细说明
-- **示例代码**: 复杂方法必须提供使用示例
-
-## 📋 具体规范
-
-### 方法命名规范
-
-#### ✅ 好的命名示例
-```typescript
-// 描述性命名
-function createNewConversation(): void
-function handleUserInput(input: string): void
-function validateMessageContent(content: string): boolean
-function processFileUpload(file: File): Promise<UploadResult>
-function initializeDatabaseConnection(): Promise<void>
-
-// 业务逻辑命名
-function sendChatMessage(message: string): Promise<void>
-function loadChatHistory(chatId: string): Promise<Message[]>
-function updateAgentConfiguration(agentId: string, config: AgentConfig): Promise<void>
-```
-
-#### ❌ 不好的命名示例
-```typescript
-// 非描述性命名
-function fn(): void
-function handle(e: Event): void
-function process(data: any): any
-function do(): void
-function run(): void
-
-// 缩写命名
-function init(): void
-function calc(): number
-function val(): boolean
-function proc(): void
-```
-
-### 注释规范
-
-#### JSDoc注释标准
+### 1. JSDoc注释
 ```typescript
 /**
  * 创建新的对话会话
- * @description 初始化新的聊天会话，重置相关状态，触发新对话事件
- * @returns {void}
+ * @description 初始化新的聊天会话，重置相关状态，并返回会话ID
+ * @param {string} agentId - 智能体ID
+ * @param {string} userId - 用户ID
+ * @param {ConversationOptions} options - 会话选项
+ * @returns {Promise<Conversation>} 返回新创建的会话对象
+ * @throws {ApiError} 当智能体不存在或用户无权限时抛出
  * @example
  * ```typescript
- * createNewConversation()
- * ```
- * @since 1.0.0
- * @author 开发团队
- */
-function createNewConversation(): void {
-  // 实现逻辑
-}
-
-/**
- * 验证消息内容
- * @param content - 要验证的消息内容
- * @param maxLength - 最大长度限制，默认为1000
- * @returns 验证结果，包含是否有效和错误信息
- * @throws {ValidationError} 当内容格式不正确时抛出
- * @example
- * ```typescript
- * const result = validateMessageContent("Hello world", 500)
- * if (result.isValid) {
- *   console.log("消息有效")
- * }
+ * const conversation = await createNewConversation(
+ *   'agent-123',
+ *   'user-456',
+ *   { maxMessages: 100 }
+ * )
  * ```
  */
-function validateMessageContent(content: string, maxLength: number = 1000): ValidationResult {
+export async function createNewConversation(
+  agentId: string,
+  userId: string,
+  options: ConversationOptions = {}
+): Promise<Conversation> {
   // 实现逻辑
 }
 ```
 
-#### 行内注释标准
+### 2. 复杂逻辑注释
 ```typescript
-function processUserInput(input: string): void {
-  // 输入验证：检查是否为空或只包含空白字符
-  if (!input || input.trim().length === 0) {
-    throw new Error("输入不能为空")
-  }
-
-  // 安全处理：清理潜在的恶意内容
-  const sanitizedInput = sanitizeInput(input)
+export function calculateComplexScore(data: UserData[]): number {
+  // 1. 过滤有效用户数据
+  const validUsers = data.filter(user => 
+    user.isActive && user.score !== null
+  )
   
-  // 业务逻辑：处理不同类型的输入
-  if (isFileInput(sanitizedInput)) {
-    // 文件输入处理逻辑
-    handleFileInput(sanitizedInput)
-  } else if (isTextInput(sanitizedInput)) {
-    // 文本输入处理逻辑
-    handleTextInput(sanitizedInput)
-  }
-}
-```
-
-### 类型定义规范
-
-#### 接口定义标准
-```typescript
-/**
- * 智能体配置接口
- * @description 定义智能体的基本配置信息
- * @interface AgentConfig
- */
-export interface AgentConfig {
-  /** 智能体唯一标识符 */
-  id: string
-  /** 智能体显示名称 */
-  name: string
-  /** 智能体类型：fastgpt | cad-analyzer | image-editor */
-  type: AgentType
-  /** API密钥，用于身份验证 */
-  apiKey: string
-  /** 应用ID，用于API调用 */
-  appId: string
-  /** API端点URL，默认为FastGPT API */
-  apiUrl?: string
-  /** 系统提示词，定义智能体行为 */
-  systemPrompt: string
-  /** 温度参数，控制回复的随机性 (0-1) */
-  temperature: number
-  /** 最大令牌数，限制回复长度 */
-  maxTokens: number
-  /** 多模态模型名称，用于图像处理 */
-  multimodalModel?: string
-  /** 是否已发布，控制智能体可见性 */
-  isPublished: boolean
-  /** 智能体描述信息 */
-  description?: string
-  /** 显示顺序，用于排序 */
-  order: number
-  /** 是否支持流式响应 */
-  supportsStream: boolean
-  /** 是否支持详细模式 */
-  supportsDetail: boolean
-  /** 全局变量配置，JSON字符串格式 */
-  globalVariables?: string
-  /** 欢迎语，用户首次使用时的提示 */
-  welcomeText?: string
-  /** 最后更新时间 */
-  updatedAt?: Date
-}
-```
-
-### 错误处理规范
-
-#### 统一错误处理
-```typescript
-/**
- * 统一错误处理函数
- * @param error - 原始错误对象
- * @param context - 错误上下文信息
- * @returns 标准化的错误信息
- */
-function handleError(error: unknown, context: string): StandardError {
-  // 记录错误日志
-  console.error(`[${context}] 错误发生:`, error)
+  // 2. 计算加权平均分
+  // 权重：活跃度(0.3) + 评分(0.7)
+  const weightedSum = validUsers.reduce((sum, user) => {
+    const weight = user.isActive ? 0.3 : 0.1
+    return sum + (user.score * weight)
+  }, 0)
   
-  // 标准化错误信息
-  if (error instanceof Error) {
-    return {
-      code: 'UNKNOWN_ERROR',
-      message: error.message,
-      context,
-      timestamp: new Date().toISOString()
-    }
-  }
-  
-  return {
-    code: 'UNKNOWN_ERROR',
-    message: '未知错误',
-    context,
-    timestamp: new Date().toISOString()
-  }
+  // 3. 返回标准化分数 (0-100)
+  return Math.min(100, Math.max(0, weightedSum))
 }
 ```
 
-### 依赖管理规范
+## 🧪 测试规范
 
-#### 导入顺序标准
-```typescript
-// 1. React相关
-import React, { useState, useEffect, useCallback } from 'react'
+### 1. 测试覆盖率要求
+- **单元测试覆盖率**: ≥ 80%
+- **集成测试覆盖率**: ≥ 60%
+- **关键业务逻辑覆盖率**: ≥ 90%
 
-// 2. Next.js相关
-import { NextPage, GetServerSideProps } from 'next'
-import { useRouter } from 'next/router'
-
-// 3. 第三方库 (按字母顺序)
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { toast } from 'react-hot-toast'
-
-// 4. 内部模块 (按路径深度)
-import { useAuth } from '@/hooks/useAuth'
-import { UserService } from '@/lib/services/user-service'
-import { formatDate } from '@/lib/utils/date-utils'
-
-// 5. 类型导入
-import type { User, UserProps } from '@/types/user'
-```
-
-#### 依赖清理标准
-```typescript
-// ❌ 不好的导入
-import React, { useState, useEffect, useState } from 'react' // 重复导入
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button' // 重复导入
-
-// ✅ 好的导入
-import React, { useState, useEffect } from 'react'
-import { Button, Card } from '@/components/ui'
-```
-
-## 🛠️ 工具配置
-
-### ESLint配置
-```json
-{
-  "extends": [
-    "next/core-web-vitals",
-    "@typescript-eslint/recommended",
-    "prettier"
-  ],
-  "rules": {
-    "@typescript-eslint/no-explicit-any": "error",
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/naming-convention": [
-      "error",
-      {
-        "selector": "function",
-        "format": ["camelCase"]
-      },
-      {
-        "selector": "variable",
-        "format": ["camelCase", "UPPER_CASE"]
-      },
-      {
-        "selector": "typeLike",
-        "format": ["PascalCase"]
-      }
-    ],
-    "prefer-const": "error",
-    "no-var": "error",
-    "no-unused-vars": "error"
-  }
-}
-```
-
-### Prettier配置
-```json
-{
-  "semi": true,
-  "trailingComma": "es5",
-  "singleQuote": true,
-  "printWidth": 80,
-  "tabWidth": 2,
-  "useTabs": false
-}
-```
-
-## 📊 质量检查
-
-### 代码质量指标
-- **方法命名规范率**: 目标 100%
-- **注释覆盖率**: 目标 90%
-- **类型安全率**: 目标 100%
-- **重复代码率**: 目标 < 2%
-- **未使用依赖率**: 目标 0%
-
-### 检查命令
+### 2. 测试命令
 ```bash
-# 代码规范检查
-npm run lint
+# 运行所有测试
+npm test
 
-# 类型检查
-npm run type-check
+# 运行单元测试
+npm run test:unit
 
-# 依赖清理检查
-npm run clean
+# 运行集成测试
+npm run test:integration
 
-# 全面质量检查
-npm run analyze
+# 生成覆盖率报告
+npm run test:coverage
 ```
+
+### 3. 测试示例
+```typescript
+// ✅ 组件测试示例
+import { render, screen, fireEvent } from '@testing-library/react'
+import { Button } from '@/components/ui/button'
+
+describe('Button', () => {
+  it('should render button with correct text', () => {
+    render(<Button>Click me</Button>)
+    expect(screen.getByText('Click me')).toBeInTheDocument()
+  })
+
+  it('should call onClick when clicked', () => {
+    const handleClick = jest.fn()
+    render(<Button onClick={handleClick}>Click me</Button>)
+    
+    fireEvent.click(screen.getByText('Click me'))
+    expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('should be disabled when disabled prop is true', () => {
+    render(<Button disabled>Click me</Button>)
+    expect(screen.getByRole('button')).toBeDisabled()
+  })
+})
+
+// ✅ 函数测试示例
+import { validateEmail, formatUserName } from '@/lib/utils'
+
+describe('validateEmail', () => {
+  it('should return true for valid email', () => {
+    expect(validateEmail('test@example.com')).toBe(true)
+  })
+
+  it('should return false for invalid email', () => {
+    expect(validateEmail('invalid-email')).toBe(false)
+    expect(validateEmail('')).toBe(false)
+  })
+})
+
+describe('formatUserName', () => {
+  it('should format first and last name correctly', () => {
+    expect(formatUserName('John', 'Doe')).toBe('John Doe')
+  })
+
+  it('should handle empty names', () => {
+    expect(formatUserName('', '')).toBe('')
+    expect(formatUserName('John', '')).toBe('John')
+  })
+})
+```
+
+## ⚡ 性能优化规范
+
+### 1. 代码分割
+```typescript
+// ✅ 使用动态导入
+import { lazy, Suspense } from 'react'
+
+const CADAnalyzer = lazy(() => import('@/components/cad-analyzer'))
+const ImageEditor = lazy(() => import('@/components/image-editor'))
+
+export function FeaturePage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <CADAnalyzer />
+    </Suspense>
+  )
+}
+```
+
+### 2. 状态管理优化
+```typescript
+// ✅ 使用useCallback优化
+import { useCallback, useMemo } from 'react'
+
+export function UserProfile({ user, onUpdate }: UserProfileProps) {
+  const handleSubmit = useCallback((data: FormData) => {
+    onUpdate(user.id, data)
+  }, [user.id, onUpdate])
+
+  const expensiveValue = useMemo(() => {
+    return computeExpensiveValue(user.data)
+  }, [user.data])
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* 表单内容 */}
+    </form>
+  )
+}
+```
+
+### 3. 虚拟滚动
+```typescript
+// ✅ 大量数据使用虚拟滚动
+import { FixedSizeList as List } from 'react-window'
+
+export function MessageList({ messages }: MessageListProps) {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
+    <div style={style}>
+      <MessageCard message={messages[index]} />
+    </div>
+  )
+
+  return (
+    <List
+      height={600}
+      itemCount={messages.length}
+      itemSize={80}
+    >
+      {Row}
+    </List>
+  )
+}
+```
+
+## 📋 代码质量检查清单
+
+### 代码质量检查
+- [ ] 使用成熟组件库，避免自定义
+- [ ] TypeScript类型完整，无any类型
+- [ ] 错误处理完善
+- [ ] 注释完整，JSDoc规范
+- [ ] 无重复代码
+- [ ] 无未使用变量/函数
+
+### 架构检查
+- [ ] 组件职责单一
+- [ ] 状态管理合理
+- [ ] API设计统一
+- [ ] 错误处理统一
+- [ ] 配置管理统一
+
+### 性能检查
+- [ ] 代码分割合理
+- [ ] 懒加载使用
+- [ ] 缓存策略完善
+- [ ] 内存泄漏防护
+- [ ] 渲染优化
 
 ## ⚠️ 重要提醒
 
-1. **严格遵循**: 所有代码必须遵循本规范
-2. **零容忍**: 对违反规范的行为零容忍
-3. **持续检查**: 通过自动化工具持续检查代码质量
-4. **及时修复**: 发现问题必须立即修复
-5. **文档同步**: 代码变更必须同步更新文档
+1. **成熟库优先**: 优先使用成熟组件库，自定义代码占比 < 20%
+2. **全局一致性**: 确保配置、错误处理、API设计全局一致
+3. **代码质量**: 零容忍错误，严格类型检查
+4. **性能优化**: 代码分割、懒加载、缓存策略
+5. **安全防护**: 输入验证、输出编码、权限控制
 
-**记住: 好的代码是设计出来的，不是改出来的。从编码阶段就要考虑质量、性能和可维护性。**
+**记住: 好的代码是设计出来的，不是改出来的。优先使用成熟解决方案，确保项目高质量交付。**
