@@ -1,0 +1,629 @@
+---
+alwaysApply: true
+---
+
+# 综合开发标准规范
+
+## 🎯 核心开发原则
+
+### 1. 成熟组件库优先原则
+- **零自定义**: 优先使用成熟组件库，避免重复造轮子
+- **shadcn/ui优先**: 基于Radix UI的无障碍组件库
+- **Ant Design补充**: 企业级复杂组件
+- **自定义比例**: 自定义代码占比 < 20%
+
+### 2. 代码质量至上
+- **TypeScript严格模式**: 禁止使用any类型
+- **零容忍错误**: 所有代码必须通过检查
+- **DRY原则**: 严格禁止代码重复
+- **单一职责**: 每个函数/组件只负责一个功能
+
+### 3. 全局一致性
+- **统一配置源**: 所有配置通过.env管理
+- **统一错误处理**: 全局错误处理中间件
+- **统一API设计**: 标准化响应格式
+- **统一组件接口**: 标准化Props接口
+
+## 📦 组件库使用规范
+
+### 1. 组件库优先级
+```typescript
+// 1. shadcn/ui (最高优先级)
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Dialog } from '@/components/ui/dialog'
+
+// 2. Radix UI (无障碍组件)
+import { AlertDialog } from '@radix-ui/react-alert-dialog'
+import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
+
+// 3. Ant Design (复杂业务组件)
+import { Table } from 'antd'
+import { Form } from 'antd'
+
+// 4. 自定义组件 (最后选择)
+import { CustomComponent } from '@/components/custom/custom-component'
+```
+
+### 2. 禁止自定义的组件类型
+```typescript
+// ❌ 禁止自定义 - 使用shadcn/ui
+// 按钮、输入框、选择器、对话框、提示框、加载状态、空状态
+
+// ❌ 禁止自定义 - 使用Ant Design
+// 表格、表单、日期选择器、上传组件、分页器
+
+// ❌ 禁止自定义 - 使用Radix UI
+// 下拉菜单、弹出框、工具提示、标签页、手风琴
+```
+
+### 3. 允许自定义的组件类型
+```typescript
+// ✅ 允许自定义 - 业务特定组件
+// 聊天消息、智能体卡片、CAD分析器、图像编辑器
+
+// ✅ 允许自定义 - 复合组件
+// 页面布局、数据展示、业务流程组件
+```
+
+## 🏗️ 架构设计规范
+
+### 1. 目录结构标准
+```
+ai-chat-interface/
+├── app/                    # Next.js App Router
+├── components/            # React组件
+│   ├── ui/               # shadcn/ui组件
+│   ├── shared/           # 共享业务组件
+│   └── [feature]/        # 功能特定组件
+├── lib/                  # 核心库
+│   ├── config/           # 配置管理
+│   ├── services/         # 业务服务
+│   └── utils/            # 工具函数
+├── types/                # 类型定义
+└── hooks/                # 自定义Hooks
+```
+
+### 2. 组件设计原则
+```typescript
+// ✅ 好的组件设计 - 基于成熟库
+interface ButtonProps {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+}
+
+// ❌ 不好的组件设计 - 重复造轮子
+interface CustomButtonProps {
+  color?: string
+  backgroundColor?: string
+  fontSize?: number
+  padding?: number
+  borderRadius?: number
+  // ... 大量自定义属性
+}
+```
+
+## 🔧 技术栈使用规范
+
+### 1. 前端技术栈
+```typescript
+// 核心框架
+import React from 'react'
+import { NextPage } from 'next'
+
+// UI组件库
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Table } from 'antd'
+
+// 状态管理
+import { create } from 'zustand'
+import { useQuery } from '@tanstack/react-query'
+
+// 表单处理
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+
+// 动画
+import { motion } from 'framer-motion'
+
+// 图标
+import { Search, User, Settings } from 'lucide-react'
+```
+
+### 2. 后端技术栈
+```typescript
+// 数据库
+import { PrismaClient } from '@prisma/client'
+import { Sequelize } from 'sequelize'
+
+// 认证
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
+
+// 验证
+import { z } from 'zod'
+
+// 文件处理
+import formidable from 'formidable'
+import multer from 'multer'
+```
+
+## 📝 代码规范
+
+### 1. 命名规范
+```typescript
+// ✅ 好的命名
+function createNewConversation(): void
+function handleUserInput(input: string): void
+function validateMessageContent(content: string): boolean
+
+// ❌ 不好的命名
+function fn(): void
+function handle(e: Event): void
+function process(data: any): any
+```
+
+### 2. 注释规范
+```typescript
+/**
+ * 创建新的对话会话
+ * @description 初始化新的聊天会话，重置相关状态
+ * @returns {void}
+ * @example
+ * ```typescript
+ * createNewConversation()
+ * ```
+ */
+function createNewConversation(): void {
+  // 实现逻辑
+}
+```
+
+### 3. 类型定义规范
+```typescript
+/**
+ * 智能体配置接口
+ * @description 定义智能体的基本配置信息
+ */
+export interface AgentConfig {
+  /** 智能体唯一标识符 */
+  id: string
+  /** 智能体显示名称 */
+  name: string
+  /** 智能体类型 */
+  type: AgentType
+  /** 是否已发布 */
+  isPublished: boolean
+}
+```
+
+## 🛡️ 安全规范
+
+### 1. 输入验证
+```typescript
+// 使用Zod进行严格验证
+const UserSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  age: z.number().min(0).max(150)
+})
+
+function validateUser(input: unknown) {
+  return UserSchema.parse(input)
+}
+```
+
+### 2. 错误处理
+```typescript
+// 统一错误处理
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public statusCode: number = 500
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+```
+
+## 📊 性能规范
+
+### 1. 代码分割
+```typescript
+// 使用动态导入
+const CADAnalyzer = lazy(() => import('@/components/cad-analyzer'))
+const ImageEditor = lazy(() => import('@/components/image-editor'))
+
+// 使用Suspense
+<Suspense fallback={<LoadingSpinner />}>
+  <CADAnalyzer />
+</Suspense>
+```
+
+### 2. 状态管理优化
+```typescript
+// 使用useCallback优化
+const handleSubmit = useCallback((data: FormData) => {
+  // 处理逻辑
+}, [dependencies])
+
+// 使用useMemo优化
+const expensiveValue = useMemo(() => {
+  return computeExpensiveValue(a, b)
+}, [a, b])
+```
+
+## 🧪 测试规范
+
+### 1. 测试覆盖率
+- **单元测试覆盖率**: ≥ 80%
+- **集成测试覆盖率**: ≥ 60%
+- **关键业务逻辑覆盖率**: ≥ 90%
+
+### 2. 测试命令
+```bash
+# 运行所有测试
+npm test
+
+# 运行单元测试
+npm run test:unit
+
+# 运行集成测试
+npm run test:integration
+
+# 生成覆盖率报告
+npm run test:coverage
+```
+
+## 📋 开发检查清单
+
+### 代码质量检查
+- [ ] 使用成熟组件库，避免自定义
+- [ ] TypeScript类型完整，无any类型
+- [ ] 错误处理完善
+- [ ] 注释完整，JSDoc规范
+- [ ] 无重复代码
+- [ ] 无未使用变量/函数
+
+### 架构检查
+- [ ] 组件职责单一
+- [ ] 状态管理合理
+- [ ] API设计统一
+- [ ] 错误处理统一
+- [ ] 配置管理统一
+
+### 性能检查
+- [ ] 代码分割合理
+- [ ] 懒加载使用
+- [ ] 缓存策略完善
+- [ ] 内存泄漏防护
+- [ ] 渲染优化
+
+## ⚠️ 重要提醒
+
+1. **成熟库优先**: 优先使用成熟组件库，自定义代码占比 < 20%
+2. **全局一致性**: 确保配置、错误处理、API设计全局一致
+3. **代码质量**: 零容忍错误，严格类型检查
+4. **性能优化**: 代码分割、懒加载、缓存策略
+5. **安全防护**: 输入验证、输出编码、权限控制
+
+**记住: 好的代码是设计出来的，不是改出来的。优先使用成熟解决方案，确保项目高质量交付。**# 综合开发标准规范
+
+## 🎯 核心开发原则
+
+### 1. 成熟组件库优先原则
+- **零自定义**: 优先使用成熟组件库，避免重复造轮子
+- **shadcn/ui优先**: 基于Radix UI的无障碍组件库
+- **Ant Design补充**: 企业级复杂组件
+- **自定义比例**: 自定义代码占比 < 20%
+
+### 2. 代码质量至上
+- **TypeScript严格模式**: 禁止使用any类型
+- **零容忍错误**: 所有代码必须通过检查
+- **DRY原则**: 严格禁止代码重复
+- **单一职责**: 每个函数/组件只负责一个功能
+
+### 3. 全局一致性
+- **统一配置源**: 所有配置通过.env管理
+- **统一错误处理**: 全局错误处理中间件
+- **统一API设计**: 标准化响应格式
+- **统一组件接口**: 标准化Props接口
+
+## 📦 组件库使用规范
+
+### 1. 组件库优先级
+```typescript
+// 1. shadcn/ui (最高优先级)
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Dialog } from '@/components/ui/dialog'
+
+// 2. Radix UI (无障碍组件)
+import { AlertDialog } from '@radix-ui/react-alert-dialog'
+import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
+
+// 3. Ant Design (复杂业务组件)
+import { Table } from 'antd'
+import { Form } from 'antd'
+
+// 4. 自定义组件 (最后选择)
+import { CustomComponent } from '@/components/custom/custom-component'
+```
+
+### 2. 禁止自定义的组件类型
+```typescript
+// ❌ 禁止自定义 - 使用shadcn/ui
+// 按钮、输入框、选择器、对话框、提示框、加载状态、空状态
+
+// ❌ 禁止自定义 - 使用Ant Design
+// 表格、表单、日期选择器、上传组件、分页器
+
+// ❌ 禁止自定义 - 使用Radix UI
+// 下拉菜单、弹出框、工具提示、标签页、手风琴
+```
+
+### 3. 允许自定义的组件类型
+```typescript
+// ✅ 允许自定义 - 业务特定组件
+// 聊天消息、智能体卡片、CAD分析器、图像编辑器
+
+// ✅ 允许自定义 - 复合组件
+// 页面布局、数据展示、业务流程组件
+```
+
+## 🏗️ 架构设计规范
+
+### 1. 目录结构标准
+```
+ai-chat-interface/
+├── app/                    # Next.js App Router
+├── components/            # React组件
+│   ├── ui/               # shadcn/ui组件
+│   ├── shared/           # 共享业务组件
+│   └── [feature]/        # 功能特定组件
+├── lib/                  # 核心库
+│   ├── config/           # 配置管理
+│   ├── services/         # 业务服务
+│   └── utils/            # 工具函数
+├── types/                # 类型定义
+└── hooks/                # 自定义Hooks
+```
+
+### 2. 组件设计原则
+```typescript
+// ✅ 好的组件设计 - 基于成熟库
+interface ButtonProps {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+}
+
+// ❌ 不好的组件设计 - 重复造轮子
+interface CustomButtonProps {
+  color?: string
+  backgroundColor?: string
+  fontSize?: number
+  padding?: number
+  borderRadius?: number
+  // ... 大量自定义属性
+}
+```
+
+## 🔧 技术栈使用规范
+
+### 1. 前端技术栈
+```typescript
+// 核心框架
+import React from 'react'
+import { NextPage } from 'next'
+
+// UI组件库
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Table } from 'antd'
+
+// 状态管理
+import { create } from 'zustand'
+import { useQuery } from '@tanstack/react-query'
+
+// 表单处理
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+
+// 动画
+import { motion } from 'framer-motion'
+
+// 图标
+import { Search, User, Settings } from 'lucide-react'
+```
+
+### 2. 后端技术栈
+```typescript
+// 数据库
+import { PrismaClient } from '@prisma/client'
+import { Sequelize } from 'sequelize'
+
+// 认证
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
+
+// 验证
+import { z } from 'zod'
+
+// 文件处理
+import formidable from 'formidable'
+import multer from 'multer'
+```
+
+## 📝 代码规范
+
+### 1. 命名规范
+```typescript
+// ✅ 好的命名
+function createNewConversation(): void
+function handleUserInput(input: string): void
+function validateMessageContent(content: string): boolean
+
+// ❌ 不好的命名
+function fn(): void
+function handle(e: Event): void
+function process(data: any): any
+```
+
+### 2. 注释规范
+```typescript
+/**
+ * 创建新的对话会话
+ * @description 初始化新的聊天会话，重置相关状态
+ * @returns {void}
+ * @example
+ * ```typescript
+ * createNewConversation()
+ * ```
+ */
+function createNewConversation(): void {
+  // 实现逻辑
+}
+```
+
+### 3. 类型定义规范
+```typescript
+/**
+ * 智能体配置接口
+ * @description 定义智能体的基本配置信息
+ */
+export interface AgentConfig {
+  /** 智能体唯一标识符 */
+  id: string
+  /** 智能体显示名称 */
+  name: string
+  /** 智能体类型 */
+  type: AgentType
+  /** 是否已发布 */
+  isPublished: boolean
+}
+```
+
+## 🛡️ 安全规范
+
+### 1. 输入验证
+```typescript
+// 使用Zod进行严格验证
+const UserSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  age: z.number().min(0).max(150)
+})
+
+function validateUser(input: unknown) {
+  return UserSchema.parse(input)
+}
+```
+
+### 2. 错误处理
+```typescript
+// 统一错误处理
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public statusCode: number = 500
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+```
+
+## 📊 性能规范
+
+### 1. 代码分割
+```typescript
+// 使用动态导入
+const CADAnalyzer = lazy(() => import('@/components/cad-analyzer'))
+const ImageEditor = lazy(() => import('@/components/image-editor'))
+
+// 使用Suspense
+<Suspense fallback={<LoadingSpinner />}>
+  <CADAnalyzer />
+</Suspense>
+```
+
+### 2. 状态管理优化
+```typescript
+// 使用useCallback优化
+const handleSubmit = useCallback((data: FormData) => {
+  // 处理逻辑
+}, [dependencies])
+
+// 使用useMemo优化
+const expensiveValue = useMemo(() => {
+  return computeExpensiveValue(a, b)
+}, [a, b])
+```
+
+## 🧪 测试规范
+
+### 1. 测试覆盖率
+- **单元测试覆盖率**: ≥ 80%
+- **集成测试覆盖率**: ≥ 60%
+- **关键业务逻辑覆盖率**: ≥ 90%
+
+### 2. 测试命令
+```bash
+# 运行所有测试
+npm test
+
+# 运行单元测试
+npm run test:unit
+
+# 运行集成测试
+npm run test:integration
+
+# 生成覆盖率报告
+npm run test:coverage
+```
+
+## 📋 开发检查清单
+
+### 代码质量检查
+- [ ] 使用成熟组件库，避免自定义
+- [ ] TypeScript类型完整，无any类型
+- [ ] 错误处理完善
+- [ ] 注释完整，JSDoc规范
+- [ ] 无重复代码
+- [ ] 无未使用变量/函数
+
+### 架构检查
+- [ ] 组件职责单一
+- [ ] 状态管理合理
+- [ ] API设计统一
+- [ ] 错误处理统一
+- [ ] 配置管理统一
+
+### 性能检查
+- [ ] 代码分割合理
+- [ ] 懒加载使用
+- [ ] 缓存策略完善
+- [ ] 内存泄漏防护
+- [ ] 渲染优化
+
+## ⚠️ 重要提醒
+
+1. **成熟库优先**: 优先使用成熟组件库，自定义代码占比 < 20%
+2. **全局一致性**: 确保配置、错误处理、API设计全局一致
+3. **代码质量**: 零容忍错误，严格类型检查
+4. **性能优化**: 代码分割、懒加载、缓存策略
+5. **安全防护**: 输入验证、输出编码、权限控制
+
+**记住: 好的代码是设计出来的，不是改出来的。优先使用成熟解决方案，确保项目高质量交付。**

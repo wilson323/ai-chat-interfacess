@@ -86,6 +86,9 @@ export interface AppConfig {
   api: ApiConfig
   features: FeatureConfig
   security: SecurityConfig
+  redis: RedisConfig
+  storage: StorageConfig
+  monitoring: MonitoringConfig
 }
 
 export interface DatabaseConfig {
@@ -95,6 +98,12 @@ export interface DatabaseConfig {
   username: string
   password: string
   ssl: boolean
+  pool: {
+    max: number
+    min: number
+    acquire: number
+    idle: number
+  }
 }
 
 export interface ApiConfig {
@@ -122,6 +131,31 @@ export interface SecurityConfig {
   bcryptRounds: number
   corsOrigins: string[]
   rateLimitEnabled: boolean
+}
+
+export interface RedisConfig {
+  host: string
+  port: number
+  password: string
+  db: number
+}
+
+export interface StorageConfig {
+  uploadPath: string
+  tempPath: string
+  provider: 'local' | 'aws' | 'azure' | 'gcp'
+  aws: {
+    accessKeyId: string
+    secretAccessKey: string
+    region: string
+    bucketName: string
+  }
+}
+
+export interface MonitoringConfig {
+  enabled: boolean
+  endpoint: string
+  logLevel: 'debug' | 'info' | 'warn' | 'error'
 }
 
 // 统一错误类型

@@ -1,8 +1,7 @@
 import { Sequelize } from 'sequelize';
 import { Client } from 'pg';
 import pg from 'pg';
-import fs from 'fs';
-import path from 'path';
+import { appConfig, validateConfig } from '@/lib/config';
 
 console.log('Sequelize loaded, cwd:', process.cwd());
 try {
@@ -12,12 +11,16 @@ try {
   console.error('pg load failed', e);
 }
 
-// 优先用环境变量 CONFIG_PATH，否则用项目根目录 config/config.json
-const configPath = process.env.CONFIG_PATH || path.join(process.cwd(), 'config/config.json');
-const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-const env = process.env.NODE_ENV || 'development';
-const dbConfig = config[env];
+// 验证配置
+try {
+  validateConfig();
+} catch (error) {
+  console.error('配置验证失败:', error);
+  throw error;
+}
 
+// 从统一配置获取数据库配置
+const { database: dbConfig } = appConfig;
 const DB_NAME = dbConfig.database;
 const DB_USER = dbConfig.username;
 const DB_PASSWORD = dbConfig.password;
@@ -52,17 +55,58 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   port: DB_PORT,
   dialect: 'postgres',
   dialectModule: pg,
-  logging: false,
+  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  
+  // 使用统一配置的连接池设置
   pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
+    max: dbConfig.pool.max,
+    min: dbConfig.pool.min,
+    acquire: dbConfig.pool.acquire,
+    idle: dbConfig.pool.idle,
+    evict: 1000, // 清理间隔
+    handleDisconnects: true, // 处理断开连接
   },
+  
+  // 添加重试机制
+  retry: {
+    max: 3, // 最大重试次数
+    timeout: 60000, // 重试超时
+    match: [
+      /ETIMEDOUT/,
+      /EHOSTUNREACH/,
+      /ECONNRESET/,
+      /ECONNREFUSED/,
+      /ETIMEDOUT/,
+      /ESOCKETTIMEDOUT/,
+      /EHOSTUNREACH/,
+      /EPIPE/,
+      /EAI_AGAIN/,
+      /SequelizeConnectionError/,
+      /SequelizeConnectionRefusedError/,
+      /SequelizeHostNotFoundError/,
+      /SequelizeHostNotReachableError/,
+      /SequelizeInvalidConnectionError/,
+      /SequelizeConnectionTimedOutError/
+    ]
+  },
+  
+  // 性能监控
+  benchmark: true,
+  
+  // 查询优化
   define: {
     freezeTableName: true,
     underscored: true,
+    timestamps: true,
+    paranoid: false, // 软删除
   },
+  
+  // 查询优化配置
+  query: {
+    raw: false,
+    nest: true,
+    plain: false
+  }
 });
 
 // 初始化数据的函数，避免循环依赖

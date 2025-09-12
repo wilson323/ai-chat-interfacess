@@ -1,0 +1,426 @@
+# 🎯 项目开发规则 - NeuroGlass AI Chat Interface
+
+> **重要提醒**: 本文档是项目的核心开发规则，所有开发工作都必须严格遵守。每次开发前必须阅读并引用相关规则。
+
+## 📋 规则快速索引
+
+- [核心开发原则](#核心开发原则)
+- [技术架构规范](#技术架构规范)
+- [组件库使用规范](#组件库使用规范)
+- [代码质量规范](#代码质量规范)
+- [测试规范](#测试规范)
+- [安全规范](#安全规范)
+- [性能规范](#性能规范)
+- [开发工作流程](#开发工作流程)
+- [规则检查机制](#规则检查机制)
+
+---
+
+## 🎯 核心开发原则
+
+### 1. 成熟组件库优先原则 ⭐⭐⭐
+- **自定义代码占比**: < 20%
+- **shadcn/ui优先**: 基于Radix UI的无障碍组件
+- **Ant Design补充**: 企业级复杂组件
+- **避免重复造轮子**: 优先使用现有解决方案
+
+### 2. 代码质量至上原则 ⭐⭐⭐
+- **TypeScript严格模式**: 禁止使用any类型
+- **零容忍错误**: 所有代码必须通过检查
+- **DRY原则**: 严格禁止代码重复
+- **单一职责**: 每个函数/组件只负责一个功能
+
+### 3. 全局一致性原则 ⭐⭐⭐
+- **统一配置源**: 所有配置通过.env管理
+- **统一错误处理**: 全局错误处理中间件
+- **统一API设计**: 标准化响应格式
+- **统一组件接口**: 标准化Props接口
+
+---
+
+## 🏗️ 技术架构规范
+
+### 技术栈要求
+```typescript
+// 前端技术栈
+- Next.js 15.2.4 (App Router)
+- React 18 + TypeScript 5
+- shadcn/ui + Radix UI + Ant Design
+- Tailwind CSS + Framer Motion
+- Zustand + TanStack Query
+- React Hook Form + Zod
+
+// 后端技术栈
+- Node.js 18+ + Next.js API Routes
+- PostgreSQL + Sequelize/Prisma
+- Redis + JWT认证
+- Docker + Docker Compose
+```
+
+### 目录结构规范
+```
+ai-chat-interface/
+├── app/                    # Next.js App Router
+├── components/            # React组件
+│   ├── ui/               # shadcn/ui组件
+│   ├── shared/           # 共享业务组件
+│   └── [feature]/        # 功能特定组件
+├── lib/                  # 核心库
+│   ├── config/           # 配置管理
+│   ├── services/         # 业务服务
+│   └── utils/            # 工具函数
+├── types/                # 类型定义
+└── hooks/                # 自定义Hooks
+```
+
+---
+
+## 📦 组件库使用规范
+
+### 组件库优先级 (必须严格遵守)
+
+#### 1. shadcn/ui (最高优先级) ⭐⭐⭐
+```typescript
+// ✅ 基础UI组件 - 必须使用shadcn/ui
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card } from '@/components/ui/card'
+import { Dialog } from '@/components/ui/dialog'
+import { Select } from '@/components/ui/select'
+import { Form } from '@/components/ui/form'
+import { Table } from '@/components/ui/table'
+// ... 所有基础UI组件
+```
+
+#### 2. Ant Design (复杂业务组件) ⭐⭐
+```typescript
+// ✅ 复杂业务组件 - 使用Ant Design
+import { Table } from 'antd' // 复杂表格
+import { Form } from 'antd' // 复杂表单
+import { DatePicker } from 'antd' // 日期选择器
+import { Upload } from 'antd' // 文件上传
+// ... 复杂业务组件
+```
+
+#### 3. Radix UI (无障碍组件) ⭐⭐
+```typescript
+// ✅ 无障碍组件 - 使用Radix UI
+import { AlertDialog } from '@radix-ui/react-alert-dialog'
+import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
+// ... 无障碍组件
+```
+
+### 🚫 禁止自定义的组件类型
+
+#### 基础UI组件 (必须使用shadcn/ui)
+- 按钮、输入框、选择器、对话框、提示框
+- 卡片、标签、头像、分割线、进度条
+- 弹出框、工具提示、下拉菜单、上下文菜单
+- 标签页、手风琴、折叠面板、轮播图
+
+#### 复杂业务组件 (必须使用Ant Design)
+- 表格、表单、日期选择器、时间选择器
+- 文件上传、树形控件、级联选择器
+- 步骤条、时间轴、统计数值、描述列表
+
+### ✅ 允许自定义的组件类型
+
+#### 业务特定组件
+- 聊天消息组件
+- 智能体卡片组件
+- CAD分析器组件
+- 图像编辑器组件
+
+#### 复合组件
+- 页面布局组件
+- 数据展示组件
+- 业务流程组件
+
+---
+
+## 📊 代码质量规范
+
+### 质量指标要求
+- **自定义代码占比**: < 20%
+- **单元测试覆盖率**: ≥ 80%
+- **集成测试覆盖率**: ≥ 60%
+- **关键业务逻辑覆盖率**: ≥ 90%
+- **代码重复率**: < 3%
+- **圈复杂度**: < 10
+
+### 代码规范要求
+```typescript
+// ✅ 正确的代码风格
+export interface UserProps {
+  id: string
+  name: string
+  email: string
+}
+
+export function UserCard({ id, name, email }: UserProps) {
+  // 单一职责，清晰逻辑
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p>{email}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ❌ 禁止的代码风格
+export function BadComponent(props: any) { // 禁止any类型
+  // 复杂逻辑，多职责
+  // 重复代码
+  // 无类型检查
+}
+```
+
+### 错误处理规范
+```typescript
+// ✅ 统一错误处理
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public statusCode: number = 500
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+// ✅ 错误处理中间件
+export function errorHandler(error: Error) {
+  if (error instanceof ApiError) {
+    return { code: error.code, message: error.message }
+  }
+  return { code: 'UNKNOWN_ERROR', message: '未知错误' }
+}
+```
+
+---
+
+## 🧪 测试规范
+
+### 测试覆盖率要求
+- **单元测试覆盖率**: ≥ 80%
+- **集成测试覆盖率**: ≥ 60%
+- **关键业务逻辑覆盖率**: ≥ 90%
+
+### 测试命令
+```bash
+# 运行所有测试
+npm test
+
+# 运行单元测试
+npm run test:unit
+
+# 运行集成测试
+npm run test:integration
+
+# 生成覆盖率报告
+npm run test:coverage
+```
+
+### 测试示例
+```typescript
+// ✅ 组件测试示例
+import { render, screen } from '@testing-library/react'
+import { UserCard } from '@/components/UserCard'
+
+describe('UserCard', () => {
+  it('should render user information correctly', () => {
+    const user = { id: '1', name: 'John Doe', email: 'john@example.com' }
+    
+    render(<UserCard {...user} />)
+    
+    expect(screen.getByText('John Doe')).toBeInTheDocument()
+    expect(screen.getByText('john@example.com')).toBeInTheDocument()
+  })
+})
+```
+
+---
+
+## 🛡️ 安全规范
+
+### 输入验证
+```typescript
+// ✅ 使用Zod进行严格验证
+const UserSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  age: z.number().min(0).max(150)
+})
+
+export function validateUser(data: unknown) {
+  return UserSchema.parse(data)
+}
+```
+
+### 敏感信息管理
+- **API密钥**: 必须放在.env文件中
+- **密码**: 必须加密存储
+- **用户数据**: 必须进行权限验证
+
+---
+
+## ⚡ 性能规范
+
+### 前端性能要求
+- **首屏加载时间**: < 3秒
+- **API响应时间**: < 500ms
+- **内存使用率**: < 80%
+- **包体积增长**: < 10%
+
+### 性能优化策略
+```typescript
+// ✅ 代码分割
+const LazyComponent = lazy(() => import('./LazyComponent'))
+
+// ✅ 记忆化
+const MemoizedComponent = memo(Component)
+
+// ✅ 虚拟滚动
+import { FixedSizeList as List } from 'react-window'
+```
+
+---
+
+## 🔄 开发工作流程
+
+### 1. 需求分析阶段
+- [ ] 明确功能需求
+- [ ] 识别技术难点
+- [ ] 评估现有组件库支持
+- [ ] 确定自定义代码范围
+
+### 2. 设计阶段
+- [ ] UI设计符合设计系统
+- [ ] 组件设计基于成熟库
+- [ ] API设计遵循RESTful规范
+- [ ] 数据库设计规范化
+
+### 3. 开发阶段
+- [ ] 环境配置正确
+- [ ] 使用成熟组件库
+- [ ] 自定义代码占比 < 20%
+- [ ] 单元测试覆盖 > 80%
+
+### 4. 测试阶段
+- [ ] 单元测试覆盖率 > 80%
+- [ ] 集成测试覆盖率 > 60%
+- [ ] 端到端测试通过
+- [ ] 性能测试通过
+
+### 5. 部署阶段
+- [ ] 构建成功
+- [ ] 环境配置正确
+- [ ] 健康检查通过
+- [ ] 监控配置完成
+
+---
+
+## 🔍 规则检查机制
+
+### 自动化检查命令
+```bash
+# 代码质量检查
+npm run check-code
+
+# 自定义代码占比检查
+npm run check:custom-ratio
+
+# 环境配置检查
+npm run check:config
+
+# 数据库连接检查
+npm run check:db
+
+# 规则一致性检查
+npm run check:rules
+```
+
+### 开发前检查清单
+- [ ] 阅读相关规则文档
+- [ ] 检查现有组件库支持
+- [ ] 评估自定义代码占比
+- [ ] 确认测试覆盖率要求
+- [ ] 验证安全规范遵循
+
+### 代码提交前检查
+- [ ] 代码质量检查通过
+- [ ] 测试覆盖率达标
+- [ ] 规则一致性验证
+- [ ] 性能指标检查
+- [ ] 安全扫描通过
+
+---
+
+## 📚 规则引用指南
+
+### 开发过程中必须引用
+1. **组件开发前**: 引用[组件库使用规范](#组件库使用规范)
+2. **API开发前**: 引用[代码质量规范](#代码质量规范)
+3. **测试编写前**: 引用[测试规范](#测试规范)
+4. **性能优化前**: 引用[性能规范](#性能规范)
+5. **安全检查前**: 引用[安全规范](#安全规范)
+
+### 规则更新流程
+1. 规则变更必须经过团队评审
+2. 更新规则文档
+3. 通知所有开发人员
+4. 更新相关检查脚本
+5. 验证规则执行效果
+
+---
+
+## ⚠️ 重要提醒
+
+1. **成熟库优先**: 优先使用成熟组件库，自定义代码占比 < 20%
+2. **全局一致性**: 确保配置、错误处理、API设计全局一致
+3. **代码质量**: 零容忍错误，严格类型检查
+4. **性能优化**: 代码分割、懒加载、缓存策略
+5. **安全防护**: 输入验证、输出编码、权限控制
+
+---
+
+## 🎯 项目目标
+
+### 短期目标 (3个月)
+- 完成核心功能开发
+- 达到生产级别质量
+- 完成性能优化
+- 建立完整的测试体系
+
+### 中期目标 (6个月)
+- 支持更多智能体类型
+- 实现高级分析功能
+- 优化用户体验
+- 建立监控体系
+
+### 长期目标 (1年)
+- 成为行业标杆产品
+- 支持大规模部署
+- 建立生态体系
+- 实现商业化运营
+
+---
+
+**记住: 好的代码是设计出来的，不是改出来的。优先使用成熟解决方案，确保项目高质量交付。**
+
+---
+
+## 📞 规则支持
+
+- **规则问题**: 通过Issue反馈
+- **规则更新**: 持续维护更新
+- **规则培训**: 定期团队培训
+
+**最后更新**: 2025-01-12
+**版本**: v1.0.0
+**维护者**: 开发团队
