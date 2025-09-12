@@ -1,20 +1,17 @@
 module.exports = {
-  preset: "ts-jest",
-  testEnvironment: "jsdom",
-  moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/$1",
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testEnvironment: 'jsdom',
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  moduleNameMapping: {
+    '^@/(.*)$': '<rootDir>/$1',
   },
-  transform: {
-    "^.+\\.(ts|tsx)$": [
-      "ts-jest",
-      {
-        tsconfig: "tsconfig.json",
-      },
-    ],
-  },
-  testMatch: ["**/__tests__/**/*.test.(ts|tsx)"],
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  collectCoverageFrom: ["lib/**/*.{ts,tsx}", "!lib/**/*.d.ts"],
+  collectCoverageFrom: [
+    'components/**/*.{js,jsx,ts,tsx}',
+    'lib/**/*.{js,jsx,ts,tsx}',
+    'app/**/*.{js,jsx,ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+  ],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -23,4 +20,8 @@ module.exports = {
       statements: 80,
     },
   },
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+  },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 }

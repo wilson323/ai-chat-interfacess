@@ -3,8 +3,9 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { Input, Button } from "antd"
-import { SendOutlined, AudioOutlined, PaperClipOutlined } from "@ant-design/icons"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Send, Mic, Paperclip } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // 添加文件上传相关导入
@@ -15,8 +16,6 @@ import { useLanguage } from "@/context/language-context"
 import axios from 'axios'
 // 添加语音录制组件导入
 import { CompactVoiceInput } from "@/components/voice/VoiceInput"
-
-const { TextArea } = Input
 
 export default function InputArea() {
   const [message, setMessage] = useState("")
@@ -37,8 +36,8 @@ export default function InputArea() {
   // Auto-resize textarea
   useEffect(() => {
     if (textAreaRef.current) {
-      textAreaRef.current.resizableTextArea.textArea.style.height = "auto"
-      textAreaRef.current.resizableTextArea.textArea.style.height = `${textAreaRef.current.resizableTextArea.textArea.scrollHeight}px`
+      textAreaRef.current.style.height = "auto"
+      textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`
     }
   }, [message])
 
@@ -55,7 +54,7 @@ export default function InputArea() {
 
       // 自动调整文本区域大小
       if (textAreaRef.current) {
-        textAreaRef.current.resizableTextArea.textArea.style.height = "auto"
+        textAreaRef.current.style.height = "auto"
       }
     }
   }
@@ -66,8 +65,8 @@ export default function InputArea() {
     // 自动调整文本区域大小
     if (textAreaRef.current) {
       setTimeout(() => {
-        textAreaRef.current.resizableTextArea.textArea.style.height = "auto"
-        textAreaRef.current.resizableTextArea.textArea.style.height = `${textAreaRef.current.resizableTextArea.textArea.scrollHeight}px`
+        textAreaRef.current.style.height = "auto"
+        textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`
       }, 0)
     }
   }
@@ -145,15 +144,17 @@ export default function InputArea() {
         {/* 文件上传按钮 - 根据智能体配置显示或隐藏 */}
         {selectedAgent?.supportsFileUpload !== false && (
           <Button
-            type="text"
-            icon={<PaperClipOutlined />}
+            variant="ghost"
+            size="icon"
             className={cn(
               "flex items-center justify-center p-2.5 rounded-full mr-1",
               "bg-white/10 backdrop-blur-sm text-light-text",
               "hover:text-primary-color hover:bg-primary-color/20 hover:scale-110",
             )}
             onClick={toggleFileUpload}
-          />
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
         )}
 
         {/* 语音输入组件 */}
@@ -162,20 +163,18 @@ export default function InputArea() {
           className="mr-1"
         />
 
-        <TextArea
+        <Textarea
           ref={textAreaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={t("inputPlaceholder")}
-          autoSize={{ minRows: 1, maxRows: 4 }}
-          className="flex-1 border-none outline-none px-3 py-3 bg-transparent text-text-color resize-none"
+          className="flex-1 border-none outline-none px-3 py-3 bg-transparent text-text-color resize-none min-h-[40px] max-h-[120px]"
           style={{ boxShadow: "none" }}
         />
 
         <Button
-          type="primary"
-          icon={<SendOutlined />}
+          size="icon"
           className={cn(
             "w-11 h-11 rounded-[14px] flex items-center justify-center",
             "bg-gradient-to-r from-primary-dark to-primary-color",
@@ -184,7 +183,9 @@ export default function InputArea() {
             "hover:scale-105 hover:shadow-xl active:scale-95 ml-2.5", // 增强交互效果
           )}
           onClick={handleSend}
-        />
+        >
+          <Send className="h-4 w-4" />
+        </Button>
       </div>
 
       {canShowImageUpload && (
