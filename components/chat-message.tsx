@@ -35,19 +35,7 @@ import { zhCN } from "date-fns/locale"
 import { InlineBubbleInteractive } from "./inline-bubble-interactive"
 import { EnhancedThinkingBubble } from "./enhanced-thinking-bubble"
 
-// 添加autoSize支持
-const TextareaWithAutoSize = ({ autoSize, ...props }: any) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    if (autoSize && textareaRef.current) {
-      textareaRef.current.style.height = "auto"
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
-    }
-  }, [autoSize, props.value])
-
-  return <Textarea ref={textareaRef} {...props} />
-}
+// 使用shadcn/ui的Textarea组件，通过CSS实现自动调整大小
 
 interface ChatMessageProps {
   message: Message
@@ -400,11 +388,16 @@ export function ChatMessage({ message, onRegenerate, onCopy, onDelete, onEdit, o
           <div className={cn("w-full", isUserCompat ? "prose-invert" : "") + " mt-2"}>
             {isEditing ? (
               <div>
-                <TextareaWithAutoSize
-                  autoSize
-                  className="w-full min-h-[60px] text-sm bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary/30 shadow-none"
+                <Textarea
+                  className="w-full min-h-[60px] text-sm bg-white/80 dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary/30 shadow-none resize-none"
+                  style={{ height: 'auto', minHeight: '60px' }}
                   value={editedContent}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditedContent(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                    setEditedContent(e.target.value)
+                    // 自动调整高度
+                    e.target.style.height = 'auto'
+                    e.target.style.height = `${e.target.scrollHeight}px`
+                  }}
                   onBlur={handleCancelEdit}
                   onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                     if (e.key === "Enter" && !e.shiftKey) handleSaveEdit()

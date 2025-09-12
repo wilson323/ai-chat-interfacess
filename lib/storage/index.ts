@@ -6,10 +6,12 @@
 // 统一导出所有存储相关功能
 export * from "./shared/constants"
 export * from "./shared/types"
+export * from "./shared/storage-utils"
 export * from "./features/chat/message-storage"
 export * from "./features/chat/message-factory"
 export * from "./features/chat/chat-session"
 export * from "./features/management/storage-manager"
+export * from "./features/agent/agent-storage"
 
 // 聊天会话索引项接口
 export interface ChatSessionIndexItem {
@@ -28,6 +30,7 @@ interface StorageMeta {
   chatIds: string[] // 所有聊天ID列表
   chatSizes: Record<string, number> // 每个聊天的大小（字节）
   chatLastAccessed: Record<string, number> // 每个聊天的最后访问时间戳
+  version?: number // 存储版本
 }
 
 // 存储统计信息接口
@@ -74,6 +77,7 @@ import {
   saveAgents as _saveAgents,
   loadAgents as _loadAgents,
   markAgentAsLocallyModified as _markAgentAsLocallyModified,
+  saveLocallyModifiedAgents as _saveLocallyModifiedAgents,
 } from './features/agent/agent-storage';
 
 import { defaultStorageProvider } from './shared/storage-utils';
@@ -118,6 +122,9 @@ export function loadAgents(): ReturnType<typeof _loadAgents> {
 }
 export function markAgentAsLocallyModified(agentId: string): ReturnType<typeof _markAgentAsLocallyModified> {
   return _markAgentAsLocallyModified(agentId);
+}
+export function saveLocallyModifiedAgents(agentIds: string[]): ReturnType<typeof _saveLocallyModifiedAgents> {
+  return _saveLocallyModifiedAgents(agentIds);
 }
 
 // ========== 统一导出工具函数 ==========

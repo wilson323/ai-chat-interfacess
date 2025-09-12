@@ -63,6 +63,66 @@ export default function AdminPage() {
             </Card>
             <Card>
               <CardHeader>
+                <CardTitle>模型配置管理</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-muted-foreground">统一管理所有AI模型配置，包括参数设置、性能监控和版本管理。</p>
+                <div className="flex gap-2">
+                  <Link href="/admin/model-config">
+                    <Button>模型配置</Button>
+                  </Link>
+                  <Link href="/admin/model-config/monitor">
+                    <Button variant="outline">性能监控</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>性能监控</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-muted-foreground">实时监控系统性能指标，包括页面加载、API响应、资源使用等关键指标。</p>
+                <Link href="/admin/performance">
+                  <Button>进入性能监控</Button>
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>安全监控</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-muted-foreground">安全漏洞扫描和加固管理，包括代码安全检查和修复建议。</p>
+                <Link href="/admin/security">
+                  <Button>进入安全监控</Button>
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>缓存监控</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-muted-foreground">Redis缓存状态监控和优化管理，包括缓存策略和性能分析。</p>
+                <Link href="/admin/cache">
+                  <Button>进入缓存监控</Button>
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>自研智能体存储管理</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-muted-foreground">管理自研智能体的存储空间、数据清除、导入导出等功能，包括CAD分析器和图像编辑器的数据管理。</p>
+                <Link href="/admin/custom-agent-storage">
+                  <Button>进入存储管理</Button>
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
                 <CardTitle>数据表结构与同步</CardTitle>
               </CardHeader>
               <CardContent>

@@ -15,10 +15,24 @@ describe('FastGPT API utilities', () => {
       expect(chatId1).not.toBe(chatId2)
     })
 
-    it('should generate chat ID with correct format', () => {
+    it('should generate chat ID with correct business format', () => {
       const chatId = generateFallbackChatId()
-      // Should be a UUID-like string
-      expect(chatId).toMatch(/^[a-f0-9-]+$/)
+      // Should be a local fallback ID format: local_timestamp_randomstring
+      expect(chatId).toMatch(/^local_\d+_[a-z0-9]+$/)
+    })
+
+    it('should contain local prefix for fallback identification', () => {
+      const chatId = generateFallbackChatId()
+      expect(chatId.startsWith('local_')).toBe(true)
+    })
+
+    it('should contain timestamp for uniqueness', () => {
+      const chatId = generateFallbackChatId()
+      const parts = chatId.split('_')
+      expect(parts).toHaveLength(3)
+      expect(parts[0]).toBe('local')
+      expect(parts[1]).toMatch(/^\d+$/) // timestamp
+      expect(parts[2]).toMatch(/^[a-z0-9]+$/) // random string
     })
   })
 })

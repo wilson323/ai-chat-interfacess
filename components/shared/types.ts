@@ -148,15 +148,7 @@ export interface ColumnDef<T = any> {
   fixed?: 'left' | 'right'
 }
 
-export interface PaginationProps {
-  current: number
-  pageSize: number
-  total: number
-  showSizeChanger?: boolean
-  showQuickJumper?: boolean
-  showTotal?: (total: number, range: [number, number]) => ReactNode
-  onChange?: (page: number, pageSize: number) => void
-}
+// 旧的PaginationProps已移除，使用下面的新定义
 
 export interface SortingProps {
   sortBy?: string

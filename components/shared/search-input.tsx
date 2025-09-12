@@ -1,6 +1,6 @@
 /**
  * 搜索输入组件
- * 提供搜索功能，支持防抖、清除、加载状态
+ * 基于shadcn/ui Input实现，减少自定义代码
  */
 
 'use client'
@@ -31,9 +31,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     ref
   ) => {
     const [internalValue, setInternalValue] = useState(value)
-    const [isSearching, setIsSearching] = useState(false)
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
-    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
     // 同步外部值变化
     useEffect(() => {
@@ -48,18 +46,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         }
 
         debounceTimerRef.current = setTimeout(() => {
-          if (onSearch) {
-            setIsSearching(true)
-            onSearch(searchValue)
-            
-            // 模拟搜索完成（实际项目中应该由onSearch回调控制）
-            if (searchTimeoutRef.current) {
-              clearTimeout(searchTimeoutRef.current)
-            }
-            searchTimeoutRef.current = setTimeout(() => {
-              setIsSearching(false)
-            }, 1000)
-          }
+          onSearch?.(searchValue)
         }, debounceMs)
       },
       [onSearch, debounceMs]
@@ -71,13 +58,9 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         const newValue = event.target.value
         setInternalValue(newValue)
         onChange?.(newValue)
-        
-        // 触发防抖搜索
-        if (onSearch) {
-          debouncedSearch(newValue)
-        }
+        debouncedSearch(newValue)
       },
-      [onChange, onSearch, debouncedSearch]
+      [onChange, debouncedSearch]
     )
 
     // 处理清除
@@ -85,20 +68,11 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
       setInternalValue('')
       onChange?.('')
       onClear?.()
+      onSearch?.('')
       
-      // 清除搜索
-      if (onSearch) {
-        onSearch('')
-      }
-      
-      // 清除定时器
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
       }
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
-      }
-      setIsSearching(false)
     }, [onChange, onClear, onSearch])
 
     // 处理键盘事件
@@ -120,19 +94,15 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         if (debounceTimerRef.current) {
           clearTimeout(debounceTimerRef.current)
         }
-        if (searchTimeoutRef.current) {
-          clearTimeout(searchTimeoutRef.current)
-        }
       }
     }, [])
 
     const showClearButton = clearable && internalValue.length > 0 && !disabled
-    const showLoading = loading || isSearching
 
     return (
       <div className={cn('relative', className)} style={style}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           
           <Input
             ref={ref}
@@ -142,16 +112,13 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
-            className={cn(
-              'pl-10 pr-20',
-              showLoading && 'pr-16'
-            )}
+            className="pl-10 pr-20"
             {...props}
           />
           
           <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-            {showLoading && (
-              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+            {loading && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
             
             {showClearButton && (
@@ -160,7 +127,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
                 variant="ghost"
                 size="sm"
                 onClick={handleClear}
-                className="h-6 w-6 p-0 hover:bg-gray-100"
+                className="h-6 w-6 p-0"
                 disabled={disabled}
               >
                 <X className="h-3 w-3" />

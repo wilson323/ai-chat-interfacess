@@ -1,0 +1,426 @@
+"use client"
+
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table'
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs'
+import { 
+  Activity, 
+  Clock, 
+  AlertTriangle, 
+  Download, 
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  Zap,
+  Globe,
+  Database,
+  Monitor
+} from 'lucide-react'
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor'
+
+export function PerformanceDashboard() {
+  const { 
+    metrics, 
+    summary, 
+    isMonitoring, 
+    startMonitoring, 
+    stopMonitoring, 
+    resetMetrics,
+    getReport 
+  } = usePerformanceMonitor()
+
+  const [activeTab, setActiveTab] = useState('overview')
+  const [autoRefresh, setAutoRefresh] = useState(true)
+
+  // 自动刷新
+  useEffect(() => {
+    if (!autoRefresh || !isMonitoring) return
+
+    const interval = setInterval(() => {
+      // 触发重新渲染
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [autoRefresh, isMonitoring])
+
+  // 获取性能等级
+  const getPerformanceLevel = (value: number, thresholds: { good: number; poor: number }) => {
+    if (value <= thresholds.good) return { level: 'good', color: 'text-green-600' }
+    if (value <= thresholds.poor) return { level: 'fair', color: 'text-yellow-600' }
+    return { level: 'poor', color: 'text-red-600' }
+  }
+
+  // 格式化时间
+  const formatTime = (ms: number) => {
+    if (ms < 1000) return `${Math.round(ms)}ms`
+    return `${(ms / 1000).toFixed(2)}s`
+  }
+
+  // 格式化文件大小
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
+  }
+
+  // 导出性能报告
+  const exportReport = () => {
+    const report = getReport()
+    const dataStr = JSON.stringify(report, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `performance-report-${new Date().toISOString().split('T')[0]}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* 页面头部 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">性能监控面板</h1>
+          <p className="text-gray-600 mt-2">实时监控系统性能指标</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={isMonitoring ? "destructive" : "default"}
+            onClick={isMonitoring ? stopMonitoring : startMonitoring}
+            size="sm"
+          >
+            {isMonitoring ? '停止监控' : '开始监控'}
+          </Button>
+          <Button variant="outline" onClick={resetMetrics} size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            重置
+          </Button>
+          <Button variant="outline" onClick={exportReport} size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            导出报告
+          </Button>
+        </div>
+      </div>
+
+      {/* 核心指标卡片 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">页面加载时间</p>
+                <p className="text-2xl font-bold">
+                  {formatTime(summary.pageLoadTime)}
+                </p>
+              </div>
+              <Clock className="h-8 w-8 text-blue-600" />
+            </div>
+            <div className="mt-2">
+              <Badge 
+                variant={summary.pageLoadTime < 2000 ? "default" : "destructive"}
+                className={summary.pageLoadTime < 2000 ? "bg-green-100 text-green-800" : ""}
+              >
+                {summary.pageLoadTime < 2000 ? '优秀' : summary.pageLoadTime < 4000 ? '良好' : '需优化'}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">API平均响应时间</p>
+                <p className="text-2xl font-bold">
+                  {formatTime(summary.averageApiResponseTime)}
+                </p>
+              </div>
+              <Database className="h-8 w-8 text-green-600" />
+            </div>
+            <div className="mt-2">
+              <Badge 
+                variant={summary.averageApiResponseTime < 500 ? "default" : "destructive"}
+                className={summary.averageApiResponseTime < 500 ? "bg-green-100 text-green-800" : ""}
+              >
+                {summary.averageApiResponseTime < 500 ? '快速' : summary.averageApiResponseTime < 1000 ? '正常' : '较慢'}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">错误数量</p>
+                <p className="text-2xl font-bold">{summary.errorCount}</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+            <div className="mt-2">
+              <Badge 
+                variant={summary.errorCount === 0 ? "default" : "destructive"}
+                className={summary.errorCount === 0 ? "bg-green-100 text-green-800" : ""}
+              >
+                {summary.errorCount === 0 ? '无错误' : '有错误'}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">资源数量</p>
+                <p className="text-2xl font-bold">{summary.resourceCount}</p>
+              </div>
+              <Globe className="h-8 w-8 text-purple-600" />
+            </div>
+            <div className="mt-2">
+              <Badge variant="secondary">
+                {summary.resourceCount < 50 ? '轻量' : summary.resourceCount < 100 ? '中等' : '较重'}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 详细指标 */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">概览</TabsTrigger>
+          <TabsTrigger value="api">API调用</TabsTrigger>
+          <TabsTrigger value="resources">资源加载</TabsTrigger>
+          <TabsTrigger value="errors">错误日志</TabsTrigger>
+        </TabsList>
+
+        {/* 概览标签页 */}
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Core Web Vitals
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>First Contentful Paint</span>
+                  <Badge className={getPerformanceLevel(summary.firstContentfulPaint, { good: 1800, poor: 3000 }).color}>
+                    {formatTime(summary.firstContentfulPaint)}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Largest Contentful Paint</span>
+                  <Badge className={getPerformanceLevel(summary.largestContentfulPaint, { good: 2500, poor: 4000 }).color}>
+                    {formatTime(summary.largestContentfulPaint)}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>First Input Delay</span>
+                  <Badge className={getPerformanceLevel(summary.firstInputDelay, { good: 100, poor: 300 }).color}>
+                    {formatTime(summary.firstInputDelay)}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Cumulative Layout Shift</span>
+                  <Badge className={getPerformanceLevel(summary.cumulativeLayoutShift, { good: 0.1, poor: 0.25 }).color}>
+                    {summary.cumulativeLayoutShift.toFixed(3)}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  用户交互
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>总交互次数</span>
+                    <span className="font-medium">{metrics.userInteractions.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>点击次数</span>
+                    <span className="font-medium">
+                      {metrics.userInteractions.filter(i => i.type === 'click').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>键盘输入</span>
+                    <span className="font-medium">
+                      {metrics.userInteractions.filter(i => i.type === 'keydown').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>滚动次数</span>
+                    <span className="font-medium">
+                      {metrics.userInteractions.filter(i => i.type === 'scroll').length}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* API调用标签页 */}
+        <TabsContent value="api" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>API调用记录</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>URL</TableHead>
+                    <TableHead>方法</TableHead>
+                    <TableHead>状态码</TableHead>
+                    <TableHead>响应时间</TableHead>
+                    <TableHead>时间</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {metrics.apiCalls.slice(-20).reverse().map((call, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-mono text-sm">
+                        {call.url.length > 50 ? `${call.url.substring(0, 50)}...` : call.url}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={call.method === 'GET' ? 'default' : 'secondary'}>
+                          {call.method}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={call.status >= 200 && call.status < 300 ? 'default' : 'destructive'}
+                          className={call.status >= 200 && call.status < 300 ? 'bg-green-100 text-green-800' : ''}
+                        >
+                          {call.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className={call.duration < 500 ? 'text-green-600' : call.duration < 1000 ? 'text-yellow-600' : 'text-red-600'}>
+                          {formatTime(call.duration)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {new Date(call.timestamp).toLocaleTimeString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 资源加载标签页 */}
+        <TabsContent value="resources" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>资源加载记录</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>资源名称</TableHead>
+                    <TableHead>类型</TableHead>
+                    <TableHead>大小</TableHead>
+                    <TableHead>加载时间</TableHead>
+                    <TableHead>时间</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {metrics.resourceTimings.slice(-20).reverse().map((resource, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-mono text-sm">
+                        {resource.name.split('/').pop()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{resource.type}</Badge>
+                      </TableCell>
+                      <TableCell>{formatSize(resource.size)}</TableCell>
+                      <TableCell>
+                        <span className={resource.duration < 100 ? 'text-green-600' : resource.duration < 500 ? 'text-yellow-600' : 'text-red-600'}>
+                          {formatTime(resource.duration)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {new Date(resource.timestamp).toLocaleTimeString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 错误日志标签页 */}
+        <TabsContent value="errors" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>错误日志</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {metrics.errors.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Monitor className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>暂无错误记录</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {metrics.errors.slice(-10).reverse().map((error, index) => (
+                    <div key={index} className="border rounded-lg p-4 bg-red-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="destructive">{error.type}</Badge>
+                        <span className="text-sm text-gray-500">
+                          {new Date(error.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium text-red-800 mb-1">{error.message}</p>
+                      <p className="text-xs text-gray-600">{error.url}</p>
+                      {error.stack && (
+                        <details className="mt-2">
+                          <summary className="text-xs text-gray-500 cursor-pointer">查看堆栈</summary>
+                          <pre className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">{error.stack}</pre>
+                        </details>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}

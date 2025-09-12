@@ -1,495 +1,400 @@
 /**
- * 性能监控工具
- * 监控Core Web Vitals和其他性能指标
+ * 前端性能监控系统
+ * 监控页面加载、API调用、用户交互等关键性能指标
  */
 
-interface PerformanceMetrics {
-  lcp: number
-  fid: number
-  cls: number
-  inp: number
-  ttfb: number
-  fcp: number
-  tti: number
-  fmp: number
-}
-
-interface PerformanceEntry {
-  name: string
-  value: number
-  delta: number
-  id: string
-  navigationType: string
-}
-
-interface PerformanceObserver {
-  observe: (options: { entryTypes: string[] }) => void
-  disconnect: () => void
-  takeRecords: () => PerformanceEntry[]
+export interface PerformanceMetrics {
+  // 页面加载指标
+  pageLoadTime: number
+  domContentLoaded: number
+  firstContentfulPaint: number
+  largestContentfulPaint: number
+  firstInputDelay: number
+  cumulativeLayoutShift: number
+  
+  // API调用指标
+  apiCalls: Array<{
+    url: string
+    method: string
+    duration: number
+    status: number
+    timestamp: number
+  }>
+  
+  // 用户交互指标
+  userInteractions: Array<{
+    type: string
+    target: string
+    timestamp: number
+    duration?: number
+  }>
+  
+  // 资源加载指标
+  resourceTimings: Array<{
+    name: string
+    type: string
+    duration: number
+    size: number
+    timestamp: number
+  }>
+  
+  // 错误指标
+  errors: Array<{
+    type: string
+    message: string
+    stack?: string
+    timestamp: number
+    url: string
+  }>
 }
 
 class PerformanceMonitor {
-  private metrics: PerformanceMetrics = {
-    lcp: 0,
-    fid: 0,
-    cls: 0,
-    inp: 0,
-    ttfb: 0,
-    fcp: 0,
-    tti: 0,
-    fmp: 0
+  private metrics: PerformanceMetrics
+  private observers: PerformanceObserver[]
+  private isEnabled: boolean
+
+  constructor() {
+    this.metrics = {
+      pageLoadTime: 0,
+      domContentLoaded: 0,
+      firstContentfulPaint: 0,
+      largestContentfulPaint: 0,
+      firstInputDelay: 0,
+      cumulativeLayoutShift: 0,
+      apiCalls: [],
+      userInteractions: [],
+      resourceTimings: [],
+      errors: []
+    }
+    this.observers = []
+    this.isEnabled = true
+    
+    this.init()
   }
-  
-  private observers: PerformanceObserver[] = []
-  private isInitialized = false
-  
+
   /**
    * 初始化性能监控
    */
-  init(): void {
-    if (this.isInitialized || typeof window === 'undefined') {
-      return
-    }
+  private init(): void {
+    if (typeof window === 'undefined') return
+
+    // 监控页面加载性能
+    this.observePageLoad()
     
-    this.isInitialized = true
+    // 监控资源加载
+    this.observeResourceTiming()
     
-    // 监控Core Web Vitals
-    this.observeLCP()
-    this.observeFID()
-    this.observeCLS()
-    this.observeINP()
-    this.observeTTFB()
-    this.observeFCP()
-    this.observeTTI()
-    this.observeFMP()
+    // 监控用户交互
+    this.observeUserInteractions()
     
-    // 页面卸载时发送数据
-    window.addEventListener('beforeunload', () => {
-      this.sendMetrics()
-    })
+    // 监控错误
+    this.observeErrors()
     
-    // 定期发送数据
-    setInterval(() => {
-      this.sendMetrics()
-    }, 30000) // 30秒
+    // 监控API调用
+    this.interceptFetch()
+    this.interceptXMLHttpRequest()
   }
-  
+
   /**
-   * 观察最大内容绘制 (LCP)
+   * 监控页面加载性能
    */
-  private observeLCP(): void {
-    if (!('PerformanceObserver' in window)) return
-    
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries()
-      const lastEntry = entries[entries.length - 1] as PerformanceEntry
-      this.metrics.lcp = lastEntry.value
-    })
-    
-    observer.observe({ entryTypes: ['largest-contentful-paint'] })
-    this.observers.push(observer)
-  }
-  
-  /**
-   * 观察首次输入延迟 (FID)
-   */
-  private observeFID(): void {
-    if (!('PerformanceObserver' in window)) return
-    
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries()
-      entries.forEach((entry: PerformanceEntry) => {
-        this.metrics.fid = entry.processingStart - entry.startTime
-      })
-    })
-    
-    observer.observe({ entryTypes: ['first-input'] })
-    this.observers.push(observer)
-  }
-  
-  /**
-   * 观察累积布局偏移 (CLS)
-   */
-  private observeCLS(): void {
-    if (!('PerformanceObserver' in window)) return
-    
-    let clsValue = 0
-    
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries()
-      entries.forEach((entry: any) => {
-        if (!entry.hadRecentInput) {
-          clsValue += entry.value
-        }
-      })
-      this.metrics.cls = clsValue
-    })
-    
-    observer.observe({ entryTypes: ['layout-shift'] })
-    this.observers.push(observer)
-  }
-  
-  /**
-   * 观察交互到下次绘制 (INP)
-   */
-  private observeINP(): void {
-    if (!('PerformanceObserver' in window)) return
-    
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries()
-      entries.forEach((entry: PerformanceEntry) => {
-        this.metrics.inp = entry.processingEnd - entry.startTime
-      })
-    })
-    
-    observer.observe({ entryTypes: ['event'] })
-    this.observers.push(observer)
-  }
-  
-  /**
-   * 观察首字节时间 (TTFB)
-   */
-  private observeTTFB(): void {
-    if (!('PerformanceNavigationTiming' in window)) return
-    
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
-    if (navigation) {
-      this.metrics.ttfb = navigation.responseStart - navigation.requestStart
-    }
-  }
-  
-  /**
-   * 观察首次内容绘制 (FCP)
-   */
-  private observeFCP(): void {
-    if (!('PerformanceObserver' in window)) return
-    
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries()
-      const fcpEntry = entries.find(entry => entry.name === 'first-contentful-paint')
-      if (fcpEntry) {
-        this.metrics.fcp = fcpEntry.startTime
+  private observePageLoad(): void {
+    if (typeof window === 'undefined') return
+
+    window.addEventListener('load', () => {
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
+      if (navigation) {
+        this.metrics.pageLoadTime = navigation.loadEventEnd - navigation.fetchStart
+        this.metrics.domContentLoaded = navigation.domContentLoadedEventEnd - navigation.fetchStart
       }
     })
-    
-    observer.observe({ entryTypes: ['paint'] })
-    this.observers.push(observer)
+
+    // 监控 Core Web Vitals
+    this.observeCoreWebVitals()
   }
-  
+
   /**
-   * 观察可交互时间 (TTI)
+   * 监控 Core Web Vitals
    */
-  private observeTTI(): void {
-    if (!('PerformanceObserver' in window)) return
-    
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries()
-      entries.forEach((entry: PerformanceEntry) => {
-        if (entry.name === 'first-input') {
-          this.metrics.tti = entry.startTime
+  private observeCoreWebVitals(): void {
+    // First Contentful Paint (FCP)
+    const fcpObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.name === 'first-contentful-paint') {
+          this.metrics.firstContentfulPaint = entry.startTime
         }
+      }
+    })
+    fcpObserver.observe({ entryTypes: ['paint'] })
+    this.observers.push(fcpObserver)
+
+    // Largest Contentful Paint (LCP)
+    const lcpObserver = new PerformanceObserver((list) => {
+      const entries = list.getEntries()
+      const lastEntry = entries[entries.length - 1]
+      this.metrics.largestContentfulPaint = lastEntry.startTime
+    })
+    lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] })
+    this.observers.push(lcpObserver)
+
+    // First Input Delay (FID)
+    const fidObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        this.metrics.firstInputDelay = (entry as any).processingStart - entry.startTime
+      }
+    })
+    fidObserver.observe({ entryTypes: ['first-input'] })
+    this.observers.push(fidObserver)
+
+    // Cumulative Layout Shift (CLS)
+    let clsValue = 0
+    const clsObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (!(entry as any).hadRecentInput) {
+          clsValue += (entry as any).value
+        }
+      }
+      this.metrics.cumulativeLayoutShift = clsValue
+    })
+    clsObserver.observe({ entryTypes: ['layout-shift'] })
+    this.observers.push(clsObserver)
+  }
+
+  /**
+   * 监控资源加载
+   */
+  private observeResourceTiming(): void {
+    if (typeof window === 'undefined') return
+
+    const resourceObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const resource = entry as PerformanceResourceTiming
+        this.metrics.resourceTimings.push({
+          name: resource.name,
+          type: this.getResourceType(resource.name),
+          duration: resource.duration,
+          size: resource.transferSize || 0,
+          timestamp: resource.startTime
+        })
+      }
+    })
+    resourceObserver.observe({ entryTypes: ['resource'] })
+    this.observers.push(resourceObserver)
+  }
+
+  /**
+   * 获取资源类型
+   */
+  private getResourceType(url: string): string {
+    if (url.includes('.js')) return 'script'
+    if (url.includes('.css')) return 'stylesheet'
+    if (url.includes('.png') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.gif') || url.includes('.webp')) return 'image'
+    if (url.includes('.woff') || url.includes('.woff2') || url.includes('.ttf')) return 'font'
+    return 'other'
+  }
+
+  /**
+   * 监控用户交互
+   */
+  private observeUserInteractions(): void {
+    if (typeof window === 'undefined') return
+
+    const interactionTypes = ['click', 'keydown', 'scroll', 'resize']
+    
+    interactionTypes.forEach(type => {
+      window.addEventListener(type, (event) => {
+        this.metrics.userInteractions.push({
+          type,
+          target: (event.target as Element)?.tagName || 'unknown',
+          timestamp: Date.now()
+        })
       })
     })
-    
-    observer.observe({ entryTypes: ['first-input'] })
-    this.observers.push(observer)
   }
-  
+
   /**
-   * 观察首次有意义绘制 (FMP)
+   * 监控错误
    */
-  private observeFMP(): void {
-    if (!('PerformanceObserver' in window)) return
-    
-    const observer = new PerformanceObserver((list) => {
-      const entries = list.getEntries()
-      entries.forEach((entry: PerformanceEntry) => {
-        if (entry.name === 'first-meaningful-paint') {
-          this.metrics.fmp = entry.startTime
-        }
+  private observeErrors(): void {
+    if (typeof window === 'undefined') return
+
+    window.addEventListener('error', (event) => {
+      this.metrics.errors.push({
+        type: 'javascript',
+        message: event.message,
+        stack: event.error?.stack,
+        timestamp: Date.now(),
+        url: window.location.href
       })
     })
-    
-    observer.observe({ entryTypes: ['paint'] })
-    this.observers.push(observer)
+
+    window.addEventListener('unhandledrejection', (event) => {
+      this.metrics.errors.push({
+        type: 'promise',
+        message: event.reason?.message || 'Unhandled Promise Rejection',
+        stack: event.reason?.stack,
+        timestamp: Date.now(),
+        url: window.location.href
+      })
+    })
   }
-  
+
+  /**
+   * 拦截 fetch API
+   */
+  private interceptFetch(): void {
+    if (typeof window === 'undefined') return
+
+    const originalFetch = window.fetch
+    window.fetch = async (...args) => {
+      const startTime = performance.now()
+      const url = args[0] as string
+      const method = (args[1] as RequestInit)?.method || 'GET'
+      
+      try {
+        const response = await originalFetch(...args)
+        const duration = performance.now() - startTime
+        
+        this.metrics.apiCalls.push({
+          url,
+          method,
+          duration,
+          status: response.status,
+          timestamp: Date.now()
+        })
+        
+        return response
+      } catch (error) {
+        const duration = performance.now() - startTime
+        
+        this.metrics.apiCalls.push({
+          url,
+          method,
+          duration,
+          status: 0,
+          timestamp: Date.now()
+        })
+        
+        throw error
+      }
+    }
+  }
+
+  /**
+   * 拦截 XMLHttpRequest
+   */
+  private interceptXMLHttpRequest(): void {
+    if (typeof window === 'undefined') return
+
+    const originalOpen = XMLHttpRequest.prototype.open
+    const originalSend = XMLHttpRequest.prototype.send
+
+    XMLHttpRequest.prototype.open = function(method: string, url: string | URL) {
+      this._method = method
+      this._url = url.toString()
+      return originalOpen.apply(this, arguments as any)
+    }
+
+    XMLHttpRequest.prototype.send = function() {
+      const startTime = performance.now()
+      
+      this.addEventListener('loadend', () => {
+        const duration = performance.now() - startTime
+        monitor.recordApiCall({
+          url: this._url,
+          method: this._method,
+          duration,
+          status: this.status,
+          timestamp: Date.now()
+        })
+      })
+      
+      return originalSend.apply(this, arguments as any)
+    }
+  }
+
+  /**
+   * 记录API调用
+   */
+  public recordApiCall(call: PerformanceMetrics['apiCalls'][0]): void {
+    this.metrics.apiCalls.push(call)
+  }
+
   /**
    * 获取性能指标
    */
-  getMetrics(): PerformanceMetrics {
+  public getMetrics(): PerformanceMetrics {
     return { ...this.metrics }
   }
-  
-  /**
-   * 检查性能是否达标
-   */
-  checkPerformance(): boolean {
-    const { lcp, fid, cls, inp } = this.metrics
-    
-    return (
-      lcp < 2500 && // LCP < 2.5s
-      fid < 100 &&  // FID < 100ms
-      cls < 0.1 &&  // CLS < 0.1
-      inp < 200     // INP < 200ms
-    )
-  }
-  
-  /**
-   * 获取性能等级
-   */
-  getPerformanceGrade(): 'A' | 'B' | 'C' | 'D' | 'F' {
-    const { lcp, fid, cls, inp } = this.metrics
-    
-    let score = 0
-    
-    // LCP评分
-    if (lcp < 2500) score += 25
-    else if (lcp < 4000) score += 15
-    else if (lcp < 6000) score += 5
-    
-    // FID评分
-    if (fid < 100) score += 25
-    else if (fid < 300) score += 15
-    else if (fid < 500) score += 5
-    
-    // CLS评分
-    if (cls < 0.1) score += 25
-    else if (cls < 0.25) score += 15
-    else if (cls < 0.4) score += 5
-    
-    // INP评分
-    if (inp < 200) score += 25
-    else if (inp < 500) score += 15
-    else if (inp < 1000) score += 5
-    
-    if (score >= 90) return 'A'
-    if (score >= 80) return 'B'
-    if (score >= 70) return 'C'
-    if (score >= 60) return 'D'
-    return 'F'
-  }
-  
+
   /**
    * 获取性能报告
    */
-  getPerformanceReport(): {
-    metrics: PerformanceMetrics
-    grade: string
-    isPassing: boolean
-    recommendations: string[]
+  public getReport(): {
+    summary: {
+      pageLoadTime: number
+      averageApiResponseTime: number
+      errorCount: number
+      resourceCount: number
+    }
+    details: PerformanceMetrics
   } {
-    const metrics = this.getMetrics()
-    const grade = this.getPerformanceGrade()
-    const isPassing = this.checkPerformance()
-    const recommendations = this.getRecommendations()
-    
+    const apiCalls = this.metrics.apiCalls
+    const averageApiResponseTime = apiCalls.length > 0 
+      ? apiCalls.reduce((sum, call) => sum + call.duration, 0) / apiCalls.length 
+      : 0
+
     return {
-      metrics,
-      grade,
-      isPassing,
-      recommendations
+      summary: {
+        pageLoadTime: this.metrics.pageLoadTime,
+        averageApiResponseTime,
+        errorCount: this.metrics.errors.length,
+        resourceCount: this.metrics.resourceTimings.length
+      },
+      details: this.metrics
     }
   }
-  
-  /**
-   * 获取性能优化建议
-   */
-  private getRecommendations(): string[] {
-    const recommendations: string[] = []
-    const { lcp, fid, cls, inp, ttfb, fcp } = this.metrics
-    
-    if (lcp > 2500) {
-      recommendations.push('优化最大内容绘制 (LCP): 优化图片加载、减少阻塞资源、使用CDN')
-    }
-    
-    if (fid > 100) {
-      recommendations.push('优化首次输入延迟 (FID): 减少JavaScript执行时间、使用代码分割')
-    }
-    
-    if (cls > 0.1) {
-      recommendations.push('优化累积布局偏移 (CLS): 为图片和广告设置尺寸、避免动态插入内容')
-    }
-    
-    if (inp > 200) {
-      recommendations.push('优化交互到下次绘制 (INP): 减少长时间任务、优化事件处理')
-    }
-    
-    if (ttfb > 600) {
-      recommendations.push('优化首字节时间 (TTFB): 使用CDN、优化服务器响应、启用缓存')
-    }
-    
-    if (fcp > 1800) {
-      recommendations.push('优化首次内容绘制 (FCP): 减少阻塞资源、优化关键渲染路径')
-    }
-    
-    return recommendations
-  }
-  
-  /**
-   * 发送性能数据
-   */
-  sendMetrics(): void {
-    if (typeof window === 'undefined') return
-    
-    const report = this.getPerformanceReport()
-    
-    // 使用sendBeacon发送数据
-    if (navigator.sendBeacon) {
-      const data = JSON.stringify({
-        ...report,
-        timestamp: Date.now(),
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        connection: (navigator as any).connection?.effectiveType || 'unknown'
-      })
-      
-      navigator.sendBeacon('/api/performance', data)
-    } else {
-      // 降级到fetch
-      fetch('/api/performance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...report,
-          timestamp: Date.now(),
-          url: window.location.href,
-          userAgent: navigator.userAgent,
-          connection: (navigator as any).connection?.effectiveType || 'unknown'
-        })
-      }).catch(console.error)
-    }
-  }
-  
-  /**
-   * 清理观察器
-   */
-  cleanup(): void {
-    this.observers.forEach(observer => {
-      observer.disconnect()
-    })
-    this.observers = []
-  }
-  
+
   /**
    * 重置指标
    */
-  reset(): void {
+  public reset(): void {
     this.metrics = {
-      lcp: 0,
-      fid: 0,
-      cls: 0,
-      inp: 0,
-      ttfb: 0,
-      fcp: 0,
-      tti: 0,
-      fmp: 0
+      pageLoadTime: 0,
+      domContentLoaded: 0,
+      firstContentfulPaint: 0,
+      largestContentfulPaint: 0,
+      firstInputDelay: 0,
+      cumulativeLayoutShift: 0,
+      apiCalls: [],
+      userInteractions: [],
+      resourceTimings: [],
+      errors: []
     }
   }
-}
 
-/**
- * 创建性能监控实例
- */
-export const performanceMonitor = new PerformanceMonitor()
-
-/**
- * 性能监控Hook
- */
-export function usePerformanceMonitor() {
-  const [metrics, setMetrics] = useState<PerformanceMetrics>({
-    lcp: 0,
-    fid: 0,
-    cls: 0,
-    inp: 0,
-    ttfb: 0,
-    fcp: 0,
-    tti: 0,
-    fmp: 0
-  })
-  
-  const [isPassing, setIsPassing] = useState(false)
-  const [grade, setGrade] = useState<'A' | 'B' | 'C' | 'D' | 'F'>('F')
-  
-  useEffect(() => {
-    // 初始化性能监控
-    performanceMonitor.init()
-    
-    // 定期更新指标
-    const interval = setInterval(() => {
-      const currentMetrics = performanceMonitor.getMetrics()
-      const currentIsPassing = performanceMonitor.checkPerformance()
-      const currentGrade = performanceMonitor.getPerformanceGrade()
-      
-      setMetrics(currentMetrics)
-      setIsPassing(currentIsPassing)
-      setGrade(currentGrade)
-    }, 1000)
-    
-    return () => {
-      clearInterval(interval)
-      performanceMonitor.cleanup()
+  /**
+   * 启用/禁用监控
+   */
+  public setEnabled(enabled: boolean): void {
+    this.isEnabled = enabled
+    if (!enabled) {
+      this.observers.forEach(observer => observer.disconnect())
     }
-  }, [])
-  
-  return {
-    metrics,
-    isPassing,
-    grade,
-    getReport: () => performanceMonitor.getPerformanceReport(),
-    sendMetrics: () => performanceMonitor.sendMetrics()
+  }
+
+  /**
+   * 销毁监控器
+   */
+  public destroy(): void {
+    this.observers.forEach(observer => observer.disconnect())
+    this.observers = []
   }
 }
 
-/**
- * 性能监控组件
- */
-export function PerformanceMonitorComponent() {
-  const { metrics, isPassing, grade, getReport } = usePerformanceMonitor()
-  
-  if (process.env.NODE_ENV !== 'development') {
-    return null
-  }
-  
-  const report = getReport()
-  
-  return (
-    <div className="fixed bottom-4 right-4 bg-background border rounded-lg p-4 shadow-lg z-50 max-w-sm">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-sm">性能监控</h3>
-        <span className={`text-xs px-2 py-1 rounded ${
-          isPassing ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {grade}
-        </span>
-      </div>
-      
-      <div className="space-y-1 text-xs">
-        <div>LCP: {metrics.lcp.toFixed(0)}ms</div>
-        <div>FID: {metrics.fid.toFixed(0)}ms</div>
-        <div>CLS: {metrics.cls.toFixed(3)}</div>
-        <div>INP: {metrics.inp.toFixed(0)}ms</div>
-        <div>TTFB: {metrics.ttfb.toFixed(0)}ms</div>
-        <div>FCP: {metrics.fcp.toFixed(0)}ms</div>
-      </div>
-      
-      {report.recommendations.length > 0 && (
-        <div className="mt-2">
-          <div className="text-xs font-medium text-muted-foreground mb-1">建议:</div>
-          <ul className="text-xs space-y-1">
-            {report.recommendations.slice(0, 2).map((rec, index) => (
-              <li key={index} className="text-muted-foreground">• {rec}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  )
-}
+// 创建全局实例
+export const monitor = new PerformanceMonitor()
 
-/**
- * 默认导出
- */
-export default performanceMonitor
+// 导出类型和实例
+export type { PerformanceMetrics }
+export { PerformanceMonitor }

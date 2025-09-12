@@ -1,15 +1,22 @@
 /**
  * 分页组件
- * 基于 shadcn/ui Pagination 的包装组件
+ * 基于 shadcn/ui Pagination 组件实现，减少自定义代码
  */
 
 'use client'
 
 import React from 'react'
-import { Button } from '@/components/ui/button'
+import {
+  Pagination as ShadcnPagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { PaginationProps } from './types'
 
@@ -29,37 +36,6 @@ const Pagination = ({
   style,
   ...props
 }: PaginationProps) => {
-  // 计算显示范围
-  const getVisiblePages = () => {
-    const delta = 2
-    const range = []
-    const rangeWithDots = []
-
-    for (
-      let i = Math.max(2, currentPage - delta);
-      i <= Math.min(totalPages - 1, currentPage + delta);
-      i++
-    ) {
-      range.push(i)
-    }
-
-    if (currentPage - delta > 2) {
-      rangeWithDots.push(1, '...')
-    } else {
-      rangeWithDots.push(1)
-    }
-
-    rangeWithDots.push(...range)
-
-    if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push('...', totalPages)
-    } else if (totalPages > 1) {
-      rangeWithDots.push(totalPages)
-    }
-
-    return rangeWithDots
-  }
-
   // 处理页码变化
   const handlePageChange = (page: number) => {
     if (disabled || page < 1 || page > totalPages || page === currentPage) return
@@ -89,7 +65,6 @@ const Pagination = ({
     return null
   }
 
-  const visiblePages = getVisiblePages()
   const startItem = (currentPage - 1) * itemsPerPage + 1
   const endItem = Math.min(currentPage * itemsPerPage, totalItems)
 
@@ -110,7 +85,7 @@ const Pagination = ({
       )}
 
       {/* 分页控件 */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
         {/* 每页数量选择 */}
         {showSizeChanger && (
           <div className="flex items-center gap-2">
@@ -135,71 +110,58 @@ const Pagination = ({
           </div>
         )}
 
-        {/* 页码按钮 */}
-        <div className="flex items-center gap-1">
-          {/* 首页 */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(1)}
-            disabled={disabled || currentPage === 1}
-            className="h-8 w-8 p-0"
-          >
-            <ChevronsLeft className="h-4 w-4" />
-          </Button>
+        {/* 使用shadcn/ui Pagination组件 */}
+        <ShadcnPagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  handlePageChange(currentPage - 1)
+                }}
+                className={disabled || currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
 
-          {/* 上一页 */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={disabled || currentPage === 1}
-            className="h-8 w-8 p-0"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+            {/* 页码 */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const page = i + 1
+              return (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handlePageChange(page)
+                    }}
+                    isActive={currentPage === page}
+                    className={disabled ? 'pointer-events-none opacity-50' : ''}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            })}
 
-          {/* 页码 */}
-          {visiblePages.map((page, index) => (
-            <React.Fragment key={index}>
-              {page === '...' ? (
-                <span className="px-2 py-1 text-muted-foreground">...</span>
-              ) : (
-                <Button
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePageChange(page as number)}
-                  disabled={disabled}
-                  className="h-8 w-8 p-0"
-                >
-                  {page}
-                </Button>
-              )}
-            </React.Fragment>
-          ))}
+            {totalPages > 5 && (
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+            )}
 
-          {/* 下一页 */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={disabled || currentPage === totalPages}
-            className="h-8 w-8 p-0"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-
-          {/* 末页 */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(totalPages)}
-            disabled={disabled || currentPage === totalPages}
-            className="h-8 w-8 p-0"
-          >
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
-        </div>
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  handlePageChange(currentPage + 1)
+                }}
+                className={disabled || currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </ShadcnPagination>
 
         {/* 快速跳转 */}
         {showQuickJumper && (

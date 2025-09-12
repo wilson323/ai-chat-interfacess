@@ -11,7 +11,7 @@ import rehypeRaw from "rehype-raw"
 import { Button } from "@/components/ui/button"
 import { Copy, Check, ExternalLink, Loader2, X } from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
-import { ErrorBoundary } from "@/components/ErrorBoundary"
+import { ErrorBoundary } from "@/components/error-boundary"
 import rehypeHighlight from "rehype-highlight"
 
 interface MarkdownMessageProps {
