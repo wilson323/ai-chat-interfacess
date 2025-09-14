@@ -4,7 +4,11 @@
  */
 
 import { GET, POST, PUT, DELETE } from '@/app/api/chat-history/route';
-import { TestRequestBuilder, testValidators, TestFixtures } from '@/__tests__/utils/api-test-utils';
+import {
+  TestRequestBuilder,
+  testValidators,
+  TestFixtures,
+} from '@/__tests__/utils/api-test-utils';
 
 // Mock database models
 jest.mock('@/lib/db/models/chat-history', () => ({
@@ -61,7 +65,10 @@ describe('Chat History API - Unit Tests', () => {
         rows: mockHistoryData,
       });
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
       const response = await GET(request);
       const data = await response.json();
 
@@ -109,7 +116,10 @@ describe('Chat History API - Unit Tests', () => {
     });
 
     it('should return empty data for user interface requests', async () => {
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
       request.headers.set('referer', 'http://localhost:3000/user/chat');
 
       const response = await GET(request);
@@ -126,7 +136,10 @@ describe('Chat History API - Unit Tests', () => {
       const dbError = new Error('Database connection failed');
       mockChatHistory.findAndCountAll.mockRejectedValue(dbError);
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
       const response = await GET(request);
       const data = await response.json();
 
@@ -160,7 +173,10 @@ describe('Chat History API - Unit Tests', () => {
         rows: mockHistoryData,
       });
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
       const response = await GET(request);
       const data = await response.json();
 
@@ -184,14 +200,19 @@ describe('Chat History API - Unit Tests', () => {
         rows: mockHistoryData,
       });
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.list[0].messages).toHaveLength(2);
       expect(data.list[0].messages[0]).toHaveProperty('message_id');
-      expect(data.list[0].messages[0].message_id).toMatch(/^msg_\d+_[a-z0-9]+$/);
+      expect(data.list[0].messages[0].message_id).toMatch(
+        /^msg_\d+_[a-z0-9]+$/
+      );
       expect(data.list[0].messages[1].parentId).toBe('some-parent');
     });
 
@@ -282,7 +303,11 @@ describe('Chat History API - Unit Tests', () => {
       mockAgentConfig.findByPk.mockResolvedValue(mockAgent);
       mockChatHistory.create.mockResolvedValue(createdHistory);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/chat-history', newHistoryData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/chat-history',
+        newHistoryData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -302,7 +327,11 @@ describe('Chat History API - Unit Tests', () => {
 
       mockAgentConfig.findByPk.mockResolvedValue(null);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/chat-history', newHistoryData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/chat-history',
+        newHistoryData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -319,7 +348,11 @@ describe('Chat History API - Unit Tests', () => {
         // Missing userId
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/chat-history', newHistoryData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/chat-history',
+        newHistoryData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -343,7 +376,11 @@ describe('Chat History API - Unit Tests', () => {
       mockAgentConfig.findByPk.mockResolvedValue(mockAgent);
       mockChatHistory.create.mockRejectedValue(dbError);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/chat-history', newHistoryData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/chat-history',
+        newHistoryData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -353,7 +390,10 @@ describe('Chat History API - Unit Tests', () => {
     });
 
     it('should handle invalid JSON in request body', async () => {
-      const request = TestRequestBuilder.createRequest('POST', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/chat-history'
+      );
       // Simulate invalid JSON by making json() throw
       request.json = jest.fn().mockRejectedValue(new Error('Invalid JSON'));
 
@@ -388,7 +428,11 @@ describe('Chat History API - Unit Tests', () => {
       mockChatHistory.findOne.mockResolvedValue(existingHistory);
       mockChatHistory.update.mockResolvedValue([1, [updatedHistory]]);
 
-      const request = TestRequestBuilder.createRequest('PUT', '/api/chat-history', updateData);
+      const request = TestRequestBuilder.createRequest(
+        'PUT',
+        '/api/chat-history',
+        updateData
+      );
       const response = await PUT(request);
       const data = await response.json();
 
@@ -412,7 +456,11 @@ describe('Chat History API - Unit Tests', () => {
         // Missing chatId and userId
       };
 
-      const request = TestRequestBuilder.createRequest('PUT', '/api/chat-history', updateData);
+      const request = TestRequestBuilder.createRequest(
+        'PUT',
+        '/api/chat-history',
+        updateData
+      );
       const response = await PUT(request);
       const data = await response.json();
 
@@ -430,7 +478,11 @@ describe('Chat History API - Unit Tests', () => {
 
       mockChatHistory.findOne.mockResolvedValue(null);
 
-      const request = TestRequestBuilder.createRequest('PUT', '/api/chat-history', updateData);
+      const request = TestRequestBuilder.createRequest(
+        'PUT',
+        '/api/chat-history',
+        updateData
+      );
       const response = await PUT(request);
       const data = await response.json();
 
@@ -446,13 +498,20 @@ describe('Chat History API - Unit Tests', () => {
         messages: [{ role: 'user', content: 'Updated message' }],
       };
 
-      const existingHistory = TestFixtures.createChatHistory({ id: 1, ...updateData });
+      const existingHistory = TestFixtures.createChatHistory({
+        id: 1,
+        ...updateData,
+      });
       const dbError = new Error('Database update failed');
 
       mockChatHistory.findOne.mockResolvedValue(existingHistory);
       mockChatHistory.update.mockRejectedValue(dbError);
 
-      const request = TestRequestBuilder.createRequest('PUT', '/api/chat-history', updateData);
+      const request = TestRequestBuilder.createRequest(
+        'PUT',
+        '/api/chat-history',
+        updateData
+      );
       const response = await PUT(request);
       const data = await response.json();
 
@@ -482,7 +541,10 @@ describe('Chat History API - Unit Tests', () => {
     });
 
     it('should validate required chatId and userId parameters', async () => {
-      const request = TestRequestBuilder.createRequest('DELETE', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'DELETE',
+        '/api/chat-history'
+      );
       const response = await DELETE(request);
       const data = await response.json();
 
@@ -549,30 +611,48 @@ describe('Chat History API - Unit Tests', () => {
 
   describe('Cleanup functionality', () => {
     it('should call cleanup function for all HTTP methods', async () => {
-      const cleanupSpy = jest.spyOn(require('@/app/api/chat-history/route'), 'cleanupOldHistory');
+      const cleanupSpy = jest.spyOn(
+        require('@/app/api/chat-history/route'),
+        'cleanupOldHistory'
+      );
       cleanupSpy.mockResolvedValue(undefined);
 
       // Test each method calls cleanup
-      const getRequest = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const getRequest = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
       mockChatHistory.findAndCountAll.mockResolvedValue({ count: 0, rows: [] });
       await GET(getRequest);
 
-      const postRequest = TestRequestBuilder.createRequest('POST', '/api/chat-history', {
-        chatId: 'test',
-        userId: 'user-1',
-        agentId: 'agent-1',
-        messages: [],
-      });
+      const postRequest = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/chat-history',
+        {
+          chatId: 'test',
+          userId: 'user-1',
+          agentId: 'agent-1',
+          messages: [],
+        }
+      );
       mockAgentConfig.findByPk.mockResolvedValue(TestFixtures.createAgent());
-      mockChatHistory.create.mockResolvedValue(TestFixtures.createChatHistory());
+      mockChatHistory.create.mockResolvedValue(
+        TestFixtures.createChatHistory()
+      );
       await POST(postRequest);
 
-      const putRequest = TestRequestBuilder.createRequest('PUT', '/api/chat-history', {
-        chatId: 'test',
-        userId: 'user-1',
-        messages: [],
-      });
-      mockChatHistory.findOne.mockResolvedValue(TestFixtures.createChatHistory());
+      const putRequest = TestRequestBuilder.createRequest(
+        'PUT',
+        '/api/chat-history',
+        {
+          chatId: 'test',
+          userId: 'user-1',
+          messages: [],
+        }
+      );
+      mockChatHistory.findOne.mockResolvedValue(
+        TestFixtures.createChatHistory()
+      );
       await PUT(putRequest);
 
       const deleteRequest = TestRequestBuilder.createRequest(
@@ -586,13 +666,19 @@ describe('Chat History API - Unit Tests', () => {
     });
 
     it('should handle cleanup errors gracefully', async () => {
-      const cleanupSpy = jest.spyOn(require('@/app/api/chat-history/route'), 'cleanupOldHistory');
+      const cleanupSpy = jest.spyOn(
+        require('@/app/api/chat-history/route'),
+        'cleanupOldHistory'
+      );
       const cleanupError = new Error('Cleanup failed');
       cleanupSpy.mockRejectedValue(cleanupError);
 
       mockChatHistory.findAndCountAll.mockResolvedValue({ count: 0, rows: [] });
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
       const response = await GET(request);
 
       expect(response.status).toBe(200);
@@ -619,7 +705,10 @@ describe('Chat History API - Unit Tests', () => {
         rows: mockHistoryData,
       });
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
 
       const startTime = process.hrtime.bigint();
       const response = await GET(request);
@@ -635,10 +724,15 @@ describe('Chat History API - Unit Tests', () => {
     it('should respond within 200ms for normal operations', async () => {
       mockChatHistory.findAndCountAll.mockResolvedValue({
         count: 10,
-        rows: Array.from({ length: 10 }, () => TestFixtures.createChatHistory()),
+        rows: Array.from({ length: 10 }, () =>
+          TestFixtures.createChatHistory()
+        ),
       });
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
 
       const startTime = process.hrtime.bigint();
       await GET(request);
@@ -656,7 +750,11 @@ describe('Chat History API - Unit Tests', () => {
       const mockHistoryData = [
         TestFixtures.createChatHistory({
           messages: [
-            { id: 'msg-1', role: 'user', content: '<script>alert("xss")</script>' },
+            {
+              id: 'msg-1',
+              role: 'user',
+              content: '<script>alert("xss")</script>',
+            },
             { id: 'msg-2', role: 'assistant', content: 'Safe response' },
           ],
         }),
@@ -667,13 +765,18 @@ describe('Chat History API - Unit Tests', () => {
         rows: mockHistoryData,
       });
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/chat-history');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/chat-history'
+      );
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       // Content should be included (sanitization should happen at DB level)
-      expect(data.list[0].messages[0].content).toBe('<script>alert("xss")</script>');
+      expect(data.list[0].messages[0].content).toBe(
+        '<script>alert("xss")</script>'
+      );
     });
 
     it('should prevent SQL injection in search parameters', async () => {
@@ -684,7 +787,7 @@ describe('Chat History API - Unit Tests', () => {
 
       const request = TestRequestBuilder.createRequest(
         'GET',
-        '/api/chat-history?keyword=\'; DROP TABLE users; --'
+        "/api/chat-history?keyword='; DROP TABLE users; --"
       );
       const response = await GET(request);
 
@@ -693,7 +796,9 @@ describe('Chat History API - Unit Tests', () => {
       expect(mockChatHistory.findAndCountAll).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            messages: { [require('sequelize').Op.iLike]: '%\'; DROP TABLE users; --%' },
+            messages: {
+              [require('sequelize').Op.iLike]: "%'; DROP TABLE users; --%",
+            },
           },
         })
       );

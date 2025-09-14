@@ -810,4 +810,3 @@ export type {
   PerformanceSummary,
   PerformanceConfig,
 };
-export { PerformanceMonitor };

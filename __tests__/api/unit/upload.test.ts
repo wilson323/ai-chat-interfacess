@@ -4,7 +4,10 @@
  */
 
 import { POST } from '@/app/api/upload/route';
-import { TestRequestBuilder, testValidators } from '@/__tests__/utils/api-test-utils';
+import {
+  TestRequestBuilder,
+  testValidators,
+} from '@/__tests__/utils/api-test-utils';
 
 // Mock dependencies
 jest.mock('@/lib/config', () => ({
@@ -67,7 +70,9 @@ describe('Upload API - Unit Tests', () => {
       expect(data.data).toHaveProperty('mimeType', 'image/jpeg');
       expect(data.data).toHaveProperty('path');
 
-      expect(mockFs.mkdir).toHaveBeenCalledWith('/tmp/uploads', { recursive: true });
+      expect(mockFs.mkdir).toHaveBeenCalledWith('/tmp/uploads', {
+        recursive: true,
+      });
       expect(mockFs.writeFile).toHaveBeenCalled();
     });
 
@@ -110,7 +115,11 @@ describe('Upload API - Unit Tests', () => {
       const data = await response.json();
 
       expect(response.status).toBe(415);
-      testValidators.validateErrorResponse(data, undefined, 'Invalid file type');
+      testValidators.validateErrorResponse(
+        data,
+        undefined,
+        'Invalid file type'
+      );
     });
 
     it('should handle missing file in request', async () => {
@@ -149,7 +158,11 @@ describe('Upload API - Unit Tests', () => {
       const data = await response.json();
 
       expect(response.status).toBe(500);
-      testValidators.validateErrorResponse(data, undefined, 'Failed to save file');
+      testValidators.validateErrorResponse(
+        data,
+        undefined,
+        'Failed to save file'
+      );
     });
 
     it('should sanitize file names to prevent path traversal', async () => {
@@ -179,10 +192,14 @@ describe('Upload API - Unit Tests', () => {
 
     describe('File size validation', () => {
       it('should handle exactly maximum size', async () => {
-        const maxSizeFile = new File(['x'.repeat(10 * 1024 * 1024)], 'max.jpg', {
-          type: 'image/jpeg',
-          size: 10 * 1024 * 1024,
-        });
+        const maxSizeFile = new File(
+          ['x'.repeat(10 * 1024 * 1024)],
+          'max.jpg',
+          {
+            type: 'image/jpeg',
+            size: 10 * 1024 * 1024,
+          }
+        );
 
         mockFs.mkdir.mockResolvedValue(undefined);
         mockFs.writeFile.mockResolvedValue(undefined);
@@ -223,19 +240,31 @@ describe('Upload API - Unit Tests', () => {
     });
 
     describe('File type validation', () => {
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+      const validTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'application/pdf',
+      ];
 
       validTypes.forEach(type => {
         it(`should accept valid file type: ${type}`, async () => {
-          const mockFile = new File(['test content'], `test.${type.split('/')[1]}`, {
-            type,
-            size: 1024,
-          });
+          const mockFile = new File(
+            ['test content'],
+            `test.${type.split('/')[1]}`,
+            {
+              type,
+              size: 1024,
+            }
+          );
 
           mockFs.mkdir.mockResolvedValue(undefined);
           mockFs.writeFile.mockResolvedValue(undefined);
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/upload');
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/upload'
+          );
           Object.defineProperty(request, 'formData', {
             value: jest.fn().mockResolvedValue({
               get: () => mockFile,
@@ -263,7 +292,10 @@ describe('Upload API - Unit Tests', () => {
             size: 1024,
           });
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/upload');
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/upload'
+          );
           Object.defineProperty(request, 'formData', {
             value: jest.fn().mockResolvedValue({
               get: () => mockFile,
@@ -297,7 +329,10 @@ describe('Upload API - Unit Tests', () => {
           mockFs.mkdir.mockResolvedValue(undefined);
           mockFs.writeFile.mockResolvedValue(undefined);
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/upload');
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/upload'
+          );
           Object.defineProperty(request, 'formData', {
             value: jest.fn().mockResolvedValue({
               get: () => mockFile,
@@ -326,7 +361,11 @@ describe('Upload API - Unit Tests', () => {
         const data = await response.json();
 
         expect(response.status).toBe(400);
-        testValidators.validateErrorResponse(data, undefined, 'Invalid form data');
+        testValidators.validateErrorResponse(
+          data,
+          undefined,
+          'Invalid form data'
+        );
       });
 
       it('should handle file system permission errors', async () => {
@@ -349,7 +388,11 @@ describe('Upload API - Unit Tests', () => {
         const data = await response.json();
 
         expect(response.status).toBe(500);
-        testValidators.validateErrorResponse(data, undefined, 'Permission denied');
+        testValidators.validateErrorResponse(
+          data,
+          undefined,
+          'Permission denied'
+        );
       });
 
       it('should handle disk space errors', async () => {
@@ -358,7 +401,9 @@ describe('Upload API - Unit Tests', () => {
           size: 1024,
         });
 
-        mockFs.mkdir.mockRejectedValue(new Error('ENOSPC: no space left on device'));
+        mockFs.mkdir.mockRejectedValue(
+          new Error('ENOSPC: no space left on device')
+        );
 
         const request = TestRequestBuilder.createRequest('POST', '/api/upload');
         Object.defineProperty(request, 'formData', {
@@ -372,7 +417,11 @@ describe('Upload API - Unit Tests', () => {
         const data = await response.json();
 
         expect(response.status).toBe(507);
-        testValidators.validateErrorResponse(data, undefined, 'Insufficient storage');
+        testValidators.validateErrorResponse(
+          data,
+          undefined,
+          'Insufficient storage'
+        );
       });
     });
 

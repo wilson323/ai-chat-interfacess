@@ -1,7 +1,7 @@
 import ChatSession from './ChatSession';
 import ChatMessage from './ChatMessage';
-import User from './user';
-import OperationLog from './operation-log';
+import User, { UserRole, UserStatus } from './user';
+import OperationLog, { OperationStatus } from './operation-log';
 import AgentConfig from './agent-config';
 import UserGeo from './user-geo';
 import AgentUsage from './agent-usage';

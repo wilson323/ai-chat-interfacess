@@ -4,7 +4,11 @@
  */
 
 import { GET } from '@/app/api/agent-config/route';
-import { TestRequestBuilder, testValidators, TestFixtures } from '@/__tests__/utils/api-test-utils';
+import {
+  TestRequestBuilder,
+  testValidators,
+  TestFixtures,
+} from '@/__tests__/utils/api-test-utils';
 
 // Mock the AgentConfig model
 jest.mock('@/lib/db/models/agent-config', () => ({
@@ -43,7 +47,10 @@ describe('Agent Config API - Unit Tests', () => {
 
       mockAgentConfig.findAll.mockResolvedValue(mockAgents);
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/agent-config'
+      );
       const response = await GET(request);
       const data = await response.json();
 
@@ -87,7 +94,10 @@ describe('Agent Config API - Unit Tests', () => {
     it('should handle empty agent list', async () => {
       mockAgentConfig.findAll.mockResolvedValue([]);
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/agent-config'
+      );
       const response = await GET(request);
       const data = await response.json();
 
@@ -105,7 +115,10 @@ describe('Agent Config API - Unit Tests', () => {
 
       mockAgentConfig.findAll.mockResolvedValue(mockAgents);
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/agent-config'
+      );
       const response = await GET(request);
       const data = await response.json();
 
@@ -118,7 +131,10 @@ describe('Agent Config API - Unit Tests', () => {
       const dbError = new Error('Database connection failed');
       mockAgentConfig.findAll.mockRejectedValue(dbError);
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/agent-config'
+      );
       const response = await GET(request);
       const data = await response.json();
 
@@ -143,7 +159,10 @@ describe('Agent Config API - Unit Tests', () => {
 
       mockAgentConfig.findAll.mockResolvedValue(mockAgents);
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/agent-config'
+      );
       const response = await GET(request);
 
       expect(response.status).toBe(500);
@@ -162,7 +181,10 @@ describe('Agent Config API - Unit Tests', () => {
 
         mockAgentConfig.findAll.mockResolvedValue([minimalAgent]);
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/agent-config'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -175,7 +197,9 @@ describe('Agent Config API - Unit Tests', () => {
         expect(agent.order).toBe(100);
         expect(agent.apiKey).toBe('');
         expect(agent.appId).toBe('');
-        expect(agent.apiUrl).toBe('https://zktecoaihub.com/api/v1/chat/completions');
+        expect(agent.apiUrl).toBe(
+          'https://zktecoaihub.com/api/v1/chat/completions'
+        );
         expect(agent.systemPrompt).toBe('');
         expect(agent.temperature).toBe(0.7);
         expect(agent.maxTokens).toBe(2000);
@@ -207,7 +231,10 @@ describe('Agent Config API - Unit Tests', () => {
 
         mockAgentConfig.findAll.mockResolvedValue([completeAgent]);
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/agent-config'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -225,7 +252,9 @@ describe('Agent Config API - Unit Tests', () => {
         expect(agent.temperature).toBe(0.9);
         expect(agent.maxTokens).toBe(1500);
         expect(agent.multimodalModel).toBe('gpt-4-vision');
-        expect(agent.globalVariables).toEqual([{ key: 'model', value: 'gpt-4' }]);
+        expect(agent.globalVariables).toEqual([
+          { key: 'model', value: 'gpt-4' },
+        ]);
         expect(agent.welcomeText).toBe('Hello! How can I help you?');
       });
     });
@@ -233,14 +262,29 @@ describe('Agent Config API - Unit Tests', () => {
     describe('Ordering', () => {
       it('should respect the order and updatedAt ordering', async () => {
         const mockAgents = [
-          TestFixtures.createAgent({ id: 'agent-2', order: 2, updatedAt: new Date('2024-01-02') }),
-          TestFixtures.createAgent({ id: 'agent-1', order: 1, updatedAt: new Date('2024-01-01') }),
-          TestFixtures.createAgent({ id: 'agent-3', order: 2, updatedAt: new Date('2024-01-03') }),
+          TestFixtures.createAgent({
+            id: 'agent-2',
+            order: 2,
+            updatedAt: new Date('2024-01-02'),
+          }),
+          TestFixtures.createAgent({
+            id: 'agent-1',
+            order: 1,
+            updatedAt: new Date('2024-01-01'),
+          }),
+          TestFixtures.createAgent({
+            id: 'agent-3',
+            order: 2,
+            updatedAt: new Date('2024-01-03'),
+          }),
         ];
 
         mockAgentConfig.findAll.mockResolvedValue(mockAgents);
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/agent-config'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -256,7 +300,10 @@ describe('Agent Config API - Unit Tests', () => {
 
         mockAgentConfig.findAll.mockResolvedValue([mockAgent]);
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/agent-config'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -272,12 +319,17 @@ describe('Agent Config API - Unit Tests', () => {
 
         mockAgentConfig.findAll.mockResolvedValue([mockAgent]);
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/agent-config'
+        );
         const response = await GET(request);
         const data = await response.json();
 
         expect(response.status).toBe(200);
-        expect(data.data[0].globalVariables).toEqual([{ key: 'test', value: 'data' }]);
+        expect(data.data[0].globalVariables).toEqual([
+          { key: 'test', value: 'data' },
+        ]);
       });
     });
 
@@ -293,7 +345,10 @@ describe('Agent Config API - Unit Tests', () => {
 
         mockAgentConfig.findAll.mockResolvedValue([mockAgent]);
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/agent-config'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -318,7 +373,10 @@ describe('Agent Config API - Unit Tests', () => {
 
         mockAgentConfig.findAll.mockResolvedValue([mockAgent]);
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/agent-config'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -342,7 +400,10 @@ describe('Agent Config API - Unit Tests', () => {
 
         mockAgentConfig.findAll.mockResolvedValue(mockAgents);
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/agent-config');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/agent-config'
+        );
 
         const startTime = process.hrtime.bigint();
         await GET(request);

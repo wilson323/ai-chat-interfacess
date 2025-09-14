@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { HeatmapService } from '@/lib/services/heatmap';
 import { AgentUsage } from '@/lib/db/models/agent-usage';
 import { UserGeo } from '@/lib/db/models/user-geo';
@@ -576,9 +583,9 @@ describe('HeatmapService Tests', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      jest.spyOn(AgentUsage, 'findAll').mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      jest
+        .spyOn(AgentUsage, 'findAll')
+        .mockRejectedValue(new Error('Database connection failed'));
 
       const params = {
         startDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
@@ -642,7 +649,9 @@ describe('HeatmapService Tests', () => {
           messageType: ['text', 'image', 'file'][Math.floor(Math.random() * 3)],
           messageCount: Math.floor(Math.random() * 20) + 1,
           tokenUsage: Math.floor(Math.random() * 5000) + 100,
-          startTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          startTime: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ),
           isCompleted: true,
           geoLocationId: testUserGeo.id,
         });
@@ -780,9 +789,9 @@ describe('HeatmapService Tests', () => {
         endDate: new Date(),
       };
 
-      await expect(heatmapService.exportData(params, 'invalid')).rejects.toThrow(
-        'Invalid export format'
-      );
+      await expect(
+        heatmapService.exportData(params, 'invalid')
+      ).rejects.toThrow('Invalid export format');
     });
   });
 });

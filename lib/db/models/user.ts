@@ -195,4 +195,5 @@ User.init(
   }
 );
 
-export { User, UserAttributes, UserCreationAttributes, UserRole, UserStatus };
+export default User;
+export { User, UserAttributes, UserCreationAttributes };

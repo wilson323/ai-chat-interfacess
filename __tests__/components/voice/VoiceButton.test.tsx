@@ -17,33 +17,35 @@ const mockMediaRecorder = {
   resume: jest.fn(),
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
-  state: 'inactive'
+  state: 'inactive',
 };
 
 const mockMediaStream = {
   getTracks: jest.fn(() => []),
   getAudioTracks: jest.fn(() => []),
-  getVideoTracks: jest.fn(() => [])
+  getVideoTracks: jest.fn(() => []),
 };
 
 // Mock navigator.mediaDevices
 Object.defineProperty(navigator, 'mediaDevices', {
   writable: true,
   value: {
-    getUserMedia: jest.fn(() => Promise.resolve(mockMediaStream))
-  }
+    getUserMedia: jest.fn(() => Promise.resolve(mockMediaStream)),
+  },
 });
 
 // Mock MediaRecorder
-global.MediaRecorder = jest.fn().mockImplementation(() => mockMediaRecorder) as any;
+global.MediaRecorder = jest
+  .fn()
+  .mockImplementation(() => mockMediaRecorder) as any;
 
 // 测试包装器
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
-      mutations: { retry: false }
-    }
+      mutations: { retry: false },
+    },
   });
 
   return (
@@ -83,7 +85,7 @@ describe('VoiceButton组件测试', () => {
     it('应该支持自定义样式', () => {
       render(
         <TestWrapper>
-          <VoiceButton onTranscript={jest.fn()} className="custom-class" />
+          <VoiceButton onTranscript={jest.fn()} className='custom-class' />
         </TestWrapper>
       );
 
@@ -95,7 +97,7 @@ describe('VoiceButton组件测试', () => {
   describe('语音录制功能测试', () => {
     it('应该开始语音录制', async () => {
       const onTranscript = jest.fn();
-      
+
       render(
         <TestWrapper>
           <VoiceButton onTranscript={onTranscript} />
@@ -107,14 +109,14 @@ describe('VoiceButton组件测试', () => {
 
       await waitFor(() => {
         expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
-          audio: true
+          audio: true,
         });
       });
     });
 
     it('应该停止语音录制', async () => {
       const onTranscript = jest.fn();
-      
+
       render(
         <TestWrapper>
           <VoiceButton onTranscript={onTranscript} />
@@ -122,7 +124,7 @@ describe('VoiceButton组件测试', () => {
       );
 
       const button = screen.getByRole('button');
-      
+
       // 开始录制
       fireEvent.click(button);
       await waitFor(() => {
@@ -144,10 +146,10 @@ describe('VoiceButton组件测试', () => {
       );
 
       const button = screen.getByRole('button');
-      
+
       // 开始录制
       fireEvent.click(button);
-      
+
       await waitFor(() => {
         expect(button).toHaveClass('recording');
         expect(screen.getByTestId('recording-indicator')).toBeInTheDocument();
@@ -161,7 +163,7 @@ describe('VoiceButton组件测试', () => {
       (navigator.mediaDevices.getUserMedia as jest.Mock).mockRejectedValueOnce(
         new Error('Permission denied')
       );
-      
+
       render(
         <TestWrapper>
           <VoiceButton onTranscript={jest.fn()} onError={onError} />
@@ -172,7 +174,9 @@ describe('VoiceButton组件测试', () => {
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(expect.stringContaining('Permission denied'));
+        expect(onError).toHaveBeenCalledWith(
+          expect.stringContaining('Permission denied')
+        );
       });
     });
 
@@ -180,7 +184,7 @@ describe('VoiceButton组件测试', () => {
       const onError = jest.fn();
       // Mock不支持MediaRecorder
       (global as any).MediaRecorder = undefined;
-      
+
       render(
         <TestWrapper>
           <VoiceButton onTranscript={jest.fn()} onError={onError} />
@@ -191,7 +195,9 @@ describe('VoiceButton组件测试', () => {
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(expect.stringContaining('not supported'));
+        expect(onError).toHaveBeenCalledWith(
+          expect.stringContaining('not supported')
+        );
       });
     });
   });
@@ -200,14 +206,16 @@ describe('VoiceButton组件测试', () => {
     it('应该处理音频数据', async () => {
       const onTranscript = jest.fn();
       const mockBlob = new Blob(['audio data'], { type: 'audio/wav' });
-      
+
       // Mock音频处理事件
-      mockMediaRecorder.addEventListener.mockImplementation((event, callback) => {
-        if (event === 'dataavailable') {
-          setTimeout(() => callback({ data: mockBlob }), 100);
+      mockMediaRecorder.addEventListener.mockImplementation(
+        (event, callback) => {
+          if (event === 'dataavailable') {
+            setTimeout(() => callback({ data: mockBlob }), 100);
+          }
         }
-      });
-      
+      );
+
       render(
         <TestWrapper>
           <VoiceButton onTranscript={onTranscript} />
@@ -250,16 +258,16 @@ describe('VoiceButton组件测试', () => {
       );
 
       const button = screen.getByRole('button');
-      
+
       // 初始状态
       expect(button).not.toHaveClass('recording');
-      
+
       // 开始录制
       fireEvent.click(button);
       await waitFor(() => {
         expect(button).toHaveClass('recording');
       });
-      
+
       // 停止录制
       fireEvent.click(button);
       await waitFor(() => {
@@ -272,7 +280,7 @@ describe('VoiceButton组件测试', () => {
       mockMediaRecorder.start.mockImplementation(() => {
         throw new Error('Recording failed');
       });
-      
+
       render(
         <TestWrapper>
           <VoiceButton onTranscript={jest.fn()} onError={onError} />
@@ -283,7 +291,9 @@ describe('VoiceButton组件测试', () => {
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(expect.stringContaining('Recording failed'));
+        expect(onError).toHaveBeenCalledWith(
+          expect.stringContaining('Recording failed')
+        );
       });
     });
   });
@@ -317,4 +327,3 @@ describe('VoiceButton组件测试', () => {
     });
   });
 });
-

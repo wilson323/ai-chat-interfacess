@@ -1,8 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import {
-  ImageEditorConfig,
-} from '@/types/api/agent-config/image-editor';
+import { ImageEditorConfig } from '@/types/api/agent-config/image-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -95,7 +93,7 @@ function ImageEditorConfigForm() {
     }
   };
 
-  const handleTestModel = async (model: {id: string; name: string}) => {
+  const handleTestModel = async (model: { id: string; name: string }) => {
     try {
       const res = await fetch('/api/admin/image-editor-config/test', {
         method: 'POST',

@@ -127,4 +127,5 @@ OperationLog.init(
   }
 );
 
-export { OperationLog, OperationLogAttributes, OperationLogCreationAttributes, OperationStatus };
+export default OperationLog;
+export { OperationLog, OperationLogAttributes, OperationLogCreationAttributes };

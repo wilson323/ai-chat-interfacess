@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { createServer } from 'http';
 import { apiResolver } from 'next/dist/server/api-utils/node';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -345,7 +352,11 @@ describe('Heatmap and Analytics Integration Tests', () => {
             id: 'fastgpt-conversation-1',
             messages: [
               { role: 'user', content: 'Hello', timestamp: new Date() },
-              { role: 'assistant', content: 'Hi there!', timestamp: new Date() },
+              {
+                role: 'assistant',
+                content: 'Hi there!',
+                timestamp: new Date(),
+              },
             ],
             metadata: {
               totalTokens: 150,
@@ -357,7 +368,11 @@ describe('Heatmap and Analytics Integration Tests', () => {
             id: 'fastgpt-conversation-2',
             messages: [
               { role: 'user', content: 'How are you?', timestamp: new Date() },
-              { role: 'assistant', content: 'I\'m doing well!', timestamp: new Date() },
+              {
+                role: 'assistant',
+                content: "I'm doing well!",
+                timestamp: new Date(),
+              },
             ],
             metadata: {
               totalTokens: 180,
@@ -382,10 +397,14 @@ describe('Heatmap and Analytics Integration Tests', () => {
           tokenUsage: conversation.metadata.totalTokens,
           responseTime: conversation.metadata.responseTime,
           startTime: conversation.messages[0].timestamp,
-          endTime: conversation.messages[conversation.messages.length - 1].timestamp,
+          endTime:
+            conversation.messages[conversation.messages.length - 1].timestamp,
           duration: Math.floor(
-            (conversation.messages[conversation.messages.length - 1].timestamp.getTime() -
-             conversation.messages[0].timestamp.getTime()) / 1000
+            (conversation.messages[
+              conversation.messages.length - 1
+            ].timestamp.getTime() -
+              conversation.messages[0].timestamp.getTime()) /
+              1000
           ),
           isCompleted: true,
           geoLocationId: testUserGeo.id,
@@ -466,18 +485,28 @@ describe('Heatmap and Analytics Integration Tests', () => {
       const sessionsPerUser = 3;
 
       for (let userId = 12; userId < 12 + userCount; userId++) {
-        for (let sessionIndex = 0; sessionIndex < sessionsPerUser; sessionIndex++) {
+        for (
+          let sessionIndex = 0;
+          sessionIndex < sessionsPerUser;
+          sessionIndex++
+        ) {
           analysisData.push({
             sessionId: `analysis-session-${userId}-${sessionIndex}`,
             userId,
             agentId: (userId % 3) + 1,
-            messageType: ['text', 'image', 'file', 'voice'][Math.floor(Math.random() * 4)],
+            messageType: ['text', 'image', 'file', 'voice'][
+              Math.floor(Math.random() * 4)
+            ],
             messageCount: Math.floor(Math.random() * 15) + 1,
             tokenUsage: Math.floor(Math.random() * 3000) + 100,
             responseTime: Math.floor(Math.random() * 500) + 100,
-            startTime: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
+            startTime: new Date(
+              Date.now() - Math.random() * 24 * 60 * 60 * 1000
+            ),
             isCompleted: Math.random() > 0.1,
-            userSatisfaction: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
+            userSatisfaction: ['positive', 'negative', 'neutral'][
+              Math.floor(Math.random() * 3)
+            ],
             geoLocationId: testUserGeo.id,
           });
         }
@@ -495,7 +524,9 @@ describe('Heatmap and Analytics Integration Tests', () => {
       const heatmapData = await heatmapService.getHeatmapData(params);
       expect(heatmapData).toBeDefined();
       expect(heatmapData.locations).toHaveLength(1);
-      expect(heatmapData.summary.totalSessions).toBe(userCount * sessionsPerUser);
+      expect(heatmapData.summary.totalSessions).toBe(
+        userCount * sessionsPerUser
+      );
       expect(heatmapData.summary.totalUsers).toBe(userCount);
 
       // 2. Generate statistics
@@ -552,8 +583,14 @@ describe('Heatmap and Analytics Integration Tests', () => {
 
         // Simulate session activity
         await new Promise(resolve => setTimeout(resolve, 100));
-        await AgentUsage.updateMessageCount(sessionId, Math.floor(Math.random() * 10) + 1);
-        await AgentUsage.updateResponseTime(sessionId, Math.floor(Math.random() * 300) + 100);
+        await AgentUsage.updateMessageCount(
+          sessionId,
+          Math.floor(Math.random() * 10) + 1
+        );
+        await AgentUsage.updateResponseTime(
+          sessionId,
+          Math.floor(Math.random() * 300) + 100
+        );
 
         realTimeSessions.push(session);
       }
@@ -594,7 +631,11 @@ describe('Heatmap and Analytics Integration Tests', () => {
               messageType: 'text',
               messageCount: Math.floor(Math.random() * 10) + 1,
               tokenUsage: Math.floor(Math.random() * 2000) + 100,
-              startTime: new Date(baseDate.getTime() + day * 24 * 60 * 60 * 1000 + hour * 60 * 60 * 1000),
+              startTime: new Date(
+                baseDate.getTime() +
+                  day * 24 * 60 * 60 * 1000 +
+                  hour * 60 * 60 * 1000
+              ),
               isCompleted: true,
               geoLocationId: testUserGeo.id,
             });
@@ -625,11 +666,13 @@ describe('Heatmap and Analytics Integration Tests', () => {
       expect(dailyStats.length).toBe(7);
 
       // Verify aggregation accuracy
-      const totalSessionsFromHourly = hourlyStats.reduce((sum, stat) =>
-        sum + parseInt(stat.session_count), 0
+      const totalSessionsFromHourly = hourlyStats.reduce(
+        (sum, stat) => sum + parseInt(stat.session_count),
+        0
       );
-      const totalSessionsFromDaily = dailyStats.reduce((sum, stat) =>
-        sum + parseInt(stat.session_count), 0
+      const totalSessionsFromDaily = dailyStats.reduce(
+        (sum, stat) => sum + parseInt(stat.session_count),
+        0
       );
 
       expect(totalSessionsFromHourly).toBe(totalSessionsFromDaily);
@@ -648,13 +691,19 @@ describe('Heatmap and Analytics Integration Tests', () => {
           sessionId: `large-scale-session-${i}`,
           userId: (i % userCount) + 1,
           agentId: (i % 5) + 1,
-          messageType: ['text', 'image', 'file', 'voice'][Math.floor(Math.random() * 4)],
+          messageType: ['text', 'image', 'file', 'voice'][
+            Math.floor(Math.random() * 4)
+          ],
           messageCount: Math.floor(Math.random() * 20) + 1,
           tokenUsage: Math.floor(Math.random() * 5000) + 100,
           responseTime: Math.floor(Math.random() * 1000) + 100,
-          startTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          startTime: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ),
           isCompleted: true,
-          userSatisfaction: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
+          userSatisfaction: ['positive', 'negative', 'neutral'][
+            Math.floor(Math.random() * 3)
+          ],
           geoLocationId: testUserGeo.id,
         });
       }
@@ -694,8 +743,14 @@ describe('Heatmap and Analytics Integration Tests', () => {
           );
 
           // Update session
-          await AgentUsage.updateMessageCount(sessionId, Math.floor(Math.random() * 10) + 1);
-          await AgentUsage.updateResponseTime(sessionId, Math.floor(Math.random() * 500) + 100);
+          await AgentUsage.updateMessageCount(
+            sessionId,
+            Math.floor(Math.random() * 10) + 1
+          );
+          await AgentUsage.updateResponseTime(
+            sessionId,
+            Math.floor(Math.random() * 500) + 100
+          );
 
           // End session
           await AgentUsage.endSession(sessionId);
@@ -780,18 +835,16 @@ describe('Heatmap and Analytics Integration Tests', () => {
   describe('Error Recovery and Resilience', () => {
     it('should handle database connection failures gracefully', async () => {
       // Mock database connection failure
-      jest.spyOn(sequelize, 'query').mockRejectedValue(new Error('Connection failed'));
+      jest
+        .spyOn(sequelize, 'query')
+        .mockRejectedValue(new Error('Connection failed'));
 
       const sessionId = 'recovery-session-1';
 
       // Attempt to start session
-      await expect(AgentUsage.startSession(
-        sessionId,
-        17,
-        1,
-        'text',
-        testUserGeo.id
-      )).rejects.toThrow();
+      await expect(
+        AgentUsage.startSession(sessionId, 17, 1, 'text', testUserGeo.id)
+      ).rejects.toThrow();
 
       // Verify no incomplete data was created
       const session = await AgentUsage.findOne({ where: { sessionId } });
@@ -840,31 +893,37 @@ describe('Heatmap and Analytics Integration Tests', () => {
       let shouldFail = true;
       let attemptCount = 0;
 
-      jest.spyOn(heatmapService, 'getHeatmapData').mockImplementation(async (params) => {
-        attemptCount++;
-        if (shouldFail && attemptCount <= 2) {
-          throw new Error('Service temporarily unavailable');
-        }
-        shouldFail = false;
-        // Return mock data after recovery
-        return {
-          locations: [],
-          summary: { totalSessions: 0, totalUsers: 0 },
-          metadata: { dateRange: params, filters: {} },
-        };
-      });
+      jest
+        .spyOn(heatmapService, 'getHeatmapData')
+        .mockImplementation(async params => {
+          attemptCount++;
+          if (shouldFail && attemptCount <= 2) {
+            throw new Error('Service temporarily unavailable');
+          }
+          shouldFail = false;
+          // Return mock data after recovery
+          return {
+            locations: [],
+            summary: { totalSessions: 0, totalUsers: 0 },
+            metadata: { dateRange: params, filters: {} },
+          };
+        });
 
       // First attempt should fail
-      await expect(heatmapService.getHeatmapData({
-        startDate: new Date(Date.now() - 1 * 60 * 60 * 1000),
-        endDate: new Date(),
-      })).rejects.toThrow();
+      await expect(
+        heatmapService.getHeatmapData({
+          startDate: new Date(Date.now() - 1 * 60 * 60 * 1000),
+          endDate: new Date(),
+        })
+      ).rejects.toThrow();
 
       // Second attempt should fail
-      await expect(heatmapService.getHeatmapData({
-        startDate: new Date(Date.now() - 1 * 60 * 60 * 1000),
-        endDate: new Date(),
-      })).rejects.toThrow();
+      await expect(
+        heatmapService.getHeatmapData({
+          startDate: new Date(Date.now() - 1 * 60 * 60 * 1000),
+          endDate: new Date(),
+        })
+      ).rejects.toThrow();
 
       // Third attempt should succeed
       const recoveredData = await heatmapService.getHeatmapData({

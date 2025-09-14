@@ -2,23 +2,56 @@
 const nextConfig = {
   reactStrictMode: true,
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // 修复：启用构建时的ESLint检查
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // 修复：启用构建时的TypeScript检查
   },
   images: {
-    unoptimized: true,
+    unoptimized: false, // 修复：启用图片优化
+    formats: ['image/webp', 'image/avif'],
   },
   transpilePackages: ['sequelize', 'pg-hstore'],
   // 启用standalone模式以支持Docker部署
   output: 'standalone',
-  // 禁用开发模式特性在生产环境中
+  // 性能优化配置
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // SWC压缩在Next.js 15中默认启用
+  // 优化构建性能
   experimental: {
-    // 确保在生产环境中不启用热重载
-    ...(process.env.NODE_ENV === 'production' && {
-      optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-    }),
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', '@radix-ui/react-*'],
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+  },
+  // Webpack优化
+  webpack: (config, { dev, isServer }) => {
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'all',
+            enforce: true,
+          },
+        },
+      };
+    }
+    return config;
   },
 };
 

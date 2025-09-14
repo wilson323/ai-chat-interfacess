@@ -3,7 +3,12 @@
  * Tests for actual database operations and data integrity
  */
 
-import { testDb, testRedis, TestFixtures, testValidators } from '@/__tests__/utils/api-test-utils';
+import {
+  testDb,
+  testRedis,
+  TestFixtures,
+  testValidators,
+} from '@/__tests__/utils/api-test-utils';
 import { AgentConfig, ChatMessage, ChatSession } from '@/lib/db/models';
 import { NextRequest } from 'next/server';
 
@@ -73,9 +78,18 @@ describe('Database Integration Tests', () => {
     it('should list only published agents', async () => {
       // Create multiple agents
       await AgentConfig.bulkCreate([
-        TestFixtures.createAgent({ name: 'Published Agent 1', isPublished: true }),
-        TestFixtures.createAgent({ name: 'Published Agent 2', isPublished: true }),
-        TestFixtures.createAgent({ name: 'Unpublished Agent', isPublished: false }),
+        TestFixtures.createAgent({
+          name: 'Published Agent 1',
+          isPublished: true,
+        }),
+        TestFixtures.createAgent({
+          name: 'Published Agent 2',
+          isPublished: true,
+        }),
+        TestFixtures.createAgent({
+          name: 'Unpublished Agent',
+          isPublished: false,
+        }),
       ]);
 
       const publishedAgents = await AgentConfig.findAll({
@@ -142,7 +156,9 @@ describe('Database Integration Tests', () => {
       expect(normalQuery).toBeNull();
 
       // Should find with paranoid: false
-      const paranoidQuery = await AgentConfig.findByPk(agent.id, { paranoid: false });
+      const paranoidQuery = await AgentConfig.findByPk(agent.id, {
+        paranoid: false,
+      });
       expect(paranoidQuery).toBeTruthy();
       expect(paranoidQuery.deletedAt).toBeTruthy();
     });
@@ -214,7 +230,9 @@ describe('Database Integration Tests', () => {
       await session.update({ title: 'Updated Title' });
 
       const updatedSession = await ChatSession.findByPk(session.id);
-      expect(updatedSession.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
+      expect(updatedSession.updatedAt.getTime()).toBeGreaterThan(
+        originalUpdatedAt.getTime()
+      );
     });
   });
 
@@ -375,7 +393,9 @@ describe('Database Integration Tests', () => {
 
       // This test will pass or fail based on your cascade configuration
       // You may need to adjust expectations based on your actual setup
-      console.log(`Remaining messages after session deletion: ${remainingMessages.length}`);
+      console.log(
+        `Remaining messages after session deletion: ${remainingMessages.length}`
+      );
     });
   });
 
@@ -405,14 +425,18 @@ describe('Database Integration Tests', () => {
 
     it('should handle complex queries with joins efficiently', async () => {
       // Create test data
-      const session = await ChatSession.create(TestFixtures.createChatSession());
+      const session = await ChatSession.create(
+        TestFixtures.createChatSession()
+      );
 
-      await Promise.all(Array.from({ length: 50 }, (_, i) =>
-        ChatMessage.create({
-          ...TestFixtures.createChatMessage({ sessionId: session.sessionId }),
-          role: i % 2 === 0 ? 'user' : 'assistant',
-        })
-      ));
+      await Promise.all(
+        Array.from({ length: 50 }, (_, i) =>
+          ChatMessage.create({
+            ...TestFixtures.createChatMessage({ sessionId: session.sessionId }),
+            role: i % 2 === 0 ? 'user' : 'assistant',
+          })
+        )
+      );
 
       const startTime = process.hrtime.bigint();
 

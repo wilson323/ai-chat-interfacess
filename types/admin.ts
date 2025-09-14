@@ -363,4 +363,4 @@ export * from './api';
 export * from './message';
 export * from './voice';
 export * from './errors';
-export * from './global';
+// export * from './global'; // 注释掉不存在的文件引用

@@ -124,7 +124,12 @@ describe('Analytics API Tests', () => {
     await UserGeo.destroy({ where: {} });
   });
 
-  const createMockRequest = (method: string = 'GET', query: any = {}, body: any = {}, headers: any = {}): NextApiRequest => {
+  const createMockRequest = (
+    method: string = 'GET',
+    query: any = {},
+    body: any = {},
+    headers: any = {}
+  ): NextApiRequest => {
     return {
       method,
       query,
@@ -267,7 +272,9 @@ describe('Analytics API Tests', () => {
   describe('GET /api/analytics/trends', () => {
     it('should return trend analysis data', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
         granularity: 'day',
       });
@@ -298,7 +305,9 @@ describe('Analytics API Tests', () => {
 
       for (const granularity of granularities) {
         const req = createMockRequest('GET', {
-          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          startDate: new Date(
+            Date.now() - 30 * 24 * 60 * 60 * 1000
+          ).toISOString(),
           endDate: new Date().toISOString(),
           granularity,
         });
@@ -319,7 +328,9 @@ describe('Analytics API Tests', () => {
 
     it('should calculate growth rates correctly', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
         granularity: 'day',
       });
@@ -343,7 +354,9 @@ describe('Analytics API Tests', () => {
 
     it('should handle invalid granularity', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
         granularity: 'invalid',
       });
@@ -367,7 +380,9 @@ describe('Analytics API Tests', () => {
   describe('GET /api/analytics/user-behavior', () => {
     it('should return user behavior analysis', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -395,7 +410,9 @@ describe('Analytics API Tests', () => {
 
     it('should analyze user segments correctly', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -425,7 +442,9 @@ describe('Analytics API Tests', () => {
 
     it('should analyze device preferences', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -454,7 +473,9 @@ describe('Analytics API Tests', () => {
 
     it('should analyze time preferences', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -477,7 +498,9 @@ describe('Analytics API Tests', () => {
   describe('GET /api/analytics/performance', () => {
     it('should return performance metrics', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -505,7 +528,9 @@ describe('Analytics API Tests', () => {
 
     it('should calculate response time metrics correctly', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -531,7 +556,9 @@ describe('Analytics API Tests', () => {
 
     it('should calculate token efficiency metrics', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -547,14 +574,20 @@ describe('Analytics API Tests', () => {
       const performance = response.data;
 
       expect(performance.tokenEfficiency).toBeDefined();
-      expect(performance.tokenEfficiency).toHaveProperty('averageTokensPerSession');
-      expect(performance.tokenEfficiency).toHaveProperty('averageTokensPerMessage');
+      expect(performance.tokenEfficiency).toHaveProperty(
+        'averageTokensPerSession'
+      );
+      expect(performance.tokenEfficiency).toHaveProperty(
+        'averageTokensPerMessage'
+      );
       expect(performance.tokenEfficiency).toHaveProperty('efficiencyScore');
     });
 
     it('should calculate overall performance score', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -577,7 +610,9 @@ describe('Analytics API Tests', () => {
 
     it('should handle performance alerts', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
         includeAlerts: 'true',
       });
@@ -637,7 +672,9 @@ describe('Analytics API Tests', () => {
 
     it('should handle database errors gracefully', async () => {
       // Mock database error
-      jest.spyOn(sequelize, 'query').mockRejectedValue(new Error('Database connection failed'));
+      jest
+        .spyOn(sequelize, 'query')
+        .mockRejectedValue(new Error('Database connection failed'));
 
       const req = createMockRequest('GET', {});
       const res = createMockResponse();
@@ -669,18 +706,30 @@ describe('Analytics API Tests', () => {
           sessionId: `perf-session-${i}`,
           userId: (i % 100) + 1,
           agentId: (i % 5) + 1,
-          messageType: ['text', 'image', 'file', 'voice'][Math.floor(Math.random() * 4)],
+          messageType: ['text', 'image', 'file', 'voice'][
+            Math.floor(Math.random() * 4)
+          ],
           messageCount: Math.floor(Math.random() * 20) + 1,
           tokenUsage: Math.floor(Math.random() * 5000) + 100,
           responseTime: Math.floor(Math.random() * 1000) + 100,
-          startTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          startTime: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ),
           isCompleted: Math.random() > 0.1,
-          userSatisfaction: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
+          userSatisfaction: ['positive', 'negative', 'neutral'][
+            Math.floor(Math.random() * 3)
+          ],
           geoLocationId: testUserGeo.id,
           deviceInfo: {
-            browser: ['Chrome', 'Firefox', 'Safari', 'Edge'][Math.floor(Math.random() * 4)],
-            os: ['Windows', 'macOS', 'Linux', 'Android', 'iOS'][Math.floor(Math.random() * 5)],
-            deviceType: ['desktop', 'mobile', 'tablet'][Math.floor(Math.random() * 3)],
+            browser: ['Chrome', 'Firefox', 'Safari', 'Edge'][
+              Math.floor(Math.random() * 4)
+            ],
+            os: ['Windows', 'macOS', 'Linux', 'Android', 'iOS'][
+              Math.floor(Math.random() * 5)
+            ],
+            deviceType: ['desktop', 'mobile', 'tablet'][
+              Math.floor(Math.random() * 3)
+            ],
           },
         });
       }
@@ -688,7 +737,9 @@ describe('Analytics API Tests', () => {
       await AgentUsage.bulkCreate(bulkData);
 
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        ).toISOString(),
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();
@@ -712,7 +763,9 @@ describe('Analytics API Tests', () => {
       // Create 5 concurrent requests
       for (let i = 0; i < 5; i++) {
         const req = createMockRequest('GET', {
-          startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          startDate: new Date(
+            Date.now() - 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
           endDate: new Date().toISOString(),
         });
         const res = createMockResponse();
@@ -729,7 +782,7 @@ describe('Analytics API Tests', () => {
       await Promise.all(requests);
 
       // Check all responses
-      responses.forEach((res) => {
+      responses.forEach(res => {
         expect(res.status).toHaveBeenCalledWith(200);
         const response = res.json.mock.calls[0][0];
         expect(response.success).toBe(true);

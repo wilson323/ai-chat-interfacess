@@ -37,7 +37,8 @@ if (!global.FormData && typeof FormData !== 'undefined') {
 // Set test environment variables
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret';
-process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/test_db';
+process.env.DATABASE_URL =
+  'postgresql://postgres:postgres@localhost:5432/test_db';
 process.env.REDIS_URL = 'redis://localhost:6379';
 
 // Mock console methods to reduce noise during tests
@@ -70,7 +71,11 @@ afterAll(() => {
 
 // Export utilities for tests
 export const testUtils = {
-  createMockRequest: (method = 'GET', url = 'http://localhost:3000/api/test', options = {}) => {
+  createMockRequest: (
+    method = 'GET',
+    url = 'http://localhost:3000/api/test',
+    options = {}
+  ) => {
     const { body, headers = {} } = options;
 
     return new Request(url, {
@@ -95,8 +100,12 @@ export const testUtils = {
 
   createJWTToken: (payload, secret = 'test-secret') => {
     const header = { alg: 'HS256', typ: 'JWT' };
-    const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
-    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const encodedHeader = Buffer.from(JSON.stringify(header)).toString(
+      'base64url'
+    );
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
+      'base64url'
+    );
 
     const crypto = require('crypto');
     const signature = crypto
@@ -107,12 +116,13 @@ export const testUtils = {
     return `${encodedHeader}.${encodedPayload}.${signature}`;
   },
 
-  validateUUID: (uuid) => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  validateUUID: uuid => {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
   },
 
-  validateISODate: (dateString) => {
+  validateISODate: dateString => {
     const date = new Date(dateString);
     return !isNaN(date.getTime()) && dateString === date.toISOString();
   },

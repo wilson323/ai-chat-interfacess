@@ -184,7 +184,10 @@ export class TestRequestBuilder {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' = 'GET',
     url: string = '/api/test',
     token: string,
-    options: Omit<Parameters<typeof TestRequestBuilder.createRequest>[2], 'headers'> = {}
+    options: Omit<
+      Parameters<typeof TestRequestBuilder.createRequest>[2],
+      'headers'
+    > = {}
   ): NextRequest {
     return this.createRequest(method, url, {
       ...options,
@@ -290,8 +293,12 @@ export class TestFixtures {
   // JWT token fixtures
   static createJWTToken(payload: any, secret: string = 'test-secret'): string {
     const header = { alg: 'HS256', typ: 'JWT' };
-    const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
-    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const encodedHeader = Buffer.from(JSON.stringify(header)).toString(
+      'base64url'
+    );
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
+      'base64url'
+    );
 
     // Simple HMAC-SHA256 for testing (not production secure)
     const crypto = require('crypto');
@@ -336,7 +343,11 @@ export class TestValidators {
   /**
    * Validate error response structure
    */
-  static validateErrorResponse(response: any, expectedCode?: string, expectedMessage?: string) {
+  static validateErrorResponse(
+    response: any,
+    expectedCode?: string,
+    expectedMessage?: string
+  ) {
     expect(response).toHaveProperty('success', false);
     expect(response).toHaveProperty('error');
     expect(response.error).toHaveProperty('code');
@@ -385,7 +396,8 @@ export class TestValidators {
    * Validate UUID format
    */
   static isValidUUID(uuid: string): boolean {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
   }
 }
@@ -430,21 +442,23 @@ export class PerformanceTestHelpers {
 
     const startTime = Date.now();
 
-    const userPromises = Array(concurrentUsers).fill(null).map(async () => {
-      for (let i = 0; i < requestsPerUser; i++) {
-        if (maxTimeMs && Date.now() - startTime > maxTimeMs) {
-          break;
-        }
+    const userPromises = Array(concurrentUsers)
+      .fill(null)
+      .map(async () => {
+        for (let i = 0; i < requestsPerUser; i++) {
+          if (maxTimeMs && Date.now() - startTime > maxTimeMs) {
+            break;
+          }
 
-        try {
-          const responseTime = await this.measureResponseTime(fn);
-          results.push(responseTime);
-          successful++;
-        } catch (error) {
-          failed++;
+          try {
+            const responseTime = await this.measureResponseTime(fn);
+            results.push(responseTime);
+            successful++;
+          } catch (error) {
+            failed++;
+          }
         }
-      }
-    });
+      });
 
     await Promise.all(userPromises);
     const totalTime = (Date.now() - startTime) / 1000; // Convert to seconds
@@ -453,7 +467,10 @@ export class PerformanceTestHelpers {
       totalRequests: successful + failed,
       successfulRequests: successful,
       failedRequests: failed,
-      averageResponseTime: results.length > 0 ? results.reduce((a, b) => a + b, 0) / results.length : 0,
+      averageResponseTime:
+        results.length > 0
+          ? results.reduce((a, b) => a + b, 0) / results.length
+          : 0,
       minResponseTime: results.length > 0 ? Math.min(...results) : 0,
       maxResponseTime: results.length > 0 ? Math.max(...results) : 0,
       throughput: successful / totalTime,
@@ -549,14 +566,20 @@ export class TestMocks {
   /**
    * Mock external API calls
    */
-  static mockExternalAPI(implementation: (url: string, options?: any) => Promise<any>) {
+  static mockExternalAPI(
+    implementation: (url: string, options?: any) => Promise<any>
+  ) {
     global.fetch = jest.fn().mockImplementation(implementation);
   }
 
   /**
    * Mock authentication
    */
-  static mockAuthMiddleware(implementation: (request: NextRequest) => Promise<{ success: boolean; user?: any }>) {
+  static mockAuthMiddleware(
+    implementation: (
+      request: NextRequest
+    ) => Promise<{ success: boolean; user?: any }>
+  ) {
     jest.mock('@/lib/middleware/auth', () => ({
       authenticateRequest: implementation,
     }));
@@ -565,7 +588,11 @@ export class TestMocks {
   /**
    * Mock rate limiting
    */
-  static mockRateLimiter(implementation: (key: string) => Promise<{ allowed: boolean; remaining?: number }>) {
+  static mockRateLimiter(
+    implementation: (
+      key: string
+    ) => Promise<{ allowed: boolean; remaining?: number }>
+  ) {
     jest.mock('@/lib/middleware/rate-limit', () => ({
       checkRateLimit: implementation,
     }));

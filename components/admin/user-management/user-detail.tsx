@@ -27,7 +27,7 @@ import {
   Mail,
   Phone,
   Building,
-  User,
+  User as UserIcon,
   Shield,
   Activity,
   Clock,
@@ -139,7 +139,7 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                  <UserIcon className="h-5 w-5" />
                   基本信息
                 </CardTitle>
               </CardHeader>

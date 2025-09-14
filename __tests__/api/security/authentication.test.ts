@@ -3,7 +3,12 @@
  * Tests for authentication flows, JWT handling, and authorization mechanisms
  */
 
-import { TestRequestBuilder, TestFixtures, testSecurity, testValidators } from '@/__tests__/utils/api-test-utils';
+import {
+  TestRequestBuilder,
+  TestFixtures,
+  testSecurity,
+  testValidators,
+} from '@/__tests__/utils/api-test-utils';
 
 // Mock authentication middleware
 jest.mock('@/lib/middleware/auth', () => ({
@@ -174,7 +179,10 @@ describe('Authentication Security Tests', () => {
       const result = await mockBcrypt.compare(plainPassword, hashedPassword);
 
       expect(result).toBe(true);
-      expect(mockBcrypt.compare).toHaveBeenCalledWith(plainPassword, hashedPassword);
+      expect(mockBcrypt.compare).toHaveBeenCalledWith(
+        plainPassword,
+        hashedPassword
+      );
     });
 
     it('should reject incorrect passwords', async () => {
@@ -210,11 +218,12 @@ describe('Authentication Security Tests', () => {
       weakPasswords.forEach(password => {
         it(`should reject weak password: ${password}`, () => {
           // This would be implemented in your actual validation logic
-          const isWeak = password.length < 8 ||
-                        !/[A-Z]/.test(password) ||
-                        !/[a-z]/.test(password) ||
-                        !/[0-9]/.test(password) ||
-                        !/[!@#$%^&*]/.test(password);
+          const isWeak =
+            password.length < 8 ||
+            !/[A-Z]/.test(password) ||
+            !/[a-z]/.test(password) ||
+            !/[0-9]/.test(password) ||
+            !/[!@#$%^&*]/.test(password);
 
           expect(isWeak).toBe(true);
         });
@@ -222,11 +231,12 @@ describe('Authentication Security Tests', () => {
 
       strongPasswords.forEach(password => {
         it(`should accept strong password: ${password}`, () => {
-          const isStrong = password.length >= 8 &&
-                           /[A-Z]/.test(password) &&
-                           /[a-z]/.test(password) &&
-                           /[0-9]/.test(password) &&
-                           /[!@#$%^&*]/.test(password);
+          const isStrong =
+            password.length >= 8 &&
+            /[A-Z]/.test(password) &&
+            /[a-z]/.test(password) &&
+            /[0-9]/.test(password) &&
+            /[!@#$%^&*]/.test(password);
 
           expect(isStrong).toBe(true);
         });
@@ -307,9 +317,14 @@ describe('Authentication Security Tests', () => {
     });
 
     it('should reject requests with invalid Authorization header format', async () => {
-      const request = TestRequestBuilder.createRequest('GET', '/api/protected', {}, {
-        headers: { Authorization: 'InvalidFormat token' },
-      });
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/protected',
+        {},
+        {
+          headers: { Authorization: 'InvalidFormat token' },
+        }
+      );
 
       mockAuth.authenticateRequest.mockResolvedValue({
         success: false,
@@ -322,9 +337,14 @@ describe('Authentication Security Tests', () => {
     });
 
     it('should handle token extraction from cookies', async () => {
-      const request = TestRequestBuilder.createRequest('GET', '/api/protected', {}, {
-        headers: { Cookie: 'auth-token=valid.jwt.token' },
-      });
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/protected',
+        {},
+        {
+          headers: { Cookie: 'auth-token=valid.jwt.token' },
+        }
+      );
 
       mockAuth.authenticateRequest.mockResolvedValue({
         success: true,
@@ -351,19 +371,32 @@ describe('Authentication Security Tests', () => {
       });
 
       // User trying to access admin resource
-      const userRequest = TestRequestBuilder.createRequest('GET', '/api/admin', {}, {
-        headers: { 'x-user-role': 'user' },
-      });
+      const userRequest = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/admin',
+        {},
+        {
+          headers: { 'x-user-role': 'user' },
+        }
+      );
 
       const userResult = await mockAuth.authorizeRequest(userRequest, 'admin');
       expect(userResult.success).toBe(false);
 
       // Admin trying to access admin resource
-      const adminRequest = TestRequestBuilder.createRequest('GET', '/api/admin', {}, {
-        headers: { 'x-user-role': 'admin' },
-      });
+      const adminRequest = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/admin',
+        {},
+        {
+          headers: { 'x-user-role': 'admin' },
+        }
+      );
 
-      const adminResult = await mockAuth.authorizeRequest(adminRequest, 'admin');
+      const adminResult = await mockAuth.authorizeRequest(
+        adminRequest,
+        'admin'
+      );
       expect(adminResult.success).toBe(true);
     });
 
@@ -408,8 +441,8 @@ describe('Authentication Security Tests', () => {
         'Content-Security-Policy': "default-src 'self'",
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        Pragma: 'no-cache',
+        Expires: '0',
       };
 
       Object.entries(secureHeaders).forEach(([header, value]) => {
@@ -504,7 +537,8 @@ describe('Authentication Security Tests', () => {
         userId: 'test-user',
         sessionId: 'secure-session-id',
         ipAddress: '192.168.1.1',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         createdAt: new Date(),
         lastAccessed: new Date(),
       };
@@ -522,7 +556,8 @@ describe('Authentication Security Tests', () => {
 
     it('should handle session fixation prevention', () => {
       const oldSessionId = 'old-session-id';
-      const newSessionId = 'new-session-' + Math.random().toString(36).substr(2, 9);
+      const newSessionId =
+        'new-session-' + Math.random().toString(36).substr(2, 9);
 
       // Session ID should change after authentication
       expect(oldSessionId).not.toBe(newSessionId);
@@ -534,7 +569,8 @@ describe('Authentication Security Tests', () => {
       const sessionTimeout = 15 * 60 * 1000; // 15 minutes
       const currentTime = new Date();
 
-      const isExpired = (currentTime.getTime() - sessionCreated.getTime()) > sessionTimeout;
+      const isExpired =
+        currentTime.getTime() - sessionCreated.getTime() > sessionTimeout;
       expect(isExpired).toBe(true);
     });
   });
@@ -559,8 +595,8 @@ describe('Authentication Security Tests', () => {
       const attempts = [1, 2, 3, 4, 5];
       const baseDelay = 1000; // 1 second
 
-      const delays = attempts.map(attempt =>
-        Math.min(baseDelay * Math.pow(2, attempt - 1), 30000) // Max 30 seconds
+      const delays = attempts.map(
+        attempt => Math.min(baseDelay * Math.pow(2, attempt - 1), 30000) // Max 30 seconds
       );
 
       expect(delays[0]).toBe(1000);

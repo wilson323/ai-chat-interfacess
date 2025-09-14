@@ -4,7 +4,10 @@
  */
 
 import { POST } from '@/app/api/cad-analyzer/analyze/route';
-import { TestRequestBuilder, testValidators } from '@/__tests__/utils/api-test-utils';
+import {
+  TestRequestBuilder,
+  testValidators,
+} from '@/__tests__/utils/api-test-utils';
 
 // Mock dependencies
 jest.mock('fs/promises', () => ({
@@ -74,18 +77,24 @@ describe('CAD Analyzer API - Unit Tests', () => {
       };
 
       // Mock successful analysis
-      jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+      jest
+        .spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
         .mockResolvedValue(mockAnalysisResult);
 
       const formData = new FormData();
       formData.append('file', mockFile);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-        headers: new Map([
-          ['content-type', 'multipart/form-data'],
-          ['x-admin-token', ADMIN_TOKEN],
-        ]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/cad-analyzer/analyze',
+        formData,
+        {
+          headers: new Map([
+            ['content-type', 'multipart/form-data'],
+            ['x-admin-token', ADMIN_TOKEN],
+          ]),
+        }
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -112,12 +121,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
       const formData = new FormData();
       formData.append('file', mockFile);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-        headers: new Map([
-          ['content-type', 'multipart/form-data'],
-          ['x-admin-token', 'invalid-token'],
-        ]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/cad-analyzer/analyze',
+        formData,
+        {
+          headers: new Map([
+            ['content-type', 'multipart/form-data'],
+            ['x-admin-token', 'invalid-token'],
+          ]),
+        }
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -133,12 +147,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
       const formData = new FormData();
       // Missing file
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-        headers: new Map([
-          ['content-type', 'multipart/form-data'],
-          ['x-admin-token', ADMIN_TOKEN],
-        ]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/cad-analyzer/analyze',
+        formData,
+        {
+          headers: new Map([
+            ['content-type', 'multipart/form-data'],
+            ['x-admin-token', ADMIN_TOKEN],
+          ]),
+        }
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -162,7 +181,11 @@ describe('CAD Analyzer API - Unit Tests', () => {
         for (const file of supportedFiles) {
           mockFs.writeFile.mockClear();
 
-          jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+          jest
+            .spyOn(
+              require('@/app/api/cad-analyzer/analyze/route'),
+              'analyzeWithAI'
+            )
             .mockResolvedValue({
               devices: [],
               summary: 'test',
@@ -172,12 +195,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
           const formData = new FormData();
           formData.append('file', file);
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-            headers: new Map([
-              ['content-type', 'multipart/form-data'],
-              ['x-admin-token', ADMIN_TOKEN],
-            ]),
-          });
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/cad-analyzer/analyze',
+            formData,
+            {
+              headers: new Map([
+                ['content-type', 'multipart/form-data'],
+                ['x-admin-token', ADMIN_TOKEN],
+              ]),
+            }
+          );
 
           const response = await POST(request);
           expect(response.status).toBe(200);
@@ -188,19 +216,26 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const unsupportedFiles = [
           new File(['content'], 'test.txt', { type: 'text/plain' }),
           new File(['content'], 'test.doc', { type: 'application/msword' }),
-          new File(['content'], 'test.exe', { type: 'application/octet-stream' }),
+          new File(['content'], 'test.exe', {
+            type: 'application/octet-stream',
+          }),
         ];
 
         for (const file of unsupportedFiles) {
           const formData = new FormData();
           formData.append('file', file);
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-            headers: new Map([
-              ['content-type', 'multipart/form-data'],
-              ['x-admin-token', ADMIN_TOKEN],
-            ]),
-          });
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/cad-analyzer/analyze',
+            formData,
+            {
+              headers: new Map([
+                ['content-type', 'multipart/form-data'],
+                ['x-admin-token', ADMIN_TOKEN],
+              ]),
+            }
+          );
 
           const response = await POST(request);
           const data = await response.json();
@@ -212,19 +247,28 @@ describe('CAD Analyzer API - Unit Tests', () => {
 
       it('should validate file size limit', async () => {
         // Create a large file (25MB)
-        const largeFile = new File(['x'.repeat(25 * 1024 * 1024)], 'large.dxf', {
-          type: 'application/dxf',
-        });
+        const largeFile = new File(
+          ['x'.repeat(25 * 1024 * 1024)],
+          'large.dxf',
+          {
+            type: 'application/dxf',
+          }
+        );
 
         const formData = new FormData();
         formData.append('file', largeFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -241,12 +285,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -266,7 +315,11 @@ describe('CAD Analyzer API - Unit Tests', () => {
         mockAgentConfig.findOne.mockResolvedValue(null);
         mockFs.readFile.mockRejectedValue(new Error('Config file not found'));
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue({
             devices: [],
             summary: 'test',
@@ -276,12 +329,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
 
@@ -308,7 +366,11 @@ describe('CAD Analyzer API - Unit Tests', () => {
 
         mockAgentConfig.findOne.mockResolvedValue(dbConfig);
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue({
             devices: [],
             summary: 'test',
@@ -318,12 +380,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
 
@@ -350,7 +417,11 @@ describe('CAD Analyzer API - Unit Tests', () => {
 
         mockFs.readFile.mockResolvedValue(JSON.stringify(fileConfig));
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue({
             devices: [],
             summary: 'test',
@@ -360,12 +431,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
 
@@ -387,7 +463,11 @@ describe('CAD Analyzer API - Unit Tests', () => {
         mockFs.mkdir.mockRejectedValueOnce(new Error('Permission denied'));
         mockFs.mkdir.mockResolvedValueOnce(undefined); // Second call for temp directory
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue({
             devices: [],
             summary: 'test',
@@ -397,12 +477,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
 
@@ -420,12 +505,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -447,18 +537,27 @@ describe('CAD Analyzer API - Unit Tests', () => {
           analysis: 'test analysis',
         };
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue(mockAnalysisResult);
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -466,7 +565,9 @@ describe('CAD Analyzer API - Unit Tests', () => {
         expect(response.status).toBe(200);
         expect(data.url).toMatch(/^\/cad-analyzer\/\d+_/);
         expect(data.reportUrl).toMatch(/^\/cad-analyzer\/report_\d+\.txt$/);
-        expect(data.structuredReportUrl).toMatch(/^\/cad-analyzer\/structured_\d+\.json$/);
+        expect(data.structuredReportUrl).toMatch(
+          /^\/cad-analyzer\/structured_\d+\.json$/
+        );
       });
     });
 
@@ -484,18 +585,27 @@ describe('CAD Analyzer API - Unit Tests', () => {
           analysis: '通过图像识别发现3个摄像机设备',
         };
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue(mockImageAnalysis);
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -519,18 +629,27 @@ describe('CAD Analyzer API - Unit Tests', () => {
           preview_image: 'data:image/png;base64,dxf-preview',
         };
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue(mockDxfAnalysis);
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -545,18 +664,27 @@ describe('CAD Analyzer API - Unit Tests', () => {
           type: 'application/dxf',
         });
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockRejectedValue(new Error('AI service unavailable'));
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -589,12 +717,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -623,12 +756,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -649,12 +787,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -673,24 +816,36 @@ describe('CAD Analyzer API - Unit Tests', () => {
         });
 
         const testError = new Error('Test CAD analysis error');
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockRejectedValue(testError);
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         await POST(request);
 
-        expect(mockFs.mkdir).toHaveBeenCalledWith(expect.stringContaining('data'), {
-          recursive: true,
-        });
+        expect(mockFs.mkdir).toHaveBeenCalledWith(
+          expect.stringContaining('data'),
+          {
+            recursive: true,
+          }
+        );
         expect(mockFs.appendFile).toHaveBeenCalledWith(
           expect.stringContaining('api-error.log'),
           expect.stringContaining('[cad-analyzer-analyze]')
@@ -702,21 +857,32 @@ describe('CAD Analyzer API - Unit Tests', () => {
           type: 'application/dxf',
         });
 
-        mockFs.appendFile.mockRejectedValueOnce(new Error('Cannot write log file'));
+        mockFs.appendFile.mockRejectedValueOnce(
+          new Error('Cannot write log file')
+        );
 
         const testError = new Error('Test analysis error');
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockRejectedValue(testError);
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
 
@@ -737,18 +903,27 @@ describe('CAD Analyzer API - Unit Tests', () => {
           analysis: '分析完成',
         };
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue(mockAnalysisResult);
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -767,12 +942,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         // Missing file
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -793,18 +973,27 @@ describe('CAD Analyzer API - Unit Tests', () => {
           // Missing analysis, preview_image, metadata
         };
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue(minimalAnalysisResult);
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -818,9 +1007,13 @@ describe('CAD Analyzer API - Unit Tests', () => {
 
     describe('Performance tests', () => {
       it('should handle large CAD files efficiently', async () => {
-        const largeFile = new File(['x'.repeat(10 * 1024 * 1024)], 'large.dxf', {
-          type: 'application/dxf',
-        });
+        const largeFile = new File(
+          ['x'.repeat(10 * 1024 * 1024)],
+          'large.dxf',
+          {
+            type: 'application/dxf',
+          }
+        );
 
         const mockAnalysisResult = {
           devices: Array.from({ length: 100 }, (_, i) => ({
@@ -832,18 +1025,27 @@ describe('CAD Analyzer API - Unit Tests', () => {
           analysis: '发现100个设备',
         };
 
-        jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+        jest
+          .spyOn(
+            require('@/app/api/cad-analyzer/analyze/route'),
+            'analyzeWithAI'
+          )
           .mockResolvedValue(mockAnalysisResult);
 
         const formData = new FormData();
         formData.append('file', largeFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const startTime = process.hrtime.bigint();
         const response = await POST(request);
@@ -864,12 +1066,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', invalidFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-          headers: new Map([
-            ['content-type', 'multipart/form-data'],
-            ['x-admin-token', ADMIN_TOKEN],
-          ]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/cad-analyzer/analyze',
+          formData,
+          {
+            headers: new Map([
+              ['content-type', 'multipart/form-data'],
+              ['x-admin-token', ADMIN_TOKEN],
+            ]),
+          }
+        );
 
         const startTime = process.hrtime.bigint();
         const response = await POST(request);
@@ -898,16 +1105,22 @@ describe('CAD Analyzer API - Unit Tests', () => {
           '<script>alert("xss")</script>', // XSS attempt
         ];
 
-        for (const token of invalidTokens.slice(0, 4)) { // Test first 4
+        for (const token of invalidTokens.slice(0, 4)) {
+          // Test first 4
           const formData = new FormData();
           formData.append('file', mockFile);
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-            headers: new Map([
-              ['content-type', 'multipart/form-data'],
-              ['x-admin-token', token],
-            ]),
-          });
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/cad-analyzer/analyze',
+            formData,
+            {
+              headers: new Map([
+                ['content-type', 'multipart/form-data'],
+                ['x-admin-token', token],
+              ]),
+            }
+          );
 
           const response = await POST(request);
           const data = await response.json();
@@ -921,15 +1134,25 @@ describe('CAD Analyzer API - Unit Tests', () => {
 
       it('should prevent directory traversal in file names', async () => {
         const maliciousFiles = [
-          new File(['content'], '../../../etc/passwd', { type: 'application/dxf' }),
-          new File(['content'], '..\\..\\windows\\system32\\config', { type: 'application/dxf' }),
-          new File(['content'], 'test/../../../etc/passwd', { type: 'application/dxf' }),
+          new File(['content'], '../../../etc/passwd', {
+            type: 'application/dxf',
+          }),
+          new File(['content'], '..\\..\\windows\\system32\\config', {
+            type: 'application/dxf',
+          }),
+          new File(['content'], 'test/../../../etc/passwd', {
+            type: 'application/dxf',
+          }),
         ];
 
         for (const file of maliciousFiles) {
           mockFs.writeFile.mockClear();
 
-          jest.spyOn(require('@/app/api/cad-analyzer/analyze/route'), 'analyzeWithAI')
+          jest
+            .spyOn(
+              require('@/app/api/cad-analyzer/analyze/route'),
+              'analyzeWithAI'
+            )
             .mockResolvedValue({
               devices: [],
               summary: 'test',
@@ -939,12 +1162,17 @@ describe('CAD Analyzer API - Unit Tests', () => {
           const formData = new FormData();
           formData.append('file', file);
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/cad-analyzer/analyze', formData, {
-            headers: new Map([
-              ['content-type', 'multipart/form-data'],
-              ['x-admin-token', ADMIN_TOKEN],
-            ]),
-          });
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/cad-analyzer/analyze',
+            formData,
+            {
+              headers: new Map([
+                ['content-type', 'multipart/form-data'],
+                ['x-admin-token', ADMIN_TOKEN],
+              ]),
+            }
+          );
 
           const response = await POST(request);
 

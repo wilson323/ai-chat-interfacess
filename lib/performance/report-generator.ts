@@ -1008,4 +1008,3 @@ export type {
   ReportMetadata,
   ReportConfig,
 };
-export { PerformanceReportGenerator };

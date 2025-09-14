@@ -4,7 +4,6 @@
  */
 
 describe('核心功能测试', () => {
-
   describe('项目基础验证', () => {
     it('应该能够导入主要模块', () => {
       // 测试主要组件是否能正常导入
@@ -78,13 +77,7 @@ describe('核心功能测试', () => {
     const path = require('path');
 
     it('应该有必要的目录结构', () => {
-      const requiredDirs = [
-        'app',
-        'components',
-        'lib',
-        '__tests__',
-        'docs'
-      ];
+      const requiredDirs = ['app', 'components', 'lib', '__tests__', 'docs'];
 
       requiredDirs.forEach(dir => {
         const dirPath = path.join(process.cwd(), dir);
@@ -98,7 +91,7 @@ describe('核心功能测试', () => {
         'tsconfig.json',
         'next.config.mjs',
         'tailwind.config.ts',
-        'jest.config.js'
+        'jest.config.js',
       ];
 
       requiredFiles.forEach(file => {

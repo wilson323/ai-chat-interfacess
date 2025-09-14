@@ -18,33 +18,31 @@ export default function UsersPage() {
   return (
     <LanguageProvider>
       <AgentProvider>
-        <div className="fixed top-4 right-4 z-50">
+        <div className='fixed top-4 right-4 z-50'>
           <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
+            variant='outline'
+            size='sm'
+            className='flex items-center gap-2'
             onClick={() => {
               // 退出登录只需清除adminToken即可
               document.cookie = 'adminToken=; path=/; max-age=0';
               window.location.replace('/admin/login');
             }}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className='h-4 w-4' />
             退出登录
           </Button>
         </div>
         <Layout isAdmin={true}>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className='space-y-6'>
+            <div className='flex items-center justify-between'>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">用户管理</h1>
-                <p className="text-muted-foreground">
+                <h1 className='text-3xl font-bold tracking-tight'>用户管理</h1>
+                <p className='text-muted-foreground'>
                   管理系统用户、角色分配和权限控制
                 </p>
               </div>
-              <Button onClick={handleRefresh}>
-                刷新列表
-              </Button>
+              <Button onClick={handleRefresh}>刷新列表</Button>
             </div>
             <UserList refreshTrigger={refreshTrigger} />
           </div>

@@ -14,8 +14,8 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
-      mutations: { retry: false }
-    }
+      mutations: { retry: false },
+    },
   });
 
   return (
@@ -48,8 +48,8 @@ describe('ConfirmDialog组件测试', () => {
         <TestWrapper>
           <ConfirmDialog
             open={true}
-            title="删除确认"
-            content="确定要删除这个项目吗？"
+            title='删除确认'
+            content='确定要删除这个项目吗？'
             onOpenChange={jest.fn()}
             onConfirm={jest.fn()}
             onCancel={jest.fn()}
@@ -66,8 +66,8 @@ describe('ConfirmDialog组件测试', () => {
         <TestWrapper>
           <ConfirmDialog
             open={true}
-            confirmText="删除"
-            cancelText="取消"
+            confirmText='删除'
+            cancelText='取消'
             onOpenChange={jest.fn()}
             onConfirm={jest.fn()}
             onCancel={jest.fn()}
@@ -83,7 +83,7 @@ describe('ConfirmDialog组件测试', () => {
   describe('交互功能测试', () => {
     it('应该处理确认操作', () => {
       const onConfirm = jest.fn();
-      
+
       render(
         <TestWrapper>
           <ConfirmDialog
@@ -103,7 +103,7 @@ describe('ConfirmDialog组件测试', () => {
 
     it('应该处理取消操作', () => {
       const onCancel = jest.fn();
-      
+
       render(
         <TestWrapper>
           <ConfirmDialog
@@ -123,7 +123,7 @@ describe('ConfirmDialog组件测试', () => {
 
     it('应该处理对话框关闭', () => {
       const onOpenChange = jest.fn();
-      
+
       render(
         <TestWrapper>
           <ConfirmDialog
@@ -144,7 +144,7 @@ describe('ConfirmDialog组件测试', () => {
 
     it('应该支持ESC键关闭', () => {
       const onOpenChange = jest.fn();
-      
+
       render(
         <TestWrapper>
           <ConfirmDialog
@@ -234,7 +234,7 @@ describe('ConfirmDialog组件测试', () => {
         <TestWrapper>
           <ConfirmDialog
             open={true}
-            className="custom-dialog"
+            className='custom-dialog'
             onOpenChange={jest.fn()}
             onConfirm={jest.fn()}
             onCancel={jest.fn()}
@@ -250,7 +250,7 @@ describe('ConfirmDialog组件测试', () => {
         <TestWrapper>
           <ConfirmDialog
             open={true}
-            variant="destructive"
+            variant='destructive'
             onOpenChange={jest.fn()}
             onConfirm={jest.fn()}
             onCancel={jest.fn()}
@@ -267,7 +267,7 @@ describe('ConfirmDialog组件测试', () => {
         <TestWrapper>
           <ConfirmDialog
             open={true}
-            size="large"
+            size='large'
             onOpenChange={jest.fn()}
             onConfirm={jest.fn()}
             onCancel={jest.fn()}
@@ -286,7 +286,7 @@ describe('ConfirmDialog组件测试', () => {
         <TestWrapper>
           <ConfirmDialog
             open={true}
-            title="删除确认"
+            title='删除确认'
             onOpenChange={jest.fn()}
             onConfirm={jest.fn()}
             onCancel={jest.fn()}
@@ -328,10 +328,10 @@ describe('ConfirmDialog组件测试', () => {
       );
 
       const confirmButton = screen.getByText('确认');
-      
+
       // Tab键应该移动到取消按钮
       fireEvent.keyDown(confirmButton, { key: 'Tab' });
-      
+
       const cancelButton = screen.getByText('取消');
       expect(cancelButton).toHaveFocus();
     });
@@ -352,7 +352,7 @@ describe('ConfirmDialog组件测试', () => {
 
       const confirmButton = screen.getByText('确认');
       const cancelButton = screen.getByText('取消');
-      
+
       // 应该不会抛出错误
       expect(() => fireEvent.click(confirmButton)).not.toThrow();
       expect(() => fireEvent.click(cancelButton)).not.toThrow();
@@ -360,7 +360,7 @@ describe('ConfirmDialog组件测试', () => {
 
     it('应该处理异步确认操作', async () => {
       const onConfirm = jest.fn().mockResolvedValue(undefined);
-      
+
       render(
         <TestWrapper>
           <ConfirmDialog
@@ -381,8 +381,10 @@ describe('ConfirmDialog组件测试', () => {
     });
 
     it('应该处理确认操作错误', async () => {
-      const onConfirm = jest.fn().mockRejectedValue(new Error('Operation failed'));
-      
+      const onConfirm = jest
+        .fn()
+        .mockRejectedValue(new Error('Operation failed'));
+
       render(
         <TestWrapper>
           <ConfirmDialog
@@ -403,4 +405,3 @@ describe('ConfirmDialog组件测试', () => {
     });
   });
 });
-

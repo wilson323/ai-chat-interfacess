@@ -188,106 +188,109 @@ export default function CadAnalyzerHistoryPage() {
       failed: { label: '失败', variant: 'destructive' as const },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
   const filteredData = data.filter(item => {
-    const matchesSearch = !searchTerm ||
+    const matchesSearch =
+      !searchTerm ||
       item.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.analysisResult.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    const matchesStatus =
+      statusFilter === 'all' || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   return (
     <LanguageProvider>
       <AgentProvider>
-        <div className="max-w-6xl mx-auto mb-4">
+        <div className='max-w-6xl mx-auto mb-4'>
           <Link
-            href="/admin"
-            className="text-pantone369-500 hover:text-pantone369-600 flex items-center gap-1"
+            href='/admin'
+            className='text-pantone369-500 hover:text-pantone369-600 flex items-center gap-1'
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              xmlns='http://www.w3.org/2000/svg'
+              width='16'
+              height='16'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
             >
-              <path d="m12 19-7-7 7-7"></path>
-              <path d="M19 12H5"></path>
+              <path d='m12 19-7-7 7-7'></path>
+              <path d='M19 12H5'></path>
             </svg>
             返回管理员首页
           </Link>
         </div>
 
-        <Card className="max-w-6xl mx-auto">
+        <Card className='max-w-6xl mx-auto'>
           <CardHeader>
-            <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <CardTitle className='text-xl font-bold flex items-center gap-2'>
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-pantone369-500"
+                xmlns='http://www.w3.org/2000/svg'
+                width='24'
+                height='24'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                className='text-pantone369-500'
               >
-                <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
-                <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"></path>
-                <path d="M12 17v-6"></path>
-                <path d="M10 14l2 3 2-3"></path>
+                <path d='M14 3v4a1 1 0 0 0 1 1h4'></path>
+                <path d='M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z'></path>
+                <path d='M12 17v-6'></path>
+                <path d='M10 14l2 3 2-3'></path>
               </svg>
               CAD 智能体历史记录
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className='space-y-4'>
             {/* 搜索和筛选 */}
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className='flex gap-4'>
+              <div className='flex-1 relative'>
+                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
                 <Input
-                  placeholder="搜索文件名或分析结果..."
+                  placeholder='搜索文件名或分析结果...'
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className='pl-10'
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="状态筛选" />
+                <SelectTrigger className='w-40'>
+                  <SelectValue placeholder='状态筛选' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="pending">待处理</SelectItem>
-                  <SelectItem value="processing">处理中</SelectItem>
-                  <SelectItem value="completed">已完成</SelectItem>
-                  <SelectItem value="failed">失败</SelectItem>
+                  <SelectItem value='all'>全部状态</SelectItem>
+                  <SelectItem value='pending'>待处理</SelectItem>
+                  <SelectItem value='processing'>处理中</SelectItem>
+                  <SelectItem value='completed'>已完成</SelectItem>
+                  <SelectItem value='failed'>失败</SelectItem>
                 </SelectContent>
               </Select>
               <Button onClick={fetchData} disabled={loading}>
                 {loading ? '加载中...' : '刷新'}
               </Button>
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={() => setExportFormat('show')}
                 disabled={exportLoading}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className='h-4 w-4 mr-2' />
                 批量导出
               </Button>
             </div>
 
             {/* 数据表格 */}
-            <div className="border rounded-lg">
+            <div className='border rounded-lg'>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -302,82 +305,84 @@ export default function CadAnalyzerHistoryPage() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
+                      <TableCell colSpan={6} className='text-center py-8'>
                         加载中...
                       </TableCell>
                     </TableRow>
                   ) : filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
+                      <TableCell colSpan={6} className='text-center py-8'>
                         暂无数据
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredData.map((item) => (
+                    filteredData.map(item => (
                       <TableRow key={item.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{item.fileName}</div>
-                            <div className="text-sm text-gray-500">
+                            <div className='font-medium'>{item.fileName}</div>
+                            <div className='text-sm text-gray-500'>
                               ID: {item.id}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(item.status)}</TableCell>
                         <TableCell>
-                          <div className="text-sm">{item.userId}</div>
+                          <div className='text-sm'>{item.userId}</div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm max-w-xs truncate" title={item.analysisResult}>
+                          <div
+                            className='text-sm max-w-xs truncate'
+                            title={item.analysisResult}
+                          >
                             {item.analysisResult}
                           </div>
                         </TableCell>
                         <TableCell>
                           {item.createdAt
                             ? new Date(item.createdAt).toLocaleString('zh-CN')
-                            : '-'
-                          }
+                            : '-'}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className='flex gap-2'>
                             {item.fileUrl && (
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size='sm'
+                                variant='outline'
                                 onClick={() => handleViewFile(item.fileUrl)}
-                                title="查看文件"
+                                title='查看文件'
                               >
-                                <Eye className="h-4 w-4" />
+                                <Eye className='h-4 w-4' />
                               </Button>
                             )}
                             <Button
-                              size="sm"
-                              variant="outline"
+                              size='sm'
+                              variant='outline'
                               onClick={() => {
                                 setDownloadId(item.id);
                                 setShowFormat(true);
                               }}
-                              title="下载报告"
+                              title='下载报告'
                             >
-                              <FileText className="h-4 w-4" />
+                              <FileText className='h-4 w-4' />
                             </Button>
                             <Button
-                              size="sm"
-                              variant="destructive"
+                              size='sm'
+                              variant='destructive'
                               onClick={() => handleDelete(item.id)}
-                              title="删除"
+                              title='删除'
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className='h-4 w-4' />
                             </Button>
                           </div>
                           {showFormat && downloadId === item.id && (
-                            <div className="absolute z-10 bg-white border rounded shadow-lg p-2 mt-1 min-w-[120px]">
-                              {['txt', 'pdf', 'json', 'excel'].map((fmt) => (
+                            <div className='absolute z-10 bg-white border rounded shadow-lg p-2 mt-1 min-w-[120px]'>
+                              {['txt', 'pdf', 'json', 'excel'].map(fmt => (
                                 <Button
                                   key={fmt}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="justify-start w-full"
+                                  size='sm'
+                                  variant='ghost'
+                                  className='justify-start w-full'
                                   disabled={downloadLoading}
                                   onClick={() => handleDownload(item.id, fmt)}
                                 >
@@ -385,9 +390,9 @@ export default function CadAnalyzerHistoryPage() {
                                 </Button>
                               ))}
                               <Button
-                                size="sm"
-                                variant="ghost"
-                                className="justify-start w-full text-red-500"
+                                size='sm'
+                                variant='ghost'
+                                className='justify-start w-full text-red-500'
                                 onClick={() => setShowFormat(false)}
                               >
                                 取消
@@ -404,20 +409,22 @@ export default function CadAnalyzerHistoryPage() {
 
             {/* 分页 */}
             {totalPages > 1 && (
-              <div className="flex justify-center gap-2">
+              <div className='flex justify-center gap-2'>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                 >
                   上一页
                 </Button>
-                <span className="flex items-center px-4">
+                <span className='flex items-center px-4'>
                   第 {currentPage} 页，共 {totalPages} 页
                 </span>
                 <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  variant='outline'
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
                   下一页
@@ -427,13 +434,13 @@ export default function CadAnalyzerHistoryPage() {
 
             {/* 批量导出菜单 */}
             {exportFormat === 'show' && (
-              <div className="absolute z-10 bg-white border rounded shadow-lg p-2 mt-1">
-                {['txt', 'pdf', 'json', 'excel'].map((fmt) => (
+              <div className='absolute z-10 bg-white border rounded shadow-lg p-2 mt-1'>
+                {['txt', 'pdf', 'json', 'excel'].map(fmt => (
                   <Button
                     key={fmt}
-                    size="sm"
-                    variant="ghost"
-                    className="justify-start w-full"
+                    size='sm'
+                    variant='ghost'
+                    className='justify-start w-full'
                     disabled={exportLoading}
                     onClick={() => handleExport(fmt)}
                   >
@@ -441,9 +448,9 @@ export default function CadAnalyzerHistoryPage() {
                   </Button>
                 ))}
                 <Button
-                  size="sm"
-                  variant="ghost"
-                  className="justify-start w-full text-red-500"
+                  size='sm'
+                  variant='ghost'
+                  className='justify-start w-full text-red-500'
                   onClick={() => setExportFormat(null)}
                 >
                   取消

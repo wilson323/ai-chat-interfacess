@@ -4,7 +4,10 @@
  */
 
 import { POST } from '@/app/api/voice-to-text/route';
-import { TestRequestBuilder, testValidators } from '@/__tests__/utils/api-test-utils';
+import {
+  TestRequestBuilder,
+  testValidators,
+} from '@/__tests__/utils/api-test-utils';
 
 // Mock file system operations
 jest.mock('fs/promises', () => ({
@@ -31,7 +34,8 @@ describe('Voice Transcription API - Unit Tests', () => {
     mockPath.join.mockImplementation((...args) => args.join('/'));
 
     // Reset environment variables
-    process.env.OPENAI_AUDIO_API_URL = 'http://test-api.com/v1/audio/transcriptions';
+    process.env.OPENAI_AUDIO_API_URL =
+      'http://test-api.com/v1/audio/transcriptions';
     process.env.OPENAI_AUDIO_API_KEY = 'test-api-key';
   });
 
@@ -59,9 +63,14 @@ describe('Voice Transcription API - Unit Tests', () => {
       const formData = new FormData();
       formData.append('file', mockFile);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-        headers: new Map([['content-type', 'multipart/form-data']]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/voice-to-text',
+        formData,
+        {
+          headers: new Map([['content-type', 'multipart/form-data']]),
+        }
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -88,9 +97,14 @@ describe('Voice Transcription API - Unit Tests', () => {
       const formData = new FormData();
       // Missing file
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-        headers: new Map([['content-type', 'multipart/form-data']]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/voice-to-text',
+        formData,
+        {
+          headers: new Map([['content-type', 'multipart/form-data']]),
+        }
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -111,9 +125,14 @@ describe('Voice Transcription API - Unit Tests', () => {
       const formData = new FormData();
       formData.append('file', largeFile);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-        headers: new Map([['content-type', 'multipart/form-data']]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/voice-to-text',
+        formData,
+        {
+          headers: new Map([['content-type', 'multipart/form-data']]),
+        }
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -133,9 +152,14 @@ describe('Voice Transcription API - Unit Tests', () => {
       const formData = new FormData();
       formData.append('file', invalidFile);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-        headers: new Map([['content-type', 'multipart/form-data']]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/voice-to-text',
+        formData,
+        {
+          headers: new Map([['content-type', 'multipart/form-data']]),
+        }
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -167,9 +191,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', file);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         expect(response.status).toBe(200);
@@ -188,9 +217,14 @@ describe('Voice Transcription API - Unit Tests', () => {
       const formData = new FormData();
       formData.append('file', mockFile);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-        headers: new Map([['content-type', 'multipart/form-data']]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/voice-to-text',
+        formData,
+        {
+          headers: new Map([['content-type', 'multipart/form-data']]),
+        }
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -221,9 +255,14 @@ describe('Voice Transcription API - Unit Tests', () => {
       const formData = new FormData();
       formData.append('file', mockFile);
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-        headers: new Map([['content-type', 'multipart/form-data']]),
-      });
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/voice-to-text',
+        formData,
+        {
+          headers: new Map([['content-type', 'multipart/form-data']]),
+        }
+      );
 
       await POST(request);
 
@@ -257,9 +296,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -288,9 +332,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -319,9 +368,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -344,9 +398,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -371,9 +430,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -399,9 +463,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -416,14 +485,21 @@ describe('Voice Transcription API - Unit Tests', () => {
           type: 'audio/wav',
         });
 
-        (fetch as jest.Mock).mockRejectedValueOnce(new Error('Network connection failed'));
+        (fetch as jest.Mock).mockRejectedValueOnce(
+          new Error('Network connection failed')
+        );
 
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -446,9 +522,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -461,9 +542,14 @@ describe('Voice Transcription API - Unit Tests', () => {
 
     describe('Request validation', () => {
       it('should handle invalid form data', async () => {
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text');
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text'
+        );
         // Simulate form data parsing error
-        request.formData = jest.fn().mockRejectedValue(new Error('Invalid form data'));
+        request.formData = jest
+          .fn()
+          .mockRejectedValue(new Error('Invalid form data'));
 
         const response = await POST(request);
         const data = await response.json();
@@ -477,9 +563,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', 'not-a-file-object'); // Invalid file
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -502,15 +593,23 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         await POST(request);
 
-        expect(mockFs.mkdir).toHaveBeenCalledWith(expect.stringContaining('data'), {
-          recursive: true,
-        });
+        expect(mockFs.mkdir).toHaveBeenCalledWith(
+          expect.stringContaining('data'),
+          {
+            recursive: true,
+          }
+        );
         expect(mockFs.appendFile).toHaveBeenCalledWith(
           expect.stringContaining('api-error.log'),
           expect.stringContaining('[voice-to-text]')
@@ -523,7 +622,9 @@ describe('Voice Transcription API - Unit Tests', () => {
         });
 
         // Mock file system error
-        mockFs.appendFile.mockRejectedValueOnce(new Error('Cannot write log file'));
+        mockFs.appendFile.mockRejectedValueOnce(
+          new Error('Cannot write log file')
+        );
 
         const testError = new Error('Test API error');
         (fetch as jest.Mock).mockRejectedValueOnce(testError);
@@ -531,9 +632,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
 
@@ -557,9 +663,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         await POST(request);
 
@@ -585,9 +696,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         await POST(request);
 
@@ -609,7 +725,7 @@ describe('Voice Transcription API - Unit Tests', () => {
 
         let timeoutTriggered = false;
         (fetch as jest.Mock).mockImplementationOnce(() => {
-          return new Promise((resolve) => {
+          return new Promise(resolve => {
             setTimeout(() => {
               timeoutTriggered = true;
               resolve({
@@ -623,9 +739,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const startTime = process.hrtime.bigint();
         const response = await POST(request);
@@ -636,20 +757,31 @@ describe('Voice Transcription API - Unit Tests', () => {
         expect(response.status).toBe(200);
         expect(responseTime).toBeGreaterThan(100); // Should wait for the simulated API call
         expect(responseTime).toBeLessThan(31000); // Should not exceed 30s timeout + buffer
-        console.log(`Voice transcription with timeout response time: ${responseTime}ms`);
+        console.log(
+          `Voice transcription with timeout response time: ${responseTime}ms`
+        );
       });
 
       it('should respond within 50ms for validation failures', async () => {
-        const largeFile = new File(['x'.repeat(30 * 1024 * 1024)], 'large.wav', {
-          type: 'audio/wav',
-        });
+        const largeFile = new File(
+          ['x'.repeat(30 * 1024 * 1024)],
+          'large.wav',
+          {
+            type: 'audio/wav',
+          }
+        );
 
         const formData = new FormData();
         formData.append('file', largeFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const startTime = process.hrtime.bigint();
         const response = await POST(request);
@@ -683,9 +815,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -701,9 +838,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         // Missing file
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();
@@ -733,9 +875,14 @@ describe('Voice Transcription API - Unit Tests', () => {
         const formData = new FormData();
         formData.append('file', mockFile);
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/voice-to-text', formData, {
-          headers: new Map([['content-type', 'multipart/form-data']]),
-        });
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/voice-to-text',
+          formData,
+          {
+            headers: new Map([['content-type', 'multipart/form-data']]),
+          }
+        );
 
         const response = await POST(request);
         const data = await response.json();

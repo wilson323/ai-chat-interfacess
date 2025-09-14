@@ -79,7 +79,12 @@ describe('Heatmap API Tests', () => {
     }
   });
 
-  const createMockRequest = (method: string = 'GET', query: any = {}, body: any = {}, headers: any = {}): NextApiRequest => {
+  const createMockRequest = (
+    method: string = 'GET',
+    query: any = {},
+    body: any = {},
+    headers: any = {}
+  ): NextApiRequest => {
     return {
       method,
       query,
@@ -409,10 +414,7 @@ describe('Heatmap API Tests', () => {
       await heatmapExportRoute.GET(req as any, res as any);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.setHeader).toHaveBeenCalledWith(
-        'Content-Type',
-        'text/csv'
-      );
+      expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
       expect(res.setHeader).toHaveBeenCalledWith(
         'Content-Disposition',
         expect.stringContaining('.csv')
@@ -499,17 +501,16 @@ describe('Heatmap API Tests', () => {
       await heatmapExportRoute.GET(req as any, res as any);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.setHeader).toHaveBeenCalledWith(
-        'Content-Type',
-        'text/csv'
-      );
+      expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
     });
   });
 
   describe('Error Handling', () => {
     it('should handle database connection errors', async () => {
       // Mock database error
-      jest.spyOn(sequelize, 'query').mockRejectedValue(new Error('Database connection failed'));
+      jest
+        .spyOn(sequelize, 'query')
+        .mockRejectedValue(new Error('Database connection failed'));
 
       const req = createMockRequest('GET', {});
       const res = createMockResponse();
@@ -583,7 +584,9 @@ describe('Heatmap API Tests', () => {
       // Create 10 concurrent requests
       for (let i = 0; i < 10; i++) {
         const req = createMockRequest('GET', {
-          startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          startDate: new Date(
+            Date.now() - 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
           endDate: new Date().toISOString(),
         });
         const res = createMockResponse();
@@ -600,7 +603,7 @@ describe('Heatmap API Tests', () => {
       await Promise.all(requests);
 
       // Check all responses
-      responses.forEach((res) => {
+      responses.forEach(res => {
         expect(res.status).toHaveBeenCalledWith(200);
         const response = res.json.mock.calls[0][0];
         expect(response.success).toBe(true);
@@ -609,7 +612,9 @@ describe('Heatmap API Tests', () => {
 
     it('should handle large date range queries', async () => {
       const req = createMockRequest('GET', {
-        startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year ago
+        startDate: new Date(
+          Date.now() - 365 * 24 * 60 * 60 * 1000
+        ).toISOString(), // 1 year ago
         endDate: new Date().toISOString(),
       });
       const res = createMockResponse();

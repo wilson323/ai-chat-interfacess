@@ -3,7 +3,11 @@
  * 测试LRU、LFU、TTL缓存策略的实现
  */
 
-import { LRUCacheStrategy, LFUCacheStrategy, TTLCacheStrategy } from '@/lib/cache/cache-strategies';
+import {
+  LRUCacheStrategy,
+  LFUCacheStrategy,
+  TTLCacheStrategy,
+} from '@/lib/cache/cache-strategies';
 
 // Mock redis manager
 jest.mock('@/lib/cache/redis-manager', () => ({
@@ -38,7 +42,11 @@ describe('缓存策略测试', () => {
       const result = await lruCache.get('key1');
 
       expect(result).toBe('value1');
-      expect(mockRedisManager.set).toHaveBeenCalledWith('key1', 'value1', undefined);
+      expect(mockRedisManager.set).toHaveBeenCalledWith(
+        'key1',
+        'value1',
+        undefined
+      );
     });
 
     it('应该能够删除键', async () => {
@@ -66,7 +74,11 @@ describe('缓存策略测试', () => {
       const result = await lfuCache.get('key1');
 
       expect(result).toBe('value1');
-      expect(mockRedisManager.set).toHaveBeenCalledWith('key1', 'value1', undefined);
+      expect(mockRedisManager.set).toHaveBeenCalledWith(
+        'key1',
+        'value1',
+        undefined
+      );
     });
 
     it('应该能够删除键', async () => {
@@ -94,7 +106,11 @@ describe('缓存策略测试', () => {
       const result = await ttlCache.get('key1');
 
       expect(result).toBe('value1');
-      expect(mockRedisManager.set).toHaveBeenCalledWith('key1', 'value1', undefined);
+      expect(mockRedisManager.set).toHaveBeenCalledWith(
+        'key1',
+        'value1',
+        undefined
+      );
     });
 
     it('应该支持自定义TTL', async () => {
@@ -161,7 +177,9 @@ describe('缓存策略测试', () => {
       const cache = new LRUCacheStrategy();
       mockRedisManager.set.mockRejectedValue(new Error('Connection failed'));
 
-      await expect(cache.set('key1', 'value1')).rejects.toThrow('Connection failed');
+      await expect(cache.set('key1', 'value1')).rejects.toThrow(
+        'Connection failed'
+      );
     });
 
     it('应该处理获取不存在的键', async () => {

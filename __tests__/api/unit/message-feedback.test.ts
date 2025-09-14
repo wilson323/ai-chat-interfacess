@@ -4,7 +4,10 @@
  */
 
 import { POST } from '@/app/api/message-feedback/route';
-import { TestRequestBuilder, testValidators } from '@/__tests__/utils/api-test-utils';
+import {
+  TestRequestBuilder,
+  testValidators,
+} from '@/__tests__/utils/api-test-utils';
 
 // Mock file system operations
 jest.mock('fs/promises', () => ({
@@ -37,16 +40,23 @@ describe('Message Feedback API - Unit Tests', () => {
         type: 'like',
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/message-feedback',
+        feedbackData
+      );
       const response = await POST(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.ok).toBe(true);
 
-      expect(mockFs.mkdir).toHaveBeenCalledWith(expect.stringContaining('data'), {
-        recursive: true,
-      });
+      expect(mockFs.mkdir).toHaveBeenCalledWith(
+        expect.stringContaining('data'),
+        {
+          recursive: true,
+        }
+      );
       expect(mockFs.readFile).toHaveBeenCalledWith(
         expect.stringContaining('message-feedback.json'),
         'utf-8'
@@ -63,7 +73,11 @@ describe('Message Feedback API - Unit Tests', () => {
         type: 'dislike',
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/message-feedback',
+        feedbackData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -82,7 +96,11 @@ describe('Message Feedback API - Unit Tests', () => {
         // Missing messageId
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/message-feedback',
+        feedbackData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -99,7 +117,11 @@ describe('Message Feedback API - Unit Tests', () => {
         // Missing type
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/message-feedback',
+        feedbackData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -117,7 +139,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: type,
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -139,7 +165,11 @@ describe('Message Feedback API - Unit Tests', () => {
         type: 'like',
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', newFeedback);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/message-feedback',
+        newFeedback
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -147,7 +177,10 @@ describe('Message Feedback API - Unit Tests', () => {
       expect(data.ok).toBe(true);
 
       // Should append new feedback to existing list
-      const expectedList = [...existingFeedback, { ...newFeedback, time: expect.any(Number) }];
+      const expectedList = [
+        ...existingFeedback,
+        { ...newFeedback, time: expect.any(Number) },
+      ];
       expect(mockFs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('message-feedback.json'),
         JSON.stringify(expectedList, null, 2)
@@ -164,10 +197,14 @@ describe('Message Feedback API - Unit Tests', () => {
 
       const updatedFeedback = {
         messageId: 'msg-123', // Same messageId as existing
-        type: 'dislike',   // Different type
+        type: 'dislike', // Different type
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', updatedFeedback);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/message-feedback',
+        updatedFeedback
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -193,7 +230,11 @@ describe('Message Feedback API - Unit Tests', () => {
         type: 'like',
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/message-feedback',
+        feedbackData
+      );
       const response = await POST(request);
 
       expect(response.status).toBe(200);
@@ -208,7 +249,11 @@ describe('Message Feedback API - Unit Tests', () => {
         type: 'like',
       };
 
-      const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+      const request = TestRequestBuilder.createRequest(
+        'POST',
+        '/api/message-feedback',
+        feedbackData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -231,7 +276,11 @@ describe('Message Feedback API - Unit Tests', () => {
 
         mockFs.mkdir.mockRejectedValue(new Error('Permission denied'));
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
 
         expect(response.status).toBe(500);
@@ -246,7 +295,11 @@ describe('Message Feedback API - Unit Tests', () => {
 
         mockFs.readFile.mockRejectedValue(new Error('File not found'));
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -256,7 +309,11 @@ describe('Message Feedback API - Unit Tests', () => {
         // Should continue with empty list when file read fails
         expect(mockFs.writeFile).toHaveBeenCalledWith(
           expect.stringContaining('message-feedback.json'),
-          JSON.stringify([{ ...feedbackData, time: expect.any(Number) }], null, 2)
+          JSON.stringify(
+            [{ ...feedbackData, time: expect.any(Number) }],
+            null,
+            2
+          )
         );
       });
 
@@ -268,7 +325,11 @@ describe('Message Feedback API - Unit Tests', () => {
 
         mockFs.writeFile.mockRejectedValue(new Error('Disk full'));
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
 
         expect(response.status).toBe(500);
@@ -283,7 +344,11 @@ describe('Message Feedback API - Unit Tests', () => {
 
         mockFs.mkdir.mockRejectedValue(new Error('EACCES: permission denied'));
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
 
         expect(response.status).toBe(500);
@@ -295,9 +360,15 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        mockFs.writeFile.mockRejectedValue(new Error('ENOSPC: no space left on device'));
+        mockFs.writeFile.mockRejectedValue(
+          new Error('ENOSPC: no space left on device')
+        );
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
 
         expect(response.status).toBe(500);
@@ -306,7 +377,10 @@ describe('Message Feedback API - Unit Tests', () => {
 
     describe('Request validation', () => {
       it('should handle invalid JSON in request body', async () => {
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback');
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback'
+        );
         request.json = jest.fn().mockRejectedValue(new Error('Invalid JSON'));
 
         const response = await POST(request);
@@ -317,7 +391,11 @@ describe('Message Feedback API - Unit Tests', () => {
       });
 
       it('should handle empty request body', async () => {
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', {});
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          {}
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -326,7 +404,10 @@ describe('Message Feedback API - Unit Tests', () => {
       });
 
       it('should handle null request body', async () => {
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback');
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback'
+        );
         request.json = jest.fn().mockResolvedValue(null);
 
         const response = await POST(request);
@@ -347,7 +428,11 @@ describe('Message Feedback API - Unit Tests', () => {
             type: 'like',
           };
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/message-feedback',
+            feedbackData
+          );
           const response = await POST(request);
           const data = await response.json();
 
@@ -362,7 +447,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -376,7 +465,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -392,7 +485,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -407,7 +504,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -432,7 +533,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
 
         const startTime = process.hrtime.bigint();
         const response = await POST(request);
@@ -451,7 +556,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
 
         const startTime = process.hrtime.bigint();
         const response = await POST(request);
@@ -481,7 +590,11 @@ describe('Message Feedback API - Unit Tests', () => {
             type: 'like',
           };
 
-          const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+          const request = TestRequestBuilder.createRequest(
+            'POST',
+            '/api/message-feedback',
+            feedbackData
+          );
           const response = await POST(request);
           const data = await response.json();
 
@@ -492,14 +605,20 @@ describe('Message Feedback API - Unit Tests', () => {
       });
 
       it('should not expose file system paths in error responses', async () => {
-        mockFs.mkdir.mockRejectedValue(new Error('/path/to/secret/directory not found'));
+        mockFs.mkdir.mockRejectedValue(
+          new Error('/path/to/secret/directory not found')
+        );
 
         const feedbackData = {
           messageId: 'msg-123',
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
 
         expect(response.status).toBe(500);
@@ -516,7 +635,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -538,7 +661,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
         await POST(request);
 
         expect(mockPath.join).toHaveBeenCalledWith(
@@ -557,7 +684,11 @@ describe('Message Feedback API - Unit Tests', () => {
           type: 'like',
         };
 
-        const request = TestRequestBuilder.createRequest('POST', '/api/message-feedback', feedbackData);
+        const request = TestRequestBuilder.createRequest(
+          'POST',
+          '/api/message-feedback',
+          feedbackData
+        );
 
         // We need to restore the original cwd after test
         const originalCwdFunc = process.cwd;

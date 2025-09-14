@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { HeatmapComponent } from '@/components/admin/heatmap/HeatmapComponent';
 import { HeatmapChart } from '@/components/admin/heatmap/HeatmapChart';
@@ -10,10 +17,16 @@ jest.mock('next-auth/react');
 jest.mock('@/lib/services/heatmap');
 jest.mock('@/lib/services/analytics');
 jest.mock('react-leaflet', () => ({
-  MapContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="map-container">{children}</div>,
-  TileLayer: () => <div data-testid="tile-layer" />,
-  CircleMarker: ({ children }: { children: React.ReactNode }) => <div data-testid="circle-marker">{children}</div>,
-  Popup: ({ children }: { children: React.ReactNode }) => <div data-testid="popup">{children}</div>,
+  MapContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='map-container'>{children}</div>
+  ),
+  TileLayer: () => <div data-testid='tile-layer' />,
+  CircleMarker: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='circle-marker'>{children}</div>
+  ),
+  Popup: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='popup'>{children}</div>
+  ),
 }));
 
 const mockHeatmapService = require('@/lib/services/heatmap');
@@ -184,7 +197,9 @@ describe('Heatmap Components Tests', () => {
     });
 
     it('should handle loading errors gracefully', async () => {
-      mockHeatmapService.getHeatmapData.mockRejectedValue(new Error('Failed to load data'));
+      mockHeatmapService.getHeatmapData.mockRejectedValue(
+        new Error('Failed to load data')
+      );
 
       render(<HeatmapComponent />);
 
@@ -201,7 +216,8 @@ describe('Heatmap Components Tests', () => {
     });
 
     it('should export data as CSV', async () => {
-      const mockCsvData = 'Country,City,Count\n中国,深圳市,50\n美国,San Francisco,30';
+      const mockCsvData =
+        'Country,City,Count\n中国,深圳市,50\n美国,San Francisco,30';
       mockHeatmapService.exportData.mockResolvedValue(mockCsvData);
 
       render(<HeatmapComponent />);
@@ -362,8 +378,12 @@ describe('Heatmap Components Tests', () => {
     };
 
     beforeEach(() => {
-      mockAnalyticsService.getOverviewData.mockResolvedValue(mockAnalyticsData.overview);
-      mockAnalyticsService.getTrendsData.mockResolvedValue(mockAnalyticsData.trends);
+      mockAnalyticsService.getOverviewData.mockResolvedValue(
+        mockAnalyticsData.overview
+      );
+      mockAnalyticsService.getTrendsData.mockResolvedValue(
+        mockAnalyticsData.trends
+      );
     });
 
     it('should render analytics dashboard', () => {
@@ -540,7 +560,9 @@ describe('Heatmap Components Tests', () => {
     });
 
     it('should handle connection errors', async () => {
-      mockAnalyticsService.getRealTimeData.mockRejectedValue(new Error('Connection failed'));
+      mockAnalyticsService.getRealTimeData.mockRejectedValue(
+        new Error('Connection failed')
+      );
 
       render(<RealTimeMonitor />);
 
@@ -581,7 +603,9 @@ describe('Heatmap Components Tests', () => {
 
   describe('Error Handling and Edge Cases', () => {
     it('should handle network errors gracefully', async () => {
-      mockHeatmapService.getHeatmapData.mockRejectedValue(new Error('Network error'));
+      mockHeatmapService.getHeatmapData.mockRejectedValue(
+        new Error('Network error')
+      );
 
       render(<HeatmapComponent />);
 
@@ -606,7 +630,7 @@ describe('Heatmap Components Tests', () => {
 
     it('should handle loading timeouts', async () => {
       mockHeatmapService.getHeatmapData.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 10000))
+        () => new Promise(resolve => setTimeout(resolve, 10000))
       );
 
       render(<HeatmapComponent />);

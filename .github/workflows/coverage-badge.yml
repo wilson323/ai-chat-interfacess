@@ -2,9 +2,9 @@ name: Coverage Badge Generator
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_run:
-    workflows: ["API Testing CI/CD Pipeline"]
+    workflows: ['API Testing CI/CD Pipeline']
     types:
       - completed
 
@@ -14,38 +14,38 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18.x'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Download coverage artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: coverage-report-18.x
-        path: coverage/
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage-report-18.x
+          path: coverage/
 
-    - name: Generate coverage badge
-      run: node scripts/coverage-report.js
+      - name: Generate coverage badge
+        run: node scripts/coverage-report.js
 
-    - name: Upload coverage badge
-      uses: actions/upload-artifact@v3
-      with:
-        name: coverage-badge
-        path: coverage/coverage-badge.json
+      - name: Upload coverage badge
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-badge
+          path: coverage/coverage-badge.json
 
-    - name: Commit coverage badge (optional)
-      if: github.ref == 'refs/heads/main'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add coverage/coverage-badge.json
-        git commit -m "docs: update coverage badge [skip ci]" || exit 0
-        git push
+      - name: Commit coverage badge (optional)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add coverage/coverage-badge.json
+          git commit -m "docs: update coverage badge [skip ci]" || exit 0
+          git push

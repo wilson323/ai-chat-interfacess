@@ -130,88 +130,91 @@ export default function ImageEditorHistoryPage() {
       failed: { label: '失败', variant: 'destructive' as const },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
   const filteredData = data.filter(item => {
-    const matchesSearch = !searchTerm ||
+    const matchesSearch =
+      !searchTerm ||
       item.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.analysisResult.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    const matchesStatus =
+      statusFilter === 'all' || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   return (
     <LanguageProvider>
       <AgentProvider>
-        <div className="max-w-6xl mx-auto mb-4">
+        <div className='max-w-6xl mx-auto mb-4'>
           <Link
-            href="/admin"
-            className="text-pantone369-500 hover:text-pantone369-600 flex items-center gap-1"
+            href='/admin'
+            className='text-pantone369-500 hover:text-pantone369-600 flex items-center gap-1'
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              xmlns='http://www.w3.org/2000/svg'
+              width='16'
+              height='16'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
             >
-              <path d="m12 19-7-7 7-7"></path>
-              <path d="M19 12H5"></path>
+              <path d='m12 19-7-7 7-7'></path>
+              <path d='M19 12H5'></path>
             </svg>
             返回管理员首页
           </Link>
         </div>
 
-        <Card className="max-w-6xl mx-auto">
+        <Card className='max-w-6xl mx-auto'>
           <CardHeader>
-            <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <CardTitle className='text-xl font-bold flex items-center gap-2'>
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-pantone369-500"
+                xmlns='http://www.w3.org/2000/svg'
+                width='24'
+                height='24'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='2'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                className='text-pantone369-500'
               >
-                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                <circle cx="9" cy="9" r="2"></circle>
-                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                <rect width='18' height='18' x='3' y='3' rx='2' ry='2'></rect>
+                <circle cx='9' cy='9' r='2'></circle>
+                <path d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'></path>
               </svg>
               图像编辑器历史记录
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className='space-y-4'>
             {/* 搜索和筛选 */}
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className='flex gap-4'>
+              <div className='flex-1 relative'>
+                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
                 <Input
-                  placeholder="搜索文件名或分析结果..."
+                  placeholder='搜索文件名或分析结果...'
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className='pl-10'
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="状态筛选" />
+                <SelectTrigger className='w-40'>
+                  <SelectValue placeholder='状态筛选' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="pending">待处理</SelectItem>
-                  <SelectItem value="processing">处理中</SelectItem>
-                  <SelectItem value="completed">已完成</SelectItem>
-                  <SelectItem value="failed">失败</SelectItem>
+                  <SelectItem value='all'>全部状态</SelectItem>
+                  <SelectItem value='pending'>待处理</SelectItem>
+                  <SelectItem value='processing'>处理中</SelectItem>
+                  <SelectItem value='completed'>已完成</SelectItem>
+                  <SelectItem value='failed'>失败</SelectItem>
                 </SelectContent>
               </Select>
               <Button onClick={fetchData} disabled={loading}>
@@ -220,7 +223,7 @@ export default function ImageEditorHistoryPage() {
             </div>
 
             {/* 数据表格 */}
-            <div className="border rounded-lg">
+            <div className='border rounded-lg'>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -234,30 +237,30 @@ export default function ImageEditorHistoryPage() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
+                      <TableCell colSpan={5} className='text-center py-8'>
                         加载中...
                       </TableCell>
                     </TableRow>
                   ) : filteredData.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
+                      <TableCell colSpan={5} className='text-center py-8'>
                         暂无数据
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredData.map((item) => (
+                    filteredData.map(item => (
                       <TableRow key={item.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{item.fileName}</div>
-                            <div className="text-sm text-gray-500 truncate max-w-xs">
+                            <div className='font-medium'>{item.fileName}</div>
+                            <div className='text-sm text-gray-500 truncate max-w-xs'>
                               {item.analysisResult}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(item.status)}</TableCell>
                         <TableCell>
-                          <div className="text-sm">
+                          <div className='text-sm'>
                             {item.editOperations?.slice(0, 2).join(', ')}
                             {item.editOperations?.length > 2 && `...`}
                           </div>
@@ -265,38 +268,41 @@ export default function ImageEditorHistoryPage() {
                         <TableCell>
                           {item.createdAt
                             ? new Date(item.createdAt).toLocaleString('zh-CN')
-                            : '-'
-                          }
+                            : '-'}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className='flex gap-2'>
                             {item.originalImageUrl && (
                               <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleViewImage(item.originalImageUrl)}
-                                title="查看原图"
+                                size='sm'
+                                variant='outline'
+                                onClick={() =>
+                                  handleViewImage(item.originalImageUrl)
+                                }
+                                title='查看原图'
                               >
-                                <Eye className="h-4 w-4" />
+                                <Eye className='h-4 w-4' />
                               </Button>
                             )}
                             {item.editedImageUrl && (
                               <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleViewImage(item.editedImageUrl)}
-                                title="查看编辑图"
+                                size='sm'
+                                variant='outline'
+                                onClick={() =>
+                                  handleViewImage(item.editedImageUrl)
+                                }
+                                title='查看编辑图'
                               >
-                                <Download className="h-4 w-4" />
+                                <Download className='h-4 w-4' />
                               </Button>
                             )}
                             <Button
-                              size="sm"
-                              variant="destructive"
+                              size='sm'
+                              variant='destructive'
                               onClick={() => handleDelete(item.id)}
-                              title="删除"
+                              title='删除'
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className='h-4 w-4' />
                             </Button>
                           </div>
                         </TableCell>
@@ -309,20 +315,22 @@ export default function ImageEditorHistoryPage() {
 
             {/* 分页 */}
             {totalPages > 1 && (
-              <div className="flex justify-center gap-2">
+              <div className='flex justify-center gap-2'>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                 >
                   上一页
                 </Button>
-                <span className="flex items-center px-4">
+                <span className='flex items-center px-4'>
                   第 {currentPage} 页，共 {totalPages} 页
                 </span>
                 <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  variant='outline'
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
                   下一页

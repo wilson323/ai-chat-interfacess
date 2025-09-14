@@ -51,7 +51,10 @@ interface SchemaDiff {
   details: string;
 }
 
-function getFieldDiff(modelField: ModelField | undefined, dbField: DatabaseField | undefined) {
+function getFieldDiff(
+  modelField: ModelField | undefined,
+  dbField: DatabaseField | undefined
+) {
   if (!modelField) return 'missing'; // 数据库有，模型无
   if (!dbField) return 'new'; // 模型有，数据库无
   if (
@@ -181,7 +184,9 @@ export default function DbSchemaPage() {
         ];
         const csv = rows
           .map(r =>
-            r.map((v: string | number) => `"${String(v).replace(/"/g, '""')}`).join(',')
+            r
+              .map((v: string | number) => `"${String(v).replace(/"/g, '""')}`)
+              .join(',')
           )
           .join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
@@ -263,14 +268,21 @@ export default function DbSchemaPage() {
   };
 
   // 健康监控
-  const [health, setHealth] = useState<{db?: string; api?: string; agent?: string} | null>(null);
+  const [health, setHealth] = useState<{
+    db?: string;
+    api?: string;
+    agent?: string;
+  } | null>(null);
   useEffect(() => {
     fetch('/api/health')
       .then(r => r.json())
       .then(setHealth);
   }, []);
   // 性能分析
-  const [perf, setPerf] = useState<{cpu?: string[]; memory?: {heapUsed?: string}} | null>(null);
+  const [perf, setPerf] = useState<{
+    cpu?: string[];
+    memory?: { heapUsed?: string };
+  } | null>(null);
   useEffect(() => {
     fetch('/api/admin/monitor/performance')
       .then(r => r.json())

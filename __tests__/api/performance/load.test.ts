@@ -3,7 +3,11 @@
  * Tests for API performance under various load conditions
  */
 
-import { testPerf, TestRequestBuilder, TestFixtures } from '@/__tests__/utils/api-test-utils';
+import {
+  testPerf,
+  TestRequestBuilder,
+  TestFixtures,
+} from '@/__tests__/utils/api-test-utils';
 
 describe('API Load and Performance Tests', () => {
   describe('API Response Time Tests', () => {
@@ -27,7 +31,10 @@ describe('API Load and Performance Tests', () => {
         // Simulate simple data retrieval
         return {
           success: true,
-          data: Array.from({ length: 10 }, (_, i) => ({ id: i, name: `Item ${i}` })),
+          data: Array.from({ length: 10 }, (_, i) => ({
+            id: i,
+            name: `Item ${i}`,
+          })),
         };
       };
 
@@ -147,7 +154,10 @@ describe('API Load and Performance Tests', () => {
     it('should not leak memory under sustained load', async () => {
       const mockMemoryIntensiveCall = async () => {
         // Simulate memory-intensive operation
-        const largeArray = Array.from({ length: 10000 }, (_, i) => ({ id: i, data: 'x'.repeat(100) }));
+        const largeArray = Array.from({ length: 10000 }, (_, i) => ({
+          id: i,
+          data: 'x'.repeat(100),
+        }));
         await new Promise(resolve => setTimeout(resolve, 20));
         return { success: true, data: largeArray.length };
       };
@@ -298,7 +308,8 @@ describe('API Load and Performance Tests', () => {
         return { success: true, cached: true };
       };
 
-      const responseTime = await testPerf.measureResponseTime(mockCacheOperation);
+      const responseTime =
+        await testPerf.measureResponseTime(mockCacheOperation);
 
       expect(responseTime).toBeLessThan(5); // Cache should be extremely fast
       console.log(`Cache operation time: ${responseTime}ms`);
@@ -358,11 +369,14 @@ describe('API Load and Performance Tests', () => {
       console.log('Recovery Test Results:', {
         firstTestThroughput: `${firstResults.throughput.toFixed(2)} req/sec`,
         secondTestThroughput: `${secondResults.throughput.toFixed(2)} req/sec`,
-        throughputRatio: (secondResults.throughput / firstResults.throughput).toFixed(2),
+        throughputRatio: (
+          secondResults.throughput / firstResults.throughput
+        ).toFixed(2),
       });
 
       // Should maintain similar performance after recovery
-      const throughputRatio = secondResults.throughput / firstResults.throughput;
+      const throughputRatio =
+        secondResults.throughput / firstResults.throughput;
       expect(throughputRatio).toBeGreaterThan(0.8); // Within 20% of original performance
     });
   });
@@ -380,13 +394,17 @@ describe('API Load and Performance Tests', () => {
 
       for (const [name, baseline] of Object.entries(performanceBaselines)) {
         const mockOperation = async () => {
-          await new Promise(resolve => setTimeout(resolve, baseline.maxTime * 0.8)); // 80% of max time
+          await new Promise(resolve =>
+            setTimeout(resolve, baseline.maxTime * 0.8)
+          ); // 80% of max time
           return { success: true, operation: name };
         };
 
         const responseTime = await testPerf.measureResponseTime(mockOperation);
 
-        console.log(`${name} (${baseline.description}): ${responseTime}ms (limit: ${baseline.maxTime}ms)`);
+        console.log(
+          `${name} (${baseline.description}): ${responseTime}ms (limit: ${baseline.maxTime}ms)`
+        );
         expect(responseTime).toBeLessThan(baseline.maxTime);
       }
     });
@@ -411,11 +429,17 @@ describe('API Load and Performance Tests', () => {
       const regressions = [];
 
       // Check for significant performance degradation (more than 20%)
-      if (currentMetrics.apiResponseTime > baselineMetrics.apiResponseTime * 1.2) {
+      if (
+        currentMetrics.apiResponseTime >
+        baselineMetrics.apiResponseTime * 1.2
+      ) {
         regressions.push('API response time increased significantly');
       }
 
-      if (currentMetrics.databaseQueryTime > baselineMetrics.databaseQueryTime * 1.2) {
+      if (
+        currentMetrics.databaseQueryTime >
+        baselineMetrics.databaseQueryTime * 1.2
+      ) {
         regressions.push('Database query time increased significantly');
       }
 

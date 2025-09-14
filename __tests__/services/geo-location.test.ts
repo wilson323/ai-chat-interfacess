@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { GeoLocationService } from '@/lib/services/geo-location';
 import { UserGeo } from '@/lib/db/models/user-geo';
 import sequelize from '@/lib/db/sequelize';
@@ -41,7 +48,9 @@ describe('GeoLocationService Tests', () => {
       };
 
       // Mock external API response
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockResolvedValue(mockGeoData);
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockResolvedValue(mockGeoData);
 
       const result = await geoLocationService.resolveIP('192.168.1.100');
 
@@ -64,9 +73,13 @@ describe('GeoLocationService Tests', () => {
         isp: 'AT&T',
       };
 
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockResolvedValue(mockGeoData);
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockResolvedValue(mockGeoData);
 
-      const result = await geoLocationService.resolveIP('2001:0db8:85a3:0000:0000:8a2e:0370:7334');
+      const result = await geoLocationService.resolveIP(
+        '2001:0db8:85a3:0000:0000:8a2e:0370:7334'
+      );
 
       expect(result).toEqual(mockGeoData);
       expect(result.country).toBe('美国');
@@ -74,9 +87,9 @@ describe('GeoLocationService Tests', () => {
     });
 
     it('should handle invalid IP address format', async () => {
-      await expect(geoLocationService.resolveIP('invalid-ip-address')).rejects.toThrow(
-        'Invalid IP address format'
-      );
+      await expect(
+        geoLocationService.resolveIP('invalid-ip-address')
+      ).rejects.toThrow('Invalid IP address format');
     });
 
     it('should handle empty IP address', async () => {
@@ -86,23 +99,23 @@ describe('GeoLocationService Tests', () => {
     });
 
     it('should handle API request failures', async () => {
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockRejectedValue(
-        new Error('API request failed')
-      );
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockRejectedValue(new Error('API request failed'));
 
-      await expect(geoLocationService.resolveIP('192.168.1.100')).rejects.toThrow(
-        'Failed to resolve IP location'
-      );
+      await expect(
+        geoLocationService.resolveIP('192.168.1.100')
+      ).rejects.toThrow('Failed to resolve IP location');
     });
 
     it('should handle rate limiting', async () => {
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockRejectedValue(
-        new Error('Rate limit exceeded')
-      );
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockRejectedValue(new Error('Rate limit exceeded'));
 
-      await expect(geoLocationService.resolveIP('192.168.1.100')).rejects.toThrow(
-        'Rate limit exceeded'
-      );
+      await expect(
+        geoLocationService.resolveIP('192.168.1.100')
+      ).rejects.toThrow('Rate limit exceeded');
     });
   });
 
@@ -120,7 +133,9 @@ describe('GeoLocationService Tests', () => {
       };
 
       // Mock external API response
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockResolvedValue(mockGeoData);
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockResolvedValue(mockGeoData);
 
       // First call - should hit external API
       const result1 = await geoLocationService.resolveIP('192.168.1.200');
@@ -153,12 +168,16 @@ describe('GeoLocationService Tests', () => {
 
       // Mock cache miss
       mockRedis.get.mockResolvedValue(null);
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockResolvedValue(mockGeoData);
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockResolvedValue(mockGeoData);
 
       const result = await geoLocationService.resolveIP('192.168.1.300');
 
       expect(result).toEqual(mockGeoData);
-      expect(mockRedis.get).toHaveBeenCalledWith(expect.stringContaining('geo:192.168.1.300'));
+      expect(mockRedis.get).toHaveBeenCalledWith(
+        expect.stringContaining('geo:192.168.1.300')
+      );
       expect(mockRedis.set).toHaveBeenCalled();
     });
 
@@ -171,7 +190,7 @@ describe('GeoLocationService Tests', () => {
         region: 'Bavaria',
         city: 'Munich',
         latitude: 48.1351,
-        longitude: 11.5820,
+        longitude: 11.582,
         timezone: 'Europe/Berlin',
         isp: 'Deutsche Telekom',
       });
@@ -198,7 +217,9 @@ describe('GeoLocationService Tests', () => {
       };
 
       mockRedis.get.mockResolvedValue(null);
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockResolvedValue(mockGeoData);
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockResolvedValue(mockGeoData);
 
       await geoLocationService.resolveIP('192.168.1.500');
 
@@ -226,7 +247,7 @@ describe('GeoLocationService Tests', () => {
         region: 'Lombardy',
         city: 'Milan',
         latitude: 45.4642,
-        longitude: 9.1900,
+        longitude: 9.19,
         timezone: 'Europe/Rome',
         isp: 'TIM',
       };
@@ -239,7 +260,8 @@ describe('GeoLocationService Tests', () => {
       expect(userGeo.usageCount).toBe(1);
 
       // Second call should update usage count
-      const updatedUserGeo = await geoLocationService.createOrUpdateUserGeo(geoData);
+      const updatedUserGeo =
+        await geoLocationService.createOrUpdateUserGeo(geoData);
       expect(updatedUserGeo.usageCount).toBe(2);
       expect(updatedUserGeo.id).toBe(userGeo.id);
     });
@@ -257,13 +279,13 @@ describe('GeoLocationService Tests', () => {
       };
 
       // Mock database error
-      jest.spyOn(UserGeo, 'createOrUpdate').mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      jest
+        .spyOn(UserGeo, 'createOrUpdate')
+        .mockRejectedValue(new Error('Database connection failed'));
 
-      await expect(geoLocationService.createOrUpdateUserGeo(geoData)).rejects.toThrow(
-        'Failed to create or update user geo record'
-      );
+      await expect(
+        geoLocationService.createOrUpdateUserGeo(geoData)
+      ).rejects.toThrow('Failed to create or update user geo record');
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to create or update user geo record')
@@ -280,17 +302,15 @@ describe('GeoLocationService Tests', () => {
         longitude: 190, // Invalid longitude
       };
 
-      await expect(geoLocationService.createOrUpdateUserGeo(invalidGeoData)).rejects.toThrow();
+      await expect(
+        geoLocationService.createOrUpdateUserGeo(invalidGeoData)
+      ).rejects.toThrow();
     });
   });
 
   describe('Batch Operations', () => {
     it('should resolve multiple IP addresses efficiently', async () => {
-      const ipAddresses = [
-        '192.168.1.100',
-        '192.168.1.200',
-        '192.168.1.300',
-      ];
+      const ipAddresses = ['192.168.1.100', '192.168.1.200', '192.168.1.300'];
 
       const mockGeoDataArray = [
         {
@@ -314,7 +334,8 @@ describe('GeoLocationService Tests', () => {
       ];
 
       // Mock API responses
-      jest.spyOn(geoLocationService as any, 'fetchGeoData')
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
         .mockResolvedValueOnce(mockGeoDataArray[0])
         .mockResolvedValueOnce(mockGeoDataArray[1])
         .mockResolvedValueOnce(mockGeoDataArray[2]);
@@ -334,7 +355,8 @@ describe('GeoLocationService Tests', () => {
         '192.168.1.300',
       ];
 
-      jest.spyOn(geoLocationService as any, 'fetchGeoData')
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
         .mockResolvedValueOnce({
           ipAddress: '192.168.1.100',
           country: '中国',
@@ -362,17 +384,22 @@ describe('GeoLocationService Tests', () => {
     });
 
     it('should respect concurrency limits in batch operations', async () => {
-      const ipAddresses = Array.from({ length: 20 }, (_, i) => `192.168.1.${i + 1}`);
+      const ipAddresses = Array.from(
+        { length: 20 },
+        (_, i) => `192.168.1.${i + 1}`
+      );
 
       // Mock API responses
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockImplementation((ip: string) =>
-        Promise.resolve({
-          ipAddress: ip,
-          country: 'Test Country',
-          region: 'Test Region',
-          city: 'Test City',
-        })
-      );
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockImplementation((ip: string) =>
+          Promise.resolve({
+            ipAddress: ip,
+            country: 'Test Country',
+            region: 'Test Region',
+            city: 'Test City',
+          })
+        );
 
       const startTime = Date.now();
       const results = await geoLocationService.resolveIPs(ipAddresses);
@@ -386,9 +413,13 @@ describe('GeoLocationService Tests', () => {
   describe('Error Handling and Logging', () => {
     it('should log errors appropriately', async () => {
       const error = new Error('Test error');
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockRejectedValue(error);
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockRejectedValue(error);
 
-      await expect(geoLocationService.resolveIP('192.168.1.100')).rejects.toThrow();
+      await expect(
+        geoLocationService.resolveIP('192.168.1.100')
+      ).rejects.toThrow();
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to resolve IP location'),
@@ -400,13 +431,13 @@ describe('GeoLocationService Tests', () => {
     });
 
     it('should handle network timeouts', async () => {
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockRejectedValue(
-        new Error('Request timeout')
-      );
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockRejectedValue(new Error('Request timeout'));
 
-      await expect(geoLocationService.resolveIP('192.168.1.100')).rejects.toThrow(
-        'Failed to resolve IP location'
-      );
+      await expect(
+        geoLocationService.resolveIP('192.168.1.100')
+      ).rejects.toThrow('Failed to resolve IP location');
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('Failed to resolve IP location'),
@@ -423,9 +454,9 @@ describe('GeoLocationService Tests', () => {
         // Missing country, city, etc.
       });
 
-      await expect(geoLocationService.resolveIP('192.168.1.100')).rejects.toThrow(
-        'Invalid geo data received'
-      );
+      await expect(
+        geoLocationService.resolveIP('192.168.1.100')
+      ).rejects.toThrow('Invalid geo data received');
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('Invalid geo data received'),
@@ -507,9 +538,12 @@ describe('GeoLocationService Tests', () => {
       };
 
       // Mock slow API response
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockImplementation(() =>
-        new Promise(resolve => setTimeout(() => resolve(mockGeoData), 100))
-      );
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockImplementation(
+          () =>
+            new Promise(resolve => setTimeout(() => resolve(mockGeoData), 100))
+        );
 
       // Make concurrent requests for the same IP
       const [result1, result2] = await Promise.all([
@@ -524,37 +558,41 @@ describe('GeoLocationService Tests', () => {
 
     it('should implement circuit breaker pattern', async () => {
       // Mock multiple consecutive failures
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockRejectedValue(
-        new Error('Service unavailable')
-      );
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockRejectedValue(new Error('Service unavailable'));
 
       // Make several requests to trigger circuit breaker
       for (let i = 0; i < 5; i++) {
-        await expect(geoLocationService.resolveIP('192.168.1.100')).rejects.toThrow();
+        await expect(
+          geoLocationService.resolveIP('192.168.1.100')
+        ).rejects.toThrow();
       }
 
       // Additional requests should fail fast without hitting the API
-      await expect(geoLocationService.resolveIP('192.168.1.100')).rejects.toThrow(
-        'Circuit breaker is open'
-      );
+      await expect(
+        geoLocationService.resolveIP('192.168.1.100')
+      ).rejects.toThrow('Circuit breaker is open');
 
       expect(geoLocationService['fetchGeoData']).toHaveBeenCalledTimes(5);
     });
 
     it('should implement retry mechanism with exponential backoff', async () => {
       let callCount = 0;
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockImplementation(() => {
-        callCount++;
-        if (callCount < 3) {
-          return Promise.reject(new Error('Temporary failure'));
-        }
-        return Promise.resolve({
-          ipAddress: '192.168.1.100',
-          country: '中国',
-          region: '广东省',
-          city: '深圳市',
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockImplementation(() => {
+          callCount++;
+          if (callCount < 3) {
+            return Promise.reject(new Error('Temporary failure'));
+          }
+          return Promise.resolve({
+            ipAddress: '192.168.1.100',
+            country: '中国',
+            region: '广东省',
+            city: '深圳市',
+          });
         });
-      });
 
       const result = await geoLocationService.resolveIP('192.168.1.100');
 

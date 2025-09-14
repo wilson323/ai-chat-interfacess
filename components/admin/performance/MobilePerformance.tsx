@@ -92,7 +92,7 @@ export function MobilePerformance() {
 
   // 检测移动设备信息
   const detectDeviceInfo = (): MobileMetrics => {
-    const connection = (navigator as any).connection || {};
+    const connection = (navigator as Navigator & { connection?: { type?: string; effectiveType?: string; downlink?: number; rtt?: number } }).connection || {};
     return {
       timestamp: Date.now(),
       deviceType: getDeviceType(),

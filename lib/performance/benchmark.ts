@@ -923,4 +923,3 @@ export type {
   BenchmarkRunResult,
   BenchmarkConfig,
 };
-export { PerformanceBenchmark };

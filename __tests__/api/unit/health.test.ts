@@ -4,7 +4,12 @@
  */
 
 import { GET, POST, PUT, DELETE, HEAD } from '@/app/api/health/route';
-import { testDb, testRedis, TestRequestBuilder, testValidators } from '@/__tests__/utils/api-test-utils';
+import {
+  testDb,
+  testRedis,
+  TestRequestBuilder,
+  testValidators,
+} from '@/__tests__/utils/api-test-utils';
 
 // Mock database and Redis
 jest.mock('@/lib/db/sequelize', () => ({
@@ -60,7 +65,10 @@ describe('Health API - Unit Tests', () => {
 
       it('should handle different URL formats for deep parameter', async () => {
         // Test with searchParams
-        const request1 = TestRequestBuilder.createRequest('GET', '/api/health?deep=0');
+        const request1 = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/health?deep=0'
+        );
         const response1 = await GET(request1);
         const data1 = await response1.json();
 
@@ -84,7 +92,9 @@ describe('Health API - Unit Tests', () => {
         const request = TestRequestBuilder.createRequest('GET', '/api/health');
         const response = await GET(request);
 
-        expect(response.headers.get('Cache-Control')).toBe('no-cache, no-store, must-revalidate');
+        expect(response.headers.get('Cache-Control')).toBe(
+          'no-cache, no-store, must-revalidate'
+        );
         expect(response.headers.get('Pragma')).toBe('no-cache');
         expect(response.headers.get('Expires')).toBe('0');
       });
@@ -96,7 +106,10 @@ describe('Health API - Unit Tests', () => {
         mockRedis.connect.mockResolvedValue(undefined);
         mockRedis.ping.mockResolvedValue('PONG');
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/health?deep=1');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/health?deep=1'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -115,11 +128,16 @@ describe('Health API - Unit Tests', () => {
       });
 
       it('should handle database connection failure', async () => {
-        mockSequelize.authenticate.mockRejectedValue(new Error('Database connection failed'));
+        mockSequelize.authenticate.mockRejectedValue(
+          new Error('Database connection failed')
+        );
         mockRedis.connect.mockResolvedValue(undefined);
         mockRedis.ping.mockResolvedValue('PONG');
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/health?deep=1');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/health?deep=1'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -131,9 +149,14 @@ describe('Health API - Unit Tests', () => {
 
       it('should handle Redis connection failure', async () => {
         mockSequelize.authenticate.mockResolvedValue(undefined);
-        mockRedis.connect.mockRejectedValue(new Error('Redis connection failed'));
+        mockRedis.connect.mockRejectedValue(
+          new Error('Redis connection failed')
+        );
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/health?deep=1');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/health?deep=1'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -144,10 +167,15 @@ describe('Health API - Unit Tests', () => {
       });
 
       it('should handle both database and Redis failures', async () => {
-        mockSequelize.authenticate.mockRejectedValue(new Error('Database failed'));
+        mockSequelize.authenticate.mockRejectedValue(
+          new Error('Database failed')
+        );
         mockRedis.connect.mockRejectedValue(new Error('Redis failed'));
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/health?deep=1');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/health?deep=1'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -162,7 +190,10 @@ describe('Health API - Unit Tests', () => {
         mockRedis.isOpen = true;
         mockRedis.ping.mockResolvedValue('PONG');
 
-        const request = TestRequestBuilder.createRequest('GET', '/api/health?deep=1');
+        const request = TestRequestBuilder.createRequest(
+          'GET',
+          '/api/health?deep=1'
+        );
         const response = await GET(request);
         const data = await response.json();
 
@@ -175,7 +206,10 @@ describe('Health API - Unit Tests', () => {
 
     describe('Error handling', () => {
       it('should handle utility function errors gracefully', async () => {
-        const { getEnvironmentInfo, validateProductionConfig } = require('@/lib/cross-platform-utils');
+        const {
+          getEnvironmentInfo,
+          validateProductionConfig,
+        } = require('@/lib/cross-platform-utils');
 
         getEnvironmentInfo.mockImplementation(() => {
           throw new Error('Environment info error');
@@ -200,12 +234,19 @@ describe('Health API - Unit Tests', () => {
 
     unsupportedMethods.forEach(({ method, handler }) => {
       it(`should return 405 for ${method} method`, async () => {
-        const request = TestRequestBuilder.createRequest(method as any, '/api/health');
+        const request = TestRequestBuilder.createRequest(
+          method as any,
+          '/api/health'
+        );
         const response = await handler();
         const data = await response.json();
 
         expect(response.status).toBe(405);
-        testValidators.validateErrorResponse(data, undefined, 'Method Not Allowed');
+        testValidators.validateErrorResponse(
+          data,
+          undefined,
+          'Method Not Allowed'
+        );
       });
     });
   });
@@ -269,12 +310,17 @@ describe('Health API - Unit Tests', () => {
       expect(testValidators.isValidISODate(data.meta.timestamp)).toBe(true);
 
       // Deep health check includes additional timestamp fields
-      const deepRequest = TestRequestBuilder.createRequest('GET', '/api/health?deep=1');
+      const deepRequest = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/health?deep=1'
+      );
       const deepResponse = await GET(deepRequest);
       const deepData = await deepResponse.json();
 
       if (deepData.success) {
-        expect(testValidators.isValidISODate(deepData.meta.timestamp)).toBe(true);
+        expect(testValidators.isValidISODate(deepData.meta.timestamp)).toBe(
+          true
+        );
       }
     });
   });
@@ -298,7 +344,10 @@ describe('Health API - Unit Tests', () => {
       mockRedis.connect.mockResolvedValue(undefined);
       mockRedis.ping.mockResolvedValue('PONG');
 
-      const request = TestRequestBuilder.createRequest('GET', '/api/health?deep=1');
+      const request = TestRequestBuilder.createRequest(
+        'GET',
+        '/api/health?deep=1'
+      );
 
       const startTime = process.hrtime.bigint();
       await GET(request);

@@ -14,8 +14,8 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
-      mutations: { retry: false }
-    }
+      mutations: { retry: false },
+    },
   });
 
   return (
@@ -48,7 +48,7 @@ describe('FileUploader组件测试', () => {
     it('应该显示支持的文件类型', () => {
       render(
         <TestWrapper>
-          <FileUploader onFileSelect={jest.fn()} accept=".pdf,.doc,.docx" />
+          <FileUploader onFileSelect={jest.fn()} accept='.pdf,.doc,.docx' />
         </TestWrapper>
       );
 
@@ -59,7 +59,7 @@ describe('FileUploader组件测试', () => {
   describe('文件选择功能测试', () => {
     it('应该正确处理文件选择', async () => {
       const onFileSelect = jest.fn();
-      
+
       render(
         <TestWrapper>
           <FileUploader onFileSelect={onFileSelect} />
@@ -68,9 +68,9 @@ describe('FileUploader组件测试', () => {
 
       const file = createMockFile('test.txt', 1024, 'text/plain');
       const input = screen.getByRole('button');
-      
+
       fireEvent.click(input);
-      
+
       // 模拟文件选择
       const fileInput = screen.getByTestId('file-input');
       fireEvent.change(fileInput, { target: { files: [file] } });
@@ -82,7 +82,7 @@ describe('FileUploader组件测试', () => {
 
     it('应该处理多个文件选择', async () => {
       const onFileSelect = jest.fn();
-      
+
       render(
         <TestWrapper>
           <FileUploader onFileSelect={onFileSelect} multiple />
@@ -91,7 +91,7 @@ describe('FileUploader组件测试', () => {
 
       const file1 = createMockFile('test1.txt', 1024, 'text/plain');
       const file2 = createMockFile('test2.txt', 2048, 'text/plain');
-      
+
       const fileInput = screen.getByTestId('file-input');
       fireEvent.change(fileInput, { target: { files: [file1, file2] } });
 
@@ -105,11 +105,11 @@ describe('FileUploader组件测试', () => {
     it('应该拒绝过大的文件', async () => {
       const onFileSelect = jest.fn();
       const onError = jest.fn();
-      
+
       render(
         <TestWrapper>
-          <FileUploader 
-            onFileSelect={onFileSelect} 
+          <FileUploader
+            onFileSelect={onFileSelect}
             onError={onError}
             maxSize={1024} // 1KB
           />
@@ -118,11 +118,13 @@ describe('FileUploader组件测试', () => {
 
       const largeFile = createMockFile('large.txt', 2048, 'text/plain');
       const fileInput = screen.getByTestId('file-input');
-      
+
       fireEvent.change(fileInput, { target: { files: [largeFile] } });
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(expect.stringContaining('too large'));
+        expect(onError).toHaveBeenCalledWith(
+          expect.stringContaining('too large')
+        );
         expect(onFileSelect).not.toHaveBeenCalled();
       });
     });
@@ -130,24 +132,30 @@ describe('FileUploader组件测试', () => {
     it('应该拒绝不支持的文件类型', async () => {
       const onFileSelect = jest.fn();
       const onError = jest.fn();
-      
+
       render(
         <TestWrapper>
-          <FileUploader 
-            onFileSelect={onFileSelect} 
+          <FileUploader
+            onFileSelect={onFileSelect}
             onError={onError}
-            accept=".txt,.pdf"
+            accept='.txt,.pdf'
           />
         </TestWrapper>
       );
 
-      const invalidFile = createMockFile('test.exe', 1024, 'application/x-executable');
+      const invalidFile = createMockFile(
+        'test.exe',
+        1024,
+        'application/x-executable'
+      );
       const fileInput = screen.getByTestId('file-input');
-      
+
       fireEvent.change(fileInput, { target: { files: [invalidFile] } });
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(expect.stringContaining('not supported'));
+        expect(onError).toHaveBeenCalledWith(
+          expect.stringContaining('not supported')
+        );
         expect(onFileSelect).not.toHaveBeenCalled();
       });
     });
@@ -156,7 +164,7 @@ describe('FileUploader组件测试', () => {
   describe('拖拽上传测试', () => {
     it('应该支持拖拽上传', async () => {
       const onFileSelect = jest.fn();
-      
+
       render(
         <TestWrapper>
           <FileUploader onFileSelect={onFileSelect} />
@@ -170,8 +178,8 @@ describe('FileUploader组件测试', () => {
       fireEvent.dragOver(dropZone);
       fireEvent.drop(dropZone, {
         dataTransfer: {
-          files: [file]
-        }
+          files: [file],
+        },
       });
 
       await waitFor(() => {
@@ -187,10 +195,10 @@ describe('FileUploader组件测试', () => {
       );
 
       const dropZone = screen.getByTestId('drop-zone');
-      
+
       fireEvent.dragOver(dropZone);
       expect(dropZone).toHaveClass('drag-over');
-      
+
       fireEvent.dragLeave(dropZone);
       expect(dropZone).not.toHaveClass('drag-over');
     });
@@ -199,7 +207,7 @@ describe('FileUploader组件测试', () => {
   describe('上传进度测试', () => {
     it('应该显示上传进度', async () => {
       const onFileSelect = jest.fn();
-      
+
       render(
         <TestWrapper>
           <FileUploader onFileSelect={onFileSelect} showProgress />
@@ -208,7 +216,7 @@ describe('FileUploader组件测试', () => {
 
       const file = createMockFile('test.txt', 1024, 'text/plain');
       const fileInput = screen.getByTestId('file-input');
-      
+
       fireEvent.change(fileInput, { target: { files: [file] } });
 
       await waitFor(() => {
@@ -220,7 +228,7 @@ describe('FileUploader组件测试', () => {
   describe('错误处理测试', () => {
     it('应该处理文件读取错误', async () => {
       const onError = jest.fn();
-      
+
       render(
         <TestWrapper>
           <FileUploader onFileSelect={jest.fn()} onError={onError} />
@@ -230,16 +238,19 @@ describe('FileUploader组件测试', () => {
       // 创建一个无法读取的文件对象
       const invalidFile = createMockFile('test.txt', 1024, 'text/plain');
       Object.defineProperty(invalidFile, 'name', {
-        get: () => { throw new Error('File read error'); }
+        get: () => {
+          throw new Error('File read error');
+        },
       });
 
       const fileInput = screen.getByTestId('file-input');
       fireEvent.change(fileInput, { target: { files: [invalidFile] } });
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith(expect.stringContaining('File read error'));
+        expect(onError).toHaveBeenCalledWith(
+          expect.stringContaining('File read error')
+        );
       });
     });
   });
 });
-

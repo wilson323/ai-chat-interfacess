@@ -146,7 +146,7 @@ export function encodeHtml(input: string): string {
 /**
  * JSON安全编码 - 使用Unicode转义
  */
-export function encodeJsonSafely(obj: any): string {
+export function encodeJsonSafely(obj: Record<string, unknown>): string {
   return JSON.stringify(obj, null, 2)
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')

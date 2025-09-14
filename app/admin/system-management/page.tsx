@@ -265,15 +265,15 @@ export default function SystemManagementPage() {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'model_update':
-        return <Settings className="h-4 w-4" />;
+        return <Settings className='h-4 w-4' />;
       case 'system_change':
-        return <Server className="h-4 w-4" />;
+        return <Server className='h-4 w-4' />;
       case 'error':
-        return <AlertTriangle className="h-4 w-4" />;
+        return <AlertTriangle className='h-4 w-4' />;
       case 'deployment':
-        return <Database className="h-4 w-4" />;
+        return <Database className='h-4 w-4' />;
       default:
-        return <Activity className="h-4 w-4" />;
+        return <Activity className='h-4 w-4' />;
     }
   };
 
@@ -284,8 +284,8 @@ export default function SystemManagementPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6">
-        <div className="text-center">加载中...</div>
+      <div className='container mx-auto py-6'>
+        <div className='text-center'>加载中...</div>
       </div>
     );
   }
@@ -293,124 +293,140 @@ export default function SystemManagementPage() {
   return (
     <LanguageProvider>
       <AgentProvider>
-        <div className="max-w-7xl mx-auto mb-4">
+        <div className='max-w-7xl mx-auto mb-4'>
           <Link
-            href="/admin"
-            className="text-pantone369-500 hover:text-pantone369-600 flex items-center gap-1"
+            href='/admin'
+            className='text-pantone369-500 hover:text-pantone369-600 flex items-center gap-1'
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              xmlns='http://www.w3.org/2000/svg'
+              width='16'
+              height='16'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
             >
-              <path d="m12 19-7-7 7-7"></path>
-              <path d="M19 12H5"></path>
+              <path d='m12 19-7-7 7-7'></path>
+              <path d='M19 12H5'></path>
             </svg>
             返回管理员首页
           </Link>
         </div>
 
-        <div className="container mx-auto py-6 space-y-6">
+        <div className='container mx-auto py-6 space-y-6'>
           {/* 页面标题 */}
-          <div className="flex items-center justify-between">
+          <div className='flex items-center justify-between'>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">系统管理</h1>
-              <p className="text-gray-600 mt-2">监控系统状态、模型配置和系统性能</p>
+              <h1 className='text-3xl font-bold text-gray-900'>系统管理</h1>
+              <p className='text-gray-600 mt-2'>
+                监控系统状态、模型配置和系统性能
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
+            <div className='flex items-center gap-2'>
+              <Button variant='outline' size='sm'>
+                <RefreshCw className='h-4 w-4 mr-2' />
                 刷新数据
               </Button>
               <Button>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className='h-4 w-4 mr-2' />
                 添加模型
               </Button>
             </div>
           </div>
 
           {/* 系统概览卡片 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between'>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">模型总数</p>
-                    <p className="text-2xl font-bold">{metrics?.totalModels}</p>
+                    <p className='text-sm font-medium text-gray-600'>
+                      模型总数
+                    </p>
+                    <p className='text-2xl font-bold'>{metrics?.totalModels}</p>
                   </div>
-                  <Server className="h-8 w-8 text-blue-500" />
+                  <Server className='h-8 w-8 text-blue-500' />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className='text-xs text-gray-500 mt-2'>
                   活跃: {metrics?.activeModels}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between'>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">总请求数</p>
-                    <p className="text-2xl font-bold">{metrics?.totalRequests?.toLocaleString()}</p>
+                    <p className='text-sm font-medium text-gray-600'>
+                      总请求数
+                    </p>
+                    <p className='text-2xl font-bold'>
+                      {metrics?.totalRequests?.toLocaleString()}
+                    </p>
                   </div>
-                  <Activity className="h-8 w-8 text-green-500" />
+                  <Activity className='h-8 w-8 text-green-500' />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className='text-xs text-gray-500 mt-2'>
                   今日: {Math.floor(metrics?.totalRequests! / 24)}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between'>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">平均响应时间</p>
-                    <p className="text-2xl font-bold">{metrics?.avgResponseTime}ms</p>
+                    <p className='text-sm font-medium text-gray-600'>
+                      平均响应时间
+                    </p>
+                    <p className='text-2xl font-bold'>
+                      {metrics?.avgResponseTime}ms
+                    </p>
                   </div>
-                  <Clock className="h-8 w-8 text-yellow-500" />
+                  <Clock className='h-8 w-8 text-yellow-500' />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  目标: {"<"}1000ms
-                </p>
+                <p className='text-xs text-gray-500 mt-2'>目标: {'<'}1000ms</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between'>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">系统健康</p>
-                    <p className="text-2xl font-bold">
-                      <Badge className={getHealthColor(metrics?.systemHealth || 'good')}>
+                    <p className='text-sm font-medium text-gray-600'>
+                      系统健康
+                    </p>
+                    <p className='text-2xl font-bold'>
+                      <Badge
+                        className={getHealthColor(
+                          metrics?.systemHealth || 'good'
+                        )}
+                      >
                         {metrics?.systemHealth}
                       </Badge>
                     </p>
                   </div>
-                  <CheckCircle className="h-8 w-8 text-green-500" />
+                  <CheckCircle className='h-8 w-8 text-green-500' />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className='text-xs text-gray-500 mt-2'>
                   错误率: {metrics?.errorRate}%
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
             {/* 模型列表 */}
-            <div className="lg:col-span-2">
+            <div className='lg:col-span-2'>
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Server className="h-5 w-5" />
+                  <CardTitle className='flex items-center gap-2'>
+                    <Server className='h-5 w-5' />
                     模型配置
-                    <Badge variant="secondary">{models.length} 个模型</Badge>
+                    <Badge variant='secondary'>{models.length} 个模型</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -428,15 +444,15 @@ export default function SystemManagementPage() {
                       {models.map(model => (
                         <TableRow key={model.id}>
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className='flex items-center gap-2'>
                               <div>
-                                <div className="font-medium">{model.name}</div>
-                                <div className="text-sm text-gray-500">
+                                <div className='font-medium'>{model.name}</div>
+                                <div className='text-sm text-gray-500'>
                                   {model.version}
                                 </div>
                               </div>
                               {model.isDefault && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant='outline' className='text-xs'>
                                   默认
                                 </Badge>
                               )}
@@ -456,35 +472,35 @@ export default function SystemManagementPage() {
                             {model.metadata.usageCount.toLocaleString()}
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
+                            <div className='flex gap-2'>
                               <Button
-                                size="sm"
-                                variant="outline"
+                                size='sm'
+                                variant='outline'
                                 onClick={() => handleViewDetails(model)}
                               >
-                                <Eye className="h-4 w-4" />
+                                <Eye className='h-4 w-4' />
                               </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <MoreHorizontal className="h-4 w-4" />
+                                  <Button variant='ghost' size='sm'>
+                                    <MoreHorizontal className='h-4 w-4' />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                                <DropdownMenuContent align='end'>
                                   <DropdownMenuItem>
-                                    <Eye className="h-4 w-4 mr-2" />
+                                    <Eye className='h-4 w-4 mr-2' />
                                     查看详情
                                   </DropdownMenuItem>
                                   <DropdownMenuItem>
-                                    <BarChart3 className="h-4 w-4 mr-2" />
+                                    <BarChart3 className='h-4 w-4 mr-2' />
                                     性能监控
                                   </DropdownMenuItem>
                                   <DropdownMenuItem>
-                                    <Edit className="h-4 w-4 mr-2" />
+                                    <Edit className='h-4 w-4 mr-2' />
                                     编辑配置
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-red-600">
-                                    <Trash2 className="h-4 w-4 mr-2" />
+                                  <DropdownMenuItem className='text-red-600'>
+                                    <Trash2 className='h-4 w-4 mr-2' />
                                     删除模型
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -503,24 +519,30 @@ export default function SystemManagementPage() {
             <div>
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
+                  <CardTitle className='flex items-center gap-2'>
+                    <Activity className='h-5 w-5' />
                     最近活动
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className='space-y-4'>
                   {activities.map(activity => (
-                    <div key={activity.id} className="flex items-start gap-3">
-                      <div className={`p-2 rounded-full ${
-                        activity.status === 'success' ? 'bg-green-100' :
-                        activity.status === 'warning' ? 'bg-yellow-100' :
-                        'bg-red-100'
-                      }`}>
+                    <div key={activity.id} className='flex items-start gap-3'>
+                      <div
+                        className={`p-2 rounded-full ${
+                          activity.status === 'success'
+                            ? 'bg-green-100'
+                            : activity.status === 'warning'
+                              ? 'bg-yellow-100'
+                              : 'bg-red-100'
+                        }`}
+                      >
                         {getActivityIcon(activity.type)}
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{activity.message}</p>
-                        <p className="text-xs text-gray-500">
+                      <div className='flex-1'>
+                        <p className='text-sm font-medium'>
+                          {activity.message}
+                        </p>
+                        <p className='text-xs text-gray-500'>
                           {new Date(activity.timestamp).toLocaleString('zh-CN')}
                         </p>
                       </div>
@@ -532,8 +554,11 @@ export default function SystemManagementPage() {
           </div>
 
           {/* 模型详情对话框 */}
-          <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-            <DialogContent className="max-w-2xl">
+          <Dialog
+            open={isDetailDialogOpen}
+            onOpenChange={setIsDetailDialogOpen}
+          >
+            <DialogContent className='max-w-2xl'>
               <DialogHeader>
                 <DialogTitle>模型详情</DialogTitle>
                 <DialogDescription>
@@ -541,22 +566,28 @@ export default function SystemManagementPage() {
                 </DialogDescription>
               </DialogHeader>
               {selectedModel && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className='space-y-4'>
+                  <div className='grid grid-cols-2 gap-4'>
                     <div>
-                      <label className="text-sm font-medium">模型名称</label>
-                      <p className="text-sm text-gray-600">{selectedModel.name}</p>
+                      <label className='text-sm font-medium'>模型名称</label>
+                      <p className='text-sm text-gray-600'>
+                        {selectedModel.name}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">提供商</label>
-                      <p className="text-sm text-gray-600">{selectedModel.provider}</p>
+                      <label className='text-sm font-medium'>提供商</label>
+                      <p className='text-sm text-gray-600'>
+                        {selectedModel.provider}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">版本</label>
-                      <p className="text-sm text-gray-600">{selectedModel.version}</p>
+                      <label className='text-sm font-medium'>版本</label>
+                      <p className='text-sm text-gray-600'>
+                        {selectedModel.version}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">状态</label>
+                      <label className='text-sm font-medium'>状态</label>
                       <Badge className={getStatusColor(selectedModel.status)}>
                         {selectedModel.status}
                       </Badge>
@@ -564,20 +595,22 @@ export default function SystemManagementPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">描述</label>
-                    <p className="text-sm text-gray-600">{selectedModel.metadata.description}</p>
+                    <label className='text-sm font-medium'>描述</label>
+                    <p className='text-sm text-gray-600'>
+                      {selectedModel.metadata.description}
+                    </p>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">能力</label>
-                    <div className="flex gap-2 mt-1">
+                    <label className='text-sm font-medium'>能力</label>
+                    <div className='flex gap-2 mt-1'>
                       {selectedModel.capabilities
                         .filter(cap => cap.supported)
                         .map((cap, index) => (
                           <Badge
                             key={index}
-                            variant="outline"
-                            className="text-xs"
+                            variant='outline'
+                            className='text-xs'
                           >
                             {cap.type}
                           </Badge>
@@ -585,26 +618,28 @@ export default function SystemManagementPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className='grid grid-cols-2 gap-4'>
                     <div>
-                      <label className="text-sm font-medium">延迟</label>
-                      <p className="text-sm text-gray-600">{selectedModel.metadata.latency}ms</p>
+                      <label className='text-sm font-medium'>延迟</label>
+                      <p className='text-sm text-gray-600'>
+                        {selectedModel.metadata.latency}ms
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">准确率</label>
-                      <p className="text-sm text-gray-600">
+                      <label className='text-sm font-medium'>准确率</label>
+                      <p className='text-sm text-gray-600'>
                         {(selectedModel.metadata.accuracy * 100).toFixed(1)}%
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">使用次数</label>
-                      <p className="text-sm text-gray-600">
+                      <label className='text-sm font-medium'>使用次数</label>
+                      <p className='text-sm text-gray-600'>
                         {selectedModel.metadata.usageCount.toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">成本/Token</label>
-                      <p className="text-sm text-gray-600">
+                      <label className='text-sm font-medium'>成本/Token</label>
+                      <p className='text-sm text-gray-600'>
                         ${selectedModel.metadata.costPerToken.toFixed(6)}
                       </p>
                     </div>

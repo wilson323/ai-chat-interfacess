@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { AgentUsage } from '@/lib/db/models/agent-usage';
 import { UserGeo } from '@/lib/db/models/user-geo';
 import { HeatmapService } from '@/lib/services/heatmap';
@@ -47,13 +54,19 @@ describe('Heatmap Performance and Boundary Tests', () => {
           sessionId: `large-session-${i}`,
           userId: (i % userCount) + 1,
           agentId: (i % 5) + 1,
-          messageType: ['text', 'image', 'file', 'voice'][Math.floor(Math.random() * 4)],
+          messageType: ['text', 'image', 'file', 'voice'][
+            Math.floor(Math.random() * 4)
+          ],
           messageCount: Math.floor(Math.random() * 20) + 1,
           tokenUsage: Math.floor(Math.random() * 5000) + 100,
           responseTime: Math.floor(Math.random() * 1000) + 100,
-          startTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          startTime: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ),
           isCompleted: Math.random() > 0.1,
-          userSatisfaction: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
+          userSatisfaction: ['positive', 'negative', 'neutral'][
+            Math.floor(Math.random() * 3)
+          ],
           geoLocationId: testUserGeo.id,
         });
       }
@@ -63,7 +76,9 @@ describe('Heatmap Performance and Boundary Tests', () => {
       await AgentUsage.bulkCreate(bulkData);
       const insertEndTime = Date.now();
 
-      console.log(`Bulk insert of ${sessionCount} sessions took ${insertEndTime - insertStartTime}ms`);
+      console.log(
+        `Bulk insert of ${sessionCount} sessions took ${insertEndTime - insertStartTime}ms`
+      );
       expect(insertEndTime - insertStartTime).toBeLessThan(30000); // Should complete within 30 seconds
 
       // Test query performance
@@ -74,7 +89,9 @@ describe('Heatmap Performance and Boundary Tests', () => {
       });
       const queryEndTime = Date.now();
 
-      console.log(`Query of ${sessionCount} sessions took ${queryEndTime - queryStartTime}ms`);
+      console.log(
+        `Query of ${sessionCount} sessions took ${queryEndTime - queryStartTime}ms`
+      );
       expect(queryEndTime - queryStartTime).toBeLessThan(10000); // Should complete within 10 seconds
 
       // Verify data integrity
@@ -97,13 +114,19 @@ describe('Heatmap Performance and Boundary Tests', () => {
             sessionId,
             userId: ((page * pageSize + i) % userCount) + 1,
             agentId: ((page * pageSize + i) % 10) + 1,
-            messageType: ['text', 'image', 'file', 'voice'][Math.floor(Math.random() * 4)],
+            messageType: ['text', 'image', 'file', 'voice'][
+              Math.floor(Math.random() * 4)
+            ],
             messageCount: Math.floor(Math.random() * 15) + 1,
             tokenUsage: Math.floor(Math.random() * 3000) + 100,
             responseTime: Math.floor(Math.random() * 800) + 100,
-            startTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+            startTime: new Date(
+              Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+            ),
             isCompleted: Math.random() > 0.05,
-            userSatisfaction: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
+            userSatisfaction: ['positive', 'negative', 'neutral'][
+              Math.floor(Math.random() * 3)
+            ],
             geoLocationId: testUserGeo.id,
           });
         }
@@ -112,7 +135,9 @@ describe('Heatmap Performance and Boundary Tests', () => {
         await AgentUsage.bulkCreate(bulkData);
         const endTime = Date.now();
 
-        console.log(`Batch ${page + 1}/${pageCount} inserted in ${endTime - startTime}ms`);
+        console.log(
+          `Batch ${page + 1}/${pageCount} inserted in ${endTime - startTime}ms`
+        );
         expect(endTime - startTime).toBeLessThan(5000); // Each batch should complete within 5 seconds
 
         // Force garbage collection
@@ -122,7 +147,8 @@ describe('Heatmap Performance and Boundary Tests', () => {
       }
 
       // Test paginated queries
-      for (let page = 0; page < 10; page++) { // Test first 10 pages
+      for (let page = 0; page < 10; page++) {
+        // Test first 10 pages
         const startTime = Date.now();
         const pageData = await heatmapService.getHeatmapData({
           startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
@@ -167,11 +193,13 @@ describe('Heatmap Performance and Boundary Tests', () => {
         for (let j = 0; j < sessionsPerLocation; j++) {
           sessionData.push({
             sessionId: `geo-session-${i}-${j}`,
-            userId: (i * sessionsPerLocation + j) % 500 + 1,
+            userId: ((i * sessionsPerLocation + j) % 500) + 1,
             agentId: (i % 10) + 1,
             messageType: 'text',
             messageCount: Math.floor(Math.random() * 10) + 1,
-            startTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+            startTime: new Date(
+              Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
+            ),
             isCompleted: true,
             geoLocationId: i + 1, // Geo location IDs start from 1
           });
@@ -188,7 +216,9 @@ describe('Heatmap Performance and Boundary Tests', () => {
       });
       const endTime = Date.now();
 
-      console.log(`Geographic query with ${locationCount} locations took ${endTime - startTime}ms`);
+      console.log(
+        `Geographic query with ${locationCount} locations took ${endTime - startTime}ms`
+      );
       expect(endTime - startTime).toBeLessThan(15000); // Should complete within 15 seconds
       expect(heatmapData.locations.length).toBe(locationCount);
     });
@@ -373,10 +403,12 @@ describe('Heatmap Performance and Boundary Tests', () => {
       // Perform concurrent reads
       const readOperations = [];
       for (let i = 0; i < 100; i++) {
-        readOperations.push(heatmapService.getHeatmapData({
-          startDate: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          endDate: new Date(),
-        }));
+        readOperations.push(
+          heatmapService.getHeatmapData({
+            startDate: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            endDate: new Date(),
+          })
+        );
       }
 
       const startTime = Date.now();
@@ -407,8 +439,14 @@ describe('Heatmap Performance and Boundary Tests', () => {
             testUserGeo.id
           );
 
-          await AgentUsage.updateMessageCount(sessionId, Math.floor(Math.random() * 10) + 1);
-          await AgentUsage.updateResponseTime(sessionId, Math.floor(Math.random() * 500) + 100);
+          await AgentUsage.updateMessageCount(
+            sessionId,
+            Math.floor(Math.random() * 10) + 1
+          );
+          await AgentUsage.updateResponseTime(
+            sessionId,
+            Math.floor(Math.random() * 500) + 100
+          );
 
           await AgentUsage.endSession(sessionId);
         });
@@ -440,10 +478,12 @@ describe('Heatmap Performance and Boundary Tests', () => {
       for (let i = 0; i < operationCount; i++) {
         if (i % 3 === 0) {
           // Read operation
-          operations.push(heatmapService.getHeatmapData({
-            startDate: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            endDate: new Date(),
-          }));
+          operations.push(
+            heatmapService.getHeatmapData({
+              startDate: new Date(Date.now() - 2 * 60 * 60 * 1000),
+              endDate: new Date(),
+            })
+          );
         } else {
           // Write operation
           operations.push(async () => {
@@ -456,7 +496,10 @@ describe('Heatmap Performance and Boundary Tests', () => {
               testUserGeo.id
             );
 
-            await AgentUsage.updateMessageCount(sessionId, Math.floor(Math.random() * 10) + 1);
+            await AgentUsage.updateMessageCount(
+              sessionId,
+              Math.floor(Math.random() * 10) + 1
+            );
             await AgentUsage.endSession(sessionId);
           });
         }
@@ -478,21 +521,24 @@ describe('Heatmap Performance and Boundary Tests', () => {
         },
       });
 
-      expect(finalCount).toBe(Math.floor(operationCount * 2 / 3)); // 2/3 are write operations
+      expect(finalCount).toBe(Math.floor((operationCount * 2) / 3)); // 2/3 are write operations
     });
   });
 
   describe('Network Exception Handling', () => {
     it('should handle timeout during IP resolution', async () => {
       // Mock timeout
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockImplementation(() =>
-        new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout')), 100);
-        })
+      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockImplementation(
+        () =>
+          new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), 100);
+          })
       );
 
       const startTime = Date.now();
-      await expect(geoLocationService.resolveIP('192.168.1.200')).rejects.toThrow('Request timeout');
+      await expect(
+        geoLocationService.resolveIP('192.168.1.200')
+      ).rejects.toThrow('Request timeout');
       const endTime = Date.now();
 
       expect(endTime - startTime).toBeLessThan(5000); // Should timeout quickly
@@ -500,18 +546,20 @@ describe('Heatmap Performance and Boundary Tests', () => {
 
     it('should handle rate limiting', async () => {
       let callCount = 0;
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockImplementation(() => {
-        callCount++;
-        if (callCount > 5) {
-          return Promise.reject(new Error('Rate limit exceeded'));
-        }
-        return Promise.resolve({
-          ipAddress: '192.168.1.200',
-          country: '中国',
-          region: '广东省',
-          city: '深圳市',
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockImplementation(() => {
+          callCount++;
+          if (callCount > 5) {
+            return Promise.reject(new Error('Rate limit exceeded'));
+          }
+          return Promise.resolve({
+            ipAddress: '192.168.1.200',
+            country: '中国',
+            region: '广东省',
+            city: '深圳市',
+          });
         });
-      });
 
       // Make multiple rapid requests
       const requests = [];
@@ -531,13 +579,13 @@ describe('Heatmap Performance and Boundary Tests', () => {
 
     it('should handle network disconnection', async () => {
       // Simulate network disconnection
-      jest.spyOn(geoLocationService as any, 'fetchGeoData').mockRejectedValue(
-        new Error('Network disconnected')
-      );
+      jest
+        .spyOn(geoLocationService as any, 'fetchGeoData')
+        .mockRejectedValue(new Error('Network disconnected'));
 
-      await expect(geoLocationService.resolveIP('192.168.1.200')).rejects.toThrow(
-        'Network disconnected'
-      );
+      await expect(
+        geoLocationService.resolveIP('192.168.1.200')
+      ).rejects.toThrow('Network disconnected');
 
       // Service should recover on subsequent calls
       jest.spyOn(geoLocationService as any, 'fetchGeoData').mockResolvedValue({
@@ -564,7 +612,9 @@ describe('Heatmap Performance and Boundary Tests', () => {
           agentId: (i % 5) + 1,
           messageType: 'text',
           messageCount: Math.floor(Math.random() * 15) + 1,
-          startTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          startTime: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ),
           isCompleted: true,
           geoLocationId: testUserGeo.id,
         });
@@ -583,7 +633,9 @@ describe('Heatmap Performance and Boundary Tests', () => {
       const peakMemory = process.memoryUsage().heapUsed;
       const memoryIncrease = peakMemory - initialMemory;
 
-      console.log(`Memory increase for ${sessionCount} sessions: ${memoryIncrease / 1024 / 1024}MB`);
+      console.log(
+        `Memory increase for ${sessionCount} sessions: ${memoryIncrease / 1024 / 1024}MB`
+      );
       expect(memoryIncrease).toBeLessThan(100 * 1024 * 1024); // Less than 100MB increase
 
       // Force garbage collection and check memory cleanup
@@ -622,7 +674,9 @@ describe('Heatmap Performance and Boundary Tests', () => {
       await Promise.all(operations);
       const endTime = Date.now();
 
-      console.log(`File descriptor test with ${connectionCount} connections took ${endTime - startTime}ms`);
+      console.log(
+        `File descriptor test with ${connectionCount} connections took ${endTime - startTime}ms`
+      );
       expect(endTime - startTime).toBeLessThan(30000); // Should complete within 30 seconds
     });
 
@@ -634,13 +688,19 @@ describe('Heatmap Performance and Boundary Tests', () => {
           sessionId: `cpu-test-session-${i}`,
           userId: (i % 50) + 1,
           agentId: (i % 10) + 1,
-          messageType: ['text', 'image', 'file', 'voice'][Math.floor(Math.random() * 4)],
+          messageType: ['text', 'image', 'file', 'voice'][
+            Math.floor(Math.random() * 4)
+          ],
           messageCount: Math.floor(Math.random() * 100) + 1,
           tokenUsage: Math.floor(Math.random() * 10000) + 100,
           responseTime: Math.floor(Math.random() * 2000) + 100,
-          startTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          startTime: new Date(
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+          ),
           isCompleted: true,
-          userSatisfaction: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
+          userSatisfaction: ['positive', 'negative', 'neutral'][
+            Math.floor(Math.random() * 3)
+          ],
           geoLocationId: testUserGeo.id,
         });
       }

@@ -40,8 +40,8 @@ describe('Pagination 组件测试', () => {
 
     // 查找下一页按钮 (可能是 button 或 link)
     const nextElements = screen.getAllByText(/next/i);
-    const nextElement = nextElements.find(el =>
-      el.closest('button') || el.closest('a') || el
+    const nextElement = nextElements.find(
+      el => el.closest('button') || el.closest('a') || el
     );
 
     if (nextElement) {
@@ -58,8 +58,11 @@ describe('Pagination 组件测试', () => {
 
     // 查找选择器控件 (可能是 combobox、button 或 div)
     const selectElements = screen.getAllByText(/10|条/);
-    const selectElement = selectElements.find(el =>
-      el.closest('[role="combobox"]') || el.closest('button') || el.closest('.select')
+    const selectElement = selectElements.find(
+      el =>
+        el.closest('[role="combobox"]') ||
+        el.closest('button') ||
+        el.closest('.select')
     );
 
     if (selectElement) {
@@ -168,9 +171,10 @@ describe('Pagination 组件测试', () => {
 
     const pagination = screen.getByRole('navigation');
     // 检查自定义类名是否应用（可能在容器上）
-    const container = pagination.closest(`.${customClassName}`) ||
-                    pagination.parentElement?.closest(`.${customClassName}`) ||
-                    document.querySelector(`.${customClassName}`);
+    const container =
+      pagination.closest(`.${customClassName}`) ||
+      pagination.parentElement?.closest(`.${customClassName}`) ||
+      document.querySelector(`.${customClassName}`);
 
     if (container) {
       expect(container).toHaveClass(customClassName);

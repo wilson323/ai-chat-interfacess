@@ -147,7 +147,7 @@ describe('UserGeo Model Tests', () => {
           region: 'Bavaria',
           city: 'Munich',
           latitude: 48.1351,
-          longitude: 11.5820,
+          longitude: 11.582,
           timezone: 'Europe/Berlin',
           isp: 'Deutsche Telekom',
         },
@@ -187,7 +187,7 @@ describe('UserGeo Model Tests', () => {
           region: 'Lombardy',
           city: 'Milan',
           latitude: 45.4642,
-          longitude: 9.1900,
+          longitude: 9.19,
           timezone: 'Europe/Rome',
           isp: 'TIM',
         },
@@ -382,9 +382,18 @@ describe('UserGeo Model Tests', () => {
       }
 
       // Update usage counts
-      await UserGeo.update({ usageCount: 100 }, { where: { ipAddress: '192.168.1.201' } });
-      await UserGeo.update({ usageCount: 50 }, { where: { ipAddress: '192.168.1.202' } });
-      await UserGeo.update({ usageCount: 75 }, { where: { ipAddress: '192.168.1.203' } });
+      await UserGeo.update(
+        { usageCount: 100 },
+        { where: { ipAddress: '192.168.1.201' } }
+      );
+      await UserGeo.update(
+        { usageCount: 50 },
+        { where: { ipAddress: '192.168.1.202' } }
+      );
+      await UserGeo.update(
+        { usageCount: 75 },
+        { where: { ipAddress: '192.168.1.203' } }
+      );
 
       const topLocations = await UserGeo.getTopLocations(2);
       expect(topLocations).toHaveLength(2);
@@ -394,9 +403,27 @@ describe('UserGeo Model Tests', () => {
 
     it('should get location statistics', async () => {
       const locations = [
-        { ipAddress: '192.168.1.204', country: '中国', region: '广东', city: '深圳', usageCount: 100 },
-        { ipAddress: '192.168.1.205', country: '中国', region: '北京', city: '北京', usageCount: 80 },
-        { ipAddress: '192.168.1.206', country: '美国', region: 'California', city: 'SF', usageCount: 60 },
+        {
+          ipAddress: '192.168.1.204',
+          country: '中国',
+          region: '广东',
+          city: '深圳',
+          usageCount: 100,
+        },
+        {
+          ipAddress: '192.168.1.205',
+          country: '中国',
+          region: '北京',
+          city: '北京',
+          usageCount: 80,
+        },
+        {
+          ipAddress: '192.168.1.206',
+          country: '美国',
+          region: 'California',
+          city: 'SF',
+          usageCount: 60,
+        },
       ];
 
       await UserGeo.bulkCreate(locations);

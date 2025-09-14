@@ -23,24 +23,24 @@ jest.mock('@/lib/cross-platform-utils', () => ({
   createCrossPlatformTextDecoder: jest.fn(() => ({
     decode: jest.fn((chunk, options) =>
       options?.stream ? `decoded_chunk_${chunk}` : `decoded_${chunk}`
-    )
+    ),
   })),
   createCrossPlatformTextEncoder: jest.fn(() => ({
-    encode: jest.fn(text => new TextEncoder().encode(text))
+    encode: jest.fn(text => new TextEncoder().encode(text)),
   })),
-  isStreamingContentType: jest.fn((contentType) =>
-    contentType?.includes('text/event-stream') || false
+  isStreamingContentType: jest.fn(
+    contentType => contentType?.includes('text/event-stream') || false
   ),
-  processStreamLines: jest.fn((buffer) => ({
+  processStreamLines: jest.fn(buffer => ({
     lines: buffer.split('\n').filter(line => line.trim()),
-    remainingBuffer: ''
+    remainingBuffer: '',
   })),
-  categorizeStreamError: jest.fn((error) => ({
+  categorizeStreamError: jest.fn(error => ({
     type: 'network_error',
     message: error instanceof Error ? error.message : String(error),
-    shouldRetry: Math.random() > 0.5
+    shouldRetry: Math.random() > 0.5,
   })),
-  safeCrossPlatformLog: jest.fn()
+  safeCrossPlatformLog: jest.fn(),
 }));
 
 const crossPlatformUtils = require('@/lib/cross-platform-utils');
@@ -59,11 +59,11 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer test-token',
-          'User-Agent': 'Test-Agent/1.0'
-        }
+          Authorization: 'Bearer test-token',
+          'User-Agent': 'Test-Agent/1.0',
+        },
       });
-    }
+    },
   };
 
   beforeEach(() => {
@@ -77,7 +77,9 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
 
   describe('Request Validation', () => {
     it('should reject requests without targetUrl parameter', async () => {
-      const request = testRequestBuilder.createGetRequest('http://localhost:3000/api/chat-proxy');
+      const request = testRequestBuilder.createGetRequest(
+        'http://localhost:3000/api/chat-proxy'
+      );
       const response = await GET(request);
       const data = await response.json();
 
@@ -104,7 +106,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
     it('should accept requests with valid URL format', async () => {
       const mockResponse = new Response(JSON.stringify({ test: 'data' }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -121,8 +123,8 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
           method: 'GET',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer test-token'
-          })
+            Authorization: 'Bearer test-token',
+          }),
         })
       );
     });
@@ -132,14 +134,14 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
         'https://api.example.com/chat',
         'http://localhost:8000/api/chat',
         'https://subdomain.example.com/v1/chat/completions',
-        'http://192.168.1.100:3000/api/assistant/chat'
+        'http://192.168.1.100:3000/api/assistant/chat',
       ];
 
       for (const url of validUrls) {
         (global.fetch as jest.Mock).mockResolvedValue(
           new Response(JSON.stringify({ success: true }), {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
           })
         );
 
@@ -150,10 +152,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
         const response = await GET(request);
 
         expect(response.status).toBe(200);
-        expect(global.fetch).toHaveBeenCalledWith(
-          url,
-          expect.any(Object)
-        );
+        expect(global.fetch).toHaveBeenCalledWith(url, expect.any(Object));
       }
     });
   });
@@ -162,7 +161,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
     it('should forward original headers excluding host', async () => {
       const mockResponse = new Response(JSON.stringify({ test: 'data' }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -185,7 +184,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
     it('should handle requests with custom headers', async () => {
       const mockResponse = new Response(JSON.stringify({ test: 'data' }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -196,9 +195,9 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
           headers: {
             'X-Custom-Header': 'custom-value',
             'X-API-Key': 'secret-key',
-            'Accept': 'application/json',
-            'Host': 'should-be-removed'
-          }
+            Accept: 'application/json',
+            Host: 'should-be-removed',
+          },
         }
       );
 
@@ -216,7 +215,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
     it('should handle requests with no additional headers', async () => {
       const mockResponse = new Response(JSON.stringify({ test: 'data' }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -242,7 +241,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
         .mockResolvedValueOnce(
           new Response(JSON.stringify({ success: true }), {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
           })
         );
 
@@ -264,7 +263,9 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
 
     it('should give up after max retries', async () => {
       // Always fail
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Persistent error'));
+      (global.fetch as jest.Mock).mockRejectedValue(
+        new Error('Persistent error')
+      );
 
       const request = testRequestBuilder.createGetRequest(
         'http://localhost:3000/api/chat-proxy',
@@ -288,7 +289,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
         .mockResolvedValueOnce(
           new Response(JSON.stringify({ success: true }), {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
           })
         );
 
@@ -307,13 +308,13 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
   describe('Response Processing', () => {
     it('should handle successful JSON responses', async () => {
       const mockData = {
-        choices: [{ message: { content: 'Hello, world!' } }]
+        choices: [{ message: { content: 'Hello, world!' } }],
       };
 
       (global.fetch as jest.Mock).mockResolvedValue(
         new Response(JSON.stringify(mockData), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         })
       );
 
@@ -334,7 +335,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
       (global.fetch as jest.Mock).mockResolvedValue(
         new Response('Service unavailable', {
           status: 503,
-          statusText: 'Service Unavailable'
+          statusText: 'Service Unavailable',
         })
       );
 
@@ -354,7 +355,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
       (global.fetch as jest.Mock).mockResolvedValue(
         new Response('Plain text response', {
           status: 200,
-          headers: { 'Content-Type': 'text/plain' }
+          headers: { 'Content-Type': 'text/plain' },
         })
       );
 
@@ -376,7 +377,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
       (global.fetch as jest.Mock).mockResolvedValue(
         new Response('invalid json {', {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         })
       );
 
@@ -419,7 +420,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
     it('should clear timeout on successful response', async () => {
       const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -452,7 +453,9 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Network connection failed'));
+      (global.fetch as jest.Mock).mockRejectedValue(
+        new Error('Network connection failed')
+      );
 
       const request = testRequestBuilder.createGetRequest(
         'http://localhost:3000/api/chat-proxy',
@@ -470,9 +473,11 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
 
     it('should handle unexpected errors during processing', async () => {
       // Mock URL constructor to throw error
-      jest.spyOn(URL.prototype, 'searchParams', 'get').mockImplementationOnce(() => {
-        throw new Error('Unexpected error');
-      });
+      jest
+        .spyOn(URL.prototype, 'searchParams', 'get')
+        .mockImplementationOnce(() => {
+          throw new Error('Unexpected error');
+        });
 
       const request = testRequestBuilder.createGetRequest(
         'http://localhost:3000/api/chat-proxy',
@@ -492,7 +497,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
     it('should handle requests efficiently', async () => {
       const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -513,7 +518,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
     it('should handle concurrent requests efficiently', async () => {
       const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -549,7 +554,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
         'http://169.254.169.254/latest/meta-data/',
         'http://127.0.0.1/admin',
         'http://localhost/admin',
-        'http://[::1]/admin'
+        'http://[::1]/admin',
       ];
 
       for (const maliciousUrl of maliciousUrls) {
@@ -569,7 +574,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
     it('should not forward sensitive headers', async () => {
       const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -578,11 +583,11 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
         {
           method: 'GET',
           headers: {
-            'host': 'evil.com',
-            'cookie': 'session=malicious',
-            'authorization': 'Bearer secret',
-            'x-forwarded-for': '192.168.1.100'
-          }
+            host: 'evil.com',
+            cookie: 'session=malicious',
+            authorization: 'Bearer secret',
+            'x-forwarded-for': '192.168.1.100',
+          },
         }
       );
 
@@ -600,7 +605,7 @@ describe('Chat Proxy API - GET /api/chat-proxy', () => {
       const encodedUrls = [
         'https%3A%2F%2Fapi.example.com%2Fchat',
         'javascript:alert(1)//',
-        'data:text/html,<script>alert(1)</script>'
+        'data:text/html,<script>alert(1)</script>',
       ];
 
       for (const encodedUrl of encodedUrls) {
@@ -625,9 +630,9 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       return new NextRequest('http://localhost:3000/api/chat-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
-    }
+    },
   };
 
   beforeEach(() => {
@@ -644,7 +649,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const request = testRequestBuilder.createPostRequest({
         method: 'POST',
         headers: {},
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
@@ -660,7 +665,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         targetUrl: 'invalid-url',
         method: 'POST',
         headers: {},
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
@@ -673,7 +678,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
 
     it('should handle missing request body gracefully', async () => {
       const request = new NextRequest('http://localhost:3000/api/chat-proxy', {
-        method: 'POST'
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -686,14 +691,14 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
     it('should ensure requestBody is never undefined', async () => {
       const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
-        headers: {}
+        headers: {},
         // No body property
       });
 
@@ -710,43 +715,47 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const mockReadable = new ReadableStream();
       const mockResponse = new Response(mockReadable, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
 
       // Mock TransformStream
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       // Mock response body
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockResolvedValue({ done: true, value: undefined })
-        }))
+          read: jest.fn().mockResolvedValue({ done: true, value: undefined }),
+        })),
       };
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello', stream: true }
+        body: { message: 'Hello', stream: true },
       });
 
       const response = await POST(request);
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
       expect(global.fetch).toHaveBeenCalledWith(
         'https://api.example.com/chat',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Accept: 'text/event-stream'
-          })
+            Accept: 'text/event-stream',
+          }),
         })
       );
     });
@@ -755,41 +764,45 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const mockReadable = new ReadableStream();
       const mockResponse = new Response(mockReadable, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
 
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockResolvedValue({ done: true, value: undefined })
-        }))
+          read: jest.fn().mockResolvedValue({ done: true, value: undefined }),
+        })),
       };
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: {},
-        body: { message: 'Hello', stream: true }
+        body: { message: 'Hello', stream: true },
       });
 
       const response = await POST(request);
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
     });
 
     it('should process non-streaming requests normally', async () => {
       const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -797,7 +810,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: {},
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
@@ -815,88 +828,103 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const mockReadable = new ReadableStream();
       const mockWriter = {
         write: jest.fn().mockResolvedValue(undefined),
-        close: jest.fn().mockResolvedValue(undefined)
+        close: jest.fn().mockResolvedValue(undefined),
       };
       const mockWritable = new WritableStream();
       jest.spyOn(mockWritable, 'getWriter').mockReturnValue(mockWriter);
 
       const mockTransformStream = {
         readable: mockReadable,
-        writable: mockWritable
+        writable: mockWritable,
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
     });
 
     it('should process streaming responses correctly', async () => {
       // Mock streaming response with chunks
       const mockChunks = [
-        new TextEncoder().encode('data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n'),
-        new TextEncoder().encode('data: {"choices":[{"delta":{"content":" world!"}}]}\n\n'),
-        new TextEncoder().encode('data: [DONE]\n\n')
+        new TextEncoder().encode(
+          'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n'
+        ),
+        new TextEncoder().encode(
+          'data: {"choices":[{"delta":{"content":" world!"}}]}\n\n'
+        ),
+        new TextEncoder().encode('data: [DONE]\n\n'),
       ];
 
       const mockBody = {
-        getReader: jest.fn()
+        getReader: jest.fn(),
       };
       const mockReader = {
-        read: jest.fn()
+        read: jest
+          .fn()
           .mockResolvedValueOnce({ done: false, value: mockChunks[0] })
           .mockResolvedValueOnce({ done: false, value: mockChunks[1] })
           .mockResolvedValueOnce({ done: false, value: mockChunks[2] })
-          .mockResolvedValueOnce({ done: true, value: undefined })
+          .mockResolvedValueOnce({ done: true, value: undefined }),
       };
       mockBody.getReader.mockReturnValue(mockReader);
 
       const mockResponse = new Response(null, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
       expect(crossPlatformUtils.processStreamLines).toHaveBeenCalled();
-      expect(crossPlatformUtils.createCrossPlatformTextDecoder).toHaveBeenCalled();
-      expect(crossPlatformUtils.createCrossPlatformTextEncoder).toHaveBeenCalled();
+      expect(
+        crossPlatformUtils.createCrossPlatformTextDecoder
+      ).toHaveBeenCalled();
+      expect(
+        crossPlatformUtils.createCrossPlatformTextEncoder
+      ).toHaveBeenCalled();
     });
 
     it('should handle streaming errors gracefully', async () => {
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockRejectedValue(new Error('Stream error'))
-        }))
+          read: jest.fn().mockRejectedValue(new Error('Stream error')),
+        })),
       };
 
       const mockResponse = new Response(null, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
       expect(crossPlatformUtils.categorizeStreamError).toHaveBeenCalled();
       expect(crossPlatformUtils.safeCrossPlatformLog).toHaveBeenCalledWith(
         'error',
@@ -908,24 +936,24 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
     it('should handle streaming timeout', async () => {
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn(() => new Promise(() => {})) // Never resolves
-        }))
+          read: jest.fn(() => new Promise(() => {})), // Never resolves
+        })),
       };
 
       const mockResponse = new Response(null, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const responsePromise = POST(request);
@@ -935,13 +963,15 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
 
       const response = await responsePromise;
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
       expect(crossPlatformUtils.safeCrossPlatformLog).toHaveBeenCalledWith(
         'error',
         '流式代理错误',
         expect.objectContaining({
           errorType: expect.any(String),
-          shouldRetry: expect.any(Boolean)
+          shouldRetry: expect.any(Boolean),
         })
       );
     });
@@ -949,29 +979,31 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
     it('should handle empty streaming responses', async () => {
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockResolvedValue({ done: true, value: undefined })
-        }))
+          read: jest.fn().mockResolvedValue({ done: true, value: undefined }),
+        })),
       };
 
       const mockResponse = new Response(null, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
       expect(crossPlatformUtils.safeCrossPlatformLog).toHaveBeenCalledWith(
         'log',
         '流读取完成',
@@ -983,13 +1015,13 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
   describe('Non-Streaming Response Processing', () => {
     it('should handle successful JSON responses', async () => {
       const mockData = {
-        choices: [{ message: { content: 'Response from API' } }]
+        choices: [{ message: { content: 'Response from API' } }],
       };
 
       (global.fetch as jest.Mock).mockResolvedValue(
         new Response(JSON.stringify(mockData), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         })
       );
 
@@ -997,7 +1029,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: {},
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
@@ -1012,7 +1044,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       (global.fetch as jest.Mock).mockResolvedValue(
         new Response('Plain text error', {
           status: 200,
-          headers: { 'Content-Type': 'text/plain' }
+          headers: { 'Content-Type': 'text/plain' },
         })
       );
 
@@ -1020,7 +1052,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: {},
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
@@ -1035,7 +1067,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       (global.fetch as jest.Mock).mockResolvedValue(
         new Response('Internal Server Error', {
           status: 500,
-          statusText: 'Internal Server Error'
+          statusText: 'Internal Server Error',
         })
       );
 
@@ -1043,7 +1075,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: {},
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
@@ -1061,33 +1093,39 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const mockReadable = new ReadableStream();
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockResolvedValue({ done: true, value: undefined })
-        }))
+          read: jest.fn().mockResolvedValue({ done: true, value: undefined }),
+        })),
       };
       (global.fetch as jest.Mock).mockResolvedValue({
         status: 200,
         headers: { 'Content-Type': 'text/event-stream' },
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
 
       // Check response headers
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
-      expect(response.headers.get('Cache-Control')).toBe('no-cache, no-store, must-revalidate');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
+      expect(response.headers.get('Cache-Control')).toBe(
+        'no-cache, no-store, must-revalidate'
+      );
       expect(response.headers.get('Connection')).toBe('keep-alive');
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
       expect(response.headers.get('X-Accel-Buffering')).toBe('no');
@@ -1108,32 +1146,38 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const mockReadable = new ReadableStream();
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockResolvedValue({ done: true, value: undefined })
-        }))
+          read: jest.fn().mockResolvedValue({ done: true, value: undefined }),
+        })),
       };
       (global.fetch as jest.Mock).mockResolvedValue({
         status: 200,
         headers: { 'Content-Type': 'text/event-stream' },
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       await POST(request);
 
-      expect(crossPlatformUtils.createCrossPlatformTextDecoder).toHaveBeenCalled();
-      expect(crossPlatformUtils.createCrossPlatformTextEncoder).toHaveBeenCalled();
+      expect(
+        crossPlatformUtils.createCrossPlatformTextDecoder
+      ).toHaveBeenCalled();
+      expect(
+        crossPlatformUtils.createCrossPlatformTextEncoder
+      ).toHaveBeenCalled();
       expect(crossPlatformUtils.processStreamLines).toHaveBeenCalled();
       expect(crossPlatformUtils.isStreamingContentType).toHaveBeenCalled();
       expect(crossPlatformUtils.categorizeStreamError).toHaveBeenCalled();
@@ -1144,32 +1188,34 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       crossPlatformUtils.categorizeStreamError.mockReturnValue({
         type: 'timeout_error',
         message: 'Request timeout',
-        shouldRetry: true
+        shouldRetry: true,
       });
 
       const mockReadable = new ReadableStream();
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockRejectedValue(new Error('Timeout'))
-        }))
+          read: jest.fn().mockRejectedValue(new Error('Timeout')),
+        })),
       };
       (global.fetch as jest.Mock).mockResolvedValue({
         status: 200,
         headers: { 'Content-Type': 'text/event-stream' },
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       await POST(request);
@@ -1182,7 +1228,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         '流式代理错误',
         expect.objectContaining({
           errorType: 'timeout_error',
-          shouldRetry: true
+          shouldRetry: true,
         })
       );
     });
@@ -1193,26 +1239,28 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const mockReadable = new ReadableStream();
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockResolvedValue({ done: true, value: undefined })
-        }))
+          read: jest.fn().mockResolvedValue({ done: true, value: undefined }),
+        })),
       };
       (global.fetch as jest.Mock).mockResolvedValue({
         status: 200,
         headers: { 'Content-Type': 'text/event-stream' },
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const startTime = Date.now();
@@ -1220,21 +1268,25 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const endTime = Date.now();
       const duration = endTime - startTime;
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
       expect(duration).toBeLessThan(100); // Should complete within 100ms
     });
 
     it('should handle large payloads efficiently', async () => {
       const largePayload = {
-        messages: Array(100).fill(null).map((_, i) => ({
-          role: i % 2 === 0 ? 'user' : 'assistant',
-          content: `Message ${i} with some content`.repeat(10)
-        }))
+        messages: Array(100)
+          .fill(null)
+          .map((_, i) => ({
+            role: i % 2 === 0 ? 'user' : 'assistant',
+            content: `Message ${i} with some content`.repeat(10),
+          })),
       };
 
       const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -1242,7 +1294,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: {},
-        body: largePayload
+        body: largePayload,
       });
 
       const startTime = Date.now();
@@ -1259,12 +1311,12 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
     it('should prevent header injection attacks', async () => {
       const maliciousHeaders = {
         'X-Injected-Header': 'malicious-value\r\nX-Another: injected',
-        'User-Agent': 'Mozilla/5.0\r\nX-Hacked: true'
+        'User-Agent': 'Mozilla/5.0\r\nX-Hacked: true',
       };
 
       const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
       (global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -1272,7 +1324,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: maliciousHeaders,
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       await POST(request);
@@ -1281,7 +1333,9 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const forwardedHeaders = fetchCall[0].headers;
 
       // Headers should be forwarded as-is (fetch handles this safely)
-      expect(forwardedHeaders['X-Injected-Header']).toBe(maliciousHeaders['X-Injected-Header']);
+      expect(forwardedHeaders['X-Injected-Header']).toBe(
+        maliciousHeaders['X-Injected-Header']
+      );
     });
 
     it('should validate target URLs to prevent SSRF', async () => {
@@ -1290,7 +1344,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
         'http://169.254.169.254/latest/meta-data/',
         'http://127.0.0.1/internal-api',
         'http://localhost/admin',
-        'http://[::1]/config'
+        'http://[::1]/config',
       ];
 
       for (const maliciousUrl of maliciousUrls) {
@@ -1298,7 +1352,7 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
           targetUrl: maliciousUrl,
           method: 'POST',
           headers: {},
-          body: { message: 'Hello' }
+          body: { message: 'Hello' },
         });
 
         const response = await POST(request);
@@ -1314,26 +1368,30 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
       const mockReadable = new ReadableStream();
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockRejectedValue(new Error('Error with "quotes" and new\nlines'))
-        }))
+          read: jest
+            .fn()
+            .mockRejectedValue(new Error('Error with "quotes" and new\nlines')),
+        })),
       };
       (global.fetch as jest.Mock).mockResolvedValue({
         status: 200,
         headers: { 'Content-Type': 'text/event-stream' },
-        body: mockBody
+        body: mockBody,
       });
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       await POST(request);
@@ -1346,112 +1404,136 @@ describe('Chat Proxy API - POST /api/chat-proxy', () => {
     it('should handle partial streaming responses', async () => {
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn()
-            .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('partial data') })
-            .mockResolvedValueOnce({ done: true, value: undefined })
-        }))
+          read: jest
+            .fn()
+            .mockResolvedValueOnce({
+              done: false,
+              value: new TextEncoder().encode('partial data'),
+            })
+            .mockResolvedValueOnce({ done: true, value: undefined }),
+        })),
       };
 
       const mockResponse = new Response(null, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const mockReadable = new ReadableStream();
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
-      expect(crossPlatformUtils.processStreamLines).toHaveBeenCalledWith('partial data');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
+      expect(crossPlatformUtils.processStreamLines).toHaveBeenCalledWith(
+        'partial data'
+      );
     });
 
     it('should handle connection interruptions during streaming', async () => {
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn().mockRejectedValue(new Error('Connection reset'))
-        }))
+          read: jest.fn().mockRejectedValue(new Error('Connection reset')),
+        })),
       };
 
       const mockResponse = new Response(null, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const mockReadable = new ReadableStream();
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
       expect(crossPlatformUtils.categorizeStreamError).toHaveBeenCalled();
     });
 
     it('should handle malformed streaming data', async () => {
       const mockBody = {
         getReader: jest.fn(() => ({
-          read: jest.fn()
-            .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('malformed streaming data without proper format') })
-            .mockResolvedValueOnce({ done: true, value: undefined })
-        }))
+          read: jest
+            .fn()
+            .mockResolvedValueOnce({
+              done: false,
+              value: new TextEncoder().encode(
+                'malformed streaming data without proper format'
+              ),
+            })
+            .mockResolvedValueOnce({ done: true, value: undefined }),
+        })),
       };
 
       const mockResponse = new Response(null, {
         status: 200,
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream' },
       });
       (global.fetch as jest.Mock).mockResolvedValue({
         ...mockResponse,
-        body: mockBody
+        body: mockBody,
       });
 
       const mockReadable = new ReadableStream();
       const mockTransformStream = {
         readable: mockReadable,
-        writable: new WritableStream()
+        writable: new WritableStream(),
       };
-      jest.spyOn(global, 'TransformStream').mockImplementation(() => mockTransformStream);
+      jest
+        .spyOn(global, 'TransformStream')
+        .mockImplementation(() => mockTransformStream);
 
       const request = testRequestBuilder.createPostRequest({
         targetUrl: 'https://api.example.com/chat',
         method: 'POST',
         headers: { Accept: 'text/event-stream' },
-        body: { message: 'Hello' }
+        body: { message: 'Hello' },
       });
 
       const response = await POST(request);
 
-      expect(response.headers.get('Content-Type')).toBe('text/event-stream; charset=utf-8');
+      expect(response.headers.get('Content-Type')).toBe(
+        'text/event-stream; charset=utf-8'
+      );
       // Should still process the data even if malformed
       expect(crossPlatformUtils.processStreamLines).toHaveBeenCalled();
     });

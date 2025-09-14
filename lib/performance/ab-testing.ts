@@ -610,4 +610,3 @@ export type {
   ABTestResult,
   ABTestVersionResult,
 };
-export { ABTestingManager };

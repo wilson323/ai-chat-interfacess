@@ -40,22 +40,23 @@ describe('User Management Components', () => {
 
   beforeEach(() => {
     // Mock fetch API
-    global.fetch = jest.fn().mockImplementation((url) => {
+    global.fetch = jest.fn().mockImplementation(url => {
       if (url.includes('/api/admin/users')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            success: true,
-            data: {
-              data: mockUsers,
-              pagination: {
-                page: 1,
-                limit: 10,
-                total: 2,
-                totalPages: 1,
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: {
+                data: mockUsers,
+                pagination: {
+                  page: 1,
+                  limit: 10,
+                  total: 2,
+                  totalPages: 1,
+                },
               },
-            },
-          }),
+            }),
         });
       }
       return Promise.resolve({
@@ -117,13 +118,7 @@ describe('User Management Components', () => {
 
   describe('UserForm', () => {
     test('renders create user form', () => {
-      render(
-        <UserForm
-          open={true}
-          onClose={() => {}}
-          onSuccess={() => {}}
-        />
-      );
+      render(<UserForm open={true} onClose={() => {}} onSuccess={() => {}} />);
 
       expect(screen.getByText('创建用户')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('请输入用户名')).toBeInTheDocument();
@@ -149,11 +144,7 @@ describe('User Management Components', () => {
     test('validates form inputs', async () => {
       const mockOnSuccess = jest.fn();
       render(
-        <UserForm
-          open={true}
-          onClose={() => {}}
-          onSuccess={mockOnSuccess}
-        />
+        <UserForm open={true} onClose={() => {}} onSuccess={mockOnSuccess} />
       );
 
       // Try to submit without required fields
@@ -174,13 +165,7 @@ describe('User Management Components', () => {
   describe('UserDetail', () => {
     test('renders user details', () => {
       const user = mockUsers[0];
-      render(
-        <UserDetail
-          user={user}
-          open={true}
-          onClose={() => {}}
-        />
-      );
+      render(<UserDetail user={user} open={true} onClose={() => {}} />);
 
       expect(screen.getByText('用户详情')).toBeInTheDocument();
       expect(screen.getByText(user.username)).toBeInTheDocument();
@@ -190,13 +175,7 @@ describe('User Management Components', () => {
 
     test('displays user permissions', () => {
       const user = mockUsers[0];
-      render(
-        <UserDetail
-          user={user}
-          open={true}
-          onClose={() => {}}
-        />
-      );
+      render(<UserDetail user={user} open={true} onClose={() => {}} />);
 
       expect(screen.getByText('智能体管理')).toBeInTheDocument();
       expect(screen.getByText('系统配置')).toBeInTheDocument();

@@ -3,7 +3,11 @@
  * Tests for input sanitization, validation, and protection against common attacks
  */
 
-import { TestRequestBuilder, testSecurity, testValidators } from '@/__tests__/utils/api-test-utils';
+import {
+  TestRequestBuilder,
+  testSecurity,
+  testValidators,
+} from '@/__tests__/utils/api-test-utils';
 
 describe('Input Validation Security Tests', () => {
   describe('SQL Injection Protection', () => {
@@ -11,7 +15,10 @@ describe('Input Validation Security Tests', () => {
       const sqlPayloads = testSecurity.getSQLInjectionPayloads();
 
       for (const payload of sqlPayloads) {
-        const containsSqlInjection = /(union|select|insert|update|delete|drop|alter|create|exec|--|;|')/i.test(payload);
+        const containsSqlInjection =
+          /(union|select|insert|update|delete|drop|alter|create|exec|--|;|')/i.test(
+            payload
+          );
         expect(containsSqlInjection).toBe(true);
       }
     });
@@ -61,7 +68,8 @@ describe('Input Validation Security Tests', () => {
       const xssPayloads = testSecurity.getXSSPayloads();
 
       for (const payload of xssPayloads) {
-        const containsXss = /<script|javascript:|on\w+\s*=|<iframe|<object|<embed/i.test(payload);
+        const containsXss =
+          /<script|javascript:|on\w+\s*=|<iframe|<object|<embed/i.test(payload);
         expect(containsXss).toBe(true);
       }
     });
@@ -166,12 +174,29 @@ describe('Input Validation Security Tests', () => {
     });
 
     it('should validate file extensions for security', () => {
-      const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt'];
-      const dangerousExtensions = ['.exe', '.bat', '.sh', '.php', '.js', '.html', '.sql'];
+      const allowedExtensions = [
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.gif',
+        '.pdf',
+        '.txt',
+      ];
+      const dangerousExtensions = [
+        '.exe',
+        '.bat',
+        '.sh',
+        '.php',
+        '.js',
+        '.html',
+        '.sql',
+      ];
 
       const validateExtension = (filename: string) => {
         const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
-        return allowedExtensions.includes(ext) && !dangerousExtensions.includes(ext);
+        return (
+          allowedExtensions.includes(ext) && !dangerousExtensions.includes(ext)
+        );
       };
 
       allowedExtensions.forEach(ext => {
@@ -345,7 +370,11 @@ describe('Input Validation Security Tests', () => {
       const validateRequestBody = (body: any) => {
         const errors = [];
 
-        if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
+        if (
+          !body.name ||
+          typeof body.name !== 'string' ||
+          body.name.trim() === ''
+        ) {
           errors.push('Name is required and must be a non-empty string');
         }
 
@@ -353,11 +382,17 @@ describe('Input Validation Security Tests', () => {
           errors.push('Valid email is required');
         }
 
-        if (body.age !== undefined && (typeof body.age !== 'number' || body.age < 0)) {
+        if (
+          body.age !== undefined &&
+          (typeof body.age !== 'number' || body.age < 0)
+        ) {
           errors.push('Age must be a non-negative number');
         }
 
-        if (body.preferences !== undefined && typeof body.preferences !== 'object') {
+        if (
+          body.preferences !== undefined &&
+          typeof body.preferences !== 'object'
+        ) {
           errors.push('Preferences must be an object');
         }
 
@@ -384,7 +419,8 @@ describe('Input Validation Security Tests', () => {
 
   describe('Query Parameter Validation', () => {
     it('should validate and sanitize query parameters', () => {
-      const maliciousQuery = '?search=test%27%20OR%201%3D1--&sort=id%20DESC%3B%20DROP%20TABLE%20users';
+      const maliciousQuery =
+        '?search=test%27%20OR%201%3D1--&sort=id%20DESC%3B%20DROP%20TABLE%20users';
 
       const sanitizeQueryParams = (queryString: string) => {
         const params = new URLSearchParams(queryString);
@@ -433,11 +469,20 @@ describe('Input Validation Security Tests', () => {
       const validatePagination = (pagination: any) => {
         const errors = [];
 
-        if (!pagination.page || typeof pagination.page !== 'number' || pagination.page < 1) {
+        if (
+          !pagination.page ||
+          typeof pagination.page !== 'number' ||
+          pagination.page < 1
+        ) {
           errors.push('Page must be a positive number');
         }
 
-        if (!pagination.limit || typeof pagination.limit !== 'number' || pagination.limit < 1 || pagination.limit > 100) {
+        if (
+          !pagination.limit ||
+          typeof pagination.limit !== 'number' ||
+          pagination.limit < 1 ||
+          pagination.limit > 100
+        ) {
           errors.push('Limit must be a number between 1 and 100');
         }
 
@@ -456,7 +501,12 @@ describe('Input Validation Security Tests', () => {
 
   describe('File Upload Security', () => {
     it('should validate file types', () => {
-      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+      const allowedMimeTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'application/pdf',
+      ];
       const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf'];
 
       const validateFileType = (filename: string, mimeType: string) => {
@@ -472,7 +522,11 @@ describe('Input Validation Security Tests', () => {
 
         const expectedExt = `.${mimeTypeToExtension[mimeType] || extWithoutDot}`;
 
-        return allowedMimeTypes.includes(mimeType) && allowedExtensions.includes(ext) && ext === expectedExt;
+        return (
+          allowedMimeTypes.includes(mimeType) &&
+          allowedExtensions.includes(ext) &&
+          ext === expectedExt
+        );
       };
 
       // Valid combinations
@@ -481,7 +535,9 @@ describe('Input Validation Security Tests', () => {
       expect(validateFileType('test.pdf', 'application/pdf')).toBe(true);
 
       // Invalid combinations
-      expect(validateFileType('test.exe', 'application/x-executable')).toBe(false);
+      expect(validateFileType('test.exe', 'application/x-executable')).toBe(
+        false
+      );
       expect(validateFileType('test.jpg', 'application/pdf')).toBe(false);
       expect(validateFileType('test.php', 'image/jpeg')).toBe(false);
     });
@@ -585,30 +641,44 @@ describe('Input Validation Security Tests', () => {
       };
 
       // Within limits - 5 minutes into a 15-minute window, should allow 1/3 of max requests
-      expect(validateRateLimit(30, Date.now() - 5 * 60 * 1000, rateLimitConfig)).toBe(true);
+      expect(
+        validateRateLimit(30, Date.now() - 5 * 60 * 1000, rateLimitConfig)
+      ).toBe(true);
       // Full window elapsed, should allow max requests
-      expect(validateRateLimit(100, Date.now() - 15 * 60 * 1000, rateLimitConfig)).toBe(true);
+      expect(
+        validateRateLimit(100, Date.now() - 15 * 60 * 1000, rateLimitConfig)
+      ).toBe(true);
 
       // Exceeding limits - more than allowed for the time elapsed
-      expect(validateRateLimit(101, Date.now() - 15 * 60 * 1000, rateLimitConfig)).toBe(false);
-      expect(validateRateLimit(50, Date.now() - 5 * 60 * 1000, rateLimitConfig)).toBe(false); // Too many for 1/3 window
+      expect(
+        validateRateLimit(101, Date.now() - 15 * 60 * 1000, rateLimitConfig)
+      ).toBe(false);
+      expect(
+        validateRateLimit(50, Date.now() - 5 * 60 * 1000, rateLimitConfig)
+      ).toBe(false); // Too many for 1/3 window
     });
 
     it('should detect suspicious request patterns', () => {
       const suspiciousPatterns = [
         {
-          requests: Array(1000).fill(null).map((_, i) => ({ timestamp: Date.now() + i })),
+          requests: Array(1000)
+            .fill(null)
+            .map((_, i) => ({ timestamp: Date.now() + i })),
           pattern: 'high_frequency',
         },
         {
-          requests: Array(10).fill(null).map((_, i) => ({ timestamp: Date.now() + i * 10 })),
+          requests: Array(10)
+            .fill(null)
+            .map((_, i) => ({ timestamp: Date.now() + i * 10 })),
           pattern: 'rapid_sequence',
         },
         {
-          requests: Array(5).fill(null).map((_, i) => ({
-            timestamp: Date.now() + i * 1000,
-            userAgent: 'DifferentAgent' + i,
-          })),
+          requests: Array(5)
+            .fill(null)
+            .map((_, i) => ({
+              timestamp: Date.now() + i * 1000,
+              userAgent: 'DifferentAgent' + i,
+            })),
           pattern: 'rotating_agents',
         },
       ];
@@ -618,8 +688,11 @@ describe('Input Validation Security Tests', () => {
           return 'high_frequency';
         }
 
-        const timeDiffs = requests.slice(1).map((req, i) => req.timestamp - requests[i].timestamp);
-        const avgTimeDiff = timeDiffs.reduce((a, b) => a + b, 0) / timeDiffs.length;
+        const timeDiffs = requests
+          .slice(1)
+          .map((req, i) => req.timestamp - requests[i].timestamp);
+        const avgTimeDiff =
+          timeDiffs.reduce((a, b) => a + b, 0) / timeDiffs.length;
 
         if (avgTimeDiff < 100) {
           return 'rapid_sequence';

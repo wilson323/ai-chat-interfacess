@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/toast/use-toast';
 import { User, UserRole, UserStatus, Permission } from '@/types/admin';
 import { Save, X } from 'lucide-react';
 

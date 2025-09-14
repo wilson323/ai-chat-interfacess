@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
 }
 
 // 获取使用数据
-async function getUsageData(where: any) {
+async function getUsageData(where: Record<string, unknown>) {
   const data = await AgentUsage.findAll({
     where,
     include: [
@@ -171,7 +171,7 @@ async function getUsageData(where: any) {
 }
 
 // 获取会话数据
-async function getSessionData(where: any) {
+async function getSessionData(where: Record<string, unknown>) {
   const data = await ChatSession.findAll({
     include: [
       {

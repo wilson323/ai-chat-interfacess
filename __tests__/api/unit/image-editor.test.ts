@@ -61,13 +61,17 @@ mockPath.join.mockImplementation((...args) => {
   }
 
   // Handle public/image-edits directory
-  if (args.some(arg => typeof arg === 'string' && arg.includes('public')) &&
-      args.some(arg => typeof arg === 'string' && arg.includes('image-edits'))) {
+  if (
+    args.some(arg => typeof arg === 'string' && arg.includes('public')) &&
+    args.some(arg => typeof arg === 'string' && arg.includes('image-edits'))
+  ) {
     return `${mockCwd}/public/image-edits`;
   }
   // Handle data directory for error logging
-  if (args.some(arg => typeof arg === 'string' && arg.includes('data')) &&
-      args.some(arg => typeof arg === 'string' && arg.includes('api-error.log'))) {
+  if (
+    args.some(arg => typeof arg === 'string' && arg.includes('data')) &&
+    args.some(arg => typeof arg === 'string' && arg.includes('api-error.log'))
+  ) {
     return `${mockCwd}/data/api-error.log`;
   }
   // Use the original path.join to avoid recursive calls
@@ -88,7 +92,12 @@ beforeAll(async () => {
 describe('Image Editor API - POST /api/image-editor/save', () => {
   const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'admin123';
   const testRequestBuilder = {
-    createRequest: (method: string, url: string, token?: string, body?: any): any => {
+    createRequest: (
+      method: string,
+      url: string,
+      token?: string,
+      body?: any
+    ): any => {
       const headers = new Headers();
       if (token) {
         headers.set('x-admin-token', token);
@@ -110,7 +119,7 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
         headers,
         body: JSON.stringify(body),
       });
-    }
+    },
   };
 
   beforeEach(() => {
@@ -127,15 +136,28 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       }
 
       // Handle special paths for testing
-      if (args.length === 3 && args.includes('public') && args.includes('image-edits') && args.some(arg => typeof arg === 'string' && arg.includes('.png'))) {
+      if (
+        args.length === 3 &&
+        args.includes('public') &&
+        args.includes('image-edits') &&
+        args.some(arg => typeof arg === 'string' && arg.includes('.png'))
+      ) {
         return `${mockCwd}/public/image-edits/${args.find(arg => typeof arg === 'string' && arg.includes('.png'))}`;
       }
       // Handle public/image-edits directory
-      if (args.length === 2 && args.includes('public') && args.includes('image-edits')) {
+      if (
+        args.length === 2 &&
+        args.includes('public') &&
+        args.includes('image-edits')
+      ) {
         return `${mockCwd}/public/image-edits`;
       }
       // Handle data directory for error logging
-      if (args.length === 2 && args.includes('data') && args.includes('api-error.log')) {
+      if (
+        args.length === 2 &&
+        args.includes('data') &&
+        args.includes('api-error.log')
+      ) {
         return `${mockCwd}/data/api-error.log`;
       }
       // Use the original path.join to avoid recursive calls
@@ -166,7 +188,10 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
   describe('Authentication & Authorization', () => {
     it('should reject requests without admin token', async () => {
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save');
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save'
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -175,7 +200,11 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     });
 
     it('should reject requests with invalid admin token', async () => {
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', 'invalid-token');
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        'invalid-token'
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -185,18 +214,27 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should accept requests with valid admin token', async () => {
       // Setup mocks
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
 
       expect(response.status).not.toBe(401);
@@ -208,15 +246,27 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       process.env.ADMIN_TOKEN = customToken;
 
       // Mock the file operations to avoid actual file system access
-      mockFs.readFile.mockResolvedValue(JSON.stringify({ maxImageSizeMB: 10, supportedFormats: ['.jpg', '.png'] }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
 
       const formData = new FormData();
-      const testFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });
+      const testFile = new File(['test content'], 'test.jpg', {
+        type: 'image/jpeg',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', customToken, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        customToken,
+        formData
+      );
       const response = await POST(request);
 
       // Should pass authentication and proceed (will fail later but not due to auth)
@@ -234,7 +284,7 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should read configuration from file', async () => {
       const mockConfig = {
         maxImageSizeMB: 15,
-        supportedFormats: ['.jpg', '.png', '.gif', '.webp']
+        supportedFormats: ['.jpg', '.png', '.gif', '.webp'],
       };
 
       // Let's check what path.resolve is actually returning
@@ -245,18 +295,31 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       });
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.jpg', { type: 'image/jpeg' });
+      const testFile = new File(['test image content'], 'test.jpg', {
+        type: 'image/jpeg',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       await POST(request);
 
       if (actualPath === undefined) {
-        throw new Error(`Debug info: actualPath is undefined. Mock calls: ${JSON.stringify({
-          pathResolveCalls: mockPath.resolve.mock.calls,
-          pathJoinCalls: mockPath.join.mock.calls,
-          readFileCalls: mockFs.readFile.mock.calls
-        }, null, 2)}`);
+        throw new Error(
+          `Debug info: actualPath is undefined. Mock calls: ${JSON.stringify(
+            {
+              pathResolveCalls: mockPath.resolve.mock.calls,
+              pathJoinCalls: mockPath.join.mock.calls,
+              readFileCalls: mockFs.readFile.mock.calls,
+            },
+            null,
+            2
+          )}`
+        );
       }
 
       expect(mockFs.readFile).toHaveBeenCalledWith(
@@ -271,10 +334,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       mockFs.writeFile.mockResolvedValue(undefined);
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -289,10 +359,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       mockFs.writeFile.mockResolvedValue(undefined);
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -304,7 +381,7 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should apply file size limits from configuration', async () => {
       const mockConfig = {
         maxImageSizeMB: 1, // Very small limit
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
+        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
       };
 
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockConfig));
@@ -312,10 +389,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       const formData = new FormData();
       // Create file larger than 1MB using Buffer for Node.js compatibility
       const largeBuffer = Buffer.alloc(2 * 1024 * 1024, 'A'); // 2MB
-      const largeFile = new File([largeBuffer], 'large.jpg', { type: 'image/jpeg' });
+      const largeFile = new File([largeBuffer], 'large.jpg', {
+        type: 'image/jpeg',
+      });
       formData.append('file', largeFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -327,16 +411,23 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should apply format restrictions from configuration', async () => {
       const mockConfig = {
         maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.jpeg'] // Only JPG allowed
+        supportedFormats: ['.jpg', '.jpeg'], // Only JPG allowed
       };
 
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockConfig));
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -347,10 +438,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
   describe('File Validation', () => {
     beforeEach(() => {
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
     });
@@ -359,7 +452,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       const formData = new FormData();
       // No file added
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -369,10 +467,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should reject unsupported file formats', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.pdf', { type: 'application/pdf' });
+      const testFile = new File(['test image content'], 'test.pdf', {
+        type: 'application/pdf',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -385,15 +490,22 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
         { name: 'test.jpg', type: 'image/jpeg' },
         { name: 'test.png', type: 'image/png' },
         { name: 'test.bmp', type: 'image/bmp' },
-        { name: 'test.tiff', type: 'image/tiff' }
+        { name: 'test.tiff', type: 'image/tiff' },
       ];
 
       for (const format of supportedFormats) {
         const formData = new FormData();
-        const testFile = new File(['test image content'], format.name, { type: format.type });
+        const testFile = new File(['test image content'], format.name, {
+          type: format.type,
+        });
         formData.append('file', testFile);
 
-        const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+        const request = testRequestBuilder.createRequest(
+          'POST',
+          '/api/image-editor/save',
+          ADMIN_TOKEN,
+          formData
+        );
         const response = await POST(request);
 
         expect(response.status).toBe(200);
@@ -402,10 +514,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should handle case-insensitive file extensions', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.JPG', { type: 'image/jpeg' });
+      const testFile = new File(['test image content'], 'test.JPG', {
+        type: 'image/jpeg',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -415,10 +534,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should reject files without extensions', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -430,10 +556,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       const formData = new FormData();
       // Create file exactly at the limit (10MB) using Buffer for Node.js compatibility
       const limitBuffer = Buffer.alloc(10 * 1024 * 1024, 'A'); // 10MB
-      const limitFile = new File([limitBuffer], 'test.png', { type: 'image/png' });
+      const limitFile = new File([limitBuffer], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', limitFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
 
       // Should accept file exactly at limit
@@ -443,11 +576,18 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should reject files that exceed size limit', async () => {
       const formData = new FormData();
       // Create file slightly over the limit (10MB + 1 byte) using Buffer for Node.js compatibility
-      const oversizedBuffer = Buffer.alloc((10 * 1024 * 1024) + 1, 'A'); // 10MB + 1 byte
-      const oversizedFile = new File([oversizedBuffer], 'test.png', { type: 'image/png' });
+      const oversizedBuffer = Buffer.alloc(10 * 1024 * 1024 + 1, 'A'); // 10MB + 1 byte
+      const oversizedFile = new File([oversizedBuffer], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', oversizedFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -458,10 +598,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
   describe('File Operations', () => {
     beforeEach(() => {
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
     });
 
     it('should create output directory if it does not exist', async () => {
@@ -469,10 +611,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       mockFs.writeFile.mockResolvedValue(undefined);
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       await POST(request);
 
       expect(mockFs.mkdir).toHaveBeenCalledWith(
@@ -494,19 +643,28 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
         return Promise.resolve(undefined);
       });
       mockFs.writeFile.mockResolvedValue(undefined);
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
 
       // Mock appendFile to prevent cascading errors in logApiError
       mockFs.appendFile.mockResolvedValue(undefined);
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -517,10 +675,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should save file with unique timestamp filename', async () => {
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.appendFile.mockResolvedValue(undefined);
 
       // Mock Date.now() to get predictable filename
@@ -529,10 +689,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
       try {
         const formData = new FormData();
-        const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+        const testFile = new File(['test image content'], 'test.png', {
+          type: 'image/png',
+        });
         formData.append('file', testFile);
 
-        const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+        const request = testRequestBuilder.createRequest(
+          'POST',
+          '/api/image-editor/save',
+          ADMIN_TOKEN,
+          formData
+        );
         const response = await POST(request);
         const data = await response.json();
 
@@ -558,10 +725,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
       const formData = new FormData();
       const testContent = 'test image content';
-      const testFile = new File([testContent], 'test.png', { type: 'image/png' });
+      const testFile = new File([testContent], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       await POST(request);
 
       expect(capturedBuffer).toBeTruthy();
@@ -573,10 +747,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       mockFs.writeFile.mockRejectedValue(new Error('Disk full'));
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -587,21 +768,30 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
   describe('Marks Processing', () => {
     beforeEach(() => {
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
     });
 
     it('should handle requests without marks', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       // No marks added
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -612,15 +802,22 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should parse valid JSON marks', async () => {
       const marks = [
         { x: 100, y: 200, type: 'circle', color: 'red' },
-        { x: 300, y: 400, type: 'rect', color: 'blue' }
+        { x: 300, y: 400, type: 'rect', color: 'blue' },
       ];
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       formData.append('marks', JSON.stringify(marks));
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -630,11 +827,18 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should handle invalid JSON in marks', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       formData.append('marks', 'invalid json {');
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -644,11 +848,18 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should handle empty marks string', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       formData.append('marks', '');
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -658,11 +869,18 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should handle null marks', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       formData.append('marks', 'null');
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -673,20 +891,29 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
   describe('Response Format', () => {
     beforeEach(() => {
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
     });
 
     it('should return correct response structure on success', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -700,10 +927,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should return public URL for saved image', async () => {
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -714,11 +948,18 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should include parsed marks in response when provided', async () => {
       const marks = [{ x: 100, y: 200, type: 'point' }];
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       formData.append('marks', JSON.stringify(marks));
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -730,20 +971,29 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should log API errors to error log file', async () => {
       const testError = new Error('Test error');
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.appendFile.mockResolvedValue(undefined);
       // Force an error during file writing
       mockFs.writeFile.mockRejectedValue(testError);
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       await POST(request);
 
       expect(mockFs.appendFile).toHaveBeenCalledWith(
@@ -753,10 +1003,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     });
 
     it('should handle file system errors gracefully', async () => {
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       // First mkdir call should succeed, second one (in logApiError) should also succeed
       let mkdirCallCount = 0;
       mockFs.mkdir.mockImplementation(() => {
@@ -767,10 +1019,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       mockFs.appendFile.mockResolvedValue(undefined);
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -788,7 +1047,11 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.appendFile.mockResolvedValue(undefined);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -799,10 +1062,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
   describe('Performance Testing', () => {
     beforeEach(() => {
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
     });
@@ -813,10 +1078,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       const formData = new FormData();
       // Create large file within limits (5MB) - use Buffer for Node.js compatibility
       const largeFileContent = Buffer.alloc(5 * 1024 * 1024, 'A');
-      const largeFile = new File([largeFileContent], 'large.png', { type: 'image/png' });
+      const largeFile = new File([largeFileContent], 'large.png', {
+        type: 'image/png',
+      });
       formData.append('file', largeFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
 
       const endTime = Date.now();
@@ -831,21 +1103,34 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     }, 10000);
 
     it('should process files with complex marks efficiently', async () => {
-      const complexMarks = Array(1000).fill(null).map((_, i) => ({
-        x: Math.random() * 1000,
-        y: Math.random() * 1000,
-        type: ['circle', 'rect', 'point', 'line'][Math.floor(Math.random() * 4)],
-        color: ['red', 'blue', 'green', 'yellow'][Math.floor(Math.random() * 4)],
-        size: Math.random() * 50 + 10
-      }));
+      const complexMarks = Array(1000)
+        .fill(null)
+        .map((_, i) => ({
+          x: Math.random() * 1000,
+          y: Math.random() * 1000,
+          type: ['circle', 'rect', 'point', 'line'][
+            Math.floor(Math.random() * 4)
+          ],
+          color: ['red', 'blue', 'green', 'yellow'][
+            Math.floor(Math.random() * 4)
+          ],
+          size: Math.random() * 50 + 10,
+        }));
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       formData.append('marks', JSON.stringify(complexMarks));
 
       const startTime = Date.now();
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const endTime = Date.now();
       const duration = endTime - startTime;
@@ -857,20 +1142,29 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
   describe('Security Testing', () => {
     beforeEach(() => {
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
     });
 
     it('should prevent path traversal in file names', async () => {
       const formData = new FormData();
-      const maliciousFile = new File(['test content'], '../../../etc/passwd', { type: 'image/png' });
+      const maliciousFile = new File(['test content'], '../../../etc/passwd', {
+        type: 'image/png',
+      });
       formData.append('file', maliciousFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -881,10 +1175,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should sanitize file extensions with special characters', async () => {
       const formData = new FormData();
-      const suspiciousFile = new File(['test content'], 'test.pn"g', { type: 'image/png' });
+      const suspiciousFile = new File(['test content'], 'test.pn"g', {
+        type: 'image/png',
+      });
       formData.append('file', suspiciousFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -894,14 +1195,22 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     });
 
     it('should validate marks data structure for injection attempts', async () => {
-      const maliciousMarks = '{"__proto__": {"polluted": true}, "constructor": {"prototype": {"malicious": true}}}';
+      const maliciousMarks =
+        '{"__proto__": {"polluted": true}, "constructor": {"prototype": {"malicious": true}}}';
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       formData.append('marks', maliciousMarks);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -917,11 +1226,18 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       const largeJson = JSON.stringify(largeMarks);
 
       const formData = new FormData();
-      const testFile = new File(['test image content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test image content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
       formData.append('marks', largeJson);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -932,10 +1248,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should prevent directory traversal in save path', async () => {
       const formData = new FormData();
-      const testFile = new File(['test content'], 'test.png', { type: 'image/png' });
+      const testFile = new File(['test content'], 'test.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       await POST(request);
 
       // Verify that the save path is within expected directory
@@ -948,10 +1271,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
   describe('Edge Cases & Boundary Conditions', () => {
     beforeEach(() => {
-      mockFs.readFile.mockResolvedValue(JSON.stringify({
-        maxImageSizeMB: 10,
-        supportedFormats: ['.jpg', '.png', '.bmp', '.tiff']
-      }));
+      mockFs.readFile.mockResolvedValue(
+        JSON.stringify({
+          maxImageSizeMB: 10,
+          supportedFormats: ['.jpg', '.png', '.bmp', '.tiff'],
+        })
+      );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
     });
@@ -961,7 +1286,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       const emptyFile = new File([], 'empty.png', { type: 'image/png' });
       formData.append('file', emptyFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -972,10 +1302,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
     it('should handle files with very long names', async () => {
       const longName = 'a'.repeat(250) + '.png';
       const formData = new FormData();
-      const testFile = new File(['test content'], longName, { type: 'image/png' });
+      const testFile = new File(['test content'], longName, {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -986,10 +1323,17 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
 
     it('should handle Unicode characters in file names', async () => {
       const formData = new FormData();
-      const testFile = new File(['test content'], '测试图片.png', { type: 'image/png' });
+      const testFile = new File(['test content'], '测试图片.png', {
+        type: 'image/png',
+      });
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 
@@ -1003,16 +1347,25 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       const concurrentCount = 10;
 
       // Mock Date.now() to return different timestamps for each call
-      const timestamps = Array(concurrentCount).fill(0).map((_, i) => 1234567890 + i);
+      const timestamps = Array(concurrentCount)
+        .fill(0)
+        .map((_, i) => 1234567890 + i);
       let callCount = 0;
       jest.spyOn(Date, 'now').mockImplementation(() => timestamps[callCount++]);
 
       for (let i = 0; i < concurrentCount; i++) {
         const formData = new FormData();
-        const testFile = new File([`test content ${i}`], `test${i}.png`, { type: 'image/png' });
+        const testFile = new File([`test content ${i}`], `test${i}.png`, {
+          type: 'image/png',
+        });
         formData.append('file', testFile);
 
-        const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+        const request = testRequestBuilder.createRequest(
+          'POST',
+          '/api/image-editor/save',
+          ADMIN_TOKEN,
+          formData
+        );
         requests.push(POST(request));
       }
 
@@ -1037,7 +1390,12 @@ describe('Image Editor API - POST /api/image-editor/save', () => {
       const testFile = new File(['test content'], 'test.png');
       formData.append('file', testFile);
 
-      const request = testRequestBuilder.createRequest('POST', '/api/image-editor/save', ADMIN_TOKEN, formData);
+      const request = testRequestBuilder.createRequest(
+        'POST',
+        '/api/image-editor/save',
+        ADMIN_TOKEN,
+        formData
+      );
       const response = await POST(request);
       const data = await response.json();
 

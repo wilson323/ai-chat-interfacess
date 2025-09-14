@@ -178,7 +178,13 @@ describe('AgentUsage Model Tests', () => {
       const sessionId = 'session-to-end-1';
 
       // Start session
-      await AgentUsage.startSession(sessionId, 1, testAgentId, 'text', testUserGeo.id);
+      await AgentUsage.startSession(
+        sessionId,
+        1,
+        testAgentId,
+        'text',
+        testUserGeo.id
+      );
 
       // End session
       const endedSession = await AgentUsage.endSession(
@@ -199,7 +205,13 @@ describe('AgentUsage Model Tests', () => {
       const sessionId = 'session-update-1';
 
       // Start session
-      await AgentUsage.startSession(sessionId, 1, testAgentId, 'text', testUserGeo.id);
+      await AgentUsage.startSession(
+        sessionId,
+        1,
+        testAgentId,
+        'text',
+        testUserGeo.id
+      );
 
       // Update message count
       await AgentUsage.updateMessageCount(sessionId, 3);
@@ -217,7 +229,13 @@ describe('AgentUsage Model Tests', () => {
       const sessionId = 'session-response-1';
 
       // Start session
-      await AgentUsage.startSession(sessionId, 1, testAgentId, 'text', testUserGeo.id);
+      await AgentUsage.startSession(
+        sessionId,
+        1,
+        testAgentId,
+        'text',
+        testUserGeo.id
+      );
 
       // Update response time
       await AgentUsage.updateResponseTime(sessionId, 250);
@@ -474,7 +492,11 @@ describe('AgentUsage Model Tests', () => {
     });
 
     it('should handle multiple sessions for same user', async () => {
-      const sessionIds = ['multi-session-1', 'multi-session-2', 'multi-session-3'];
+      const sessionIds = [
+        'multi-session-1',
+        'multi-session-2',
+        'multi-session-3',
+      ];
 
       for (const sessionId of sessionIds) {
         await AgentUsage.create({
@@ -495,7 +517,9 @@ describe('AgentUsage Model Tests', () => {
       });
 
       expect(userSessions).toHaveLength(3);
-      expect(userSessions.map(s => s.sessionId)).toEqual(expect.arrayContaining(sessionIds));
+      expect(userSessions.map(s => s.sessionId)).toEqual(
+        expect.arrayContaining(sessionIds)
+      );
     });
 
     it('should handle multiple sessions for different agents', async () => {
@@ -573,7 +597,9 @@ describe('AgentUsage Model Tests', () => {
           sessionId: `bulk-session-${i}`,
           userId: (i % 10) + 1, // 10 different users
           agentId: testAgentId,
-          messageType: ['text', 'image', 'file', 'voice'][Math.floor(Math.random() * 4)],
+          messageType: ['text', 'image', 'file', 'voice'][
+            Math.floor(Math.random() * 4)
+          ],
           messageCount: Math.floor(Math.random() * 10) + 1,
           startTime: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
           isCompleted: Math.random() > 0.2, // 80% completed
@@ -602,7 +628,9 @@ describe('AgentUsage Model Tests', () => {
           messageType: 'text',
           messageCount: Math.floor(Math.random() * 20) + 1,
           tokenUsage: Math.floor(Math.random() * 5000) + 100,
-          startTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+          startTime: new Date(
+            Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
+          ),
           isCompleted: true,
           geoLocationId: testUserGeo.id,
         });

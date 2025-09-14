@@ -1,6 +1,67 @@
-# NeuroGlass AI Chat Interface
+# AI Chat Interface - 智能聊天接口系统
 
-## Docker 一键部署指南
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14.0+-black.svg)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18.0+-61dafb.svg)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+一个现代化的AI聊天接口系统，支持多智能体对话、实时分析、性能监控等功能。
+
+## ✨ 主要特性
+
+- 🤖 **多智能体支持** - 集成FastGPT多智能体系统
+- 💬 **实时聊天** - 流畅的对话体验
+- 📊 **数据分析** - 实时性能监控和分析
+- 🔐 **身份验证** - 基于NextAuth.js的安全认证
+- 📱 **响应式设计** - 支持移动端和桌面端
+- 🎨 **现代UI** - 基于Tailwind CSS和shadcn/ui
+- ⚡ **高性能** - 优化的构建和运行时性能
+- 🧪 **测试覆盖** - 完整的单元测试和集成测试
+
+## 🚀 快速开始
+
+### 前提条件
+
+- Node.js 18.0+
+- npm 8.0+
+- PostgreSQL 数据库
+
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 环境配置
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env` 文件，配置必要的环境变量：
+
+```env
+# 数据库配置
+DATABASE_URL="postgresql://username:password@localhost:5432/ai_chat"
+
+# NextAuth配置
+NEXTAUTH_SECRET="your-secret-key"
+NEXTAUTH_URL="http://localhost:3000"
+
+# FastGPT配置
+FASTGPT_API_URL="your-fastgpt-url"
+FASTGPT_API_KEY="your-api-key"
+```
+
+### 启动开发服务器
+
+```bash
+npm run dev
+```
+
+访问 http://localhost:3000 查看应用。
+
+## 🐳 Docker 一键部署指南
 
 ### 前提条件
 

@@ -11,12 +11,12 @@ describe('Jest环境测试', () => {
     const mockData = { test: 'data' };
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve(mockData)
+      json: () => Promise.resolve(mockData),
     });
 
     const response = await fetch('/api/test');
     const data = await response.json();
-    
+
     expect(data).toEqual(mockData);
   });
 

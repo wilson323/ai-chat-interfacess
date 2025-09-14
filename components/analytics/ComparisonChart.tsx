@@ -39,7 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Download, RefreshCw, BarChart3, PieChart as PieIcon, TrendingUp } from 'lucide-react';
 
 interface ComparisonData {
-  [key: string]: any;
+  [key: string]: string | number | boolean | null | undefined;
 }
 
 interface ComparisonChartProps {

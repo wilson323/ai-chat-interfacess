@@ -116,7 +116,11 @@ function CadAnalyzerConfigForm() {
     }
   };
 
-  const handleTestModel = async (model: { name: string; apiKey: string; baseUrl: string }) => {
+  const handleTestModel = async (model: {
+    name: string;
+    apiKey: string;
+    baseUrl: string;
+  }) => {
     try {
       const res = await fetch('/api/admin/cad-analyzer-config/test', {
         method: 'POST',

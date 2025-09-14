@@ -36,9 +36,13 @@ describe('Health API - Simple Tests', () => {
 
     it('should handle health check errors', async () => {
       // Mock failed health check
-      mockHealthCheck.mockRejectedValue(new Error('Database connection failed'));
+      mockHealthCheck.mockRejectedValue(
+        new Error('Database connection failed')
+      );
 
-      await expect(mockHealthCheck()).rejects.toThrow('Database connection failed');
+      await expect(mockHealthCheck()).rejects.toThrow(
+        'Database connection failed'
+      );
     });
 
     it('should validate response structure', async () => {
@@ -88,7 +92,9 @@ describe('Health API - Simple Tests', () => {
         return { success: true, data: { status: 'healthy' } };
       });
 
-      const requests = Array(10).fill(null).map(() => mockHealthCheck());
+      const requests = Array(10)
+        .fill(null)
+        .map(() => mockHealthCheck());
       const results = await Promise.all(requests);
 
       // All requests should succeed

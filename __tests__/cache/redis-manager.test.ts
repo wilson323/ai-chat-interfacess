@@ -137,7 +137,7 @@ describe('RedisManager', () => {
       const items = [
         { key: 'batch:1', value: { id: 1, data: 'first' }, ttl: 60 },
         { key: 'batch:2', value: { id: 2, data: 'second' }, ttl: 60 },
-        { key: 'batch:3', value: { id: 3, data: 'third' }, ttl: 60 }
+        { key: 'batch:3', value: { id: 3, data: 'third' }, ttl: 60 },
       ];
 
       const result = await redisManager.mset(items);
@@ -154,7 +154,7 @@ describe('RedisManager', () => {
       const items = [
         { key: 'mget:1', value: { id: 1, data: 'first' } },
         { key: 'mget:2', value: { id: 2, data: 'second' } },
-        { key: 'mget:3', value: { id: 3, data: 'third' } }
+        { key: 'mget:3', value: { id: 3, data: 'third' } },
       ];
 
       await redisManager.mset(items);
@@ -171,7 +171,7 @@ describe('RedisManager', () => {
     test('批量获取应该处理部分命中', async () => {
       const items = [
         { key: 'partial:1', value: { id: 1, data: 'exists' } },
-        { key: 'partial:2', value: { id: 2, data: 'exists' } }
+        { key: 'partial:2', value: { id: 2, data: 'exists' } },
       ];
 
       await redisManager.mset(items);
@@ -199,7 +199,7 @@ describe('RedisManager', () => {
         ttl: 1,
         createdAt: Date.now() - 2000, // 2秒前创建
         accessedAt: Date.now() - 1000,
-        accessCount: 1
+        accessCount: 1,
       };
 
       await redisManager.set(expiredKey, expiredItem.value, expiredItem.ttl);
@@ -296,7 +296,9 @@ describe('RedisManager', () => {
       expect(Array.isArray(hotKeys)).toBe(true);
 
       // 热门键应该存在且访问次数较高
-      const hotKeyData = hotKeys.find(k => k.key === hotKey.replace('test:', ''));
+      const hotKeyData = hotKeys.find(
+        k => k.key === hotKey.replace('test:', '')
+      );
       if (hotKeyData) {
         expect(hotKeyData.accessCount).toBeGreaterThan(0);
       }
@@ -332,7 +334,7 @@ describe('RedisManager', () => {
       const warmupItems = [
         { key: 'warmup:1', value: { id: 1, data: 'preloaded1' }, ttl: 300 },
         { key: 'warmup:2', value: { id: 2, data: 'preloaded2' }, ttl: 300 },
-        { key: 'warmup:3', value: { id: 3, data: 'preloaded3' }, ttl: 300 }
+        { key: 'warmup:3', value: { id: 3, data: 'preloaded3' }, ttl: 300 },
       ];
 
       const result = await redisManager.warmup(warmupItems);
@@ -360,7 +362,9 @@ describe('RedisManager', () => {
       const invalidRedisManager = new RedisManager(invalidConfig);
 
       // 操作应该失败并抛出错误
-      await expect(invalidRedisManager.set('test:key', 'test')).rejects.toThrow();
+      await expect(
+        invalidRedisManager.set('test:key', 'test')
+      ).rejects.toThrow();
 
       // 健康检查应该返回不健康状态
       const health = await invalidRedisManager.healthCheck();
@@ -421,19 +425,21 @@ describe('RedisManager', () => {
     test('应该能够处理大对象', async () => {
       // 创建一个较大的对象
       const largeObject = {
-        data: Array(1000).fill(0).map((_, i) => ({
-          id: i,
-          name: `item ${i}`,
-          description: `这是第 ${i} 个项目的详细描述`,
-          metadata: {
-            created: new Date().toISOString(),
-            tags: [`tag${i}`, `test`, `large`],
-            stats: {
-              views: Math.floor(Math.random() * 10000),
-              likes: Math.floor(Math.random() * 1000),
-            }
-          }
-        }))
+        data: Array(1000)
+          .fill(0)
+          .map((_, i) => ({
+            id: i,
+            name: `item ${i}`,
+            description: `这是第 ${i} 个项目的详细描述`,
+            metadata: {
+              created: new Date().toISOString(),
+              tags: [`tag${i}`, `test`, `large`],
+              stats: {
+                views: Math.floor(Math.random() * 10000),
+                likes: Math.floor(Math.random() * 1000),
+              },
+            },
+          })),
       };
 
       const key = 'large:object';
@@ -452,7 +458,10 @@ describe('RedisManager', () => {
 
       // 执行多次写入操作
       for (let i = 0; i < iterations; i++) {
-        await redisManager.set(`perf:write:${i}`, { id: i, data: `performance test ${i}` });
+        await redisManager.set(`perf:write:${i}`, {
+          id: i,
+          data: `performance test ${i}`,
+        });
       }
 
       const writeTime = Date.now() - startTime;
@@ -471,11 +480,15 @@ describe('RedisManager', () => {
 
       // 性能期望：每个操作应该在合理时间内完成
       expect(writeTime).toBeLessThan(5000); // 写入应该在5秒内完成
-      expect(readTime).toBeLessThan(3000);  // 读取应该在3秒内完成
+      expect(readTime).toBeLessThan(3000); // 读取应该在3秒内完成
 
       console.log(`性能测试结果:`);
-      console.log(`  写入 ${iterations} 条: ${writeTime}ms (${(iterations/writeTime*1000).toFixed(2)} ops/sec)`);
-      console.log(`  读取 ${iterations} 条: ${readTime}ms (${(iterations/readTime*1000).toFixed(2)} ops/sec)`);
+      console.log(
+        `  写入 ${iterations} 条: ${writeTime}ms (${((iterations / writeTime) * 1000).toFixed(2)} ops/sec)`
+      );
+      console.log(
+        `  读取 ${iterations} 条: ${readTime}ms (${((iterations / readTime) * 1000).toFixed(2)} ops/sec)`
+      );
     });
   });
 });

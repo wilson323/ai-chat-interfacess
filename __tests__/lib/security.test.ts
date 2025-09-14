@@ -14,7 +14,7 @@ import {
   detectSQLInjection,
   validateFileUpload,
   encryptData,
-  decryptData
+  decryptData,
 } from '@/lib/security';
 
 describe('安全模块测试', () => {
@@ -24,7 +24,7 @@ describe('安全模块测试', () => {
         'Hello World',
         'user@example.com',
         '12345',
-        'normal-text-123'
+        'normal-text-123',
       ];
 
       validInputs.forEach(input => {
@@ -37,7 +37,7 @@ describe('安全模块测试', () => {
         '', // 空字符串
         '   ', // 只有空格
         null,
-        undefined
+        undefined,
       ];
 
       invalidInputs.forEach(input => {
@@ -49,14 +49,14 @@ describe('安全模块测试', () => {
       const validEmails = [
         'user@example.com',
         'test.email@domain.co.uk',
-        'user+tag@example.org'
+        'user+tag@example.org',
       ];
 
       const invalidEmails = [
         'invalid-email',
         '@example.com',
         'user@',
-        'user@.com'
+        'user@.com',
       ];
 
       validEmails.forEach(email => {
@@ -72,13 +72,13 @@ describe('安全模块测试', () => {
       const validUrls = [
         'https://example.com',
         'http://localhost:3000',
-        'https://sub.domain.com/path?query=value'
+        'https://sub.domain.com/path?query=value',
       ];
 
       const invalidUrls = [
         'not-a-url',
         'ftp://example.com',
-        'javascript:alert("xss")'
+        'javascript:alert("xss")',
       ];
 
       validUrls.forEach(url => {
@@ -95,7 +95,7 @@ describe('安全模块测试', () => {
     it('应该清理HTML标签', () => {
       const input = '<script>alert("xss")</script>Hello World';
       const cleaned = sanitizeInput(input, 'html');
-      
+
       expect(cleaned).toBe('Hello World');
       expect(cleaned).not.toContain('<script>');
       expect(cleaned).not.toContain('alert');
@@ -104,7 +104,7 @@ describe('安全模块测试', () => {
     it('应该清理SQL注入字符', () => {
       const input = "'; DROP TABLE users; --";
       const cleaned = sanitizeInput(input, 'sql');
-      
+
       expect(cleaned).not.toContain('DROP');
       expect(cleaned).not.toContain('--');
       expect(cleaned).not.toContain("'");
@@ -113,7 +113,7 @@ describe('安全模块测试', () => {
     it('应该清理JavaScript代码', () => {
       const input = 'Hello <img src=x onerror=alert("xss")> World';
       const cleaned = sanitizeInput(input, 'js');
-      
+
       expect(cleaned).toBe('Hello  World');
       expect(cleaned).not.toContain('<img');
       expect(cleaned).not.toContain('onerror');
@@ -122,7 +122,7 @@ describe('安全模块测试', () => {
     it('应该保留安全的HTML标签', () => {
       const input = '<p>Hello <strong>World</strong></p>';
       const cleaned = sanitizeInput(input, 'html');
-      
+
       expect(cleaned).toContain('<p>');
       expect(cleaned).toContain('<strong>');
       expect(cleaned).toContain('Hello');
@@ -134,13 +134,13 @@ describe('安全模块测试', () => {
     const mockUser = {
       id: '1',
       role: 'admin',
-      permissions: ['read', 'write', 'delete']
+      permissions: ['read', 'write', 'delete'],
     };
 
     const mockRegularUser = {
       id: '2',
       role: 'user',
-      permissions: ['read']
+      permissions: ['read'],
     };
 
     it('应该允许有权限的用户访问', () => {
@@ -170,7 +170,7 @@ describe('安全模块测试', () => {
     it('应该生成安全的令牌', () => {
       const token1 = generateSecureToken();
       const token2 = generateSecureToken();
-      
+
       expect(token1).toBeDefined();
       expect(token2).toBeDefined();
       expect(token1).not.toBe(token2);
@@ -180,7 +180,7 @@ describe('安全模块测试', () => {
     it('应该正确哈希密码', async () => {
       const password = 'testpassword123';
       const hash = await hashPassword(password);
-      
+
       expect(hash).toBeDefined();
       expect(hash).not.toBe(password);
       expect(hash.length).toBeGreaterThan(50);
@@ -189,10 +189,10 @@ describe('安全模块测试', () => {
     it('应该正确验证密码', async () => {
       const password = 'testpassword123';
       const hash = await hashPassword(password);
-      
+
       const isValid = await verifyPassword(password, hash);
       const isInvalid = await verifyPassword('wrongpassword', hash);
-      
+
       expect(isValid).toBe(true);
       expect(isInvalid).toBe(false);
     });
@@ -201,7 +201,7 @@ describe('安全模块测试', () => {
       const originalData = { message: 'secret data', id: 123 };
       const encrypted = encryptData(originalData);
       const decrypted = decryptData(encrypted);
-      
+
       expect(encrypted).not.toEqual(originalData);
       expect(decrypted).toEqual(originalData);
     });
@@ -213,7 +213,7 @@ describe('安全模块测试', () => {
         '<script>alert("xss")</script>',
         '<img src=x onerror=alert("xss")>',
         'javascript:alert("xss")',
-        '<svg onload=alert("xss")>'
+        '<svg onload=alert("xss")>',
       ];
 
       xssPayloads.forEach(payload => {
@@ -223,7 +223,7 @@ describe('安全模块测试', () => {
       const safeInputs = [
         'Hello World',
         'Normal text with numbers 123',
-        '<p>Safe HTML</p>'
+        '<p>Safe HTML</p>',
       ];
 
       safeInputs.forEach(input => {
@@ -236,7 +236,7 @@ describe('安全模块测试', () => {
         "'; DROP TABLE users; --",
         "' OR '1'='1",
         "'; INSERT INTO users VALUES ('hacker', 'password'); --",
-        "' UNION SELECT * FROM users --"
+        "' UNION SELECT * FROM users --",
       ];
 
       sqlPayloads.forEach(payload => {
@@ -246,7 +246,7 @@ describe('安全模块测试', () => {
       const safeInputs = [
         'normal search query',
         'user@example.com',
-        'John Doe'
+        'John Doe',
       ];
 
       safeInputs.forEach(input => {
@@ -259,36 +259,36 @@ describe('安全模块测试', () => {
     const mockFile = {
       name: 'test.txt',
       size: 1024,
-      type: 'text/plain'
+      type: 'text/plain',
     };
 
     const mockImageFile = {
       name: 'test.jpg',
       size: 2048,
-      type: 'image/jpeg'
+      type: 'image/jpeg',
     };
 
     const mockLargeFile = {
       name: 'large.txt',
       size: 10 * 1024 * 1024, // 10MB
-      type: 'text/plain'
+      type: 'text/plain',
     };
 
     const mockExecutableFile = {
       name: 'malware.exe',
       size: 1024,
-      type: 'application/x-executable'
+      type: 'application/x-executable',
     };
 
     it('应该验证允许的文件类型', () => {
       const result1 = validateFileUpload(mockFile, {
         allowedTypes: ['text/plain', 'text/csv'],
-        maxSize: 5 * 1024 * 1024
+        maxSize: 5 * 1024 * 1024,
       });
 
       const result2 = validateFileUpload(mockImageFile, {
         allowedTypes: ['image/jpeg', 'image/png'],
-        maxSize: 5 * 1024 * 1024
+        maxSize: 5 * 1024 * 1024,
       });
 
       expect(result1.isValid).toBe(true);
@@ -298,7 +298,7 @@ describe('安全模块测试', () => {
     it('应该拒绝不允许的文件类型', () => {
       const result = validateFileUpload(mockExecutableFile, {
         allowedTypes: ['text/plain', 'image/jpeg'],
-        maxSize: 5 * 1024 * 1024
+        maxSize: 5 * 1024 * 1024,
       });
 
       expect(result.isValid).toBe(false);
@@ -308,7 +308,7 @@ describe('安全模块测试', () => {
     it('应该拒绝过大的文件', () => {
       const result = validateFileUpload(mockLargeFile, {
         allowedTypes: ['text/plain'],
-        maxSize: 1024 * 1024 // 1MB
+        maxSize: 1024 * 1024, // 1MB
       });
 
       expect(result.isValid).toBe(false);
@@ -318,7 +318,7 @@ describe('安全模块测试', () => {
     it('应该验证文件扩展名', () => {
       const result = validateFileUpload(mockFile, {
         allowedExtensions: ['.txt', '.csv'],
-        maxSize: 5 * 1024 * 1024
+        maxSize: 5 * 1024 * 1024,
       });
 
       expect(result.isValid).toBe(true);
@@ -328,12 +328,12 @@ describe('安全模块测试', () => {
       const dangerousFile = {
         name: 'malware.exe',
         size: 1024,
-        type: 'application/octet-stream'
+        type: 'application/octet-stream',
       };
 
       const result = validateFileUpload(dangerousFile, {
         allowedExtensions: ['.txt', '.pdf'],
-        maxSize: 5 * 1024 * 1024
+        maxSize: 5 * 1024 * 1024,
       });
 
       expect(result.isValid).toBe(false);
@@ -363,7 +363,7 @@ describe('安全模块测试', () => {
     it('应该处理长输入', () => {
       const longText = 'A'.repeat(10000);
       expect(validateInput(longText, 'text')).toBe(true);
-      
+
       const cleaned = sanitizeInput(longText, 'html');
       expect(cleaned.length).toBe(10000);
     });

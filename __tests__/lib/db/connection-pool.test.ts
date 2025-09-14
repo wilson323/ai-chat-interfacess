@@ -10,7 +10,7 @@ import {
   closeConnectionPool,
   getPoolStatus,
   executeQuery,
-  executeTransaction
+  executeTransaction,
 } from '@/lib/db/connection-pool';
 
 // Mock数据库连接
@@ -20,7 +20,7 @@ const mockConnection = {
   commit: jest.fn(),
   rollback: jest.fn(),
   release: jest.fn(),
-  destroy: jest.fn()
+  destroy: jest.fn(),
 };
 
 const mockPool = {
@@ -29,12 +29,12 @@ const mockPool = {
   end: jest.fn(),
   _allConnections: [],
   _acquiringConnections: [],
-  _freeConnections: []
+  _freeConnections: [],
 };
 
 // Mock mysql2
 jest.mock('mysql2', () => ({
-  createPool: jest.fn(() => mockPool)
+  createPool: jest.fn(() => mockPool),
 }));
 
 describe('数据库连接池测试', () => {
@@ -55,7 +55,7 @@ describe('数据库连接池测试', () => {
         user: 'test',
         password: 'password',
         database: 'testdb',
-        connectionLimit: 10
+        connectionLimit: 10,
       };
 
       await createConnectionPool(config);
@@ -76,7 +76,9 @@ describe('数据库连接池测试', () => {
         throw new Error('Connection failed');
       });
 
-      await expect(createConnectionPool({})).rejects.toThrow('Connection failed');
+      await expect(createConnectionPool({})).rejects.toThrow(
+        'Connection failed'
+      );
     });
   });
 
@@ -86,7 +88,7 @@ describe('数据库连接池测试', () => {
     });
 
     it('应该获取数据库连接', async () => {
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         callback(null, mockConnection);
       });
 
@@ -97,7 +99,7 @@ describe('数据库连接池测试', () => {
     });
 
     it('应该处理连接获取失败', async () => {
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         callback(new Error('Connection timeout'), null);
       });
 
@@ -115,14 +117,16 @@ describe('数据库连接池测试', () => {
         throw new Error('Release failed');
       });
 
-      await expect(releaseConnection(mockConnection)).rejects.toThrow('Release failed');
+      await expect(releaseConnection(mockConnection)).rejects.toThrow(
+        'Release failed'
+      );
     });
   });
 
   describe('查询执行测试', () => {
     beforeEach(async () => {
       await createConnectionPool({});
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         callback(null, mockConnection);
       });
     });
@@ -135,7 +139,10 @@ describe('数据库连接池测试', () => {
 
       const result = await executeQuery('SELECT * FROM users');
 
-      expect(mockConnection.query).toHaveBeenCalledWith('SELECT * FROM users', expect.any(Function));
+      expect(mockConnection.query).toHaveBeenCalledWith(
+        'SELECT * FROM users',
+        expect.any(Function)
+      );
       expect(result).toEqual(mockResult);
     });
 
@@ -145,7 +152,9 @@ describe('数据库连接池测试', () => {
         callback(null, mockResult);
       });
 
-      const result = await executeQuery('SELECT * FROM users WHERE id = ?', [1]);
+      const result = await executeQuery('SELECT * FROM users WHERE id = ?', [
+        1,
+      ]);
 
       expect(mockConnection.query).toHaveBeenCalledWith(
         'SELECT * FROM users WHERE id = ?',
@@ -160,11 +169,13 @@ describe('数据库连接池测试', () => {
         callback(new Error('SQL syntax error'), null);
       });
 
-      await expect(executeQuery('INVALID SQL')).rejects.toThrow('SQL syntax error');
+      await expect(executeQuery('INVALID SQL')).rejects.toThrow(
+        'SQL syntax error'
+      );
     });
 
     it('应该处理连接获取失败', async () => {
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         callback(new Error('Pool exhausted'), null);
       });
 
@@ -175,28 +186,32 @@ describe('数据库连接池测试', () => {
   describe('事务处理测试', () => {
     beforeEach(async () => {
       await createConnectionPool({});
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         callback(null, mockConnection);
       });
     });
 
     it('应该执行成功的事务', async () => {
-      mockConnection.beginTransaction.mockImplementation((callback) => {
+      mockConnection.beginTransaction.mockImplementation(callback => {
         callback(null);
       });
-      mockConnection.commit.mockImplementation((callback) => {
+      mockConnection.commit.mockImplementation(callback => {
         callback(null);
       });
       mockConnection.query.mockImplementation((sql, callback) => {
         callback(null, { affectedRows: 1 });
       });
 
-      const result = await executeTransaction(async (connection) => {
+      const result = await executeTransaction(async connection => {
         await new Promise((resolve, reject) => {
-          connection.query('INSERT INTO users SET ?', [{ name: 'John' }], (err, result) => {
-            if (err) reject(err);
-            else resolve(result);
-          });
+          connection.query(
+            'INSERT INTO users SET ?',
+            [{ name: 'John' }],
+            (err, result) => {
+              if (err) reject(err);
+              else resolve(result);
+            }
+          );
         });
         return { success: true };
       });
@@ -207,24 +222,30 @@ describe('数据库连接池测试', () => {
     });
 
     it('应该回滚失败的事务', async () => {
-      mockConnection.beginTransaction.mockImplementation((callback) => {
+      mockConnection.beginTransaction.mockImplementation(callback => {
         callback(null);
       });
-      mockConnection.rollback.mockImplementation((callback) => {
+      mockConnection.rollback.mockImplementation(callback => {
         callback(null);
       });
       mockConnection.query.mockImplementation((sql, callback) => {
         callback(new Error('Insert failed'), null);
       });
 
-      await expect(executeTransaction(async (connection) => {
-        await new Promise((resolve, reject) => {
-          connection.query('INSERT INTO users SET ?', [{ name: 'John' }], (err, result) => {
-            if (err) reject(err);
-            else resolve(result);
+      await expect(
+        executeTransaction(async connection => {
+          await new Promise((resolve, reject) => {
+            connection.query(
+              'INSERT INTO users SET ?',
+              [{ name: 'John' }],
+              (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+              }
+            );
           });
-        });
-      })).rejects.toThrow('Insert failed');
+        })
+      ).rejects.toThrow('Insert failed');
 
       expect(mockConnection.beginTransaction).toHaveBeenCalled();
       expect(mockConnection.rollback).toHaveBeenCalled();
@@ -232,26 +253,30 @@ describe('数据库连接池测试', () => {
     });
 
     it('应该处理事务开始失败', async () => {
-      mockConnection.beginTransaction.mockImplementation((callback) => {
+      mockConnection.beginTransaction.mockImplementation(callback => {
         callback(new Error('Transaction failed'));
       });
 
-      await expect(executeTransaction(async () => {
-        return { success: true };
-      })).rejects.toThrow('Transaction failed');
+      await expect(
+        executeTransaction(async () => {
+          return { success: true };
+        })
+      ).rejects.toThrow('Transaction failed');
     });
 
     it('应该处理提交失败', async () => {
-      mockConnection.beginTransaction.mockImplementation((callback) => {
+      mockConnection.beginTransaction.mockImplementation(callback => {
         callback(null);
       });
-      mockConnection.commit.mockImplementation((callback) => {
+      mockConnection.commit.mockImplementation(callback => {
         callback(new Error('Commit failed'));
       });
 
-      await expect(executeTransaction(async () => {
-        return { success: true };
-      })).rejects.toThrow('Commit failed');
+      await expect(
+        executeTransaction(async () => {
+          return { success: true };
+        })
+      ).rejects.toThrow('Commit failed');
     });
   });
 
@@ -271,21 +296,21 @@ describe('数据库连接池测试', () => {
         total: 2,
         acquiring: 1,
         free: 1,
-        used: 0
+        used: 0,
       });
     });
 
     it('应该处理连接池未初始化', () => {
       // 重置连接池
       jest.clearAllMocks();
-      
+
       const status = getPoolStatus();
-      
+
       expect(status).toEqual({
         total: 0,
         acquiring: 0,
         free: 0,
-        used: 0
+        used: 0,
       });
     });
   });
@@ -296,7 +321,7 @@ describe('数据库连接池测试', () => {
     });
 
     it('应该关闭连接池', async () => {
-      mockPool.end.mockImplementation((callback) => {
+      mockPool.end.mockImplementation(callback => {
         callback(null);
       });
 
@@ -306,7 +331,7 @@ describe('数据库连接池测试', () => {
     });
 
     it('应该处理关闭失败', async () => {
-      mockPool.end.mockImplementation((callback) => {
+      mockPool.end.mockImplementation(callback => {
         callback(new Error('Close failed'));
       });
 
@@ -321,12 +346,14 @@ describe('数据库连接池测试', () => {
 
     it('应该处理并发连接请求', async () => {
       const connections = [];
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         callback(null, { ...mockConnection, id: Math.random() });
       });
 
       // 创建多个并发连接请求
-      const promises = Array(10).fill(0).map(() => getConnection());
+      const promises = Array(10)
+        .fill(0)
+        .map(() => getConnection());
       const results = await Promise.all(promises);
 
       expect(results).toHaveLength(10);
@@ -335,7 +362,7 @@ describe('数据库连接池测试', () => {
 
     it('应该限制最大连接数', async () => {
       let connectionCount = 0;
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         if (connectionCount >= 5) {
           callback(new Error('Pool exhausted'), null);
         } else {
@@ -345,7 +372,9 @@ describe('数据库连接池测试', () => {
       });
 
       // 尝试获取超过限制的连接数
-      const promises = Array(7).fill(0).map(() => getConnection());
+      const promises = Array(7)
+        .fill(0)
+        .map(() => getConnection());
       const results = await Promise.allSettled(promises);
 
       const fulfilled = results.filter(r => r.status === 'fulfilled');
@@ -357,8 +386,8 @@ describe('数据库连接池测试', () => {
 
     it('应该处理连接超时', async () => {
       jest.useFakeTimers();
-      
-      mockPool.getConnection.mockImplementation((callback) => {
+
+      mockPool.getConnection.mockImplementation(callback => {
         // 模拟连接获取延迟
         setTimeout(() => {
           callback(null, mockConnection);
@@ -366,12 +395,12 @@ describe('数据库连接池测试', () => {
       });
 
       const promise = getConnection();
-      
+
       // 快进时间超过超时时间
       jest.advanceTimersByTime(15000);
-      
+
       await expect(promise).rejects.toThrow();
-      
+
       jest.useRealTimers();
     });
   });
@@ -383,7 +412,7 @@ describe('数据库连接池测试', () => {
 
     it('应该自动重连断开的连接', async () => {
       let connectionAttempts = 0;
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         connectionAttempts++;
         if (connectionAttempts === 1) {
           callback(new Error('Connection lost'), null);
@@ -398,7 +427,7 @@ describe('数据库连接池测试', () => {
     });
 
     it('应该处理连接池完全失效', async () => {
-      mockPool.getConnection.mockImplementation((callback) => {
+      mockPool.getConnection.mockImplementation(callback => {
         callback(new Error('Pool destroyed'), null);
       });
 
@@ -406,4 +435,3 @@ describe('数据库连接池测试', () => {
     });
   });
 });
-

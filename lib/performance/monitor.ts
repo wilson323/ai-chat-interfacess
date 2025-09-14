@@ -415,4 +415,3 @@ export const monitor = new PerformanceMonitor();
 
 // 导出类型和实例
 export type { PerformanceMetrics };
-export { PerformanceMonitor };

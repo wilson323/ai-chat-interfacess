@@ -15,7 +15,7 @@ const mockMessage = {
   content: 'Hello, world!',
   role: 'user' as const,
   timestamp: new Date().toISOString(),
-  agentId: 'test-agent'
+  agentId: 'test-agent',
 };
 
 const mockAgentMessage = {
@@ -23,7 +23,7 @@ const mockAgentMessage = {
   content: 'Hi there!',
   role: 'assistant' as const,
   timestamp: new Date().toISOString(),
-  agentId: 'test-agent'
+  agentId: 'test-agent',
 };
 
 // 测试包装器
@@ -31,8 +31,8 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
-      mutations: { retry: false }
-    }
+      mutations: { retry: false },
+    },
   });
 
   return (
@@ -83,8 +83,8 @@ describe('ChatMessage组件测试', () => {
       // Mock clipboard API
       Object.assign(navigator, {
         clipboard: {
-          writeText: jest.fn().mockImplementation(() => Promise.resolve())
-        }
+          writeText: jest.fn().mockImplementation(() => Promise.resolve()),
+        },
       });
 
       render(
@@ -97,7 +97,9 @@ describe('ChatMessage组件测试', () => {
       const copyButton = screen.getByRole('button', { name: /copy/i });
       fireEvent.click(copyButton);
 
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Hello, world!');
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        'Hello, world!'
+      );
     });
 
     it('应该支持消息删除功能', () => {
@@ -156,7 +158,7 @@ describe('ChatMessage组件测试', () => {
     it('应该处理长消息内容', () => {
       const longMessage = {
         ...mockMessage,
-        content: 'A'.repeat(1000)
+        content: 'A'.repeat(1000),
       };
 
       render(
@@ -171,7 +173,7 @@ describe('ChatMessage组件测试', () => {
     it('应该处理特殊字符消息', () => {
       const specialMessage = {
         ...mockMessage,
-        content: '<script>alert("test")</script>'
+        content: '<script>alert("test")</script>',
       };
 
       render(
