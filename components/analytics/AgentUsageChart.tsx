@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import type { AgentUsageData, RadarData, AnalyticsQueryParams } from '@/types/analytics';
 import {
   PieChart,
   Pie,
@@ -37,24 +38,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, RefreshCw, PieChart as PieIcon, BarChart3, Target } from 'lucide-react';
 
-interface AgentUsageData {
-  agentId: number;
-  agentName: string;
-  agentType: string;
-  value: number;
-  messageCount?: number;
-  sessionCount?: number;
-}
-
-interface RadarData {
-  agentId: number;
-  agentName: string;
-  agentType: string;
-  usage: number;
-  duration: number;
-  responseTime: number;
-  satisfaction: number;
-}
+// 类型定义已移至 @/types/analytics
 
 interface AgentUsageChartProps {
   title?: string;
@@ -186,7 +170,20 @@ export default function AgentUsageChart({
   };
 
   // 自定义工具提示
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label
+  }: {
+    active?: boolean;
+    payload?: Array<{
+      name: string;
+      value: number;
+      color: string;
+      payload: Record<string, unknown>;
+    }>;
+    label?: string;
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

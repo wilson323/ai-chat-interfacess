@@ -35,7 +35,22 @@ import {
   Edit,
 } from 'lucide-react';
 import { User, UserRole, UserStatus } from '@/types/admin';
-import { OperationLog, OperationStatus } from '@/lib/db/models';
+// import { OperationLog, OperationStatus } from '@/lib/db/models'; // 暂时注释，避免前端导入数据库模块
+
+// 临时类型定义
+interface OperationLog {
+  id: string;
+  operation: string;
+  status: OperationStatus;
+  timestamp: Date;
+  details?: string;
+}
+
+enum OperationStatus {
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  PENDING = 'PENDING'
+}
 
 interface UserDetailProps {
   user: User | null;

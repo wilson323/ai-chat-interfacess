@@ -532,15 +532,18 @@ export class PerformanceBenchmark {
   }
 
   private async detectMemoryLeak(): Promise<BenchmarkRunResult> {
-    if (typeof window === 'undefined' || !(performance as any).memory) {
+    if (typeof window === 'undefined' || !(performance as Performance & { memory?: { usedJSHeapSize: number } }).memory) {
       return { duration: 0, success: false, error: 'Memory API not available' };
     }
 
-    const memory = (performance as any).memory;
+    const memory = (performance as Performance & { memory: { usedJSHeapSize: number } }).memory;
     const initialMemory = memory.usedJSHeapSize;
 
     // 创建可能导致内存泄漏的对象
-    const leakyObjects: any[] = [];
+    const leakyObjects: Array<{
+      data: string[];
+      callback: () => void;
+    }> = [];
     for (let i = 0; i < 1000; i++) {
       const obj = {
         data: new Array(1000).fill(`Leaky data ${i}`),
@@ -555,8 +558,8 @@ export class PerformanceBenchmark {
     leakyObjects.length = 0;
 
     // 强制垃圾回收（如果可用）
-    if ((window as any).gc) {
-      (window as any).gc();
+    if ((window as Window & { gc?: () => void }).gc) {
+      (window as Window & { gc: () => void }).gc();
     }
 
     await new Promise(resolve => setTimeout(resolve, 100));

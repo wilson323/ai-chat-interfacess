@@ -190,14 +190,14 @@ export async function GET(request: NextRequest) {
 }
 
 // 将数据转换为CSV格式
-function convertToCSV(data: any): string {
+function convertToCSV(data: Record<string, unknown>): string {
   const rows: string[] = [];
 
   // 简化的CSV转换逻辑
   if (data.userBehavior) {
     rows.push('用户行为分析');
     rows.push('小时,活跃用户数');
-    data.userBehavior.hourlyActivity.forEach((item: any) => {
+    (data.userBehavior as { hourlyActivity: Array<{ hour: number; count: number }> }).hourlyActivity.forEach((item) => {
       rows.push(`${item.hour},${item.count}`);
     });
     rows.push('');
@@ -206,12 +206,12 @@ function convertToCSV(data: any): string {
   if (data.agentPerformance) {
     rows.push('智能体性能分析');
     rows.push('智能体ID,智能体名称,响应时间中位数,错误率,满意度');
-    data.agentPerformance.responseTimeDistribution.forEach((agent: any) => {
-      const errorRate = data.agentPerformance.errorRates.find(
-        (e: any) => e.agentId === agent.agentId
+    (data.agentPerformance as { responseTimeDistribution: Array<{ agentId: string; agentName: string; median: number }> }).responseTimeDistribution.forEach((agent) => {
+      const errorRate = (data.agentPerformance as { errorRates: Array<{ agentId: string; errorRate: number }> }).errorRates.find(
+        (e) => e.agentId === agent.agentId
       );
-      const satisfaction = data.agentPerformance.satisfactionAnalysis.find(
-        (s: any) => s.agentId === agent.agentId
+      const satisfaction = (data.agentPerformance as { satisfactionAnalysis: Array<{ agentId: string; avgSatisfaction: number }> }).satisfactionAnalysis.find(
+        (s) => s.agentId === agent.agentId
       );
       rows.push(
         `${agent.agentId},"${agent.agentName}",${agent.median},${(errorRate?.errorRate * 100 || 0).toFixed(2)}%,${(satisfaction?.avgSatisfaction || 0).toFixed(2)}`

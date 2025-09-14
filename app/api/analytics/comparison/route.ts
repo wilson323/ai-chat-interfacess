@@ -140,7 +140,7 @@ async function getTimeComparisonData(where: any, metric: string, granularity: st
 }
 
 // 地理位置维度对比数据
-async function getLocationComparisonData(where: any, metric: string, level: string) {
+async function getLocationComparisonData(where: Record<string, unknown>, metric: string, level: string) {
   // 获取包含地理位置数据的记录
   const geoData = await AgentUsage.findAll({
     where,
@@ -196,7 +196,7 @@ async function getLocationComparisonData(where: any, metric: string, level: stri
 }
 
 // 用户类型维度对比数据（登录用户vs匿名用户）
-async function getUserTypeComparisonData(where: any, metric: string) {
+async function getUserTypeComparisonData(where: Record<string, unknown>, metric: string) {
   const loggedUsers = await AgentUsage.findAll({
     where: {
       ...where,
@@ -234,7 +234,7 @@ async function getUserTypeComparisonData(where: any, metric: string) {
 }
 
 // 设备类型维度对比数据
-async function getDeviceTypeComparisonData(where: any, metric: string) {
+async function getDeviceTypeComparisonData(where: Record<string, unknown>, metric: string) {
   const deviceData = await AgentUsage.findAll({
     where,
     attributes: [
@@ -253,7 +253,7 @@ async function getDeviceTypeComparisonData(where: any, metric: string) {
 }
 
 // 智能体类型维度对比数据
-async function getAgentTypeComparisonData(where: any, metric: string) {
+async function getAgentTypeComparisonData(where: Record<string, unknown>, metric: string) {
   const agentData = await AgentUsage.findAll({
     where,
     include: [{

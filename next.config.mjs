@@ -33,6 +33,27 @@ const nextConfig = {
   },
   // Webpack优化
   webpack: (config, { dev, isServer }) => {
+    // 处理 Node.js 内置模块
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        dns: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        util: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+    }
+
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',

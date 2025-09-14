@@ -16,6 +16,8 @@
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "quality-check": "node scripts/quality-monitor.js",
+    "quality-deep": "node scripts/code-quality-check.js",
+    "quality-full": "npm run quality-check && npm run quality-deep",
     "safe-fix": "node scripts/safe-auto-fix.js",
     "validate-rules": "node scripts/validate-cursor-rules.js",
     "test:quick": "node scripts/quick-test.js",
