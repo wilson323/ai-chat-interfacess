@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import CadHistory from '@/lib/db/models/cad-history';
-// @ts-ignore
-// import archiver from "archiver";
-import { Readable } from 'stream';
-import path from 'path';
-import fs from 'fs/promises';
-import fsSync from 'fs';
 import sequelize from '@/lib/db/sequelize';
 
 // GET /api/admin/cad-history?agentId=xx&userId=xx
@@ -94,16 +88,14 @@ export async function GET_EXPORT(req: NextRequest) {
     if (!list.length) {
       return new Response('无数据可导出', { status: 404 });
     }
-    // 动态引入 archiver
-    // @ts-ignore
-    const archiver = require('archiver');
+    // 动态引入 jszip (轻量化替代)
+    const JSZip = require('jszip');
     const fsSync = require('fs');
     const os = require('os');
     const tmpDir = os.tmpdir();
     const zipPath = path.join(tmpDir, `cad_history_export_${Date.now()}.zip`);
     const output = fsSync.createWriteStream(zipPath);
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    archive.pipe(output);
+    const zip = new JSZip();
     const publicDir = path.join(process.cwd(), 'public');
     // 多格式批量导出
     for (const item of list) {
@@ -131,42 +123,41 @@ export async function GET_EXPORT(req: NextRequest) {
           decodeURIComponent(item.fileUrl.replace(/^\//, ''))
         );
         if (fsSync.existsSync(absPath)) {
-          archive.file(absPath, { name: `files/${item.fileName}` });
+          const fileBuffer = fsSync.readFileSync(absPath);
+          zip.file(`files/${item.fileName}`, fileBuffer);
         }
       }
       // 多格式导出
       if (format === 'pdf') {
-        const PDFDocument = require('pdfkit');
-        const doc = new PDFDocument();
-        const chunks: Buffer[] = [];
-        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-        doc.fontSize(18).text('CAD 分析报告', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(12).text(`文件名: ${item.fileName}`);
-        doc.text(`用户ID: ${item.userId}`);
-        doc.text(
-          `分析时间: ${item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}`
-        );
-        doc.moveDown();
-        doc.fontSize(14).text('结构化分析内容:');
-        doc.fontSize(12).text(JSON.stringify(structured.analysis, null, 2));
-        doc.end();
-        // 等待pdf生成
-        archive.append(Buffer.concat(chunks), {
-          name: `reports/CAD_Report_${item.id}.pdf`,
-        });
+        const { jsPDF } = require('jspdf');
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text('CAD 分析报告', 105, 20, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text(`文件名: ${item.fileName}`, 20, 40);
+        doc.text(`用户ID: ${item.userId}`, 20, 50);
+        doc.text(`分析时间: ${item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}`, 20, 60);
+        doc.setFontSize(14);
+        doc.text('结构化分析内容:', 20, 80);
+        doc.setFontSize(12);
+        doc.text(JSON.stringify(structured.analysis, null, 2), 20, 100);
+
+        // 将PDF添加到ZIP
+        const pdfBuffer = doc.output('arraybuffer');
+        zip.file(`reports/CAD_Report_${item.id}.pdf`, pdfBuffer);
       } else if (format === 'excel' || format === 'xlsx') {
-        const ExcelJS = require('exceljs');
-        const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet('CAD分析报告');
-        sheet.addRow(['字段', '内容']);
-        sheet.addRow(['文件名', item.fileName]);
-        sheet.addRow(['用户ID', item.userId]);
-        sheet.addRow([
-          '分析时间',
-          item.createdAt ? new Date(item.createdAt).toLocaleString() : '-',
-        ]);
-        sheet.addRow(['结构化分析内容', JSON.stringify(structured.analysis)]);
+        const XLSX = require('xlsx');
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet([{
+          fileName: item.fileName,
+          userId: item.userId,
+          agentId: item.agentId,
+          createdAt: item.createdAt,
+          analysisResult: item.analysisResult
+        }]);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'CAD分析报告');
+        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        zip.file(`reports/CAD_Report_${item.id}.xlsx`, excelBuffer);
         // 可扩展：设备清单分多行
         if (structured.analysis.devices && structured.analysis.devices.length) {
           sheet.addRow(['设备类型', '数量', '坐标']);
@@ -179,29 +170,19 @@ export async function GET_EXPORT(req: NextRequest) {
           });
         }
         const buffer = workbook.xlsx.writeBuffer();
-        archive.append(buffer, { name: `reports/CAD_Report_${item.id}.xlsx` });
+        zip.file(`reports/CAD_Report_${item.id}.xlsx`, buffer);
       } else if (format === 'json') {
-        archive.append(JSON.stringify(structured, null, 2), {
-          name: `reports/CAD_Report_${item.id}.json`,
-        });
+        zip.file(`reports/CAD_Report_${item.id}.json`, JSON.stringify(structured, null, 2));
       } else {
         // txt
-        archive.append(item.analysisResult || '无分析结果', {
-          name: `reports/CAD_Report_${item.id}.txt`,
-        });
+        zip.file(`reports/CAD_Report_${item.id}.txt`, item.analysisResult || '无分析结果');
       }
       // 结构化元数据
-      archive.append(JSON.stringify(structured, null, 2), {
-        name: `meta/${item.id}.json`,
-      });
-    }
-    await archive.finalize();
-    await new Promise((resolve, reject) => {
-      output.on('close', resolve);
-      output.on('error', reject);
-    });
-    const zipBuffer = await fs.readFile(zipPath);
-    await fs.unlink(zipPath);
+        zip.file(`meta/${item.id}.json`, JSON.stringify(structured, null, 2));
+      }
+
+      // 生成ZIP文件
+      const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
     return new Response(zipBuffer, {
       headers: {
         'Content-Type': 'application/zip',
@@ -224,24 +205,20 @@ export async function GET_EXPORT_SINGLE(req: NextRequest) {
     if (!record) return new Response('记录不存在', { status: 404 });
     // PDF
     if (format === 'pdf') {
-      const PDFDocument = require('pdfkit');
-      const doc = new PDFDocument();
-      const chunks: Buffer[] = [];
-      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-      doc.on('end', () => {});
-      doc.fontSize(18).text('CAD 分析报告', { align: 'center' });
-      doc.moveDown();
-      doc.fontSize(12).text(`文件名: ${record.fileName}`);
-      doc.text(`用户ID: ${record.userId}`);
-      doc.text(
-        `分析时间: ${record.createdAt ? new Date(record.createdAt).toLocaleString() : '-'}`
-      );
-      doc.moveDown();
-      doc.fontSize(14).text('分析结果:');
-      doc.fontSize(12).text(record.analysisResult || '无');
-      doc.end();
-      await new Promise(resolve => doc.on('end', resolve));
-      const pdfBuffer = Buffer.concat(chunks);
+      const { jsPDF } = require('jspdf');
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text('CAD 分析报告', 105, 20, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`文件名: ${record.fileName}`, 20, 40);
+      doc.text(`用户ID: ${record.userId}`, 20, 50);
+      doc.text(`分析时间: ${record.createdAt ? new Date(record.createdAt).toLocaleString() : '-'}`, 20, 60);
+      doc.setFontSize(14);
+      doc.text('分析结果:', 20, 80);
+      doc.setFontSize(12);
+      doc.text(record.analysisResult || '无分析结果', 20, 100);
+
+      const pdfBuffer = doc.output('arraybuffer');
       return new Response(pdfBuffer, {
         headers: {
           'Content-Type': 'application/pdf',
@@ -251,18 +228,17 @@ export async function GET_EXPORT_SINGLE(req: NextRequest) {
     }
     // Excel
     if (format === 'excel' || format === 'xlsx') {
-      const ExcelJS = require('exceljs');
-      const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet('CAD分析报告');
-      sheet.addRow(['字段', '内容']);
-      sheet.addRow(['文件名', record.fileName]);
-      sheet.addRow(['用户ID', record.userId]);
-      sheet.addRow([
-        '分析时间',
-        record.createdAt ? new Date(record.createdAt).toLocaleString() : '-',
-      ]);
-      sheet.addRow(['分析结果', record.analysisResult]);
-      const buffer = await workbook.xlsx.writeBuffer();
+      const XLSX = require('xlsx');
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet([{
+        fileName: record.fileName,
+        userId: record.userId,
+        agentId: record.agentId,
+        createdAt: record.createdAt,
+        analysisResult: record.analysisResult
+      }]);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'CAD分析报告');
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
       return new Response(buffer, {
         headers: {
           'Content-Type':

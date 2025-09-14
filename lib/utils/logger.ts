@@ -123,6 +123,9 @@ class Logger {
 // 导出单例实例
 export const logger = new Logger();
 
+// 导出默认实例
+export default logger;
+
 // 导出便捷方法
 export const {
   debug,

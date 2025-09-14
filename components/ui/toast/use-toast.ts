@@ -44,3 +44,5 @@ export function useToast() {
     toast: addToast,
   }
 }
+
+export const toast = useToast().toast

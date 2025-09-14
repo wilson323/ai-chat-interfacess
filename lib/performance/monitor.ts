@@ -48,7 +48,7 @@ export interface PerformanceMetrics {
   }>;
 }
 
-class PerformanceMonitor {
+export class PerformanceMonitor {
   private metrics: PerformanceMetrics;
   private observers: PerformanceObserver[];
   private isEnabled: boolean;

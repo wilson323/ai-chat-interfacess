@@ -170,4 +170,4 @@ export const sequelizeInitPromise = (async () => {
 })();
 
 export default sequelize;
-export { Op };
+export { sequelize, Op };

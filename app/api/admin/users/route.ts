@@ -73,8 +73,8 @@ async function logOperation(
 export async function GET(request: NextRequest) {
   try {
     // 验证管理员权限
-    const authResult = await isAdmin(request);
-    if (!authResult.success) {
+    const isAdminUser = await isAdmin(request);
+    if (!isAdminUser) {
       return NextResponse.json({
         success: false,
         error: {

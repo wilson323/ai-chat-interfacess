@@ -48,6 +48,8 @@ export interface CacheItem<T = any> {
 class RedisManager {
   private config: CacheConfig;
   private client: RedisClientType;
+  private memoryCache: Map<string, CacheItem> = new Map();
+  private isConnected: boolean = false;
   private stats = {
     hits: 0,
     misses: 0,
@@ -639,7 +641,7 @@ class RedisManager {
     return now - item.createdAt > item.ttl * 1000;
   }
 
-  
+
   private async getMemoryUsage(): Promise<number> {
     try {
       const info = await this.executeWithRetry(async () => {

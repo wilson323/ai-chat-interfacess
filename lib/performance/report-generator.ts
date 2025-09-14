@@ -87,7 +87,7 @@ export interface ReportConfig {
   timeRange: '1h' | '6h' | '24h' | '7d' | '30d';
 }
 
-export class PerformanceReportGenerator {
+export class ReportGenerator {
   private config: ReportConfig;
 
   constructor(config?: Partial<ReportConfig>) {

@@ -216,3 +216,33 @@ export function requireNumberInRange(
   }
   return num;
 }
+
+/**
+ * 错误处理器类
+ */
+export class ErrorHandler {
+  static handle(error: unknown): AppError {
+    return handleError(error);
+  }
+
+  static createResponse(error: AppError) {
+    return createErrorResponse(error);
+  }
+
+  static async withErrorHandling<T>(
+    operation: () => Promise<T>,
+    errorContext?: string
+  ): Promise<{ data?: T; error?: AppError }> {
+    return withErrorHandling(operation, errorContext);
+  }
+}
+
+/**
+ * 内部错误类
+ */
+export class InternalError extends CustomError {
+  constructor(message: string, details?: unknown) {
+    super(message, 'INTERNAL_ERROR', 500, details);
+    this.name = 'InternalError';
+  }
+}
