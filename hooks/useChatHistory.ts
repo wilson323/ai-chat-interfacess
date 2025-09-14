@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { ConversationAgentType } from "@/types/agent"
+import type { ConversationAgentType } from '@/types/agent';
 
 const LOCAL_CACHE_KEY = 'fastgpt_chat_history_cache';
 const CACHE_EXPIRE_MS = 1000 * 60 * 60 * 24; // 24小时
@@ -11,41 +11,48 @@ const CACHE_EXPIRE_MS = 1000 * 60 * 60 * 24; // 24小时
  */
 export function useChatHistory() {
   // 获取缓存
-  const getCache = useCallback((agentId: ConversationAgentType, userId: number) => {
-    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
-    if (!raw) return null;
-    try {
-      const data = JSON.parse(raw);
-      const key = `${agentId}_${userId}`;
-      if (data[key] && Date.now() - data[key].ts < CACHE_EXPIRE_MS) {
-        return data[key].history;
+  const getCache = useCallback(
+    (agentId: ConversationAgentType, userId: number) => {
+      const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+      if (!raw) return null;
+      try {
+        const data = JSON.parse(raw);
+        const key = `${agentId}_${userId}`;
+        if (data[key] && Date.now() - data[key].ts < CACHE_EXPIRE_MS) {
+          return data[key].history;
+        }
+        return null;
+      } catch {
+        return null;
       }
-      return null;
-    } catch {
-      return null;
-    }
-  }, []);
+    },
+    []
+  );
 
   // 设置缓存
-  const setCache = useCallback((agentId: ConversationAgentType, userId: number, history: any) => {
-    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
-    let data: { [key: string]: { history: any; ts: number } } = {};
-    try {
-      data = raw ? JSON.parse(raw) : {};
-    } catch {
-      data = {};
-    }
-    const key = `${agentId}_${userId}`;
-    data[key] = { history, ts: Date.now() };
-    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(data));
-  }, []);
+  const setCache = useCallback(
+    (agentId: ConversationAgentType, userId: number, history: any) => {
+      const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+      let data: { [key: string]: { history: any; ts: number } } = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        data = {};
+      }
+      const key = `${agentId}_${userId}`;
+      data[key] = { history, ts: Date.now() };
+      localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(data));
+    },
+    []
+  );
 
   // 清理过期缓存
   const clearExpired = useCallback(() => {
     const raw = localStorage.getItem(LOCAL_CACHE_KEY);
     if (!raw) return;
     try {
-      const data: { [key: string]: { history: any; ts: number } } = JSON.parse(raw);
+      const data: { [key: string]: { history: any; ts: number } } =
+        JSON.parse(raw);
       const now = Date.now();
       Object.keys(data).forEach(key => {
         if (now - data[key].ts > CACHE_EXPIRE_MS) {
@@ -57,4 +64,4 @@ export function useChatHistory() {
   }, []);
 
   return { getCache, setCache, clearExpired };
-} 
+}

@@ -2,7 +2,7 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     // 添加 globalVariables 字段
     await queryInterface.addColumn('agent_config', 'global_variables', {
       type: Sequelize.TEXT,
@@ -42,12 +42,12 @@ module.exports = {
     }
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     // 删除添加的字段
     await queryInterface.removeColumn('agent_config', 'global_variables');
     await queryInterface.removeColumn('agent_config', 'welcome_text');
-    
+
     // 注意：不删除 supports_stream 和 supports_detail 字段，
     // 因为它们可能在其他地方被使用
-  }
+  },
 };

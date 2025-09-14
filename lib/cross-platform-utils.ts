@@ -20,8 +20,8 @@ export function safeCrossPlatformJSONParse<T>(
     try {
       // 处理可能的换行符差异
       const normalizedValue = value
-        .replace(/\r\n/g, '\n')  // Windows -> Unix
-        .replace(/\r/g, '\n')    // Mac -> Unix
+        .replace(/\r\n/g, '\n') // Windows -> Unix
+        .replace(/\r/g, '\n') // Mac -> Unix
         .trim();
 
       if (!normalizedValue) {
@@ -32,8 +32,9 @@ export function safeCrossPlatformJSONParse<T>(
     } catch (error) {
       console.warn('跨平台JSON解析失败:', {
         error: error instanceof Error ? error.message : String(error),
-        value: typeof value === 'string' ? value.substring(0, 100) + '...' : value,
-        platform: getPlatformInfo()
+        value:
+          typeof value === 'string' ? value.substring(0, 100) + '...' : value,
+        platform: getPlatformInfo(),
       });
       return fallback;
     }
@@ -52,7 +53,7 @@ export function getPlatformInfo() {
       type: 'server',
       os: process.platform,
       nodeVersion: process.version,
-      arch: process.arch
+      arch: process.arch,
     };
   } else {
     // 客户端
@@ -60,7 +61,7 @@ export function getPlatformInfo() {
       type: 'client',
       userAgent: navigator.userAgent,
       platform: navigator.platform,
-      language: navigator.language
+      language: navigator.language,
     };
   }
 }
@@ -87,12 +88,14 @@ export interface InteractiveNodeValidationResult {
   platform: any;
 }
 
-export function validateInteractiveNodeData(data: any): InteractiveNodeValidationResult {
+export function validateInteractiveNodeData(
+  data: any
+): InteractiveNodeValidationResult {
   const result: InteractiveNodeValidationResult = {
     isValid: false,
     type: 'unknown',
     errors: [],
-    platform: getPlatformInfo()
+    platform: getPlatformInfo(),
   };
 
   // 基础结构验证
@@ -177,8 +180,8 @@ export function normalizeTextContent(text: string): string {
   }
 
   return text
-    .replace(/\r\n/g, '\n')  // Windows -> Unix
-    .replace(/\r/g, '\n')    // Mac -> Unix
+    .replace(/\r\n/g, '\n') // Windows -> Unix
+    .replace(/\r/g, '\n') // Mac -> Unix
     .trim();
 }
 
@@ -193,7 +196,7 @@ export function createCrossPlatformDebugInfo(context: string, data: any) {
     data: typeof data === 'object' ? safeCrossPlatformClone(data) : data,
     dataType: typeof data,
     isArray: Array.isArray(data),
-    stringLength: typeof data === 'string' ? data.length : undefined
+    stringLength: typeof data === 'string' ? data.length : undefined,
   };
 }
 
@@ -220,7 +223,8 @@ export function isDockerEnvironment(): boolean {
     return !!(
       process.env.DOCKER_CONTAINER ||
       process.env.KUBERNETES_SERVICE_HOST ||
-      (typeof window === 'undefined' && process.env.HOSTNAME?.includes('docker'))
+      (typeof window === 'undefined' &&
+        process.env.HOSTNAME?.includes('docker'))
     );
   } catch {
     return false;
@@ -245,7 +249,10 @@ export function getEnvironmentInfo() {
 /**
  * 验证生产环境配置
  */
-export function validateProductionConfig(): { isValid: boolean; issues: string[] } {
+export function validateProductionConfig(): {
+  isValid: boolean;
+  issues: string[];
+} {
   const issues: string[] = [];
 
   if (!isProduction()) {
@@ -279,7 +286,11 @@ export function validateProductionConfig(): { isValid: boolean; issues: string[]
 /**
  * 安全的控制台日志，在生产环境中可以禁用
  */
-export function safeCrossPlatformLog(level: 'log' | 'warn' | 'error', message: string, data?: any) {
+export function safeCrossPlatformLog(
+  level: 'log' | 'warn' | 'error',
+  message: string,
+  data?: any
+) {
   if (isProduction() && level === 'log') {
     return; // 生产环境不输出普通日志
   }
@@ -303,78 +314,92 @@ export function safeCrossPlatformLog(level: 'log' | 'warn' | 'error', message: s
 export function normalizeStreamData(data: string): string {
   // 处理不同平台的换行符差异
   return data
-    .replace(/\r\n/g, '\n')  // Windows -> Unix
-    .replace(/\r/g, '\n')    // Mac -> Unix
-    .trim()
+    .replace(/\r\n/g, '\n') // Windows -> Unix
+    .replace(/\r/g, '\n') // Mac -> Unix
+    .trim();
 }
 
 export function createCrossPlatformTextDecoder(): TextDecoder {
   // 确保在所有平台上使用一致的文本解码器
-  return new TextDecoder("utf-8", {
+  return new TextDecoder('utf-8', {
     stream: true,
-    fatal: false,  // 不因解码错误而抛出异常
-    ignoreBOM: true // 忽略字节顺序标记
-  })
+    fatal: false, // 不因解码错误而抛出异常
+    ignoreBOM: true, // 忽略字节顺序标记
+  });
 }
 
 export function createCrossPlatformTextEncoder(): TextEncoder {
   // 确保在所有平台上使用一致的文本编码器
-  return new TextEncoder()
+  return new TextEncoder();
 }
 
 // 🔥 新增：检测流式响应的内容类型
 export function isStreamingContentType(contentType: string): boolean {
-  if (!contentType) return false
+  if (!contentType) return false;
 
-  const normalizedType = contentType.toLowerCase()
-  return normalizedType.includes("text/event-stream") ||
-         normalizedType.includes("text/plain") ||
-         normalizedType.includes("application/octet-stream") ||
-         normalizedType.includes("text/stream")
+  const normalizedType = contentType.toLowerCase();
+  return (
+    normalizedType.includes('text/event-stream') ||
+    normalizedType.includes('text/plain') ||
+    normalizedType.includes('application/octet-stream') ||
+    normalizedType.includes('text/stream')
+  );
 }
 
 // 🔥 新增：处理流式数据行的跨平台兼容性
-export function processStreamLines(buffer: string): { lines: string[], remainingBuffer: string } {
+export function processStreamLines(buffer: string): {
+  lines: string[];
+  remainingBuffer: string;
+} {
   // 使用正则表达式处理所有类型的换行符
-  const lines = buffer.split(/\r?\n/)
-  const remainingBuffer = lines.pop() || "" // 保留最后一个不完整的行
+  const lines = buffer.split(/\r?\n/);
+  const remainingBuffer = lines.pop() || ''; // 保留最后一个不完整的行
 
   return {
-    lines: lines.filter(line => line.trim() !== ""), // 过滤空行
-    remainingBuffer
-  }
+    lines: lines.filter(line => line.trim() !== ''), // 过滤空行
+    remainingBuffer,
+  };
 }
 
 // 🔥 新增：增强的错误处理
 export function categorizeStreamError(error: any): {
-  type: 'network' | 'timeout' | 'content-type' | 'abort' | 'unknown'
-  message: string
-  shouldRetry: boolean
+  type: 'network' | 'timeout' | 'content-type' | 'abort' | 'unknown';
+  message: string;
+  shouldRetry: boolean;
 } {
   if (!error) {
-    return { type: 'unknown', message: '未知错误', shouldRetry: false }
+    return { type: 'unknown', message: '未知错误', shouldRetry: false };
   }
 
-  const errorMessage = error.message || String(error)
+  const errorMessage = error.message || String(error);
 
   if (error.name === 'AbortError') {
-    return { type: 'abort', message: '请求被中断', shouldRetry: false }
+    return { type: 'abort', message: '请求被中断', shouldRetry: false };
   }
 
-  if (errorMessage.includes('content-type') || errorMessage.includes('text/event-stream')) {
-    return { type: 'content-type', message: '服务器不支持流式响应', shouldRetry: true }
+  if (
+    errorMessage.includes('content-type') ||
+    errorMessage.includes('text/event-stream')
+  ) {
+    return {
+      type: 'content-type',
+      message: '服务器不支持流式响应',
+      shouldRetry: true,
+    };
   }
 
   if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
-    return { type: 'timeout', message: '请求超时', shouldRetry: false }
+    return { type: 'timeout', message: '请求超时', shouldRetry: false };
   }
 
-  if (errorMessage.includes('network') ||
-      errorMessage.includes('fetch') ||
-      errorMessage.includes('ECONNREFUSED') ||
-      errorMessage.includes('ENOTFOUND')) {
-    return { type: 'network', message: '网络连接失败', shouldRetry: true }
+  if (
+    errorMessage.includes('network') ||
+    errorMessage.includes('fetch') ||
+    errorMessage.includes('ECONNREFUSED') ||
+    errorMessage.includes('ENOTFOUND')
+  ) {
+    return { type: 'network', message: '网络连接失败', shouldRetry: true };
   }
 
-  return { type: 'unknown', message: errorMessage, shouldRetry: true }
+  return { type: 'unknown', message: errorMessage, shouldRetry: true };
 }

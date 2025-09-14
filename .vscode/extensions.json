@@ -1,5 +1,18 @@
 {
-    "recommendations": [
-        "augment.vscode-augment"
-    ]
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-markdown",
+    "ms-vscode.vscode-github-actions",
+    "ms-vscode.vscode-github-pullrequest",
+    "ms-vscode.vscode-github-issues",
+    "ms-vscode.vscode-github-repositories",
+    "ms-vscode.vscode-github-pullrequest",
+    "ms-vscode.vscode-github-issues",
+    "ms-vscode.vscode-github-repositories"
+  ]
 }

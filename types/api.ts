@@ -3,161 +3,161 @@
  * 统一的API接口类型和响应格式
  */
 
-import { ApiErrorCode } from '@/lib/api/response'
+import { ApiErrorCode } from '@/lib/api/response';
 
 /**
  * 通用API响应类型
  */
-export type ApiResponse<T = any> = ApiSuccessResponse<T> | ApiErrorResponse
+export type ApiResponse<T = any> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 /**
  * 成功响应接口
  */
 export interface ApiSuccessResponse<T = any> {
-  success: true
-  data: T
-  message?: string
+  success: true;
+  data: T;
+  message?: string;
   meta?: {
-    pagination?: PaginationMeta
-    timestamp: string
-    requestId: string
-    version?: string
-  }
+    pagination?: PaginationMeta;
+    timestamp: string;
+    requestId: string;
+    version?: string;
+  };
 }
 
 /**
  * 错误响应接口
  */
 export interface ApiErrorResponse {
-  success: false
+  success: false;
   error: {
-    code: string
-    message: string
-    details?: any
-    timestamp: string
-    requestId: string
-    version?: string
-  }
+    code: string;
+    message: string;
+    details?: any;
+    timestamp: string;
+    requestId: string;
+    version?: string;
+  };
 }
 
 /**
  * 分页元数据接口
  */
 export interface PaginationMeta {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-  hasNext: boolean
-  hasPrev: boolean
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 /**
  * 查询参数接口
  */
 export interface QueryParams {
-  page?: number
-  limit?: number
-  sort?: string
-  order?: 'asc' | 'desc'
-  search?: string
-  filter?: string
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: 'asc' | 'desc';
+  search?: string;
+  filter?: string;
 }
 
 /**
  * 排序参数接口
  */
 export interface SortParams {
-  sort?: string
-  order: 'asc' | 'desc'
+  sort?: string;
+  order: 'asc' | 'desc';
 }
 
 /**
  * 搜索参数接口
  */
 export interface SearchParams {
-  search?: string
-  filter?: string
+  search?: string;
+  filter?: string;
 }
 
 /**
  * 分页参数接口
  */
 export interface PaginationParams {
-  page: number
-  limit: number
+  page: number;
+  limit: number;
 }
 
 /**
  * 智能体相关API类型
  */
 export interface AgentListResponse {
-  agents: Agent[]
-  pagination: PaginationMeta
+  agents: Agent[];
+  pagination: PaginationMeta;
 }
 
 export interface AgentDetailResponse {
-  agent: Agent
+  agent: Agent;
 }
 
 export interface CreateAgentRequest {
-  name: string
-  description?: string
-  type: 'chat' | 'cad' | 'image'
-  iconType?: string
-  avatar?: string
-  order?: number
-  isPublished?: boolean
-  apiKey: string
-  appId: string
-  apiUrl: string
-  systemPrompt?: string
-  temperature?: number
-  maxTokens?: number
-  multimodalModel?: string
-  globalVariables?: GlobalVariable[]
-  welcomeText?: string
+  name: string;
+  description?: string;
+  type: 'chat' | 'cad' | 'image';
+  iconType?: string;
+  avatar?: string;
+  order?: number;
+  isPublished?: boolean;
+  apiKey: string;
+  appId: string;
+  apiUrl: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  multimodalModel?: string;
+  globalVariables?: GlobalVariable[];
+  welcomeText?: string;
 }
 
 export interface UpdateAgentRequest extends Partial<CreateAgentRequest> {
-  id: string
+  id: string;
 }
 
 export interface DeleteAgentRequest {
-  id: string
+  id: string;
 }
 
 /**
  * 聊天相关API类型
  */
 export interface ChatMessageResponse {
-  message: Message
+  message: Message;
 }
 
 export interface ChatMessagesResponse {
-  messages: Message[]
-  pagination: PaginationMeta
+  messages: Message[];
+  pagination: PaginationMeta;
 }
 
 export interface SendMessageRequest {
-  message: string
-  agentId: string
-  sessionId?: string
-  globalVariables?: Record<string, any>
-  stream?: boolean
+  message: string;
+  agentId: string;
+  sessionId?: string;
+  globalVariables?: Record<string, any>;
+  stream?: boolean;
 }
 
 export interface SendMessageResponse {
-  message: Message
-  sessionId: string
+  message: Message;
+  sessionId: string;
 }
 
 export interface ChatSessionResponse {
-  sessionId: string
-  messages: Message[]
-  agent: Agent
-  createdAt: string
-  updatedAt: string
+  sessionId: string;
+  messages: Message[];
+  agent: Agent;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -165,19 +165,19 @@ export interface ChatSessionResponse {
  */
 export interface FileUploadResponse {
   file: {
-    id: string
-    name: string
-    size: number
-    type: string
-    url: string
-    uploadedAt: string
-  }
+    id: string;
+    name: string;
+    size: number;
+    type: string;
+    url: string;
+    uploadedAt: string;
+  };
 }
 
 export interface FileUploadRequest {
-  file: File
-  type: 'image' | 'audio' | 'document' | 'cad'
-  maxSize?: number
+  file: File;
+  type: 'image' | 'audio' | 'document' | 'cad';
+  maxSize?: number;
 }
 
 /**
@@ -185,33 +185,33 @@ export interface FileUploadRequest {
  */
 export interface VoiceTranscribeResponse {
   transcription: {
-    text: string
-    language: string
-    confidence: number
-    duration: number
-  }
+    text: string;
+    language: string;
+    confidence: number;
+    duration: number;
+  };
 }
 
 export interface VoiceTranscribeRequest {
-  audio: File
-  language?: string
-  model?: string
+  audio: File;
+  language?: string;
+  model?: string;
 }
 
 export interface VoiceConfigResponse {
   config: {
-    language: string
-    autoStart: boolean
-    autoStop: boolean
-    maxDuration: number
-  }
+    language: string;
+    autoStart: boolean;
+    autoStop: boolean;
+    maxDuration: number;
+  };
 }
 
 export interface VoiceConfigRequest {
-  language?: string
-  autoStart?: boolean
-  autoStop?: boolean
-  maxDuration?: number
+  language?: string;
+  autoStart?: boolean;
+  autoStop?: boolean;
+  maxDuration?: number;
 }
 
 /**
@@ -219,55 +219,55 @@ export interface VoiceConfigRequest {
  */
 export interface CADAnalyzeResponse {
   analysis: {
-    id: string
-    fileName: string
-    fileSize: number
-    analysisType: string
-    results: CADAnalysisResult
-    metadata: CADMetadata
-    createdAt: string
-  }
+    id: string;
+    fileName: string;
+    fileSize: number;
+    analysisType: string;
+    results: CADAnalysisResult;
+    metadata: CADMetadata;
+    createdAt: string;
+  };
 }
 
 export interface CADAnalyzeRequest {
-  file: File
-  analysisType?: 'basic' | 'detailed' | 'advanced'
-  includeMetadata?: boolean
+  file: File;
+  analysisType?: 'basic' | 'detailed' | 'advanced';
+  includeMetadata?: boolean;
 }
 
 export interface CADAnalysisResult {
-  summary: string
+  summary: string;
   dimensions: {
-    width: number
-    height: number
-    depth: number
-    units: string
-  }
-  components: CADComponent[]
-  materials: CADMaterial[]
-  properties: Record<string, any>
+    width: number;
+    height: number;
+    depth: number;
+    units: string;
+  };
+  components: CADComponent[];
+  materials: CADMaterial[];
+  properties: Record<string, any>;
 }
 
 export interface CADComponent {
-  name: string
-  type: string
-  quantity: number
-  dimensions: Record<string, number>
-  position: { x: number; y: number; z: number }
+  name: string;
+  type: string;
+  quantity: number;
+  dimensions: Record<string, number>;
+  position: { x: number; y: number; z: number };
 }
 
 export interface CADMaterial {
-  name: string
-  type: string
-  properties: Record<string, any>
+  name: string;
+  type: string;
+  properties: Record<string, any>;
 }
 
 export interface CADMetadata {
-  software: string
-  version: string
-  createdBy: string
-  createdAt: string
-  lastModified: string
+  software: string;
+  version: string;
+  createdBy: string;
+  createdAt: string;
+  lastModified: string;
 }
 
 /**
@@ -275,20 +275,20 @@ export interface CADMetadata {
  */
 export interface ImageProcessResponse {
   processedImage: {
-    id: string
-    originalName: string
-    processedName: string
-    url: string
-    operations: string[]
-    parameters: Record<string, any>
-    createdAt: string
-  }
+    id: string;
+    originalName: string;
+    processedName: string;
+    url: string;
+    operations: string[];
+    parameters: Record<string, any>;
+    createdAt: string;
+  };
 }
 
 export interface ImageProcessRequest {
-  file: File
-  operations: ('resize' | 'crop' | 'rotate' | 'filter' | 'enhance')[]
-  parameters?: Record<string, any>
+  file: File;
+  operations: ('resize' | 'crop' | 'rotate' | 'filter' | 'enhance')[];
+  parameters?: Record<string, any>;
 }
 
 /**
@@ -296,37 +296,37 @@ export interface ImageProcessRequest {
  */
 export interface UserResponse {
   user: {
-    id: string
-    name: string
-    email: string
-    avatar?: string
-    isAdmin: boolean
-    createdAt: string
-    updatedAt: string
-  }
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+    isAdmin: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 export interface LoginRequest {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 export interface LoginResponse {
-  user: UserResponse['user']
-  token: string
-  expiresIn: number
+  user: UserResponse['user'];
+  token: string;
+  expiresIn: number;
 }
 
 export interface RegisterRequest {
-  name: string
-  email: string
-  password: string
+  name: string;
+  email: string;
+  password: string;
 }
 
 export interface UpdateUserRequest {
-  name?: string
-  email?: string
-  avatar?: string
+  name?: string;
+  email?: string;
+  avatar?: string;
 }
 
 /**
@@ -334,69 +334,69 @@ export interface UpdateUserRequest {
  */
 export interface ConfigResponse {
   config: {
-    app: AppConfig
-    features: FeatureConfig
-    models: ModelConfig
-  }
+    app: AppConfig;
+    features: FeatureConfig;
+    models: ModelConfig;
+  };
 }
 
 export interface AppConfig {
-  name: string
-  version: string
-  environment: string
-  debug: boolean
+  name: string;
+  version: string;
+  environment: string;
+  debug: boolean;
 }
 
 export interface FeatureConfig {
-  voiceEnabled: boolean
-  cadAnalysisEnabled: boolean
-  imageProcessingEnabled: boolean
-  fileUploadEnabled: boolean
-  maxFileSize: number
-  supportedFormats: string[]
+  voiceEnabled: boolean;
+  cadAnalysisEnabled: boolean;
+  imageProcessingEnabled: boolean;
+  fileUploadEnabled: boolean;
+  maxFileSize: number;
+  supportedFormats: string[];
 }
 
 export interface ModelConfig {
-  chat: ModelInfo[]
-  voice: ModelInfo[]
-  image: ModelInfo[]
-  cad: ModelInfo[]
+  chat: ModelInfo[];
+  voice: ModelInfo[];
+  image: ModelInfo[];
+  cad: ModelInfo[];
 }
 
 export interface ModelInfo {
-  id: string
-  name: string
-  provider: string
-  enabled: boolean
-  config: Record<string, any>
+  id: string;
+  name: string;
+  provider: string;
+  enabled: boolean;
+  config: Record<string, any>;
 }
 
 /**
  * 健康检查API类型
  */
 export interface HealthCheckResponse {
-  status: 'healthy' | 'unhealthy'
-  timestamp: string
-  version: string
+  status: 'healthy' | 'unhealthy';
+  timestamp: string;
+  version: string;
   services: {
-    database: ServiceStatus
-    redis: ServiceStatus
-    storage: ServiceStatus
-    external: ServiceStatus
-  }
-  uptime: number
+    database: ServiceStatus;
+    redis: ServiceStatus;
+    storage: ServiceStatus;
+    external: ServiceStatus;
+  };
+  uptime: number;
   memory: {
-    used: number
-    total: number
-    percentage: number
-  }
+    used: number;
+    total: number;
+    percentage: number;
+  };
 }
 
 export interface ServiceStatus {
-  status: 'up' | 'down' | 'degraded'
-  responseTime?: number
-  lastCheck: string
-  error?: string
+  status: 'up' | 'down' | 'degraded';
+  responseTime?: number;
+  lastCheck: string;
+  error?: string;
 }
 
 /**
@@ -404,23 +404,23 @@ export interface ServiceStatus {
  */
 export interface ErrorStatsResponse {
   stats: {
-    total: number
-    byType: Record<string, number>
-    bySeverity: Record<string, number>
-    recent: ErrorLog[]
-  }
-  pagination: PaginationMeta
+    total: number;
+    byType: Record<string, number>;
+    bySeverity: Record<string, number>;
+    recent: ErrorLog[];
+  };
+  pagination: PaginationMeta;
 }
 
 export interface ErrorLog {
-  id: string
-  type: string
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  message: string
-  stack?: string
-  context: Record<string, any>
-  timestamp: string
-  resolved: boolean
+  id: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  stack?: string;
+  context: Record<string, any>;
+  timestamp: string;
+  resolved: boolean;
 }
 
 /**
@@ -429,106 +429,106 @@ export interface ErrorLog {
 export interface StatsResponse {
   stats: {
     users: {
-      total: number
-      active: number
-      new: number
-    }
+      total: number;
+      active: number;
+      new: number;
+    };
     agents: {
-      total: number
-      published: number
-      drafts: number
-    }
+      total: number;
+      published: number;
+      drafts: number;
+    };
     chats: {
-      total: number
-      today: number
-      thisWeek: number
-      thisMonth: number
-    }
+      total: number;
+      today: number;
+      thisWeek: number;
+      thisMonth: number;
+    };
     files: {
-      total: number
-      totalSize: number
-      byType: Record<string, number>
-    }
-  }
+      total: number;
+      totalSize: number;
+      byType: Record<string, number>;
+    };
+  };
   period: {
-    start: string
-    end: string
-  }
+    start: string;
+    end: string;
+  };
 }
 
 /**
  * 导出相关API类型
  */
 export interface ExportRequest {
-  type: 'agents' | 'chats' | 'users' | 'errors'
-  format: 'json' | 'csv' | 'xlsx'
-  filters?: Record<string, any>
+  type: 'agents' | 'chats' | 'users' | 'errors';
+  format: 'json' | 'csv' | 'xlsx';
+  filters?: Record<string, any>;
   dateRange?: {
-    start: string
-    end: string
-  }
+    start: string;
+    end: string;
+  };
 }
 
 export interface ExportResponse {
-  downloadUrl: string
-  filename: string
-  expiresAt: string
+  downloadUrl: string;
+  filename: string;
+  expiresAt: string;
 }
 
 /**
  * 批量操作API类型
  */
 export interface BatchOperationRequest {
-  operation: 'delete' | 'update' | 'publish' | 'unpublish'
-  ids: string[]
-  data?: Record<string, any>
+  operation: 'delete' | 'update' | 'publish' | 'unpublish';
+  ids: string[];
+  data?: Record<string, any>;
 }
 
 export interface BatchOperationResponse {
-  success: string[]
+  success: string[];
   failed: Array<{
-    id: string
-    error: string
-  }>
-  total: number
-  successCount: number
-  failureCount: number
+    id: string;
+    error: string;
+  }>;
+  total: number;
+  successCount: number;
+  failureCount: number;
 }
 
 /**
  * 搜索相关API类型
  */
 export interface SearchRequest {
-  query: string
-  type?: 'agents' | 'chats' | 'users' | 'files'
-  filters?: Record<string, any>
-  pagination?: PaginationParams
+  query: string;
+  type?: 'agents' | 'chats' | 'users' | 'files';
+  filters?: Record<string, any>;
+  pagination?: PaginationParams;
 }
 
 export interface SearchResponse<T = any> {
-  results: T[]
-  query: string
-  total: number
-  pagination: PaginationMeta
-  suggestions?: string[]
+  results: T[];
+  query: string;
+  total: number;
+  pagination: PaginationMeta;
+  suggestions?: string[];
 }
 
 /**
  * 通知相关API类型
  */
 export interface NotificationResponse {
-  notifications: Notification[]
-  unreadCount: number
+  notifications: Notification[];
+  unreadCount: number;
 }
 
 export interface Notification {
-  id: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  title: string
-  message: string
-  read: boolean
-  createdAt: string
-  actionUrl?: string
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  actionUrl?: string;
 }
 
 /**
@@ -536,77 +536,77 @@ export interface Notification {
  */
 export interface SystemInfoResponse {
   system: {
-    nodeVersion: string
-    platform: string
-    arch: string
-    uptime: number
+    nodeVersion: string;
+    platform: string;
+    arch: string;
+    uptime: number;
     memory: {
-      used: number
-      total: number
-      percentage: number
-    }
+      used: number;
+      total: number;
+      percentage: number;
+    };
     cpu: {
-      usage: number
-      cores: number
-    }
-  }
+      usage: number;
+      cores: number;
+    };
+  };
   database: {
-    type: string
-    version: string
-    connections: number
-    maxConnections: number
-  }
+    type: string;
+    version: string;
+    connections: number;
+    maxConnections: number;
+  };
   redis: {
-    version: string
-    memory: number
-    keys: number
-  }
+    version: string;
+    memory: number;
+    keys: number;
+  };
 }
 
 /**
  * API错误类型
  */
 export interface ApiError {
-  code: ApiErrorCode
-  message: string
-  details?: any
-  timestamp: string
-  requestId: string
+  code: ApiErrorCode;
+  message: string;
+  details?: any;
+  timestamp: string;
+  requestId: string;
 }
 
 /**
  * 请求上下文类型
  */
 export interface RequestContext {
-  requestId: string
-  userId?: string
-  userAgent: string
-  ip: string
-  timestamp: string
-  method: string
-  url: string
+  requestId: string;
+  userId?: string;
+  userAgent: string;
+  ip: string;
+  timestamp: string;
+  method: string;
+  url: string;
 }
 
 /**
  * 中间件配置类型
  */
 export interface MiddlewareConfig {
-  logging: boolean
-  validation: boolean
-  auth: boolean
+  logging: boolean;
+  validation: boolean;
+  auth: boolean;
   rateLimit: {
-    enabled: boolean
-    maxRequests: number
-    windowMs: number
-  }
+    enabled: boolean;
+    maxRequests: number;
+    windowMs: number;
+  };
   cache: {
-    enabled: boolean
-    ttl: number
-  }
+    enabled: boolean;
+    ttl: number;
+  };
   cors: {
-    enabled: boolean
-    origins: string[]
-  }
+    enabled: boolean;
+    origins: string[];
+  };
 }
 
 /**
@@ -671,5 +671,5 @@ export default {
   SystemInfoResponse,
   ApiError,
   RequestContext,
-  MiddlewareConfig
-}
+  MiddlewareConfig,
+};

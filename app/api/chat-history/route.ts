@@ -4,7 +4,7 @@ import AgentConfig from '@/lib/db/models/agent-config';
 import { Op } from 'sequelize';
 
 // 清理2天前的历史
-async function cleanupOldHistory() {
+export async function cleanupOldHistory() {
   const cutoff = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   await ChatHistory.destroy({ where: { updatedAt: { [Op.lt]: cutoff } } });
 }
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         total: 0,
         list: [],
-        message: 'User interface history is managed locally'
+        message: 'User interface history is managed locally',
       });
     }
 
@@ -55,7 +55,9 @@ export async function GET(request: NextRequest) {
           ...row.toJSON(),
           messages: messages.map((msg: any) => ({
             ...msg,
-            message_id: msg.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, // 确保有唯一ID
+            message_id:
+              msg.id ||
+              `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, // 确保有唯一ID
             parentId: msg.parentId || null,
             meta: msg.meta || null,
           })),
@@ -77,12 +79,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ total: count, list });
   } catch (error) {
     console.error('获取聊天历史失败:', error);
-    return NextResponse.json({
-      error: '获取聊天历史失败',
-      detail: String(error),
-      total: 0,
-      list: []
-    }, { status: 200 }); // 使用200状态码，确保前端能正常解析
+    return NextResponse.json(
+      {
+        error: '获取聊天历史失败',
+        detail: String(error),
+        total: 0,
+        list: [],
+      },
+      { status: 200 }
+    ); // 使用200状态码，确保前端能正常解析
   }
 }
 
@@ -102,7 +107,10 @@ export async function POST(request: NextRequest) {
     const history = await ChatHistory.create({ ...body });
     return NextResponse.json(history);
   } catch (error) {
-    return NextResponse.json({ error: '新增聊天历史失败', detail: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: '新增聊天历史失败', detail: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -113,16 +121,25 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { chatId, userId, messages } = body;
     if (!chatId || !userId) {
-      return NextResponse.json({ error: '缺少 chatId 或 userId' }, { status: 400 });
+      return NextResponse.json(
+        { error: '缺少 chatId 或 userId' },
+        { status: 400 }
+      );
     }
     const history = await ChatHistory.findOne({ where: { chatId, userId } });
     if (!history) {
-      return NextResponse.json({ error: '未找到对应聊天历史' }, { status: 404 });
+      return NextResponse.json(
+        { error: '未找到对应聊天历史' },
+        { status: 404 }
+      );
     }
     await history.update({ messages, updatedAt: new Date() });
     return NextResponse.json(history);
   } catch (error) {
-    return NextResponse.json({ error: '更新聊天历史失败', detail: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: '更新聊天历史失败', detail: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -134,11 +151,17 @@ export async function DELETE(request: NextRequest) {
     const chatId = searchParams.get('chatId');
     const userId = searchParams.get('userId');
     if (!chatId || !userId) {
-      return NextResponse.json({ error: '缺少 chatId 或 userId' }, { status: 400 });
+      return NextResponse.json(
+        { error: '缺少 chatId 或 userId' },
+        { status: 400 }
+      );
     }
     const count = await ChatHistory.destroy({ where: { chatId, userId } });
     return NextResponse.json({ success: true, deleted: count });
   } catch (error) {
-    return NextResponse.json({ error: '删除聊天历史失败', detail: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: '删除聊天历史失败', detail: String(error) },
+      { status: 500 }
+    );
   }
 }

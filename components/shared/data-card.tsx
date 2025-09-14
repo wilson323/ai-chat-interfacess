@@ -3,16 +3,22 @@
  * 用于展示结构化数据，支持标题、描述、图片、操作等
  */
 
-'use client'
+'use client';
 
-import React from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Image } from '@/components/ui/image'
-import { cn } from '@/lib/utils'
-import type { DataCardProps } from './types'
+import React from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Image } from '@/components/ui/image';
+import { cn } from '@/lib/utils';
+import type { DataCardProps } from './types';
 
 const DataCard = <T,>({
   data,
@@ -30,58 +36,58 @@ const DataCard = <T,>({
   // 获取标题
   const getTitle = (): string => {
     if (typeof title === 'function') {
-      return title(data)
+      return title(data);
     }
-    return title || String(data)
-  }
+    return title || String(data);
+  };
 
   // 获取描述
   const getDescription = (): string | undefined => {
     if (typeof description === 'function') {
-      return description(data)
+      return description(data);
     }
-    return description
-  }
+    return description;
+  };
 
   // 获取图片
   const getImage = (): string | undefined => {
     if (typeof image === 'function') {
-      return image(data)
+      return image(data);
     }
-    return image
-  }
+    return image;
+  };
 
   // 获取操作按钮
   const getActions = (): React.ReactNode => {
     if (typeof actions === 'function') {
-      return actions(data)
+      return actions(data);
     }
-    return actions
-  }
+    return actions;
+  };
 
   // 处理点击事件
   const handleClick = () => {
     if (!loading && onClick) {
-      onClick(data)
+      onClick(data);
     }
-  }
+  };
 
   if (loading) {
     return (
       <Card className={cn('w-full', className)} style={style} {...props}>
         <CardHeader>
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-3 w-1/2" />
+          <Skeleton className='h-4 w-3/4' />
+          <Skeleton className='h-3 w-1/2' />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-32 w-full mb-4" />
-          <div className="flex space-x-2">
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-8 w-16" />
+          <Skeleton className='h-32 w-full mb-4' />
+          <div className='flex space-x-2'>
+            <Skeleton className='h-8 w-16' />
+            <Skeleton className='h-8 w-16' />
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -98,11 +104,11 @@ const DataCard = <T,>({
     >
       {/* 图片 */}
       {getImage() && (
-        <div className="aspect-video w-full overflow-hidden rounded-t-lg">
+        <div className='aspect-video w-full overflow-hidden rounded-t-lg'>
           <Image
             src={getImage()!}
             alt={getTitle()}
-            className="h-full w-full object-cover"
+            className='h-full w-full object-cover'
             width={400}
             height={225}
           />
@@ -110,9 +116,9 @@ const DataCard = <T,>({
       )}
 
       <CardHeader>
-        <CardTitle className="line-clamp-2">{getTitle()}</CardTitle>
+        <CardTitle className='line-clamp-2'>{getTitle()}</CardTitle>
         {getDescription() && (
-          <CardDescription className="line-clamp-3">
+          <CardDescription className='line-clamp-3'>
             {getDescription()}
           </CardDescription>
         )}
@@ -120,26 +126,30 @@ const DataCard = <T,>({
 
       <CardContent>
         {/* 数据展示 */}
-        <div className="space-y-2">
+        <div className='space-y-2'>
           {Object.entries(data as Record<string, any>).map(([key, value]) => {
             // 跳过特殊字段
-            if (['id', 'createdAt', 'updatedAt'].includes(key)) return null
-            
+            if (['id', 'createdAt', 'updatedAt'].includes(key)) return null;
+
             // 跳过空值
-            if (value === null || value === undefined || value === '') return null
-            
+            if (value === null || value === undefined || value === '')
+              return null;
+
             // 跳过函数
-            if (typeof value === 'function') return null
-            
+            if (typeof value === 'function') return null;
+
             // 跳过对象和数组（复杂数据）
-            if (typeof value === 'object') return null
+            if (typeof value === 'object') return null;
 
             return (
-              <div key={key} className="flex items-center justify-between text-sm">
-                <span className="text-gray-500 capitalize">
+              <div
+                key={key}
+                className='flex items-center justify-between text-sm'
+              >
+                <span className='text-gray-500 capitalize'>
                   {key.replace(/([A-Z])/g, ' $1').trim()}:
                 </span>
-                <span className="font-medium">
+                <span className='font-medium'>
                   {typeof value === 'boolean' ? (
                     <Badge variant={value ? 'default' : 'secondary'}>
                       {value ? '是' : '否'}
@@ -149,20 +159,17 @@ const DataCard = <T,>({
                   )}
                 </span>
               </div>
-            )
+            );
           })}
         </div>
 
         {/* 操作按钮 */}
         {getActions() && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {getActions()}
-          </div>
+          <div className='mt-4 flex flex-wrap gap-2'>{getActions()}</div>
         )}
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default DataCard
-
+export default DataCard;

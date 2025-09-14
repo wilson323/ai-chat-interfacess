@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
 
 // 生产级 mock 智能体列表，可后续对接数据库
 const agents = [
@@ -30,9 +30,9 @@ const agents = [
     published: false,
     welcomeText: 'CAD 分析器暂未开放。',
   },
-]
+];
 
 export async function GET() {
   // 只返回已发布的智能体
-  return NextResponse.json(agents.filter(a => a.published))
-} 
+  return NextResponse.json(agents.filter(a => a.published));
+}

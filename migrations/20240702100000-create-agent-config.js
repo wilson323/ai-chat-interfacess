@@ -2,7 +2,7 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.createTable('agent_config', {
       id: {
         type: Sequelize.INTEGER.UNSIGNED,
@@ -66,11 +66,11 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 100,
-      }
+      },
     });
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('agent_config');
-  }
-}; 
+  },
+};

@@ -1,5 +1,9 @@
-import type { Message } from "@/types/message"
-import { getAllChatSessions, loadMessagesFromLocalStorage, saveMessagesToLocalStorage } from "@/lib/storage/index"
+import type { Message } from '@/types/message';
+import {
+  getAllChatSessions,
+  loadMessagesFromLocalStorage,
+  saveMessagesToLocalStorage,
+} from '@/lib/storage/index';
 
 /**
  * 导出所有聊天历史记录
@@ -7,13 +11,13 @@ import { getAllChatSessions, loadMessagesFromLocalStorage, saveMessagesToLocalSt
  */
 export function exportAllChatHistory(): string {
   try {
-    const sessions = getAllChatSessions()
-    const exportData: Record<string, Message[]> = {}
+    const sessions = getAllChatSessions();
+    const exportData: Record<string, Message[]> = {};
 
     for (const session of sessions) {
-      const messages = loadMessagesFromLocalStorage(session.id)
+      const messages = loadMessagesFromLocalStorage(session.id);
       if (messages) {
-        exportData[session.id] = messages
+        exportData[session.id] = messages;
       }
     }
 
@@ -21,10 +25,10 @@ export function exportAllChatHistory(): string {
       version: 1,
       timestamp: Date.now(),
       data: exportData,
-    })
+    });
   } catch (error) {
-    console.error("Failed to export chat history:", error)
-    throw new Error("导出聊天历史失败")
+    console.error('Failed to export chat history:', error);
+    throw new Error('导出聊天历史失败');
   }
 }
 
@@ -35,33 +39,33 @@ export function exportAllChatHistory(): string {
  */
 export function importChatHistory(jsonData: string): boolean {
   try {
-    const importData = JSON.parse(jsonData)
+    const importData = JSON.parse(jsonData);
 
     // 验证数据格式
     if (!importData.version || !importData.data) {
-      throw new Error("无效的导入数据格式")
+      throw new Error('无效的导入数据格式');
     }
 
     // 导入每个会话
-    const data = importData.data as Record<string, Message[]>
+    const data = importData.data as Record<string, Message[]>;
     for (const chatId in data) {
-      const messages = data[chatId]
+      const messages = data[chatId];
       if (Array.isArray(messages) && messages.length > 0) {
         // 确保时间戳是Date对象
-        const processedMessages = messages.map((msg) => ({
+        const processedMessages = messages.map(msg => ({
           ...msg,
           timestamp: new Date(msg.timestamp),
-        }))
+        }));
 
         // 保存到本地存储
-        saveMessagesToLocalStorage(chatId, processedMessages)
+        saveMessagesToLocalStorage(chatId, processedMessages);
       }
     }
 
-    return true
+    return true;
   } catch (error) {
-    console.error("Failed to import chat history:", error)
-    throw new Error("导入聊天历史失败")
+    console.error('Failed to import chat history:', error);
+    throw new Error('导入聊天历史失败');
   }
 }
 
@@ -71,18 +75,18 @@ export function importChatHistory(jsonData: string): boolean {
  */
 export function clearAllChatHistory(): boolean {
   try {
-    const sessions = getAllChatSessions()
+    const sessions = getAllChatSessions();
 
     for (const session of sessions) {
-      localStorage.removeItem(`zkteco_messages_${session.id}`)
+      localStorage.removeItem(`zkteco_messages_${session.id}`);
     }
 
     // 清除索引
-    localStorage.removeItem("zkteco_chat_index")
+    localStorage.removeItem('zkteco_chat_index');
 
-    return true
+    return true;
   } catch (error) {
-    console.error("Failed to clear chat history:", error)
-    return false
+    console.error('Failed to clear chat history:', error);
+    return false;
   }
 }

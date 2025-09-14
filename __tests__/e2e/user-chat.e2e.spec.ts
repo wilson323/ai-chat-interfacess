@@ -10,7 +10,9 @@ test('Agent switcher renders and can switch agent', async ({ page }) => {
   // 切换到第2个智能体（如有）
   if (options.length > 1) {
     await switcher.selectOption({ index: 1 });
-    await expect(switcher).toHaveValue(await switcher.locator('option').nth(1).getAttribute('value'));
+    await expect(switcher).toHaveValue(
+      await switcher.locator('option').nth(1).getAttribute('value')
+    );
   }
 });
 
@@ -18,12 +20,16 @@ test('Agent switcher renders and can switch agent', async ({ page }) => {
 test('FastGPT agent shows welcome message', async ({ page }) => {
   await page.goto('/user/chat');
   const switcher = page.locator('select');
-  const fastgptOption = await switcher.locator('option', { hasText: /fastgpt/i }).first();
-  if (await fastgptOption.count() > 0) {
+  const fastgptOption = await switcher
+    .locator('option', { hasText: /fastgpt/i })
+    .first();
+  if ((await fastgptOption.count()) > 0) {
     const value = await fastgptOption.getAttribute('value');
     await switcher.selectOption(value!);
     // 检查开场白
-    await expect(page.locator('.prose')).toContainText(/(你好|welcome|hi|hello)/i);
+    await expect(page.locator('.prose')).toContainText(
+      /(你好|welcome|hi|hello)/i
+    );
   }
 });
 
@@ -42,26 +48,34 @@ test('Send message and receive response', async ({ page }) => {
 // 4. 文件上传按钮可见
 test('File upload button is visible', async ({ page }) => {
   await page.goto('/user/chat');
-  await expect(page.getByRole('button', { name: /上传|upload|file/i })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /上传|upload|file/i })
+  ).toBeVisible();
 });
 
 // 5. 历史记录按钮可见
 test('History button is visible', async ({ page }) => {
   await page.goto('/user/chat');
-  await expect(page.getByRole('button', { name: /历史|history/i })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /历史|history/i })
+  ).toBeVisible();
 });
 
 // 6. 语音输入按钮可见
 test('Voice input button is visible', async ({ page }) => {
   await page.goto('/user/chat');
-  await expect(page.getByRole('button', { name: /语音|voice|mic|录音/i })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /语音|voice|mic|录音/i })
+  ).toBeVisible();
 });
 
 // 7. 国际化切换（如有）
 test('Language switcher is visible (if exists)', async ({ page }) => {
   await page.goto('/user/chat');
-  const langSwitcher = page.locator('select[name=language],button[aria-label*=语言]');
-  if (await langSwitcher.count() > 0) {
+  const langSwitcher = page.locator(
+    'select[name=language],button[aria-label*=语言]'
+  );
+  if ((await langSwitcher.count()) > 0) {
     await expect(langSwitcher).toBeVisible();
   }
 });
@@ -73,4 +87,4 @@ test('Responsive UI: mobile layout', async ({ page, browserName }) => {
   // 检查移动端下拉、按钮等是否可见
   await expect(page.locator('select')).toBeVisible();
   await expect(page.locator('textarea')).toBeVisible();
-}); 
+});

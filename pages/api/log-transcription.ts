@@ -7,7 +7,7 @@ type Data = {
   message: string;
   filename?: string;
   error?: string;
-}
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -18,7 +18,9 @@ export default async function handler(
       const { logContent } = req.body;
 
       if (!logContent || typeof logContent !== 'string') {
-        return res.status(400).json({ message: '无效的日志内容 (Invalid log content)' });
+        return res
+          .status(400)
+          .json({ message: '无效的日志内容 (Invalid log content)' });
       }
 
       // 确保 'docs' 文件夹在项目的根目录下
@@ -38,16 +40,29 @@ export default async function handler(
       // 将日志内容追加到文件，如果文件不存在则创建
       // 使用 appendFileSync 可以避免覆盖已有日志（如果选择固定文件名的话）
       // 这里我们使用时间戳文件名，所以 writeFile 或 appendFile 效果类似
-      fs.appendFileSync(filePath, logContent + '\n\n--- Log Entry End ---\n\n', 'utf8');
+      fs.appendFileSync(
+        filePath,
+        logContent + '\n\n--- Log Entry End ---\n\n',
+        'utf8'
+      );
 
-      res.status(200).json({ message: '日志已成功保存 (Log saved successfully)', filename });
+      res
+        .status(200)
+        .json({ message: '日志已成功保存 (Log saved successfully)', filename });
     } catch (error: any) {
       console.error('保存日志时出错 (Error saving log):', error);
-      res.status(500).json({ message: '保存日志失败 (Failed to save log)', error: error.message });
+      res
+        .status(500)
+        .json({
+          message: '保存日志失败 (Failed to save log)',
+          error: error.message,
+        });
     }
   } else {
     // 只允许 POST 方法
     res.setHeader('Allow', ['POST']);
-    res.status(405).end(`方法 ${req.method} 不允许 (Method ${req.method} Not Allowed)`);
+    res
+      .status(405)
+      .end(`方法 ${req.method} 不允许 (Method ${req.method} Not Allowed)`);
   }
-} 
+}

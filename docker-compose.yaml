@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "3009:3009"
+      - '3009:3009'
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
@@ -19,7 +19,7 @@ services:
       - db
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3009/api/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3009/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,7 +29,7 @@ services:
     image: postgres:14-alpine
     container_name: chat-postgres
     ports:
-      - "5452:5452"
+      - '5452:5452'
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-root}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ZKTeco##123}

@@ -1,8 +1,8 @@
 graph TD
-    %% 定义节点样式
-    classDef person fill:#f9f,stroke:#333;
-    classDef system fill:#bbf,stroke:#333;
-    classDef external fill:#f96,stroke:#333;
+%% 定义节点样式
+classDef person fill:#f9f,stroke:#333;
+classDef system fill:#bbf,stroke:#333;
+classDef external fill:#f96,stroke:#333;
 
     %% 主要元素
     User[("个人用户

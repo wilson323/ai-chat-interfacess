@@ -13,7 +13,14 @@ export async function GET(req: NextRequest) {
   const list = await CadHistory.findAll({
     where,
     order: [['createdAt', 'DESC']],
-    attributes: ['id', 'agentId', 'userId', 'filename', 'analysis', 'createdAt'],
+    attributes: [
+      'id',
+      'agentId',
+      'userId',
+      'filename',
+      'analysis',
+      'createdAt',
+    ],
   });
   return NextResponse.json({ code: 0, data: list });
-} 
+}

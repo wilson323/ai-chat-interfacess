@@ -1,7 +1,7 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { loadAgents, saveAgents } from "@/lib/storage/index";
-import type { Agent } from "@/types/agent";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { loadAgents, saveAgents } from '@/lib/storage/index';
+import type { Agent } from '@/types/agent';
 
 interface AgentState {
   agents: Agent[];
@@ -25,7 +25,9 @@ export const useAgentStore = create<AgentState>()(
         set({ agents });
       },
       updateAgent: (agent: Agent) => {
-        const agents = get().agents.map((a: Agent) => a.id === agent.id ? agent : a);
+        const agents = get().agents.map((a: Agent) =>
+          a.id === agent.id ? agent : a
+        );
         saveAgents(agents);
         set({ agents });
       },
@@ -35,6 +37,6 @@ export const useAgentStore = create<AgentState>()(
         set({ agents });
       },
     }),
-    { name: "agent-storage" }
+    { name: 'agent-storage' }
   )
-); 
+);

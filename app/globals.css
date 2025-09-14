@@ -90,8 +90,54 @@
   * {
     @apply border-border;
   }
+
+  html {
+    /* 防止iOS Safari缩放 */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* 平滑滚动 */
+    scroll-behavior: smooth;
+
+    /* 防止水平滚动 */
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
+
+    /* 防止iOS Safari缩放 */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* 防止选择文本时的蓝色高亮 */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    /* 允许输入框选择文本 */
+    input,
+    textarea {
+      -webkit-user-select: text;
+      -khtml-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
+
+    /* 防止iOS Safari的橡皮筋效果 */
+    overscroll-behavior: none;
+
+    /* 优化字体渲染 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   h1,
   h2,
@@ -248,7 +294,7 @@ canvas {
 }
 
 .message-bubble-ai pre code {
-  font-family: Monaco, Consolas, "Courier New", monospace !important;
+  font-family: Monaco, Consolas, 'Courier New', monospace !important;
   font-size: 13px !important;
   line-height: 1.8 !important;
 }
@@ -322,7 +368,9 @@ canvas {
   top: -24px !important;
   right: 0 !important;
   opacity: 0 !important;
-  transition: opacity 0.2s ease, transform 0.2s ease !important;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease !important;
   background: rgba(255, 255, 255, 0.9) !important;
   border-radius: 16px !important;
   padding: 4px 8px !important;
@@ -348,13 +396,21 @@ canvas {
 
 /* Typography */
 .message-content {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif !important;
   font-size: 14px !important;
   line-height: 1.6 !important;
 }
 
 .message-content code:not(pre code) {
-  font-family: Monaco, Consolas, "Courier New", monospace !important;
+  font-family: Monaco, Consolas, 'Courier New', monospace !important;
   font-size: 13px !important;
   padding: 2px 4px !important;
   border-radius: 3px !important;
@@ -543,7 +599,7 @@ canvas {
 }
 
 .timeline::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   bottom: 0;
@@ -799,4 +855,325 @@ canvas {
 
 .typing-dot:nth-child(3) {
   animation-delay: 0.4s;
+}
+
+/* 响应式工具类 */
+@layer utilities {
+  /* 触摸优化 */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
+
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+
+  .touch-none {
+    touch-action: none;
+  }
+
+  /* 滚动优化 */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  .scroll-momentum {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-bounce {
+    overscroll-behavior: auto;
+  }
+
+  .scroll-contain {
+    overscroll-behavior: contain;
+  }
+
+  /* 移动端优化 */
+  .mobile-optimized {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 响应式文本 */
+  .text-responsive {
+    font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+    line-height: 1.6;
+  }
+
+  .text-responsive-lg {
+    font-size: clamp(1.125rem, 3vw, 1.5rem);
+    line-height: 1.5;
+  }
+
+  .text-responsive-xl {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    line-height: 1.4;
+  }
+
+  /* 响应式间距 */
+  .spacing-responsive {
+    padding: clamp(1rem, 3vw, 2rem);
+  }
+
+  .spacing-responsive-sm {
+    padding: clamp(0.5rem, 2vw, 1rem);
+  }
+
+  .spacing-responsive-lg {
+    padding: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  /* 响应式容器 */
+  .container-responsive {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding-left: clamp(1rem, 4vw, 2rem);
+    padding-right: clamp(1rem, 4vw, 2rem);
+  }
+
+  /* 响应式网格 */
+  .grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: clamp(1rem, 3vw, 2rem);
+  }
+
+  .grid-responsive-sm {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: clamp(0.5rem, 2vw, 1rem);
+  }
+
+  .grid-responsive-lg {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  /* 响应式图片 */
+  .img-responsive {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    object-fit: cover;
+  }
+
+  .img-responsive-contain {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  /* 响应式按钮 */
+  .btn-responsive {
+    padding: clamp(0.5rem, 2vw, 1rem) clamp(1rem, 4vw, 2rem);
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    min-height: 44px; /* iOS推荐的最小触摸目标 */
+  }
+
+  /* 响应式卡片 */
+  .card-responsive {
+    padding: clamp(1rem, 3vw, 1.5rem);
+    border-radius: clamp(0.5rem, 2vw, 1rem);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* 响应式导航 */
+  .nav-responsive {
+    height: clamp(3rem, 8vw, 4rem);
+    padding: 0 clamp(1rem, 4vw, 2rem);
+  }
+
+  /* 响应式侧边栏 */
+  .sidebar-responsive {
+    width: clamp(250px, 30vw, 320px);
+    min-width: 250px;
+    max-width: 320px;
+  }
+
+  /* 响应式模态框 */
+  .modal-responsive {
+    width: 90vw;
+    max-width: 500px;
+    margin: 1rem auto;
+  }
+
+  @media (min-width: 640px) {
+    .modal-responsive {
+      width: 80vw;
+      max-width: 600px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .modal-responsive {
+      width: 70vw;
+      max-width: 800px;
+    }
+  }
+
+  /* 响应式表格 */
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-responsive table {
+    min-width: 600px;
+  }
+
+  /* 响应式视频 */
+  .video-responsive {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 宽高比 */
+  }
+
+  .video-responsive iframe,
+  .video-responsive video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* 响应式工具提示 */
+  .tooltip-responsive {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+    padding: clamp(0.25rem, 1vw, 0.5rem) clamp(0.5rem, 2vw, 0.75rem);
+    max-width: 200px;
+  }
+
+  /* 响应式加载动画 */
+  .loading-responsive {
+    width: clamp(1rem, 3vw, 2rem);
+    height: clamp(1rem, 3vw, 2rem);
+  }
+
+  /* 响应式阴影 */
+  .shadow-responsive {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (min-width: 640px) {
+    .shadow-responsive {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .shadow-responsive {
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  /* 响应式边框 */
+  .border-responsive {
+    border-width: clamp(1px, 0.5vw, 2px);
+  }
+
+  /* 响应式圆角 */
+  .rounded-responsive {
+    border-radius: clamp(0.25rem, 1vw, 0.5rem);
+  }
+
+  .rounded-responsive-lg {
+    border-radius: clamp(0.5rem, 2vw, 1rem);
+  }
+
+  /* 响应式过渡 */
+  .transition-responsive {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* 响应式变换 */
+  .transform-responsive {
+    transform: scale(1);
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .transform-responsive:hover {
+    transform: scale(1.05);
+  }
+
+  /* 响应式透明度 */
+  .opacity-responsive {
+    opacity: 0.8;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  .opacity-responsive:hover {
+    opacity: 1;
+  }
+
+  /* 响应式可见性 */
+  .visible-mobile {
+    display: block;
+  }
+
+  @media (min-width: 768px) {
+    .visible-mobile {
+      display: none;
+    }
+  }
+
+  .visible-tablet {
+    display: none;
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .visible-tablet {
+      display: block;
+    }
+  }
+
+  .visible-desktop {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    .visible-desktop {
+      display: block;
+    }
+  }
+
+  .hidden-mobile {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .hidden-mobile {
+      display: block;
+    }
+  }
+
+  .hidden-tablet {
+    display: block;
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .hidden-tablet {
+      display: none;
+    }
+  }
+
+  .hidden-desktop {
+    display: block;
+  }
+
+  @media (min-width: 1024px) {
+    .hidden-desktop {
+      display: none;
+    }
+  }
 }

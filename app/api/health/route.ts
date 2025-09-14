@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import sequelize from '@/lib/db/sequelize';
 import redis from '@/lib/db/redis';
-import { getEnvironmentInfo, validateProductionConfig } from '@/lib/cross-platform-utils';
+import {
+  getEnvironmentInfo,
+  validateProductionConfig,
+} from '@/lib/cross-platform-utils';
 
 export async function GET(request: NextRequest) {
   let deep = false;
@@ -17,19 +20,22 @@ export async function GET(request: NextRequest) {
     const envInfo = getEnvironmentInfo();
     const configValidation = validateProductionConfig();
 
-    return NextResponse.json({
-      success: true,
-      message: 'ok',
-      environment: envInfo,
-      config: configValidation,
-      timestamp: new Date().toISOString(),
-    }, {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+    return NextResponse.json(
+      {
+        success: true,
+        message: 'ok',
+        environment: envInfo,
+        config: configValidation,
+        timestamp: new Date().toISOString(),
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
       }
-    });
+    );
   }
   // 深度健康检查
   const dependencies: { db?: string; redis?: string } = {};
@@ -55,34 +61,46 @@ export async function GET(request: NextRequest) {
   const envInfo = getEnvironmentInfo();
   const configValidation = validateProductionConfig();
 
-  return NextResponse.json({
-    success,
-    message: 'ok',
-    dependencies,
-    environment: envInfo,
-    config: configValidation,
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-  }, {
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
+  return NextResponse.json(
+    {
+      success,
+      message: 'ok',
+      dependencies,
+      environment: envInfo,
+      config: configValidation,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+    },
+    {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
     }
-  });
+  );
 }
 
 export function POST() {
-  return NextResponse.json({ success: false, error: 'Method Not Allowed' }, { status: 405 });
+  return NextResponse.json(
+    { success: false, error: 'Method Not Allowed' },
+    { status: 405 }
+  );
 }
 
 export function PUT() {
-  return NextResponse.json({ success: false, error: 'Method Not Allowed' }, { status: 405 });
+  return NextResponse.json(
+    { success: false, error: 'Method Not Allowed' },
+    { status: 405 }
+  );
 }
 
 export function DELETE() {
-  return NextResponse.json({ success: false, error: 'Method Not Allowed' }, { status: 405 });
+  return NextResponse.json(
+    { success: false, error: 'Method Not Allowed' },
+    { status: 405 }
+  );
 }
 
 // 支持HEAD请求用于Docker健康检查

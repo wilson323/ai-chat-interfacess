@@ -3,64 +3,34 @@
  * 提供通用的测试辅助函数和Mock组件
  */
 
-import React from 'react'
-import { render, RenderOptions } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AgentProvider } from '@/context/agent-context'
-import { LanguageProvider } from '@/context/language-context'
-
-// 创建测试用的QueryClient
-export function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        cacheTime: 0,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  })
-}
+import React from 'react';
+import { render, RenderOptions } from '@testing-library/react';
+// Remove react-query dependency as it's not used in the project
+import { AgentProvider } from '@/context/agent-context';
+import { LanguageProvider } from '@/context/language-context';
 
 // 测试用的Wrapper组件
 interface TestWrapperProps {
-  children: React.ReactNode
-  queryClient?: QueryClient
+  children: React.ReactNode;
 }
 
-export function TestWrapper({ children, queryClient }: TestWrapperProps) {
-  const client = queryClient || createTestQueryClient()
-  
+export function TestWrapper({ children }: TestWrapperProps) {
   return (
-    <QueryClientProvider client={client}>
-      <LanguageProvider>
-        <AgentProvider>
-          {children}
-        </AgentProvider>
-      </LanguageProvider>
-    </QueryClientProvider>
-  )
+    <LanguageProvider>
+      <AgentProvider>{children}</AgentProvider>
+    </LanguageProvider>
+  );
 }
 
 // 自定义渲染函数
 export function renderWithProviders(
   ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'> & {
-    queryClient?: QueryClient
-  }
+  options?: Omit<RenderOptions, 'wrapper'>
 ) {
-  const { queryClient, ...renderOptions } = options || {}
-  
   return render(ui, {
-    wrapper: ({ children }) => (
-      <TestWrapper queryClient={queryClient}>
-        {children}
-      </TestWrapper>
-    ),
-    ...renderOptions,
-  })
+    wrapper: ({ children }) => <TestWrapper>{children}</TestWrapper>,
+    ...options,
+  });
 }
 
 // Mock函数
@@ -70,49 +40,49 @@ export const mockFetch = (data: any, status = 200) => {
     status,
     json: jest.fn().mockResolvedValue(data),
     text: jest.fn().mockResolvedValue(JSON.stringify(data)),
-  })
-}
+  });
+};
 
 // Mock localStorage
 export const mockLocalStorage = () => {
-  const store: Record<string, string> = {}
-  
+  const store: Record<string, string> = {};
+
   return {
     getItem: jest.fn((key: string) => store[key] || null),
     setItem: jest.fn((key: string, value: string) => {
-      store[key] = value
+      store[key] = value;
     }),
     removeItem: jest.fn((key: string) => {
-      delete store[key]
+      delete store[key];
     }),
     clear: jest.fn(() => {
-      Object.keys(store).forEach(key => delete store[key])
+      Object.keys(store).forEach(key => delete store[key]);
     }),
-  }
-}
+  };
+};
 
 // Mock sessionStorage
 export const mockSessionStorage = () => {
-  const store: Record<string, string> = {}
-  
+  const store: Record<string, string> = {};
+
   return {
     getItem: jest.fn((key: string) => store[key] || null),
     setItem: jest.fn((key: string, value: string) => {
-      store[key] = value
+      store[key] = value;
     }),
     removeItem: jest.fn((key: string) => {
-      delete store[key]
+      delete store[key];
     }),
     clear: jest.fn(() => {
-      Object.keys(store).forEach(key => delete store[key])
+      Object.keys(store).forEach(key => delete store[key]);
     }),
-  }
-}
+  };
+};
 
 // Mock window.location
 export const mockLocation = (url: string) => {
-  const location = new URL(url)
-  
+  const location = new URL(url);
+
   Object.defineProperty(window, 'location', {
     value: {
       href: location.href,
@@ -129,30 +99,30 @@ export const mockLocation = (url: string) => {
       reload: jest.fn(),
     },
     writable: true,
-  })
-}
+  });
+};
 
 // Mock IntersectionObserver
 export const mockIntersectionObserver = () => {
-  const mockIntersectionObserver = jest.fn()
+  const mockIntersectionObserver = jest.fn();
   mockIntersectionObserver.mockReturnValue({
     observe: () => null,
     unobserve: () => null,
     disconnect: () => null,
-  })
-  window.IntersectionObserver = mockIntersectionObserver
-}
+  });
+  window.IntersectionObserver = mockIntersectionObserver;
+};
 
 // Mock ResizeObserver
 export const mockResizeObserver = () => {
-  const mockResizeObserver = jest.fn()
+  const mockResizeObserver = jest.fn();
   mockResizeObserver.mockReturnValue({
     observe: () => null,
     unobserve: () => null,
     disconnect: () => null,
-  })
-  window.ResizeObserver = mockResizeObserver
-}
+  });
+  window.ResizeObserver = mockResizeObserver;
+};
 
 // Mock matchMedia
 export const mockMatchMedia = (matches = false) => {
@@ -168,39 +138,40 @@ export const mockMatchMedia = (matches = false) => {
       removeEventListener: jest.fn(),
       dispatchEvent: jest.fn(),
     })),
-  })
-}
+  });
+};
 
 // 等待异步操作完成
-export const waitFor = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+export const waitFor = (ms: number) =>
+  new Promise(resolve => setTimeout(resolve, ms));
 
 // 模拟用户输入
 export const simulateUserInput = (element: HTMLElement, value: string) => {
-  const input = element as HTMLInputElement
-  input.value = value
-  input.dispatchEvent(new Event('input', { bubbles: true }))
-  input.dispatchEvent(new Event('change', { bubbles: true }))
-}
+  const input = element as HTMLInputElement;
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+};
 
 // 模拟点击事件
 export const simulateClick = (element: HTMLElement) => {
-  element.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-}
+  element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+};
 
 // 模拟键盘事件
 export const simulateKeyPress = (element: HTMLElement, key: string) => {
-  element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
-  element.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true }))
-}
+  element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  element.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true }));
+};
 
 // 模拟滚动事件
 export const simulateScroll = (element: HTMLElement, scrollTop: number) => {
   Object.defineProperty(element, 'scrollTop', {
     value: scrollTop,
     writable: true,
-  })
-  element.dispatchEvent(new Event('scroll', { bubbles: true }))
-}
+  });
+  element.dispatchEvent(new Event('scroll', { bubbles: true }));
+};
 
 // 测试数据生成器
 export const generateTestData = {
@@ -242,55 +213,61 @@ export const generateTestData = {
     status: 'active',
     ...overrides,
   }),
-}
+};
 
 // 测试断言辅助函数
 export const expectToBeInDocument = (element: HTMLElement | null) => {
-  expect(element).toBeInTheDocument()
-}
+  expect(element).toBeInTheDocument();
+};
 
-export const expectToHaveTextContent = (element: HTMLElement | null, text: string) => {
-  expect(element).toHaveTextContent(text)
-}
+export const expectToHaveTextContent = (
+  element: HTMLElement | null,
+  text: string
+) => {
+  expect(element).toHaveTextContent(text);
+};
 
-export const expectToHaveClass = (element: HTMLElement | null, className: string) => {
-  expect(element).toHaveClass(className)
-}
+export const expectToHaveClass = (
+  element: HTMLElement | null,
+  className: string
+) => {
+  expect(element).toHaveClass(className);
+};
 
 export const expectToBeVisible = (element: HTMLElement | null) => {
-  expect(element).toBeVisible()
-}
+  expect(element).toBeVisible();
+};
 
 export const expectToBeDisabled = (element: HTMLElement | null) => {
-  expect(element).toBeDisabled()
-}
+  expect(element).toBeDisabled();
+};
 
 export const expectToBeEnabled = (element: HTMLElement | null) => {
-  expect(element).toBeEnabled()
-}
+  expect(element).toBeEnabled();
+};
 
 // 测试覆盖率辅助函数
 export const getCoverageReport = () => {
   if (typeof window !== 'undefined' && (window as any).__coverage__) {
-    return (window as any).__coverage__
+    return (window as any).__coverage__;
   }
-  return null
-}
+  return null;
+};
 
 // 清理测试环境
 export const cleanupTestEnvironment = () => {
   // 清理DOM
-  document.body.innerHTML = ''
-  
+  document.body.innerHTML = '';
+
   // 清理localStorage
-  localStorage.clear()
-  
+  localStorage.clear();
+
   // 清理sessionStorage
-  sessionStorage.clear()
-  
+  sessionStorage.clear();
+
   // 重置所有Mock
-  jest.clearAllMocks()
-}
+  jest.clearAllMocks();
+};
 
 // 测试配置
 export const testConfig = {
@@ -304,5 +281,4 @@ export const testConfig = {
       statements: 80,
     },
   },
-}
-
+};

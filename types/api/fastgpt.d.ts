@@ -135,4 +135,4 @@ export interface ResumeNodeRequest {
   resumeData: Record<string, any>;
 }
 
-export interface ResumeNodeResponse extends NodeResponse {} 
+export interface ResumeNodeResponse extends NodeResponse {}

@@ -2,9 +2,7 @@
   "enabled": true,
   "defaultModel": "qwen-turbo-latest",
   "maxFileSizeMB": 100,
-  "supportedFormats": [
-    "dxf"
-  ],
+  "supportedFormats": ["dxf"],
   "analysisParams": {
     "precision": "medium",
     "timeoutSec": 60,

@@ -3,9 +3,9 @@
  * 基于 shadcn/ui AlertDialog 的包装组件
  */
 
-'use client'
+'use client';
 
-import React from 'react'
+import React from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,10 +15,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import type { ConfirmDialogProps } from './types'
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import type { ConfirmDialogProps } from './types';
 
 const ConfirmDialog = ({
   open,
@@ -36,61 +36,57 @@ const ConfirmDialog = ({
 }: ConfirmDialogProps) => {
   // 处理确认
   const handleConfirm = async () => {
-    if (loading) return
-    
+    if (loading) return;
+
     try {
       if (onConfirm) {
-        await onConfirm()
+        await onConfirm();
       }
-      onOpenChange?.(false)
+      onOpenChange?.(false);
     } catch (error) {
-      console.error('确认操作失败:', error)
+      console.error('确认操作失败:', error);
     }
-  }
+  };
 
   // 处理取消
   const handleCancel = () => {
-    if (loading) return
-    
+    if (loading) return;
+
     if (onCancel) {
-      onCancel()
+      onCancel();
     }
-    onOpenChange?.(false)
-  }
+    onOpenChange?.(false);
+  };
 
   // 获取确认按钮样式
   const getConfirmButtonVariant = () => {
     switch (variant) {
       case 'destructive':
-        return 'destructive'
+        return 'destructive';
       case 'warning':
-        return 'secondary'
+        return 'secondary';
       default:
-        return 'default'
+        return 'default';
     }
-  }
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className={cn('max-w-md', className)} {...props}>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-left">
+          <AlertDialogDescription className='text-left'>
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        
+
         <AlertDialogFooter>
           <AlertDialogCancel asChild>
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={loading}
-            >
+            <Button variant='outline' onClick={handleCancel} disabled={loading}>
               {cancelText}
             </Button>
           </AlertDialogCancel>
-          
+
           <AlertDialogAction asChild>
             <Button
               variant={getConfirmButtonVariant()}
@@ -103,8 +99,7 @@ const ConfirmDialog = ({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
-}
+  );
+};
 
-export default ConfirmDialog
-
+export default ConfirmDialog;

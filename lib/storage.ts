@@ -4,4 +4,4 @@
  */
 
 // 重新导出存储目录中的所有内容
-export * from "./storage"
+export * from './storage';

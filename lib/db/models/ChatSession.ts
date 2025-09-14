@@ -11,9 +11,13 @@ export interface ChatSessionAttributes {
   isArchived?: boolean;
 }
 
-export interface ChatSessionCreationAttributes extends Optional<ChatSessionAttributes, 'id'> {}
+export interface ChatSessionCreationAttributes
+  extends Optional<ChatSessionAttributes, 'id'> {}
 
-export class ChatSession extends Model<ChatSessionAttributes, ChatSessionCreationAttributes> implements ChatSessionAttributes {
+export class ChatSession
+  extends Model<ChatSessionAttributes, ChatSessionCreationAttributes>
+  implements ChatSessionAttributes
+{
   public id!: string;
   public userId!: string;
   public title!: string;
@@ -52,11 +56,8 @@ ChatSession.init(
   {
     sequelize,
     tableName: 'chat_sessions',
-    indexes: [
-      { fields: ['userId'] },
-      { fields: ['updatedAt'] },
-    ],
+    indexes: [{ fields: ['userId'] }, { fields: ['updatedAt'] }],
   }
 );
 
-export default ChatSession; 
+export default ChatSession;

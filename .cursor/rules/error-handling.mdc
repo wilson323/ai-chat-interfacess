@@ -1,0 +1,88 @@
+---
+alwaysApply: true
+description: 错误处理标准和最佳实践
+---
+
+# 错误处理标准
+
+## 核心原则
+- 所有函数必须添加错误处理
+- 严格按照错误处理架构规范
+- 提供有意义的错误信息
+- 确保系统稳定性
+
+## 函数错误处理
+```typescript
+// ✅ 正确：完整的错误处理
+export async function fetchUserData(userId: string): Promise<UserData | null> {
+  try {
+    const response = await fetch(`/api/users/${userId}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('获取用户数据失败:', error);
+    return null;
+  }
+}
+```
+
+## API路由错误处理
+```typescript
+// ✅ 正确：API路由错误处理
+export async function GET(request: NextRequest) {
+  try {
+    const data = await processRequest(request);
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('API错误:', error);
+    return NextResponse.json(
+      { success: false, error: '服务器内部错误' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+## 组件错误处理
+```typescript
+// ✅ 正确：错误边界组件
+export function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = (error: ErrorEvent) => {
+      console.error('组件错误:', error);
+      setHasError(true);
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  if (hasError) {
+    return <div>出现错误，请刷新页面重试</div>;
+  }
+
+  return <>{children}</>;
+}
+```
+
+## 错误处理要求
+- 所有异步操作必须包装在try-catch中
+- 提供用户友好的错误信息
+- 记录详细的错误日志
+- 实现错误恢复机制
+- 使用统一的错误响应格式
+
+## 禁止事项
+- ❌ 忽略错误处理
+- ❌ 使用空的catch块
+- ❌ 不提供错误信息
+- ❌ 不记录错误日志
+
+参考文件：[app/api](mdc:app/api)

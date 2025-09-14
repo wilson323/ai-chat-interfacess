@@ -3,13 +3,13 @@
  * 基于 shadcn/ui 设计系统的包装组件
  */
 
-'use client'
+'use client';
 
-import React from 'react'
-import { Button } from '@/components/ui/button'
-import { FileX, Search, AlertCircle, Package } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { EmptyStateProps } from './types'
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { FileX, Search, AlertCircle, Package } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { EmptyStateProps } from './types';
 
 const EmptyState = ({
   icon,
@@ -31,57 +31,57 @@ const EmptyState = ({
           icon: 'h-8 w-8',
           title: 'text-lg',
           description: 'text-sm',
-          spacing: 'space-y-2'
-        }
+          spacing: 'space-y-2',
+        };
       case 'lg':
         return {
           icon: 'h-16 w-16',
           title: 'text-2xl',
           description: 'text-lg',
-          spacing: 'space-y-4'
-        }
+          spacing: 'space-y-4',
+        };
       case 'xl':
         return {
           icon: 'h-20 w-20',
           title: 'text-3xl',
           description: 'text-xl',
-          spacing: 'space-y-6'
-        }
+          spacing: 'space-y-6',
+        };
       default:
         return {
           icon: 'h-12 w-12',
           title: 'text-xl',
           description: 'text-base',
-          spacing: 'space-y-3'
-        }
+          spacing: 'space-y-3',
+        };
     }
-  }
+  };
 
-  const sizeClass = getSizeClass()
+  const sizeClass = getSizeClass();
 
   // 处理操作点击
   const handleAction = () => {
     if (onAction) {
-      onAction()
+      onAction();
     }
-  }
+  };
 
   // 获取默认图标
   const getDefaultIcon = () => {
     if (typeof icon === 'string') {
       switch (icon) {
         case 'search':
-          return <Search className={sizeClass.icon} />
+          return <Search className={sizeClass.icon} />;
         case 'error':
-          return <AlertCircle className={sizeClass.icon} />
+          return <AlertCircle className={sizeClass.icon} />;
         case 'package':
-          return <Package className={sizeClass.icon} />
+          return <Package className={sizeClass.icon} />;
         default:
-          return <FileX className={sizeClass.icon} />
+          return <FileX className={sizeClass.icon} />;
       }
     }
-    return icon
-  }
+    return icon;
+  };
 
   return (
     <div
@@ -106,21 +106,26 @@ const EmptyState = ({
 
       {/* 描述 */}
       {description && (
-        <p className={cn('text-muted-foreground max-w-sm', sizeClass.description)}>
+        <p
+          className={cn(
+            'text-muted-foreground max-w-sm',
+            sizeClass.description
+          )}
+        >
           {description}
         </p>
       )}
 
       {/* 操作按钮 */}
       {(action || onAction) && (
-        <div className="pt-2">
+        <div className='pt-2'>
           {action ? (
             action
           ) : (
             <Button
-              variant="outline"
+              variant='outline'
               onClick={handleAction}
-              className="min-w-24"
+              className='min-w-24'
             >
               {actionText}
             </Button>
@@ -128,8 +133,7 @@ const EmptyState = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default EmptyState
-
+export default EmptyState;

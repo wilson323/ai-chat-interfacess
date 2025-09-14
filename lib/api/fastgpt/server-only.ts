@@ -1,13 +1,13 @@
-import { API_CONSTANTS } from "@/lib/storage/shared/constants";
-import { Agent } from "@/types/agent";
+import { API_CONSTANTS } from '@/lib/storage/shared/constants';
+import { Agent } from '@/types/agent';
 
 function getDefaultSuggestions(): string[] {
   return [
-    "这个产品有哪些功能？",
-    "如何使用这个系统？",
-    "有没有相关的使用案例？",
-    "能提供一些示例吗？",
-    "有哪些限制？",
+    '这个产品有哪些功能？',
+    '如何使用这个系统？',
+    '有没有相关的使用案例？',
+    '能提供一些示例吗？',
+    '有哪些限制？',
   ];
 }
 
@@ -35,14 +35,16 @@ export async function getQuestionSuggestionsCore(
       chatId: chatId,
       questionGuide: {
         open: true,
-        model: agent.multimodalModel || "GPT-4o-mini",
-        customPrompt: customConfig?.customPrompt || "你是一个智能助手，请根据用户的问题生成猜你想问。",
+        model: agent.multimodalModel || 'GPT-4o-mini',
+        customPrompt:
+          customConfig?.customPrompt ||
+          '你是一个智能助手，请根据用户的问题生成猜你想问。',
       },
     };
     const response = await fetch(targetUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${agent.apiKey}`,
       },
       body: JSON.stringify(requestBody),
@@ -61,4 +63,4 @@ export async function getQuestionSuggestionsCore(
       data: getDefaultSuggestions(),
     };
   }
-} 
+}

@@ -58,7 +58,7 @@ describe('存储模块测试', () => {
 
     test('应该能够删除聊天会话', () => {
       const chatId = 'test-chat-1';
-      
+
       // 删除聊天会话
       const deleteResult = deleteChatSession(chatId);
       expect(deleteResult).toBe(true);
@@ -69,10 +69,20 @@ describe('存储模块测试', () => {
 
     test('应该能够获取所有聊天会话', () => {
       // 模拟返回的聊天会话数据
-      localStorageMock.getItem.mockReturnValue(JSON.stringify({
-        'chat-1': { id: 'chat-1', title: 'Test Chat 1', timestamp: Date.now() },
-        'chat-2': { id: 'chat-2', title: 'Test Chat 2', timestamp: Date.now() },
-      }));
+      localStorageMock.getItem.mockReturnValue(
+        JSON.stringify({
+          'chat-1': {
+            id: 'chat-1',
+            title: 'Test Chat 1',
+            timestamp: Date.now(),
+          },
+          'chat-2': {
+            id: 'chat-2',
+            title: 'Test Chat 2',
+            timestamp: Date.now(),
+          },
+        })
+      );
 
       const sessions = getAllChatSessions();
       expect(Array.isArray(sessions)).toBe(true);
@@ -80,10 +90,16 @@ describe('存储模块测试', () => {
 
     test('应该能够搜索聊天会话', () => {
       // 模拟返回的聊天会话数据
-      localStorageMock.getItem.mockReturnValue(JSON.stringify({
-        'chat-1': { id: 'chat-1', title: 'Hello World', timestamp: Date.now() },
-        'chat-2': { id: 'chat-2', title: 'Test Chat', timestamp: Date.now() },
-      }));
+      localStorageMock.getItem.mockReturnValue(
+        JSON.stringify({
+          'chat-1': {
+            id: 'chat-1',
+            title: 'Hello World',
+            timestamp: Date.now(),
+          },
+          'chat-2': { id: 'chat-2', title: 'Test Chat', timestamp: Date.now() },
+        })
+      );
 
       const results = searchChatSessions('Hello');
       expect(Array.isArray(results)).toBe(true);
@@ -116,9 +132,9 @@ describe('存储模块测试', () => {
 
   describe('工具函数', () => {
     test('应该能够估算字符串大小', () => {
-      const testString = "Hello, world!";
+      const testString = 'Hello, world!';
       const size = estimateSize(testString);
-      
+
       // 每个字符2字节
       expect(size).toBe(testString.length * 2);
     });
@@ -130,7 +146,7 @@ describe('存储模块测试', () => {
       ];
 
       const compressedMessages = compressMessages(messages);
-      
+
       expect(compressedMessages).toHaveLength(2);
       expect(compressedMessages[0]).toHaveProperty('id');
       expect(compressedMessages[0]).toHaveProperty('role');
@@ -141,7 +157,7 @@ describe('存储模块测试', () => {
   describe('消息工厂', () => {
     test('应该能够创建用户消息', () => {
       const message = createUserMessage('Hello', { deviceId: 'device1' });
-      
+
       expect(message.role).toBe('user');
       expect(message.content).toBe('Hello');
       expect(message.metadata).toHaveProperty('deviceId', 'device1');
@@ -149,14 +165,14 @@ describe('存储模块测试', () => {
 
     test('应该能够创建系统消息', () => {
       const message = createSystemMessage('System notification');
-      
+
       expect(message.role).toBe('system');
       expect(message.content).toBe('System notification');
     });
 
     test('应该能够创建助手消息', () => {
       const message = createAssistantMessage('Assistant response');
-      
+
       expect(message.role).toBe('assistant');
       expect(message.content).toBe('Assistant response');
     });
@@ -170,13 +186,13 @@ describe('存储模块测试', () => {
 
       const messages = [createUserMessage('Hello')];
       const result = saveMessagesToStorage('test-chat', messages);
-      
+
       expect(result).toBe(false);
     });
 
     test('应该处理无效的JSON数据', () => {
       localStorageMock.getItem.mockReturnValue('invalid json');
-      
+
       const meta = getStorageMeta();
       expect(meta).toHaveProperty('totalSize', 0);
     });

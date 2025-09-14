@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "02:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "your-github-username"
+    assignees:
+      - "your-github-username"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    allow:
+      - dependency-type: "production"
+      - dependency-type: "development"
+    ignore:
+      - dependency-name: "typescript"
+        versions: ["5.x"]
+      - dependency-name: "react"
+        versions: ["18.x"]
+      - dependency-name: "next"
+        versions: ["15.x"]

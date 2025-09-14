@@ -1,6 +1,7 @@
 # FastGPT 对话接口文档
 
 ## 1. 如何获取 AppId
+
 可在应用详情的路径里获取 AppId。
 
 ## 2. 获取对话初始化信息
@@ -8,17 +9,20 @@
 ### 2.1 请求信息
 
 #### 请求地址
+
 ```
 GET https://fastgpt.run/api/v1/chat/init
 ```
 
 #### 请求头
+
 ```
 Content-Type: application/json
 Authorization: Bearer {API_KEY}
 ```
 
 #### 响应格式
+
 ```json
 {
   "code": 200, // 状态码，表示请求成功
@@ -55,10 +59,10 @@ Authorization: Bearer {API_KEY}
             "type": "custom", // 变量类型为自定义
             "required": false, // 是否为必填项
             "maxLen": 50, // 最大长度限制
-            "enums": [{"value": ""}], // 枚举值（当前仅有一个空值）
+            "enums": [{ "value": "" }], // 枚举值（当前仅有一个空值）
             "valueType": "any", // 数据类型为任意类型
             "icon": "core/workflow/inputType/customVariable", // 变量图标标识
-            "list": [{"value": ""}], // 列表值（当前仅有一个空值）
+            "list": [{ "value": "" }], // 列表值（当前仅有一个空值）
             "description": "", // 变量描述（当前为空）
             "defaultValue": "" // 默认值（当前为空）
           },
@@ -70,9 +74,9 @@ Authorization: Bearer {API_KEY}
             "description": "",
             "required": false,
             "valueType": "any",
-            "list": [{"value": "", "label": ""}],
+            "list": [{ "value": "", "label": "" }],
             "defaultValue": "",
-            "enums": [{"value": "", "label": ""}]
+            "enums": [{ "value": "", "label": "" }]
           },
           {
             "id": "d6e1kh",
@@ -82,9 +86,9 @@ Authorization: Bearer {API_KEY}
             "description": "功能汇总", // 变量描述为“功能汇总”
             "required": false,
             "valueType": "any",
-            "list": [{"value": "", "label": ""}],
+            "list": [{ "value": "", "label": "" }],
             "defaultValue": "",
-            "enums": [{"value": "", "label": ""}]
+            "enums": [{ "value": "", "label": "" }]
           },
           {
             "id": "fvee6t",
@@ -95,13 +99,13 @@ Authorization: Bearer {API_KEY}
             "required": true, // 为必填项
             "valueType": "string", // 数据类型为字符串
             "list": [
-              {"label": "万傲瑞达V6600", "value": "万傲瑞达V6600"},
-              {"label": "ZKEcoPro", "value": "ZKEcoPro"}
+              { "label": "万傲瑞达V6600", "value": "万傲瑞达V6600" },
+              { "label": "ZKEcoPro", "value": "ZKEcoPro" }
             ], // 下拉选择的选项列表
             "defaultValue": "万傲瑞达V6600", // 默认选中的产品
             "enums": [
-              {"label": "万傲瑞达V6600", "value": "万傲瑞达V6600"},
-              {"label": "ZKEcoPro", "value": "ZKEcoPro"}
+              { "label": "万傲瑞达V6600", "value": "万傲瑞达V6600" },
+              { "label": "ZKEcoPro", "value": "ZKEcoPro" }
             ],
             "icon": "core/workflow/inputType/option" // 选择框类型的图标标识
           }
@@ -122,6 +126,7 @@ Authorization: Bearer {API_KEY}
 ## 3. 发起对话请求
 
 ### 3.1 基本说明
+
 - API Key 需使用应用特定的 key，否则会报错
 - 有些包调用时，BaseUrl需要添加v1路径，如果出现404情况，可补充v1重试
 - 接口兼容GPT的标准接口格式
@@ -129,131 +134,144 @@ Authorization: Bearer {API_KEY}
 ### 3.2 请求信息
 
 #### 请求地址
+
 ```
 POST https://fastgpt.run/api/v1/chat/completions
 ```
 
 #### 请求头
+
 ```
 Content-Type: application/json
 Authorization: Bearer {API_KEY}
 ```
 
 #### 基础参数
+
 ```json
 {
-    "chatId": "my_chatId",           // 会话ID
-    "stream": false,                // 是否流式输出
-    "detail": false,                // 是否返回详细信息
-    "responseChatItemId": "xxx",    // 响应消息ID
-    "variables": {                  // 模块变量
-        "uid": "xxx",
-        "name": "张三"
-    },
-    "messages": [                   // 消息内容
-        {
-            "role": "user",
-            "content": "问题内容"
-        }
-    ]
+  "chatId": "my_chatId", // 会话ID
+  "stream": false, // 是否流式输出
+  "detail": false, // 是否返回详细信息
+  "responseChatItemId": "xxx", // 响应消息ID
+  "variables": {
+    // 模块变量
+    "uid": "xxx",
+    "name": "张三"
+  },
+  "messages": [
+    // 消息内容
+    {
+      "role": "user",
+      "content": "问题内容"
+    }
+  ]
 }
 ```
 
 #### 重要字段说明
-- **chatId**: 
+
+- **chatId**:
   - 类型: string | undefined
   - 说明: 对话的唯一标识符
   - undefined: 不使用上下文功能
   - string: 使用chatId进行对话，自动获取历史记录
   - 长度限制: <250字符
 
-- **stream**: 
+- **stream**:
   - 类型: boolean
   - 说明: 是否使用流式响应
   - true: 使用流式响应，实时返回生成内容
   - false: 等待完整响应后一次性返回
 
-- **detail**: 
+- **detail**:
   - 类型: boolean
   - 说明: 是否返回中间值(模块状态、完整结果等)
   - true: 返回详细的中间过程信息
   - false: 仅返回最终结果
 
-- **responseChatItemId**: 
+- **responseChatItemId**:
   - 类型: string
   - 说明: 响应消息的唯一ID，用于追踪和管理响应
 
-- **variables**: 
+- **variables**:
   - 类型: object
   - 说明: 用于替换模块中的{{key}}变量
   - 格式: key-value对象，key对应模板变量名
 
-- **messages**: 
+- **messages**:
   - 类型: array
   - 说明: 对话消息数组，与GPT接口chat模式结构一致
   - role: 消息角色，可选值 user/assistant/system
   - content: 消息内容，可以是字符串或结构化内容
 
 ### 3.3 文件/图片请求格式
+
 ```json
 {
-    "messages": [
+  "messages": [
+    {
+      "role": "user",
+      "content": [
         {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "分析图片"
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": "图片链接"
-                    }
-                },
-                {
-                    "type": "file_url",
-                    "name": "文件名",
-                    "url": "文档链接"
-                }
-            ]
+          "type": "text",
+          "text": "分析图片"
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": "图片链接"
+          }
+        },
+        {
+          "type": "file_url",
+          "name": "文件名",
+          "url": "文档链接"
         }
-    ]
+      ]
+    }
+  ]
 }
 ```
 
 ## 4. 响应格式
 
 ### 4.1 非流式响应 (stream=false)
+
 ```json
 {
-    "id": "xxx",                // 响应ID
-    "model": "",               // 模型信息
-    "usage": {                  // Token使用统计
-        "prompt_tokens": 1,     // 提示Token数
-        "completion_tokens": 1,  // 补全Token数
-        "total_tokens": 1       // 总Token数
-    },
-    "choices": [                // 响应选项数组
-        {
-            "message": {         // 响应消息
-                "role": "assistant",
-                "content": "回复内容"
-            },
-            "finish_reason": "stop",  // 结束原因
-            "index": 0               // 选项索引
-        }
-    ]
+  "id": "xxx", // 响应ID
+  "model": "", // 模型信息
+  "usage": {
+    // Token使用统计
+    "prompt_tokens": 1, // 提示Token数
+    "completion_tokens": 1, // 补全Token数
+    "total_tokens": 1 // 总Token数
+  },
+  "choices": [
+    // 响应选项数组
+    {
+      "message": {
+        // 响应消息
+        "role": "assistant",
+        "content": "回复内容"
+      },
+      "finish_reason": "stop", // 结束原因
+      "index": 0 // 选项索引
+    }
+  ]
 }
 ```
 
 ### 4.2 流式响应 (stream=true)
+
 ```
 data: {"id":"","choices":[{"delta":{"content":"部分"},"index":0}]}
 data: {"id":"","choices":[{"delta":{"content":"内容"},"index":0}]}
 ```
 
 ### 4.3 事件类型
+
 - **answer**: 返回文本内容
 - **fastAnswer**: 指定快速回复文本
 - **toolCall**: 执行工具调用
@@ -267,86 +285,93 @@ data: {"id":"","choices":[{"delta":{"content":"内容"},"index":0}]}
 ## 5. 交互节点
 
 ### 5.1 交互节点响应
+
 当工作流遇到交互节点时，会返回以下格式：
 
 #### 用户选择节点
+
 ```json
 {
-    "interactive": {
-        "type": "userSelect",      // 交互类型：用户选择
-        "params": {
-            "description": "描述",   // 选择说明
-            "userSelectOptions": [    // 选项列表
-                {
-                    "value": "Confirm",  // 选项显示值
-                    "key": "option1"     // 选项标识
-                },
-                {
-                    "value": "Cancel",
-                    "key": "option2"
-                }
-            ]
+  "interactive": {
+    "type": "userSelect", // 交互类型：用户选择
+    "params": {
+      "description": "描述", // 选择说明
+      "userSelectOptions": [
+        // 选项列表
+        {
+          "value": "Confirm", // 选项显示值
+          "key": "option1" // 选项标识
+        },
+        {
+          "value": "Cancel",
+          "key": "option2"
         }
+      ]
     }
+  }
 }
 ```
 
 #### 表单输入节点
+
 ```json
 {
-    "interactive": {
-        "type": "userInput",       // 交互类型：用户输入
-        "params": {
-            "description": "描述",    // 表单说明
-            "inputForm": [           // 表单字段列表
-                {
-                    "type": "input",      // 输入框类型
-                    "key": "字段1",        // 字段标识
-                    "label": "标签1",      // 字段标签
-                    "valueType": "string", // 值类型
-                    "required": false      // 是否必填
-                },
-                {
-                    "type": "numberInput",
-                    "key": "字段2",
-                    "label": "标签2",
-                    "valueType": "number",
-                    "required": false
-                }
-            ]
+  "interactive": {
+    "type": "userInput", // 交互类型：用户输入
+    "params": {
+      "description": "描述", // 表单说明
+      "inputForm": [
+        // 表单字段列表
+        {
+          "type": "input", // 输入框类型
+          "key": "字段1", // 字段标识
+          "label": "标签1", // 字段标签
+          "valueType": "string", // 值类型
+          "required": false // 是否必填
+        },
+        {
+          "type": "numberInput",
+          "key": "字段2",
+          "label": "标签2",
+          "valueType": "number",
+          "required": false
         }
+      ]
     }
+  }
 }
 ```
 
 ### 5.2 继续运行请求
 
 #### 用户选择继续
+
 ```json
 {
-    "stream": true,
-    "detail": true,
-    "chatId": "xxx",
-    "messages": [
-        {
-            "role": "user",
-            "content": "Confirm"    // 选择的选项值
-        }
-    ]
+  "stream": true,
+  "detail": true,
+  "chatId": "xxx",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Confirm" // 选择的选项值
+    }
+  ]
 }
 ```
 
 #### 表单输入继续
+
 ```json
 {
-    "stream": true,
-    "detail": true,
-    "chatId": "xxx",
-    "messages": [
-        {
-            "role": "user",
-            "content": "{\"字段1\":\"输入内容\",\"字段2\":666}"    // JSON格式的表单数据
-        }
-    ]
+  "stream": true,
+  "detail": true,
+  "chatId": "xxx",
+  "messages": [
+    {
+      "role": "user",
+      "content": "{\"字段1\":\"输入内容\",\"字段2\":666}" // JSON格式的表单数据
+    }
+  ]
 }
 ```

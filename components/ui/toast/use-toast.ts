@@ -1,67 +1,46 @@
 "use client"
 
 import * as React from "react"
-import { useCallback, useRef } from "react"
-
-const UPDATE_INTERVAL = 4000
-
-type ToastActionElement = React.ReactNode & React.RefAttributes<HTMLButtonElement>
+import { toast as sonnerToast } from "sonner"
 
 export interface ToastProps {
   id?: string
   title?: React.ReactNode
   description?: React.ReactNode
-  action?: ToastActionElement
+  action?: React.ReactNode
   duration?: number
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  type?: "default" | "destructive"
+  type?: "default" | "destructive" | "success" | "warning"
   className?: string
 }
 
-const ToastContext = React.createContext<{
-  addToast: (toast: ToastProps) => void
-  updateToast: (toast: ToastProps) => void
-  removeToast: (toastId: string) => void
-  toasts: ToastProps[]
-}>(null as any)
+export function useToast() {
+  const addToast = React.useCallback((toast: ToastProps) => {
+    if (toast.type === "destructive") {
+      sonnerToast.error(toast.title as string, {
+        description: toast.description as string,
+        duration: toast.duration || 4000,
+      })
+    } else if (toast.type === "success") {
+      sonnerToast.success(toast.title as string, {
+        description: toast.description as string,
+        duration: toast.duration || 4000,
+      })
+    } else if (toast.type === "warning") {
+      sonnerToast.warning(toast.title as string, {
+        description: toast.description as string,
+        duration: toast.duration || 4000,
+      })
+    } else {
+      sonnerToast(toast.title as string, {
+        description: toast.description as string,
+        duration: toast.duration || 4000,
+      })
+    }
+  }, [])
 
-function useToast() {
-  const context = React.useContext(ToastContext)
-  if (!context) {
-    throw new Error("useToast must be used within a ToastProvider")
+  return {
+    toast: addToast,
   }
-  return context
 }
-
-function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = React.useState<ToastProps[]>([])
-  const idRef = useRef(0)
-
-  const addToast = useCallback((toast: ToastProps) => {
-    const id = String(idRef.current++)
-    setToasts((prev) => [...prev, { id, ...toast }])
-  }, [])
-
-  const updateToast = useCallback((toast: ToastProps) => {
-    setToasts((prev) => prev.map((t) => (t.id === toast.id ? { ...t, ...toast } : t)))
-  }, [])
-
-  const removeToast = useCallback((toastId: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== toastId))
-  }, [])
-
-  const value = React.useMemo(
-    () => ({
-      addToast,
-      updateToast,
-      removeToast,
-      toasts,
-    }),
-    [addToast, updateToast, removeToast, toasts],
-  )
-
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
-}
-
-export { useToast, ToastProvider }

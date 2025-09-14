@@ -19,18 +19,21 @@
 ## 🎯 核心开发原则
 
 ### 1. 成熟组件库优先原则 ⭐⭐⭐
+
 - **自定义代码占比**: < 20%
 - **shadcn/ui优先**: 基于Radix UI的无障碍组件
 - **Ant Design补充**: 企业级复杂组件
 - **避免重复造轮子**: 优先使用现有解决方案
 
 ### 2. 代码质量至上原则 ⭐⭐⭐
+
 - **TypeScript严格模式**: 禁止使用any类型
 - **零容忍错误**: 所有代码必须通过检查
 - **DRY原则**: 严格禁止代码重复
 - **单一职责**: 每个函数/组件只负责一个功能
 
 ### 3. 全局一致性原则 ⭐⭐⭐
+
 - **统一配置源**: 所有配置通过.env管理
 - **统一错误处理**: 全局错误处理中间件
 - **统一API设计**: 标准化响应格式
@@ -41,6 +44,7 @@
 ## 🏗️ 技术架构规范
 
 ### 技术栈要求
+
 ```typescript
 // 前端技术栈
 - Next.js 15.2.4 (App Router)
@@ -58,6 +62,7 @@
 ```
 
 ### 目录结构规范
+
 ```
 ai-chat-interface/
 ├── app/                    # Next.js App Router
@@ -80,45 +85,50 @@ ai-chat-interface/
 ### 组件库优先级 (必须严格遵守)
 
 #### 1. shadcn/ui (最高优先级) ⭐⭐⭐
+
 ```typescript
 // ✅ 基础UI组件 - 必须使用shadcn/ui
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
-import { Dialog } from '@/components/ui/dialog'
-import { Select } from '@/components/ui/select'
-import { Form } from '@/components/ui/form'
-import { Table } from '@/components/ui/table'
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { Dialog } from '@/components/ui/dialog';
+import { Select } from '@/components/ui/select';
+import { Form } from '@/components/ui/form';
+import { Table } from '@/components/ui/table';
 // ... 所有基础UI组件
 ```
 
 #### 2. Ant Design (复杂业务组件) ⭐⭐
+
 ```typescript
 // ✅ 复杂业务组件 - 使用Ant Design
-import { Table } from 'antd' // 复杂表格
-import { Form } from 'antd' // 复杂表单
-import { DatePicker } from 'antd' // 日期选择器
-import { Upload } from 'antd' // 文件上传
+import { Table } from 'antd'; // 复杂表格
+import { Form } from 'antd'; // 复杂表单
+import { DatePicker } from 'antd'; // 日期选择器
+import { Upload } from 'antd'; // 文件上传
 // ... 复杂业务组件
 ```
 
 #### 3. Radix UI (无障碍组件) ⭐⭐
+
 ```typescript
 // ✅ 无障碍组件 - 使用Radix UI
-import { AlertDialog } from '@radix-ui/react-alert-dialog'
-import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
+import { AlertDialog } from '@radix-ui/react-alert-dialog';
+import { DropdownMenu } from '@radix-ui/react-dropdown-menu';
 // ... 无障碍组件
 ```
 
 ### 🚫 禁止自定义的组件类型
 
 #### 基础UI组件 (必须使用shadcn/ui)
+
 - 按钮、输入框、选择器、对话框、提示框
 - 卡片、标签、头像、分割线、进度条
 - 弹出框、工具提示、下拉菜单、上下文菜单
 - 标签页、手风琴、折叠面板、轮播图
 
 #### 复杂业务组件 (必须使用Ant Design)
+
 - 表格、表单、日期选择器、时间选择器
 - 文件上传、树形控件、级联选择器
 - 步骤条、时间轴、统计数值、描述列表
@@ -126,12 +136,14 @@ import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
 ### ✅ 允许自定义的组件类型
 
 #### 业务特定组件
+
 - 聊天消息组件
 - 智能体卡片组件
 - CAD分析器组件
 - 图像编辑器组件
 
 #### 复合组件
+
 - 页面布局组件
 - 数据展示组件
 - 业务流程组件
@@ -141,6 +153,7 @@ import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
 ## 📊 代码质量规范
 
 ### 质量指标要求
+
 - **自定义代码占比**: < 20%
 - **单元测试覆盖率**: ≥ 80%
 - **集成测试覆盖率**: ≥ 60%
@@ -149,6 +162,7 @@ import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
 - **圈复杂度**: < 10
 
 ### 代码规范要求
+
 ```typescript
 // ✅ 正确的代码风格
 export interface UserProps {
@@ -180,6 +194,7 @@ export function BadComponent(props: any) { // 禁止any类型
 ```
 
 ### 错误处理规范
+
 ```typescript
 // ✅ 统一错误处理
 export class ApiError extends Error {
@@ -188,17 +203,17 @@ export class ApiError extends Error {
     message: string,
     public statusCode: number = 500
   ) {
-    super(message)
-    this.name = 'ApiError'
+    super(message);
+    this.name = 'ApiError';
   }
 }
 
 // ✅ 错误处理中间件
 export function errorHandler(error: Error) {
   if (error instanceof ApiError) {
-    return { code: error.code, message: error.message }
+    return { code: error.code, message: error.message };
   }
-  return { code: 'UNKNOWN_ERROR', message: '未知错误' }
+  return { code: 'UNKNOWN_ERROR', message: '未知错误' };
 }
 ```
 
@@ -207,11 +222,13 @@ export function errorHandler(error: Error) {
 ## 🧪 测试规范
 
 ### 测试覆盖率要求
+
 - **单元测试覆盖率**: ≥ 80%
 - **集成测试覆盖率**: ≥ 60%
 - **关键业务逻辑覆盖率**: ≥ 90%
 
 ### 测试命令
+
 ```bash
 # 运行所有测试
 npm test
@@ -227,6 +244,7 @@ npm run test:coverage
 ```
 
 ### 测试示例
+
 ```typescript
 // ✅ 组件测试示例
 import { render, screen } from '@testing-library/react'
@@ -235,9 +253,9 @@ import { UserCard } from '@/components/UserCard'
 describe('UserCard', () => {
   it('should render user information correctly', () => {
     const user = { id: '1', name: 'John Doe', email: 'john@example.com' }
-    
+
     render(<UserCard {...user} />)
-    
+
     expect(screen.getByText('John Doe')).toBeInTheDocument()
     expect(screen.getByText('john@example.com')).toBeInTheDocument()
   })
@@ -249,20 +267,22 @@ describe('UserCard', () => {
 ## 🛡️ 安全规范
 
 ### 输入验证
+
 ```typescript
 // ✅ 使用Zod进行严格验证
 const UserSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
-  age: z.number().min(0).max(150)
-})
+  age: z.number().min(0).max(150),
+});
 
 export function validateUser(data: unknown) {
-  return UserSchema.parse(data)
+  return UserSchema.parse(data);
 }
 ```
 
 ### 敏感信息管理
+
 - **API密钥**: 必须放在.env文件中
 - **密码**: 必须加密存储
 - **用户数据**: 必须进行权限验证
@@ -272,21 +292,23 @@ export function validateUser(data: unknown) {
 ## ⚡ 性能规范
 
 ### 前端性能要求
+
 - **首屏加载时间**: < 3秒
 - **API响应时间**: < 500ms
 - **内存使用率**: < 80%
 - **包体积增长**: < 10%
 
 ### 性能优化策略
+
 ```typescript
 // ✅ 代码分割
-const LazyComponent = lazy(() => import('./LazyComponent'))
+const LazyComponent = lazy(() => import('./LazyComponent'));
 
 // ✅ 记忆化
-const MemoizedComponent = memo(Component)
+const MemoizedComponent = memo(Component);
 
 // ✅ 虚拟滚动
-import { FixedSizeList as List } from 'react-window'
+import { FixedSizeList as List } from 'react-window';
 ```
 
 ---
@@ -294,30 +316,35 @@ import { FixedSizeList as List } from 'react-window'
 ## 🔄 开发工作流程
 
 ### 1. 需求分析阶段
+
 - [ ] 明确功能需求
 - [ ] 识别技术难点
 - [ ] 评估现有组件库支持
 - [ ] 确定自定义代码范围
 
 ### 2. 设计阶段
+
 - [ ] UI设计符合设计系统
 - [ ] 组件设计基于成熟库
 - [ ] API设计遵循RESTful规范
 - [ ] 数据库设计规范化
 
 ### 3. 开发阶段
+
 - [ ] 环境配置正确
 - [ ] 使用成熟组件库
 - [ ] 自定义代码占比 < 20%
 - [ ] 单元测试覆盖 > 80%
 
 ### 4. 测试阶段
+
 - [ ] 单元测试覆盖率 > 80%
 - [ ] 集成测试覆盖率 > 60%
 - [ ] 端到端测试通过
 - [ ] 性能测试通过
 
 ### 5. 部署阶段
+
 - [ ] 构建成功
 - [ ] 环境配置正确
 - [ ] 健康检查通过
@@ -328,6 +355,7 @@ import { FixedSizeList as List } from 'react-window'
 ## 🔍 规则检查机制
 
 ### 自动化检查命令
+
 ```bash
 # 代码质量检查
 npm run check-code
@@ -346,6 +374,7 @@ npm run check:rules
 ```
 
 ### 开发前检查清单
+
 - [ ] 阅读相关规则文档
 - [ ] 检查现有组件库支持
 - [ ] 评估自定义代码占比
@@ -353,6 +382,7 @@ npm run check:rules
 - [ ] 验证安全规范遵循
 
 ### 代码提交前检查
+
 - [ ] 代码质量检查通过
 - [ ] 测试覆盖率达标
 - [ ] 规则一致性验证
@@ -364,6 +394,7 @@ npm run check:rules
 ## 📚 规则引用指南
 
 ### 开发过程中必须引用
+
 1. **组件开发前**: 引用[组件库使用规范](#组件库使用规范)
 2. **API开发前**: 引用[代码质量规范](#代码质量规范)
 3. **测试编写前**: 引用[测试规范](#测试规范)
@@ -371,6 +402,7 @@ npm run check:rules
 5. **安全检查前**: 引用[安全规范](#安全规范)
 
 ### 规则更新流程
+
 1. 规则变更必须经过团队评审
 2. 更新规则文档
 3. 通知所有开发人员
@@ -392,18 +424,21 @@ npm run check:rules
 ## 🎯 项目目标
 
 ### 短期目标 (3个月)
+
 - 完成核心功能开发
 - 达到生产级别质量
 - 完成性能优化
 - 建立完整的测试体系
 
 ### 中期目标 (6个月)
+
 - 支持更多智能体类型
 - 实现高级分析功能
 - 优化用户体验
 - 建立监控体系
 
 ### 长期目标 (1年)
+
 - 成为行业标杆产品
 - 支持大规模部署
 - 建立生态体系

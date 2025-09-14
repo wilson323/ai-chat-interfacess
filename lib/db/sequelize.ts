@@ -1,4 +1,4 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize, Op } from 'sequelize';
 import { Client } from 'pg';
 import pg from 'pg';
 import { appConfig, validateConfig } from '@/lib/config';
@@ -37,7 +37,9 @@ async function ensureDatabaseExists() {
   });
   try {
     await client.connect();
-    const res = await client.query(`SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'`);
+    const res = await client.query(
+      `SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'`
+    );
     if (res.rowCount === 0) {
       await client.query(`CREATE DATABASE "${DB_NAME}"`);
       console.log(`数据库 ${DB_NAME} 已自动创建`);
@@ -56,7 +58,7 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   dialect: 'postgres',
   dialectModule: pg,
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
-  
+
   // 使用统一配置的连接池设置
   pool: {
     max: dbConfig.pool.max,
@@ -66,7 +68,7 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
     evict: 1000, // 清理间隔
     handleDisconnects: true, // 处理断开连接
   },
-  
+
   // 添加重试机制
   retry: {
     max: 3, // 最大重试次数
@@ -86,13 +88,13 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
       /SequelizeHostNotFoundError/,
       /SequelizeHostNotReachableError/,
       /SequelizeInvalidConnectionError/,
-      /SequelizeConnectionTimedOutError/
-    ]
+      /SequelizeConnectionTimedOutError/,
+    ],
   },
-  
+
   // 性能监控
   benchmark: true,
-  
+
   // 查询优化
   define: {
     freezeTableName: true,
@@ -100,13 +102,13 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
     timestamps: true,
     paranoid: false, // 软删除
   },
-  
+
   // 查询优化配置
   query: {
     raw: false,
     nest: true,
-    plain: false
-  }
+    plain: false,
+  },
 });
 
 // 初始化数据的函数，避免循环依赖
@@ -141,8 +143,8 @@ async function initializeDefaultData() {
 }
 
 export const sequelizeInitPromise = (async () => {
-  await ensureDatabaseExists();
   try {
+    await ensureDatabaseExists();
     await sequelize.authenticate();
     console.log('数据库连接成功');
 
@@ -153,15 +155,19 @@ export const sequelizeInitPromise = (async () => {
     // 延迟初始化数据，避免循环依赖
     await initializeDefaultData();
   } catch (err) {
-    console.error('数据库连接失败:', err);
-    console.error('连接信息:', {
+    console.warn('数据库连接失败，启用内存存储模式:', err.message);
+    console.warn('连接信息:', {
       database: DB_NAME,
       user: DB_USER,
       host: DB_HOST,
       port: DB_PORT,
     });
-    throw err;
+    console.log('🔄 应用将在内存存储模式下运行，数据不会持久化');
+
+    // 不抛出错误，允许应用继续运行
+    return { fallback: true };
   }
 })();
 
 export default sequelize;
+export { Op };

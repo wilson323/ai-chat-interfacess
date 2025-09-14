@@ -64,33 +64,33 @@ graph TB
         C[Context Providers]
         D[Custom Hooks]
     end
-    
+
     subgraph "API层"
         E[Next.js API Routes]
         F[智能体管理API]
         G[文件处理API]
         H[语音识别API]
     end
-    
+
     subgraph "服务层"
         I[智能体服务]
         J[文件存储服务]
         K[语音处理服务]
         L[历史管理服务]
     end
-    
+
     subgraph "数据层"
         M[PostgreSQL]
         N[Sequelize ORM]
         O[本地存储]
     end
-    
+
     subgraph "外部服务"
         P[FastGPT API]
         Q[阿里云千问]
         R[语音识别服务]
     end
-    
+
     A --> E
     B --> C
     C --> D
@@ -111,18 +111,21 @@ graph TB
 ### 2. 核心组件分析
 
 #### 智能体系统
+
 - **类型**: FastGPT、CAD分析器、图像编辑器
 - **配置**: 数据库存储，支持动态配置
 - **切换**: 实时切换，支持全局变量管理
 - **状态**: Context管理，持久化存储
 
 #### 对话系统
+
 - **消息流**: 流式响应，支持中断
 - **历史管理**: 分页加载，搜索过滤
 - **文件支持**: 图片、CAD图纸上传
 - **语音交互**: 录音、转文字、TTS播放
 
 #### 文件处理
+
 - **图片编辑**: 画笔工具、坐标标记
 - **CAD分析**: 设备识别、报告生成
 - **存储策略**: 本地存储 + 数据库记录
@@ -137,7 +140,7 @@ sequenceDiagram
     participant API as API Routes
     participant DB as Database
     participant E as 外部服务
-    
+
     U->>C: 发送消息
     C->>A: 获取智能体配置
     A->>API: 调用对话API

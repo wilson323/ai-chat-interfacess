@@ -1,9 +1,9 @@
 /**
  * 消息存储模块
  */
-import type { Message } from "@/types/message"
-import type { StorageProvider, ChatIndexItem } from "../../shared/types"
-import { MESSAGES_PREFIX, CHAT_INDEX_KEY } from "../../shared/constants"
+import type { Message } from '@/types/message';
+import type { StorageProvider, ChatIndexItem } from '../../shared/types';
+import { MESSAGES_PREFIX, CHAT_INDEX_KEY } from '../../shared/constants';
 import {
   getStorageMeta,
   saveStorageMeta,
@@ -14,7 +14,7 @@ import {
   safeJSONStringify,
   formatTitleText,
   formatPreviewText,
-} from "../../shared/storage-utils"
+} from '../../shared/storage-utils';
 
 /**
  * 将消息保存到存储
@@ -22,46 +22,48 @@ import {
 export function saveMessagesToStorage(
   chatId: string,
   messages: Message[],
-  provider: StorageProvider = defaultStorageProvider,
+  provider: StorageProvider = defaultStorageProvider
 ): boolean {
   try {
     if (!messages?.length) {
-      console.warn(`No messages to save for chat ID: ${chatId}`)
-      return false
+      console.warn(`No messages to save for chat ID: ${chatId}`);
+      return false;
     }
 
-    const meta = getStorageMeta(provider)
-    const compressedMessages = compressMessages(messages)
-    const messagesJson = safeJSONStringify(compressedMessages)
-    
+    const meta = getStorageMeta(provider);
+    const compressedMessages = compressMessages(messages);
+    const messagesJson = safeJSONStringify(compressedMessages);
+
     if (!messagesJson) {
-      console.error("Failed to stringify messages")
-      return false
+      console.error('Failed to stringify messages');
+      return false;
     }
 
-    const size = estimateSize(messagesJson)
-    const chatKey = `${MESSAGES_PREFIX}${chatId}`
-    const oldSize = meta.chatSizes[chatId] || 0
+    const size = estimateSize(messagesJson);
+    const chatKey = `${MESSAGES_PREFIX}${chatId}`;
+    const oldSize = meta.chatSizes[chatId] || 0;
 
     // 更新元数据
-    meta.totalSize = meta.totalSize - oldSize + size
-    meta.chatSizes[chatId] = size
-    meta.chatLastAccessed[chatId] = Date.now()
+    meta.totalSize = meta.totalSize - oldSize + size;
+    meta.chatSizes[chatId] = size;
+    meta.chatLastAccessed[chatId] = Date.now();
 
     if (!meta.chatIds.includes(chatId)) {
-      meta.chatIds.push(chatId)
+      meta.chatIds.push(chatId);
     }
 
     // 保存消息和更新索引
-    provider.setItem(chatKey, messagesJson)
-    updateChatIndex(chatId, compressedMessages, provider)
-    saveStorageMeta(meta, provider)
+    provider.setItem(chatKey, messagesJson);
+    updateChatIndex(chatId, compressedMessages, provider);
+    saveStorageMeta(meta, provider);
 
-    console.log(`Successfully saved ${messages.length} messages for chat ID: ${chatId}`)
-    return true
+    console.log(
+      `Successfully saved ${messages.length} messages for chat ID: ${chatId}`
+    );
+    return true;
   } catch (error) {
-    console.error(`Failed to save messages for chat ID ${chatId}:`, error)
-    return false
+    console.error(`Failed to save messages for chat ID ${chatId}:`, error);
+    return false;
   }
 }
 
@@ -70,34 +72,36 @@ export function saveMessagesToStorage(
  */
 export function loadMessagesFromStorage(
   chatId: string,
-  provider: StorageProvider = defaultStorageProvider,
+  provider: StorageProvider = defaultStorageProvider
 ): Message[] | null {
   try {
-    const chatKey = `${MESSAGES_PREFIX}${chatId}`
-    const messagesJson = provider.getItem(chatKey)
+    const chatKey = `${MESSAGES_PREFIX}${chatId}`;
+    const messagesJson = provider.getItem(chatKey);
 
     if (!messagesJson) {
-      console.log(`No messages found for chat ID: ${chatId}`)
-      return null
+      console.log(`No messages found for chat ID: ${chatId}`);
+      return null;
     }
 
     // 更新访问时间
-    const meta = getStorageMeta(provider)
-    meta.chatLastAccessed[chatId] = Date.now()
-    saveStorageMeta(meta, provider)
+    const meta = getStorageMeta(provider);
+    meta.chatLastAccessed[chatId] = Date.now();
+    saveStorageMeta(meta, provider);
 
     // 解析和处理消息
-    const messages = safeJSONParse<Message[]>(messagesJson, [])
+    const messages = safeJSONParse<Message[]>(messagesJson, []);
     const processedMessages = messages.map(msg => ({
       ...msg,
       timestamp: new Date(msg.timestamp),
-    }))
+    }));
 
-    console.log(`Successfully loaded ${processedMessages.length} messages for chat ID: ${chatId}`)
-    return processedMessages
+    console.log(
+      `Successfully loaded ${processedMessages.length} messages for chat ID: ${chatId}`
+    );
+    return processedMessages;
   } catch (error) {
-    console.error(`Failed to load messages for chat ID ${chatId}:`, error)
-    return null
+    console.error(`Failed to load messages for chat ID ${chatId}:`, error);
+    return null;
   }
 }
 
@@ -107,18 +111,24 @@ export function loadMessagesFromStorage(
 function updateChatIndex(
   chatId: string,
   messages: Message[],
-  provider: StorageProvider = defaultStorageProvider,
+  provider: StorageProvider = defaultStorageProvider
 ): void {
   try {
-    const indexJson = provider.getItem(CHAT_INDEX_KEY)
-    const index = safeJSONParse<Record<string, ChatIndexItem>>(indexJson, {})
+    const indexJson = provider.getItem(CHAT_INDEX_KEY);
+    const index = safeJSONParse<Record<string, ChatIndexItem>>(indexJson, {});
 
-    const firstUserMessage = messages.find(msg => msg.role === "user")
-    const lastMessage = messages[messages.length - 1]
+    const firstUserMessage = messages.find(msg => msg.role === 'user');
+    const lastMessage = messages[messages.length - 1];
 
-    const title = firstUserMessage ? formatTitleText(firstUserMessage.content) : "对话"
-    const preview = lastMessage ? formatPreviewText(lastMessage.content) : "内容"
-    const timestamp = lastMessage ? new Date(lastMessage.timestamp).getTime() : Date.now()
+    const title = firstUserMessage
+      ? formatTitleText(firstUserMessage.content)
+      : '对话';
+    const preview = lastMessage
+      ? formatPreviewText(lastMessage.content)
+      : '内容';
+    const timestamp = lastMessage
+      ? new Date(lastMessage.timestamp).getTime()
+      : Date.now();
 
     index[chatId] = {
       id: chatId,
@@ -127,15 +137,15 @@ function updateChatIndex(
       timestamp,
       agentId: messages[0]?.metadata?.agentId,
       messageCount: messages.length,
-    }
+    };
 
-    provider.setItem(CHAT_INDEX_KEY, JSON.stringify(index))
-    console.log(`Updated chat index for chat ID: ${chatId}`)
+    provider.setItem(CHAT_INDEX_KEY, JSON.stringify(index));
+    console.log(`Updated chat index for chat ID: ${chatId}`);
   } catch (error) {
-    console.error("Failed to update chat index:", error)
+    console.error('Failed to update chat index:', error);
   }
 }
 
 // 提供别名以保持兼容性
-export const loadMessagesFromLocalStorage = loadMessagesFromStorage
-export const saveMessagesToLocalStorage = saveMessagesToStorage 
+export const loadMessagesFromLocalStorage = loadMessagesFromStorage;
+export const saveMessagesToLocalStorage = saveMessagesToStorage;

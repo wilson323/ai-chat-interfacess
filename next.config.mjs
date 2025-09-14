@@ -10,10 +10,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  transpilePackages: [
-    'sequelize',
-    'pg-hstore',
-  ],
+  transpilePackages: ['sequelize', 'pg-hstore'],
   // 启用standalone模式以支持Docker部署
   output: 'standalone',
   // 禁用开发模式特性在生产环境中
@@ -23,6 +20,6 @@ const nextConfig = {
       optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
     }),
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

@@ -4,58 +4,61 @@
  */
 
 export interface SecurityIssue {
-  id: string
-  type: 'vulnerability' | 'warning' | 'info'
-  severity: 'critical' | 'high' | 'medium' | 'low'
-  title: string
-  description: string
-  file?: string
-  line?: number
-  code?: string
-  recommendation: string
-  cwe?: string
-  owasp?: string
+  id: string;
+  type: 'vulnerability' | 'warning' | 'info';
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  title: string;
+  description: string;
+  file?: string;
+  line?: number;
+  code?: string;
+  recommendation: string;
+  cwe?: string;
+  owasp?: string;
 }
 
 export interface SecurityScanResult {
-  timestamp: number
-  totalIssues: number
-  criticalIssues: number
-  highIssues: number
-  mediumIssues: number
-  lowIssues: number
-  issues: SecurityIssue[]
+  timestamp: number;
+  totalIssues: number;
+  criticalIssues: number;
+  highIssues: number;
+  mediumIssues: number;
+  lowIssues: number;
+  issues: SecurityIssue[];
   summary: {
-    score: number
-    grade: 'A' | 'B' | 'C' | 'D' | 'F'
-    recommendations: string[]
-  }
+    score: number;
+    grade: 'A' | 'B' | 'C' | 'D' | 'F';
+    recommendations: string[];
+  };
 }
 
 class SecurityScanner {
-  private issues: SecurityIssue[] = []
+  private issues: SecurityIssue[] = [];
 
   /**
    * 扫描代码中的安全漏洞
    */
-  public async scanCode(code: string, filePath: string): Promise<SecurityIssue[]> {
-    this.issues = []
-    
+  public async scanCode(
+    code: string,
+    filePath: string
+  ): Promise<SecurityIssue[]> {
+    this.issues = [];
+
     // 扫描各种安全漏洞
-    this.scanSQLInjection(code, filePath)
-    this.scanXSS(code, filePath)
-    this.scanCSRF(code, filePath)
-    this.scanInsecureDirectObjectReference(code, filePath)
-    this.scanSecurityMisconfiguration(code, filePath)
-    this.scanSensitiveDataExposure(code, filePath)
-    this.scanMissingFunctionLevelAccessControl(code, filePath)
-    this.scanCrossSiteScripting(code, filePath)
-    this.scanUsingComponentsWithKnownVulnerabilities(code, filePath)
-    this.scanUnderprotectedAPIs(code, filePath)
-    this.scanInsufficientLogging(code, filePath)
-    this.scanServerSideRequestForgery(code, filePath)
-    
-    return this.issues
+    this.scanSQLInjection(code, filePath);
+    this.scanXSS(code, filePath);
+    this.scanCSRF(code, filePath);
+    this.scanInsecureDirectObjectReference(code, filePath);
+    this.scanSecurityMisconfiguration(code, filePath);
+    this.scanSensitiveDataExposure(code, filePath);
+    this.scanMissingFunctionLevelAccessControl(code, filePath);
+    this.scanCrossSiteScripting(code, filePath);
+    this.scanUsingComponentsWithKnownVulnerabilities(code, filePath);
+    this.scanUnderprotectedAPIs(code, filePath);
+    this.scanInsufficientLogging(code, filePath);
+    this.scanServerSideRequestForgery(code, filePath);
+
+    return this.issues;
   }
 
   /**
@@ -69,11 +72,11 @@ class SecurityScanner {
       /SELECT.*FROM.*WHERE.*\+/g,
       /INSERT.*INTO.*VALUES.*\+/g,
       /UPDATE.*SET.*WHERE.*\+/g,
-      /DELETE.*FROM.*WHERE.*\+/g
-    ]
+      /DELETE.*FROM.*WHERE.*\+/g,
+    ];
 
     sqlPatterns.forEach((pattern, index) => {
-      const matches = code.match(pattern)
+      const matches = code.match(pattern);
       if (matches) {
         matches.forEach(match => {
           this.addIssue({
@@ -84,13 +87,14 @@ class SecurityScanner {
             description: '发现可能的SQL注入漏洞，使用了字符串拼接构建SQL查询',
             file: filePath,
             code: match,
-            recommendation: '使用参数化查询或预编译语句，避免直接拼接用户输入到SQL语句中',
+            recommendation:
+              '使用参数化查询或预编译语句，避免直接拼接用户输入到SQL语句中',
             cwe: 'CWE-89',
-            owasp: 'A03:2021 – Injection'
-          })
-        })
+            owasp: 'A03:2021 – Injection',
+          });
+        });
       }
-    })
+    });
   }
 
   /**
@@ -104,11 +108,11 @@ class SecurityScanner {
       /eval\s*\(/g,
       /Function\s*\(/g,
       /setTimeout\s*\(\s*['"`]/g,
-      /setInterval\s*\(\s*['"`]/g
-    ]
+      /setInterval\s*\(\s*['"`]/g,
+    ];
 
     xssPatterns.forEach((pattern, index) => {
-      const matches = code.match(pattern)
+      const matches = code.match(pattern);
       if (matches) {
         matches.forEach(match => {
           this.addIssue({
@@ -119,13 +123,14 @@ class SecurityScanner {
             description: '发现可能的XSS漏洞，直接操作DOM或执行动态代码',
             file: filePath,
             code: match,
-            recommendation: '对用户输入进行适当的转义和验证，使用安全的DOM操作方法',
+            recommendation:
+              '对用户输入进行适当的转义和验证，使用安全的DOM操作方法',
             cwe: 'CWE-79',
-            owasp: 'A03:2021 – Injection'
-          })
-        })
+            owasp: 'A03:2021 – Injection',
+          });
+        });
       }
-    })
+    });
   }
 
   /**
@@ -135,14 +140,14 @@ class SecurityScanner {
     const csrfPatterns = [
       /fetch\s*\(\s*['"`][^'"`]*['"`]\s*,\s*\{[^}]*method\s*:\s*['"`](POST|PUT|DELETE|PATCH)['"`]/g,
       /axios\s*\.\s*(post|put|delete|patch)/g,
-      /XMLHttpRequest.*open\s*\(\s*['"`](POST|PUT|DELETE|PATCH)['"`]/g
-    ]
+      /XMLHttpRequest.*open\s*\(\s*['"`](POST|PUT|DELETE|PATCH)['"`]/g,
+    ];
 
-    const hasCSRFToken = /csrf|xsrf|_token|authenticity_token/i.test(code)
-    
+    const hasCSRFToken = /csrf|xsrf|_token|authenticity_token/i.test(code);
+
     if (!hasCSRFToken) {
       csrfPatterns.forEach((pattern, index) => {
-        const matches = code.match(pattern)
+        const matches = code.match(pattern);
         if (matches) {
           matches.forEach(match => {
             this.addIssue({
@@ -155,26 +160,29 @@ class SecurityScanner {
               code: match,
               recommendation: '实施CSRF令牌验证，确保请求来自合法来源',
               cwe: 'CWE-352',
-              owasp: 'A01:2021 – Broken Access Control'
-            })
-          })
+              owasp: 'A01:2021 – Broken Access Control',
+            });
+          });
         }
-      })
+      });
     }
   }
 
   /**
    * 扫描不安全的直接对象引用
    */
-  private scanInsecureDirectObjectReference(code: string, filePath: string): void {
+  private scanInsecureDirectObjectReference(
+    code: string,
+    filePath: string
+  ): void {
     const patterns = [
       /\/api\/[^\/]+\/\$\{/g,
       /\/api\/[^\/]+\/\+/g,
-      /params\.\w+\s*:\s*['"`][^'"`]*\$\{/g
-    ]
+      /params\.\w+\s*:\s*['"`][^'"`]*\$\{/g,
+    ];
 
     patterns.forEach((pattern, index) => {
-      const matches = code.match(pattern)
+      const matches = code.match(pattern);
       if (matches) {
         matches.forEach(match => {
           this.addIssue({
@@ -185,13 +193,14 @@ class SecurityScanner {
             description: '发现可能的IDOR漏洞，直接使用用户输入作为资源标识符',
             file: filePath,
             code: match,
-            recommendation: '实施适当的访问控制，验证用户是否有权访问请求的资源',
+            recommendation:
+              '实施适当的访问控制，验证用户是否有权访问请求的资源',
             cwe: 'CWE-639',
-            owasp: 'A01:2021 – Broken Access Control'
-          })
-        })
+            owasp: 'A01:2021 – Broken Access Control',
+          });
+        });
       }
-    })
+    });
   }
 
   /**
@@ -203,11 +212,11 @@ class SecurityScanner {
       /cors\s*:\s*\{\s*origin\s*:\s*['"`]\*['"`]/g,
       /helmet\s*\(\s*\)/g,
       /express\.static\s*\(/g,
-      /process\.env\.NODE_ENV\s*!==\s*['"`]production['"`]/g
-    ]
+      /process\.env\.NODE_ENV\s*!==\s*['"`]production['"`]/g,
+    ];
 
     patterns.forEach((pattern, index) => {
-      const matches = code.match(pattern)
+      const matches = code.match(pattern);
       if (matches) {
         matches.forEach(match => {
           this.addIssue({
@@ -220,11 +229,11 @@ class SecurityScanner {
             code: match,
             recommendation: '检查安全配置，确保在生产环境中使用适当的安全设置',
             cwe: 'CWE-16',
-            owasp: 'A05:2021 – Security Misconfiguration'
-          })
-        })
+            owasp: 'A05:2021 – Security Misconfiguration',
+          });
+        });
       }
-    })
+    });
   }
 
   /**
@@ -237,11 +246,11 @@ class SecurityScanner {
       /secret\s*:\s*['"`][^'"`]*['"`]/g,
       /token\s*:\s*['"`][^'"`]*['"`]/g,
       /console\.log\s*\(\s*[^)]*password[^)]*\)/gi,
-      /console\.log\s*\(\s*[^)]*api[_-]?key[^)]*\)/gi
-    ]
+      /console\.log\s*\(\s*[^)]*api[_-]?key[^)]*\)/gi,
+    ];
 
     patterns.forEach((pattern, index) => {
-      const matches = code.match(pattern)
+      const matches = code.match(pattern);
       if (matches) {
         matches.forEach(match => {
           this.addIssue({
@@ -254,27 +263,31 @@ class SecurityScanner {
             code: match,
             recommendation: '使用环境变量存储敏感信息，避免在代码中硬编码',
             cwe: 'CWE-798',
-            owasp: 'A02:2021 – Cryptographic Failures'
-          })
-        })
+            owasp: 'A02:2021 – Cryptographic Failures',
+          });
+        });
       }
-    })
+    });
   }
 
   /**
    * 扫描缺少函数级访问控制
    */
-  private scanMissingFunctionLevelAccessControl(code: string, filePath: string): void {
+  private scanMissingFunctionLevelAccessControl(
+    code: string,
+    filePath: string
+  ): void {
     const patterns = [
       /export\s+async\s+function\s+\w+\s*\([^)]*req[^)]*\)/g,
-      /app\.(get|post|put|delete|patch)\s*\(/g
-    ]
+      /app\.(get|post|put|delete|patch)\s*\(/g,
+    ];
 
-    const hasAuthCheck = /auth|authenticate|authorize|middleware|jwt|session/i.test(code)
-    
+    const hasAuthCheck =
+      /auth|authenticate|authorize|middleware|jwt|session/i.test(code);
+
     if (!hasAuthCheck) {
       patterns.forEach((pattern, index) => {
-        const matches = code.match(pattern)
+        const matches = code.match(pattern);
         if (matches) {
           matches.forEach(match => {
             this.addIssue({
@@ -287,11 +300,11 @@ class SecurityScanner {
               code: match,
               recommendation: '实施适当的身份验证和授权中间件',
               cwe: 'CWE-285',
-              owasp: 'A01:2021 – Broken Access Control'
-            })
-          })
+              owasp: 'A01:2021 – Broken Access Control',
+            });
+          });
         }
-      })
+      });
     }
   }
 
@@ -305,13 +318,16 @@ class SecurityScanner {
   /**
    * 扫描使用已知漏洞的组件
    */
-  private scanUsingComponentsWithKnownVulnerabilities(code: string, filePath: string): void {
+  private scanUsingComponentsWithKnownVulnerabilities(
+    code: string,
+    filePath: string
+  ): void {
     const vulnerablePackages = [
       'lodash@4.17.0',
       'jquery@1.12.0',
       'moment@2.24.0',
-      'express@4.16.0'
-    ]
+      'express@4.16.0',
+    ];
 
     vulnerablePackages.forEach((pkg, index) => {
       if (code.includes(pkg)) {
@@ -324,25 +340,20 @@ class SecurityScanner {
           file: filePath,
           recommendation: '更新到最新版本或使用替代方案',
           cwe: 'CWE-1104',
-          owasp: 'A06:2021 – Vulnerable and Outdated Components'
-        })
+          owasp: 'A06:2021 – Vulnerable and Outdated Components',
+        });
       }
-    })
+    });
   }
 
   /**
    * 扫描保护不足的API
    */
   private scanUnderprotectedAPIs(code: string, filePath: string): void {
-    const patterns = [
-      /rate[_-]?limit/gi,
-      /throttle/gi,
-      /helmet/gi,
-      /cors/gi
-    ]
+    const patterns = [/rate[_-]?limit/gi, /throttle/gi, /helmet/gi, /cors/gi];
 
-    const hasProtection = patterns.some(pattern => pattern.test(code))
-    
+    const hasProtection = patterns.some(pattern => pattern.test(code));
+
     if (!hasProtection && /app\.(get|post|put|delete|patch)/.test(code)) {
       this.addIssue({
         id: 'underprotected-api',
@@ -353,8 +364,8 @@ class SecurityScanner {
         file: filePath,
         recommendation: '实施速率限制、CORS、安全头等保护措施',
         cwe: 'CWE-770',
-        owasp: 'A05:2021 – Security Misconfiguration'
-      })
+        owasp: 'A05:2021 – Security Misconfiguration',
+      });
     }
   }
 
@@ -362,8 +373,10 @@ class SecurityScanner {
    * 扫描日志记录不足
    */
   private scanInsufficientLogging(code: string, filePath: string): void {
-    const hasLogging = /console\.(log|error|warn)|logger|winston|pino/i.test(code)
-    
+    const hasLogging = /console\.(log|error|warn)|logger|winston|pino/i.test(
+      code
+    );
+
     if (!hasLogging && /app\.(get|post|put|delete|patch)/.test(code)) {
       this.addIssue({
         id: 'insufficient-logging',
@@ -372,10 +385,11 @@ class SecurityScanner {
         title: '日志记录不足',
         description: 'API端点缺少适当的日志记录',
         file: filePath,
-        recommendation: '实施适当的日志记录，包括访问日志、错误日志和安全事件日志',
+        recommendation:
+          '实施适当的日志记录，包括访问日志、错误日志和安全事件日志',
         cwe: 'CWE-778',
-        owasp: 'A09:2021 – Security Logging and Monitoring Failures'
-      })
+        owasp: 'A09:2021 – Security Logging and Monitoring Failures',
+      });
     }
   }
 
@@ -386,11 +400,11 @@ class SecurityScanner {
     const patterns = [
       /fetch\s*\(\s*[^)]*req\.(query|params|body)/g,
       /axios\s*\.\s*(get|post|put|delete)\s*\(\s*[^)]*req\.(query|params|body)/g,
-      /http\.(get|post|put|delete)/g
-    ]
+      /http\.(get|post|put|delete)/g,
+    ];
 
     patterns.forEach((pattern, index) => {
-      const matches = code.match(pattern)
+      const matches = code.match(pattern);
       if (matches) {
         matches.forEach(match => {
           this.addIssue({
@@ -403,35 +417,55 @@ class SecurityScanner {
             code: match,
             recommendation: '验证和过滤用户输入，使用白名单限制允许的URL',
             cwe: 'CWE-918',
-            owasp: 'A10:2021 – Server-Side Request Forgery'
-          })
-        })
+            owasp: 'A10:2021 – Server-Side Request Forgery',
+          });
+        });
       }
-    })
+    });
   }
 
   /**
    * 添加安全问题
    */
   private addIssue(issue: SecurityIssue): void {
-    this.issues.push(issue)
+    this.issues.push(issue);
   }
 
   /**
    * 生成安全扫描报告
    */
   public generateReport(): SecurityScanResult {
-    const criticalIssues = this.issues.filter(i => i.severity === 'critical').length
-    const highIssues = this.issues.filter(i => i.severity === 'high').length
-    const mediumIssues = this.issues.filter(i => i.severity === 'medium').length
-    const lowIssues = this.issues.filter(i => i.severity === 'low').length
+    const criticalIssues = this.issues.filter(
+      i => i.severity === 'critical'
+    ).length;
+    const highIssues = this.issues.filter(i => i.severity === 'high').length;
+    const mediumIssues = this.issues.filter(
+      i => i.severity === 'medium'
+    ).length;
+    const lowIssues = this.issues.filter(i => i.severity === 'low').length;
 
     // 计算安全评分
-    const score = Math.max(0, 100 - (criticalIssues * 20 + highIssues * 10 + mediumIssues * 5 + lowIssues * 2))
-    const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F'
+    const score = Math.max(
+      0,
+      100 -
+        (criticalIssues * 20 +
+          highIssues * 10 +
+          mediumIssues * 5 +
+          lowIssues * 2)
+    );
+    const grade =
+      score >= 90
+        ? 'A'
+        : score >= 80
+          ? 'B'
+          : score >= 70
+            ? 'C'
+            : score >= 60
+              ? 'D'
+              : 'F';
 
     // 生成建议
-    const recommendations = this.generateRecommendations()
+    const recommendations = this.generateRecommendations();
 
     return {
       timestamp: Date.now(),
@@ -444,47 +478,51 @@ class SecurityScanner {
       summary: {
         score,
         grade,
-        recommendations
-      }
-    }
+        recommendations,
+      },
+    };
   }
 
   /**
    * 生成修复建议
    */
   private generateRecommendations(): string[] {
-    const recommendations: string[] = []
-    
-    if (this.issues.some(i => i.type === 'vulnerability' && i.severity === 'critical')) {
-      recommendations.push('立即修复所有关键漏洞')
-    }
-    
-    if (this.issues.some(i => i.title.includes('SQL注入'))) {
-      recommendations.push('实施参数化查询防止SQL注入')
-    }
-    
-    if (this.issues.some(i => i.title.includes('XSS'))) {
-      recommendations.push('对用户输入进行适当的转义和验证')
-    }
-    
-    if (this.issues.some(i => i.title.includes('CSRF'))) {
-      recommendations.push('实施CSRF令牌验证')
-    }
-    
-    if (this.issues.some(i => i.title.includes('敏感数据'))) {
-      recommendations.push('使用环境变量存储敏感信息')
-    }
-    
-    if (this.issues.some(i => i.title.includes('身份验证'))) {
-      recommendations.push('实施适当的身份验证和授权机制')
-    }
-    
-    if (this.issues.some(i => i.title.includes('日志记录'))) {
-      recommendations.push('实施全面的安全日志记录')
+    const recommendations: string[] = [];
+
+    if (
+      this.issues.some(
+        i => i.type === 'vulnerability' && i.severity === 'critical'
+      )
+    ) {
+      recommendations.push('立即修复所有关键漏洞');
     }
 
-    return recommendations
+    if (this.issues.some(i => i.title.includes('SQL注入'))) {
+      recommendations.push('实施参数化查询防止SQL注入');
+    }
+
+    if (this.issues.some(i => i.title.includes('XSS'))) {
+      recommendations.push('对用户输入进行适当的转义和验证');
+    }
+
+    if (this.issues.some(i => i.title.includes('CSRF'))) {
+      recommendations.push('实施CSRF令牌验证');
+    }
+
+    if (this.issues.some(i => i.title.includes('敏感数据'))) {
+      recommendations.push('使用环境变量存储敏感信息');
+    }
+
+    if (this.issues.some(i => i.title.includes('身份验证'))) {
+      recommendations.push('实施适当的身份验证和授权机制');
+    }
+
+    if (this.issues.some(i => i.title.includes('日志记录'))) {
+      recommendations.push('实施全面的安全日志记录');
+    }
+
+    return recommendations;
   }
 }
 
-export { SecurityScanner }
+export { SecurityScanner };

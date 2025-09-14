@@ -26,4 +26,4 @@ export default {
     memory: '内存占用',
   },
   // ...其他模块
-} 
+};

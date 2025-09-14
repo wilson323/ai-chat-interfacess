@@ -1,62 +1,74 @@
-import type { Message } from "@/types/message"
-import { MessageType } from "@/types/message"
-import { generateUniqueId } from "../../shared/storage-utils"
+import type { Message } from '@/types/message';
+import { MessageType } from '@/types/message';
+import { generateUniqueId } from '../../shared/storage-utils';
 
 /**
  * 创建用户消息
  */
-export function createUserMessage(content: string, metadata?: Record<string, any>): Message {
+export function createUserMessage(
+  content: string,
+  metadata?: Record<string, any>
+): Message {
   return {
     id: generateUniqueId(),
     type: MessageType.Text,
-    role: "user",
+    role: 'user',
     content,
     timestamp: new Date(),
     metadata,
-  }
+  };
 }
 
 /**
  * 创建系统消息
  */
-export function createSystemMessage(content: string, metadata?: Record<string, any>): Message {
+export function createSystemMessage(
+  content: string,
+  metadata?: Record<string, any>
+): Message {
   return {
     id: generateUniqueId(),
     type: MessageType.Text,
-    role: "system",
+    role: 'system',
     content,
     timestamp: new Date(),
     metadata,
-  }
+  };
 }
 
 /**
  * 创建助手消息
  */
-export function createAssistantMessage(content: string, metadata?: Record<string, any>): Message {
+export function createAssistantMessage(
+  content: string,
+  metadata?: Record<string, any>
+): Message {
   return {
     id: generateUniqueId(),
     type: MessageType.Text,
-    role: "assistant",
+    role: 'assistant',
     content,
     timestamp: new Date(),
     metadata,
-  }
+  };
 }
 
 /**
  * 创建错误消息
  */
-export function createErrorMessage(error: Error | string, metadata?: Record<string, any>): Message {
-  const content = error instanceof Error ? error.message : error
+export function createErrorMessage(
+  error: Error | string,
+  metadata?: Record<string, any>
+): Message {
+  const content = error instanceof Error ? error.message : error;
   return {
     id: generateUniqueId(),
     type: MessageType.Text,
-    role: "system",
+    role: 'system',
     content,
     timestamp: new Date(),
     metadata: { ...metadata, error: true },
-  }
+  };
 }
 
 /**
@@ -64,7 +76,7 @@ export function createErrorMessage(error: Error | string, metadata?: Record<stri
  */
 export function createImageMessage(
   imageUrl: string,
-  role: "user" | "assistant" = "user",
+  role: 'user' | 'assistant' = 'user',
   metadata?: Record<string, any>
 ): Message {
   return {
@@ -74,7 +86,7 @@ export function createImageMessage(
     content: imageUrl,
     timestamp: new Date(),
     metadata,
-  }
+  };
 }
 
 /**
@@ -82,7 +94,7 @@ export function createImageMessage(
  */
 export function createFileMessage(
   fileInfo: { url: string; name: string; size: number },
-  role: "user" | "assistant" = "user",
+  role: 'user' | 'assistant' = 'user',
   metadata?: Record<string, any>
 ): Message {
   return {
@@ -96,7 +108,7 @@ export function createFileMessage(
       fileName: fileInfo.name,
       fileSize: fileInfo.size,
     },
-  }
+  };
 }
 
 /**
@@ -105,7 +117,7 @@ export function createFileMessage(
 export function createCodeMessage(
   code: string,
   language: string,
-  role: "user" | "assistant" = "assistant",
+  role: 'user' | 'assistant' = 'assistant',
   metadata?: Record<string, any>
 ): Message {
   return {
@@ -118,7 +130,7 @@ export function createCodeMessage(
       ...metadata,
       language,
     },
-  }
+  };
 }
 
 /**
@@ -126,7 +138,7 @@ export function createCodeMessage(
  */
 export function createMarkdownMessage(
   markdown: string,
-  role: "user" | "assistant" = "assistant",
+  role: 'user' | 'assistant' = 'assistant',
   metadata?: Record<string, any>
 ): Message {
   return {
@@ -136,5 +148,5 @@ export function createMarkdownMessage(
     content: markdown,
     timestamp: new Date(),
     metadata,
-  }
-} 
+  };
+}

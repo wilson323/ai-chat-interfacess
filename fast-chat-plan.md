@@ -3,6 +3,7 @@
 ## 1. 需求概述
 
 在编辑智能体页面中，增加"获取参数"按钮，实现以下功能：
+
 1. 输入API端点和API密钥后，点击按钮调用FastGPT初始化接口
 2. 获取FastGPT应用配置信息并自动回填到表单中
 3. 支持回填的字段包括：应用ID、智能体名称、描述信息、欢迎语、多模态模型等
@@ -17,12 +18,14 @@
 **请求地址**：`GET https://fastgpt.run/api/v1/chat/init`
 
 **请求头**：
+
 ```
 Content-Type: application/json
 Authorization: Bearer {API_KEY}
 ```
 
 **响应格式**：
+
 ```json
 {
   "code": 200,
@@ -40,13 +43,13 @@ Authorization: Bearer {API_KEY}
             "type": "custom",
             "required": false,
             "maxLen": 50,
-            "enums": [{"value": ""}],
+            "enums": [{ "value": "" }],
             "valueType": "any",
             "icon": "core/workflow/inputType/customVariable",
-            "list": [{"value": ""}],
+            "list": [{ "value": "" }],
             "description": "",
             "defaultValue": ""
-          },
+          }
           // 其他变量...
         ]
       },
@@ -68,7 +71,7 @@ sequenceDiagram
     participant 编辑表单
     participant 代理API
     participant FastGPT
-    
+
     管理员->>编辑表单: 输入API端点和密钥
     管理员->>编辑表单: 点击"获取参数"按钮
     编辑表单->>代理API: 发送代理请求
@@ -96,8 +99,8 @@ interface GlobalVariable {
   defaultValue?: string;
   maxLen?: number;
   icon?: string;
-  enums?: Array<{value: string; label?: string}>;
-  list?: Array<{value: string; label?: string}>;
+  enums?: Array<{ value: string; label?: string }>;
+  list?: Array<{ value: string; label?: string }>;
 }
 
 // 扩展Agent类型
@@ -112,33 +115,36 @@ interface Agent {
 在高级设置选项卡中添加全局变量配置区域：
 
 ```jsx
-<TabsContent value="advanced" className="space-y-4">
+<TabsContent value='advanced' className='space-y-4'>
   {/* 现有高级设置... */}
-  
-  <div className="space-y-2">
-    <Label className="text-pantone369-700 dark:text-pantone369-300">
+
+  <div className='space-y-2'>
+    <Label className='text-pantone369-700 dark:text-pantone369-300'>
       全局变量
     </Label>
-    <div className="border rounded-md p-4 space-y-2">
+    <div className='border rounded-md p-4 space-y-2'>
       {globalVariables.length > 0 ? (
-        <div className="space-y-2">
-          <div className="grid grid-cols-4 gap-2 font-medium text-sm">
+        <div className='space-y-2'>
+          <div className='grid grid-cols-4 gap-2 font-medium text-sm'>
             <div>变量名</div>
             <div>类型</div>
             <div>是否必填</div>
             <div>描述</div>
           </div>
           {globalVariables.map((variable, index) => (
-            <div key={variable.id || index} className="grid grid-cols-4 gap-2 items-center text-sm py-1 border-b">
+            <div
+              key={variable.id || index}
+              className='grid grid-cols-4 gap-2 items-center text-sm py-1 border-b'
+            >
               <div>{variable.label || variable.key}</div>
               <div>{variable.type}</div>
-              <div>{variable.required ? "必填" : "选填"}</div>
-              <div>{variable.description || "-"}</div>
+              <div>{variable.required ? '必填' : '选填'}</div>
+              <div>{variable.description || '-'}</div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-gray-500 text-center py-2">暂无全局变量</div>
+        <div className='text-gray-500 text-center py-2'>暂无全局变量</div>
       )}
     </div>
   </div>
@@ -199,20 +205,23 @@ interface Agent {
 
 ```typescript
 // pages/api/chat-proxy.ts
-import { NextApiRequest, NextApiResponse } from 'next'
-import axios from 'axios'
+import { NextApiRequest, NextApiResponse } from 'next';
+import axios from 'axios';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { targetUrl, method = 'POST', headers = {}, body } = req.body
+    const { targetUrl, method = 'POST', headers = {}, body } = req.body;
 
     // 验证目标URL
     if (!targetUrl || typeof targetUrl !== 'string') {
-      return res.status(400).json({ error: 'Invalid target URL' })
+      return res.status(400).json({ error: 'Invalid target URL' });
     }
 
     // 发送请求到目标URL
@@ -222,18 +231,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       headers: headers,
       data: method === 'GET' ? undefined : body,
       timeout: 30000, // 30秒超时
-    })
+    });
 
     // 返回响应
-    return res.status(response.status).json(response.data)
+    return res.status(response.status).json(response.data);
   } catch (error: any) {
-    console.error('Proxy request failed:', error)
-    
+    console.error('Proxy request failed:', error);
+
     // 返回错误信息
     return res.status(error.response?.status || 500).json({
       error: error.message,
-      details: error.response?.data || 'Unknown error'
-    })
+      details: error.response?.data || 'Unknown error',
+    });
   }
 }
 ```
@@ -266,7 +275,7 @@ const fetchAgentParams = async () => {
     // 构建初始化请求URL
     const baseApiUrl = apiUrl.replace('/chat/completions', '')
     const initUrl = `${baseApiUrl}/chat/init`
-    
+
     // 通过代理发送请求
     const response = await axios.post('/api/chat-proxy', {
       targetUrl: initUrl,
@@ -276,31 +285,31 @@ const fetchAgentParams = async () => {
         'Authorization': `Bearer ${apiKey}`
       }
     })
-    
+
     // 处理响应
     const data = response.data
-    
+
     if (data.code === 200 && data.data) {
       // 回填基础字段
       setAppId(data.data.appId)
       setName(data.data.app.name || "")
       setDescription(data.data.app.intro || "")
-      
+
       // 设置欢迎语
       if (data.data.app.chatConfig?.welcomeText) {
         setWelcomeText(data.data.app.chatConfig.welcomeText)
       }
-      
+
       // 处理全局变量
       if (data.data.app.chatConfig?.variables && Array.isArray(data.data.app.chatConfig.variables)) {
         setGlobalVariables(data.data.app.chatConfig.variables)
       }
-      
+
       // 如果有模型信息，设置多模态模型
       if (data.data.app.chatModels && data.data.app.chatModels.length > 0) {
         setMultimodalModel(data.data.app.chatModels[0])
       }
-      
+
       toast({
         title: "获取参数成功",
         description: "已自动填充相关字段",
@@ -335,9 +344,9 @@ const fetchAgentParams = async () => {
       required
       className="flex-1"
     />
-    <Button 
-      type="button" 
-      variant="outline" 
+    <Button
+      type="button"
+      variant="outline"
       onClick={fetchAgentParams}
       disabled={isLoading}
       className="whitespace-nowrap"
@@ -354,43 +363,46 @@ const fetchAgentParams = async () => {
 // 全局变量列表组件
 function GlobalVariableList({ variables }) {
   if (!variables || variables.length === 0) {
-    return (
-      <div className="text-gray-500 text-center py-2">暂无全局变量</div>
-    )
+    return <div className='text-gray-500 text-center py-2'>暂无全局变量</div>;
   }
 
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-2 font-medium text-sm text-gray-500 pb-1">
+    <div className='space-y-2'>
+      <div className='grid grid-cols-4 gap-2 font-medium text-sm text-gray-500 pb-1'>
         <div>变量名</div>
         <div>类型</div>
         <div>是否必填</div>
         <div>描述</div>
       </div>
-      <div className="space-y-1">
+      <div className='space-y-1'>
         {variables.map((variable, index) => (
-          <div key={variable.id || index} className="grid grid-cols-4 gap-2 items-center text-sm py-1 border-b border-gray-100 dark:border-gray-800">
-            <div className="font-medium">{variable.label || variable.key}</div>
+          <div
+            key={variable.id || index}
+            className='grid grid-cols-4 gap-2 items-center text-sm py-1 border-b border-gray-100 dark:border-gray-800'
+          >
+            <div className='font-medium'>{variable.label || variable.key}</div>
             <div>{getVariableTypeLabel(variable.type)}</div>
-            <div>{variable.required ? "必填" : "选填"}</div>
-            <div className="truncate" title={variable.description}>{variable.description || "-"}</div>
+            <div>{variable.required ? '必填' : '选填'}</div>
+            <div className='truncate' title={variable.description}>
+              {variable.description || '-'}
+            </div>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // 变量类型标签映射
 function getVariableTypeLabel(type) {
   const typeMap = {
-    'text': '文本',
-    'select': '选择框',
-    'custom': '自定义',
-    'number': '数字',
-    'boolean': '布尔值'
-  }
-  return typeMap[type] || type
+    text: '文本',
+    select: '选择框',
+    custom: '自定义',
+    number: '数字',
+    boolean: '布尔值',
+  };
+  return typeMap[type] || type;
 }
 ```
 
@@ -400,10 +412,10 @@ function getVariableTypeLabel(type) {
 
 ```typescript
 const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault()
-  
+  e.preventDefault();
+
   // 验证表单...
-  
+
   // 构建要保存的智能体对象
   const updatedAgent: Agent = {
     id: agent?.id,
@@ -421,11 +433,11 @@ const handleSubmit = (e: React.FormEvent) => {
     isPublished,
     globalVariables, // 添加全局变量
     // 其他字段...
-  }
-  
+  };
+
   // 调用保存回调
-  onSave(updatedAgent)
-}
+  onSave(updatedAgent);
+};
 ```
 
 ## 5. 开发规范

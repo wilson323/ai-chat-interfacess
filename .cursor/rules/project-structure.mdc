@@ -1,0 +1,274 @@
+---
+alwaysApply: true
+description: 项目结构和文件组织规范
+---
+
+# 项目结构和文件组织规范
+
+## 核心目录结构
+基于项目根目录的完整结构：
+
+```
+ai-chat-interfacess/
+├── app/                    # Next.js App Router页面
+│   ├── admin/             # 管理界面页面
+│   ├── api/               # API路由
+│   ├── user/              # 用户界面页面
+│   └── globals.css        # 全局样式
+├── components/            # React组件库
+│   ├── admin/             # 管理界面组件
+│   ├── ui/                # 基础UI组件
+│   ├── shared/            # 共享组件
+│   └── index.ts           # 组件导出
+├── lib/                   # 工具函数库
+├── types/                 # TypeScript类型定义
+├── hooks/                 # 自定义React钩子
+├── context/               # React上下文
+├── __tests__/             # 测试文件
+├── docs/                  # 项目文档
+└── .cursor/rules/         # Cursor Rules配置
+```
+
+## 组件组织规范
+
+### 组件目录结构
+```
+components/
+  admin/
+    user-management/
+      user-form.tsx          # 组件文件
+      user-form.test.tsx     # 测试文件
+      user-form.types.ts     # 类型定义
+      index.ts              # 导出文件
+    performance/
+      MobilePerformance.tsx  # 性能组件
+      PerformanceAlerts.tsx  # 性能警告
+  ui/
+    button.tsx              # 基础按钮
+    input.tsx               # 基础输入框
+    modal.tsx               # 基础模态框
+  shared/
+    layout.tsx              # 共享布局
+    header.tsx              # 共享头部
+```
+
+### 组件文件命名
+- 组件文件：`PascalCase.tsx`
+- 测试文件：`component-name.test.tsx`
+- 类型文件：`component-name.types.ts`
+- 样式文件：`component-name.module.css`
+- 工具文件：`component-name.utils.ts`
+
+## 文件导入规范
+
+### 导入路径规范
+```typescript
+// ✅ 正确：使用@别名
+import { Button } from '@/components/ui';
+import { userService } from '@/lib/services';
+import { UserData } from '@/types/user';
+import { useUserData } from '@/hooks/useUserData';
+
+// ❌ 错误：相对路径
+import { Button } from '../../../components/ui';
+import { userService } from '../../lib/services';
+```
+
+### 导入顺序规范
+```typescript
+// 1. React相关
+import React from 'react';
+import { useState, useEffect } from 'react';
+
+// 2. Next.js相关
+import { NextRequest, NextResponse } from 'next/server';
+import { useRouter } from 'next/navigation';
+
+// 3. 第三方库
+import { z } from 'zod';
+import { toast } from 'sonner';
+
+// 4. 内部模块
+import { Button } from '@/components/ui';
+import { userService } from '@/lib/services';
+import { UserData } from '@/types/user';
+```
+
+## 类型定义规范
+
+### 类型文件组织
+```
+types/
+  user.ts                  # 用户相关类型
+  api.ts                   # API相关类型
+  common.ts                # 通用类型
+  index.ts                 # 类型导出
+```
+
+### 类型定义规范
+```typescript
+// ✅ 正确：类型定义
+export interface UserData {
+  readonly id: string;
+  name: string;
+  email: string;
+  age?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type UserStatus = 'active' | 'inactive' | 'pending';
+export type UserRole = 'admin' | 'user' | 'guest';
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
+```
+
+## 工具函数组织
+
+### 工具函数目录
+```
+lib/
+  services/                # 服务层
+    user.service.ts        # 用户服务
+    auth.service.ts        # 认证服务
+  utils/                   # 工具函数
+    format.ts              # 格式化工具
+    validation.ts          # 验证工具
+  constants/               # 常量定义
+    api.ts                 # API常量
+    config.ts              # 配置常量
+```
+
+### 工具函数规范
+```typescript
+// ✅ 正确：工具函数
+export function formatDate(date: Date): string {
+  return date.toLocaleDateString('zh-CN');
+}
+
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+```
+
+## 测试文件组织
+
+### 测试目录结构
+```
+__tests__/
+  components/              # 组件测试
+    admin/
+      user-management/
+        user-form.test.tsx
+  api/                     # API测试
+    users.test.ts
+  hooks/                   # 钩子测试
+    useUserData.test.ts
+  lib/                     # 工具函数测试
+    format.test.ts
+  integration/             # 集成测试
+    user-flow.test.ts
+  e2e/                     # 端到端测试
+    user-management.e2e.ts
+```
+
+### 测试文件命名
+- 组件测试：`component-name.test.tsx`
+- API测试：`api-name.test.ts`
+- 钩子测试：`hook-name.test.ts`
+- 工具测试：`util-name.test.ts`
+- 集成测试：`feature-name.test.ts`
+- E2E测试：`feature-name.e2e.ts`
+
+## 文档组织规范
+
+### 文档目录结构
+```
+docs/
+  代码质量保障体系/          # 质量保障文档
+    编码规范.md
+    测试标准.md
+    安全标准.md
+  JSX转义字符问题修复/       # 问题修复文档
+    ALIGNMENT_*.md
+    CONSENSUS_*.md
+    DESIGN_*.md
+    TASK_*.md
+    ACCEPTANCE_*.md
+    FINAL_*.md
+    TODO_*.md
+  API文档/                  # API文档
+    users.md
+    auth.md
+  README.md                 # 项目说明
+```
+
+### 文档命名规范
+- 需求文档：`ALIGNMENT_功能名.md`
+- 共识文档：`CONSENSUS_功能名.md`
+- 设计文档：`DESIGN_功能名.md`
+- 任务文档：`TASK_功能名.md`
+- 验收文档：`ACCEPTANCE_功能名.md`
+- 总结文档：`FINAL_功能名.md`
+- 待办文档：`TODO_功能名.md`
+
+## 配置文件组织
+
+### 配置文件位置
+```
+根目录/
+  tsconfig.json            # TypeScript配置
+  next.config.mjs          # Next.js配置
+  tailwind.config.ts       # TailwindCSS配置
+  jest.config.js           # Jest测试配置
+  eslint.config.js         # ESLint配置
+  prettier.config.js       # Prettier配置
+  package.json             # 项目依赖
+  env.template             # 环境变量模板
+```
+
+### 配置文件规范
+- 使用JSON格式（.json）
+- 使用JavaScript格式（.js）
+- 使用TypeScript格式（.ts）
+- 使用ES模块格式（.mjs）
+- 保持配置一致性
+
+## 禁止事项
+
+### 文件组织禁止
+- ❌ 随意创建目录
+- ❌ 文件命名不规范
+- ❌ 导入路径混乱
+- ❌ 类型定义分散
+- ❌ 测试文件缺失
+
+### 代码组织禁止
+- ❌ 组件文件过大
+- ❌ 逻辑耦合严重
+- ❌ 重复代码过多
+- ❌ 注释文档缺失
+- ❌ 类型定义不完整
+
+## 检查清单
+
+### 目录结构检查
+- [ ] 目录结构清晰合理
+- [ ] 文件命名规范统一
+- [ ] 导入路径使用别名
+- [ ] 类型定义集中管理
+- [ ] 测试文件完整覆盖
+
+### 代码组织检查
+- [ ] 组件拆分合理
+- [ ] 逻辑解耦清晰
+- [ ] 代码复用充分
+- [ ] 注释文档完整
+- [ ] 类型定义准确
+
+参考目录：[components](mdc:components), [app](mdc:app), [lib](mdc:lib), [types](mdc:types)

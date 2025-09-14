@@ -1,159 +1,187 @@
 /**
- * ChatMessage 组件测试
- * 测试聊天消息的显示、编辑、删除等功能
+ * ChatMessage组件测试
+ * 测试聊天消息组件的渲染和交互功能
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ChatMessage } from '@/components/chat-message';
-import { MessageType, MessageRole } from '@/types/message';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AppProvider } from '@/context/user-context';
 
-// Mock 依赖
-jest.mock('@/context/language-context', () => ({
-  useLanguage: () => ({
-    language: 'zh',
-    t: (key: string) => key,
-  }),
-}));
+// 测试数据
+const mockMessage = {
+  id: '1',
+  content: 'Hello, world!',
+  role: 'user' as const,
+  timestamp: new Date().toISOString(),
+  agentId: 'test-agent'
+};
 
-jest.mock('@/hooks/use-responsive', () => ({
-  useResponsive: () => ({
-    isMobile: false,
-    isTablet: false,
-    isDesktop: true,
-  }),
-}));
+const mockAgentMessage = {
+  id: '2',
+  content: 'Hi there!',
+  role: 'assistant' as const,
+  timestamp: new Date().toISOString(),
+  agentId: 'test-agent'
+};
 
-describe('ChatMessage 组件测试', () => {
-  const mockMessage = {
-    id: 'test-message-1',
-    type: MessageType.Text,
-    role: MessageRole.User,
-    content: 'Hello, this is a test message',
-    timestamp: new Date('2024-01-01T10:00:00Z'),
-    metadata: {
-      deviceId: 'test-device',
-    },
-  };
-
-  const mockAssistantMessage = {
-    id: 'test-message-2',
-    type: MessageType.Text,
-    role: MessageRole.Assistant,
-    content: 'This is an assistant response',
-    timestamp: new Date('2024-01-01T10:01:00Z'),
-    metadata: {
-      deviceId: 'test-device',
-    },
-  };
-
-  test('应该正确渲染用户消息', () => {
-    render(<ChatMessage message={mockMessage} />);
-    
-    expect(screen.getByText('Hello, this is a test message')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /复制/i })).toBeInTheDocument();
+// 测试包装器
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false }
+    }
   });
 
-  test('应该正确渲染助手消息', () => {
-    render(<ChatMessage message={mockAssistantMessage} />);
-    
-    expect(screen.getByText('This is an assistant response')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /重新生成/i })).toBeInTheDocument();
-  });
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>{children}</AppProvider>
+    </QueryClientProvider>
+  );
+};
 
-  test('应该支持消息编辑功能', async () => {
-    const onRegenerate = jest.fn();
-    render(<ChatMessage message={mockMessage} onRegenerate={onRegenerate} />);
-    
-    // 点击编辑按钮
-    const editButton = screen.getByRole('button', { name: /编辑/i });
-    fireEvent.click(editButton);
-    
-    // 验证编辑模式
-    await waitFor(() => {
-      expect(screen.getByDisplayValue('Hello, this is a test message')).toBeInTheDocument();
+describe('ChatMessage组件测试', () => {
+  describe('基础渲染测试', () => {
+    it('应该正确渲染用户消息', () => {
+      render(
+        <TestWrapper>
+          <ChatMessage message={mockMessage} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('Hello, world!')).toBeInTheDocument();
+      expect(screen.getByText('user')).toBeInTheDocument();
     });
-    
-    // 验证保存和取消按钮
-    expect(screen.getByRole('button', { name: /保存/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /取消/i })).toBeInTheDocument();
-  });
 
-  test('应该支持消息复制功能', () => {
-    const onCopy = jest.fn();
-    render(<ChatMessage message={mockMessage} onCopy={onCopy} />);
-    
-    const copyButton = screen.getByRole('button', { name: /复制/i });
-    fireEvent.click(copyButton);
-    
-    expect(onCopy).toHaveBeenCalled();
-  });
+    it('应该正确渲染助手消息', () => {
+      render(
+        <TestWrapper>
+          <ChatMessage message={mockAgentMessage} />
+        </TestWrapper>
+      );
 
-  test('应该支持消息删除功能', () => {
-    const onDelete = jest.fn();
-    render(<ChatMessage message={mockMessage} onDelete={onDelete} />);
-    
-    const deleteButton = screen.getByRole('button', { name: /删除/i });
-    fireEvent.click(deleteButton);
-    
-    expect(onDelete).toHaveBeenCalledWith(mockMessage);
-  });
+      expect(screen.getByText('Hi there!')).toBeInTheDocument();
+      expect(screen.getByText('assistant')).toBeInTheDocument();
+    });
 
-  test('应该支持消息点赞功能', () => {
-    const onLike = jest.fn();
-    render(<ChatMessage message={mockAssistantMessage} onLike={onLike} />);
-    
-    const likeButton = screen.getByRole('button', { name: /点赞/i });
-    fireEvent.click(likeButton);
-    
-    expect(onLike).toHaveBeenCalledWith(mockAssistantMessage);
-  });
+    it('应该显示时间戳', () => {
+      render(
+        <TestWrapper>
+          <ChatMessage message={mockMessage} />
+        </TestWrapper>
+      );
 
-  test('应该支持消息点踩功能', () => {
-    const onDislike = jest.fn();
-    render(<ChatMessage message={mockAssistantMessage} onDislike={onDislike} />);
-    
-    const dislikeButton = screen.getByRole('button', { name: /点踩/i });
-    fireEvent.click(dislikeButton);
-    
-    expect(onDislike).toHaveBeenCalledWith(mockAssistantMessage);
-  });
-
-  test('应该正确处理键盘事件', async () => {
-    render(<ChatMessage message={mockMessage} />);
-    
-    // 进入编辑模式
-    const editButton = screen.getByRole('button', { name: /编辑/i });
-    fireEvent.click(editButton);
-    
-    await waitFor(() => {
-      const textarea = screen.getByDisplayValue('Hello, this is a test message');
-      
-      // 测试 Escape 键取消编辑
-      fireEvent.keyDown(textarea, { key: 'Escape' });
-      
-      // 验证编辑模式已退出
-      expect(screen.queryByDisplayValue('Hello, this is a test message')).not.toBeInTheDocument();
+      // 检查时间戳是否存在（具体格式可能不同）
+      expect(screen.getByText(/\d{4}-\d{2}-\d{2}/)).toBeInTheDocument();
     });
   });
 
-  test('应该正确显示时间戳', () => {
-    render(<ChatMessage message={mockMessage} />);
-    
-    // 验证时间戳显示
-    expect(screen.getByText(/刚刚|分钟前|小时前/)).toBeInTheDocument();
+  describe('交互功能测试', () => {
+    it('应该支持消息复制功能', () => {
+      // Mock clipboard API
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: jest.fn().mockImplementation(() => Promise.resolve())
+        }
+      });
+
+      render(
+        <TestWrapper>
+          <ChatMessage message={mockMessage} />
+        </TestWrapper>
+      );
+
+      // 查找复制按钮并点击
+      const copyButton = screen.getByRole('button', { name: /copy/i });
+      fireEvent.click(copyButton);
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Hello, world!');
+    });
+
+    it('应该支持消息删除功能', () => {
+      const onDelete = jest.fn();
+
+      render(
+        <TestWrapper>
+          <ChatMessage message={mockMessage} onDelete={onDelete} />
+        </TestWrapper>
+      );
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i });
+      fireEvent.click(deleteButton);
+
+      expect(onDelete).toHaveBeenCalledWith('1');
+    });
   });
 
-  test('应该正确处理空消息', () => {
-    const emptyMessage = {
-      ...mockMessage,
-      content: '',
-    };
-    
-    render(<ChatMessage message={emptyMessage} />);
-    
-    // 验证空消息的处理
-    expect(screen.getByText('内容')).toBeInTheDocument();
+  describe('样式和布局测试', () => {
+    it('用户消息应该有正确的样式类', () => {
+      const { container } = render(
+        <TestWrapper>
+          <ChatMessage message={mockMessage} />
+        </TestWrapper>
+      );
+
+      const messageElement = container.querySelector('.user-message');
+      expect(messageElement).toBeInTheDocument();
+    });
+
+    it('助手消息应该有正确的样式类', () => {
+      const { container } = render(
+        <TestWrapper>
+          <ChatMessage message={mockAgentMessage} />
+        </TestWrapper>
+      );
+
+      const messageElement = container.querySelector('.assistant-message');
+      expect(messageElement).toBeInTheDocument();
+    });
+  });
+
+  describe('边界条件测试', () => {
+    it('应该处理空消息内容', () => {
+      const emptyMessage = { ...mockMessage, content: '' };
+
+      render(
+        <TestWrapper>
+          <ChatMessage message={emptyMessage} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('user')).toBeInTheDocument();
+    });
+
+    it('应该处理长消息内容', () => {
+      const longMessage = {
+        ...mockMessage,
+        content: 'A'.repeat(1000)
+      };
+
+      render(
+        <TestWrapper>
+          <ChatMessage message={longMessage} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText(/A{100}/)).toBeInTheDocument();
+    });
+
+    it('应该处理特殊字符消息', () => {
+      const specialMessage = {
+        ...mockMessage,
+        content: '<script>alert("test")</script>'
+      };
+
+      render(
+        <TestWrapper>
+          <ChatMessage message={specialMessage} />
+        </TestWrapper>
+      );
+
+      // 应该转义HTML字符
+      expect(screen.getByText(/&lt;script&gt;/)).toBeInTheDocument();
+    });
   });
 });

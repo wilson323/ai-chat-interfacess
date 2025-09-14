@@ -3,73 +3,78 @@
  * 基于shadcn/ui组件构建，避免自定义代码过多
  */
 
-import React from 'react'
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChatHeader } from './ChatHeader'
-import { ChatMessages } from './ChatMessages'
-import { ChatInput } from './ChatInput'
-import { ChatHistory } from '../chat-history'
-import { HistoryManager } from '../history-manager'
-import { Agent } from '@/types/agent'
-import { Message } from '@/types/message'
-import { GlobalVariable } from '@/types/global-variable'
-import { ProcessingStep } from '@/types/message'
+import React from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardFooter,
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChatHeader } from './ChatHeader';
+import { ChatMessages } from './ChatMessages';
+import { ChatInput } from './ChatInput';
+import { ChatHistory } from '../chat-history';
+import { HistoryManager } from '../history-manager';
+import { Agent } from '@/types/agent';
+import { Message } from '@/types/message';
+import { GlobalVariable } from '@/types/global-variable';
+import { ProcessingStep } from '@/types/message';
 
 interface UploadedFile {
-  id: string
-  name: string
-  size: number
-  type: string
-  url: string
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
 }
 
-interface ChatContainerRefactoredProps {
+interface ChatContainerProps {
   // 智能体相关
-  selectedAgent: Agent | null
-  agents: Agent[]
-  onAgentChange: (agent: Agent) => void
-  
+  selectedAgent: Agent | null;
+  agents: Agent[];
+  onAgentChange: (agent: Agent) => void;
+
   // 消息相关
-  messages: Message[]
-  onEditMessage?: (message: Message) => void
-  onDeleteMessage?: (message: Message) => void
-  onCopyMessage?: (message: Message) => void
-  onLikeMessage?: (message: Message) => void
-  onDislikeMessage?: (message: Message) => void
-  
+  messages: Message[];
+  onEditMessage?: (message: Message) => void;
+  onDeleteMessage?: (message: Message) => void;
+  onCopyMessage?: (message: Message) => void;
+  onLikeMessage?: (message: Message) => void;
+  onDislikeMessage?: (message: Message) => void;
+
   // 输入相关
-  input: string
-  onInputChange: (value: string) => void
-  onSendMessage: () => void
-  onFileUpload?: (files: File[]) => void
-  onVoiceStart?: () => void
-  onVoiceStop?: () => void
-  uploadedFiles: UploadedFile[]
-  onRemoveFile?: (fileId: string) => void
-  
+  input: string;
+  onInputChange: (value: string) => void;
+  onSendMessage: () => void;
+  onFileUpload?: (files: File[]) => void;
+  onVoiceStart?: () => void;
+  onVoiceStop?: () => void;
+  uploadedFiles: UploadedFile[];
+  onRemoveFile?: (fileId: string) => void;
+
   // 状态相关
-  isTyping: boolean
-  isRecording: boolean
-  isSending: boolean
-  processingSteps: ProcessingStep[]
-  showProcessingFlow: boolean
-  
+  isTyping: boolean;
+  isRecording: boolean;
+  isSending: boolean;
+  processingSteps: ProcessingStep[];
+  showProcessingFlow: boolean;
+
   // 全局变量
-  globalVariables: GlobalVariable[]
-  onGlobalVariablesChange: (variables: GlobalVariable[]) => void
-  
+  globalVariables: GlobalVariable[];
+  onGlobalVariablesChange: (variables: GlobalVariable[]) => void;
+
   // 历史记录
-  onSelectHistory: (messages: Message[], chatId: string) => void
-  onNewChat: () => void
-  onManageHistory?: () => void
-  
+  onSelectHistory: (messages: Message[], chatId: string) => void;
+  onNewChat: () => void;
+  onManageHistory?: () => void;
+
   // 其他
-  onSettingsClick: () => void
-  className?: string
+  onSettingsClick: () => void;
+  className?: string;
 }
 
-export function ChatContainerRefactored({
+export function ChatContainer({
   selectedAgent,
   agents,
   onAgentChange,
@@ -98,15 +103,15 @@ export function ChatContainerRefactored({
   onNewChat,
   onManageHistory,
   onSettingsClick,
-  className
-}: ChatContainerRefactoredProps) {
+  className,
+}: ChatContainerProps) {
   return (
     <div className={`flex h-full ${className}`}>
       {/* 主聊天区域 */}
-      <div className="flex-1 flex flex-col">
-        <Card className="h-full flex flex-col">
+      <div className='flex-1 flex flex-col'>
+        <Card className='h-full flex flex-col'>
           {/* 聊天头部 */}
-          <CardHeader className="pb-0">
+          <CardHeader className='pb-0'>
             <ChatHeader
               selectedAgent={selectedAgent}
               agents={agents}
@@ -118,7 +123,7 @@ export function ChatContainerRefactored({
           </CardHeader>
 
           {/* 聊天消息区域 */}
-          <CardContent className="flex-1 p-0">
+          <CardContent className='flex-1 p-0'>
             <ChatMessages
               messages={messages}
               isTyping={isTyping}
@@ -133,7 +138,7 @@ export function ChatContainerRefactored({
           </CardContent>
 
           {/* 聊天输入区域 */}
-          <CardFooter className="pt-0">
+          <CardFooter className='pt-0'>
             <ChatInput
               value={input}
               onChange={onInputChange}
@@ -152,14 +157,14 @@ export function ChatContainerRefactored({
       </div>
 
       {/* 侧边栏 */}
-      <div className="w-80 border-l bg-muted/30">
-        <Tabs defaultValue="history" className="h-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="history">历史记录</TabsTrigger>
-            <TabsTrigger value="manage">管理</TabsTrigger>
+      <div className='w-80 border-l bg-muted/30'>
+        <Tabs defaultValue='history' className='h-full'>
+          <TabsList className='grid w-full grid-cols-2'>
+            <TabsTrigger value='history'>历史记录</TabsTrigger>
+            <TabsTrigger value='manage'>管理</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="history" className="h-full m-0">
+
+          <TabsContent value='history' className='h-full m-0'>
             <ChatHistory
               onClose={() => {}}
               onSelect={onSelectHistory}
@@ -167,8 +172,8 @@ export function ChatContainerRefactored({
               onManageHistory={onManageHistory}
             />
           </TabsContent>
-          
-          <TabsContent value="manage" className="h-full m-0">
+
+          <TabsContent value='manage' className='h-full m-0'>
             <HistoryManager
               open={true}
               onOpenChange={() => {}}
@@ -178,5 +183,5 @@ export function ChatContainerRefactored({
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

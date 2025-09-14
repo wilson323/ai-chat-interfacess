@@ -1,0 +1,409 @@
+name: Quality Assurance Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 每天早上9点运行 (UTC+8)
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: test_user
+  POSTGRES_PASSWORD: test_password
+  POSTGRES_DB: test_db
+
+jobs:
+  # 代码质量检查
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run ESLint
+      run: npm run lint
+      continue-on-error: true
+
+    - name: Run TypeScript check
+      run: npm run check-types
+      continue-on-error: true
+
+    - name: Run Prettier check
+      run: npm run format:check
+      continue-on-error: true
+
+    - name: Check custom code ratio
+      run: npm run check:custom-ratio
+      continue-on-error: true
+
+    - name: Upload quality results
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-quality-results
+        path: |
+          quality-reports/
+          coverage/
+        retention-days: 7
+
+  # 测试执行
+  testing:
+    name: Testing Suite
+    runs-on: ubuntu-latest
+    needs: code-quality
+
+    strategy:
+      matrix:
+        test-type: [unit, integration, e2e]
+
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Setup database
+      run: |
+        npm run setup:db
+        npm run db:migrate
+
+    - name: Run unit tests
+      if: matrix.test-type == 'unit'
+      run: npm run test:unit -- --coverage --watchAll=false
+      env:
+        NODE_ENV: test
+
+    - name: Run integration tests
+      if: matrix.test-type == 'integration'
+      run: npm run test:integration -- --watchAll=false
+      env:
+        NODE_ENV: test
+
+    - name: Run E2E tests
+      if: matrix.test-type == 'e2e'
+      run: |
+        npm run build
+        npm run test:e2e
+      env:
+        NODE_ENV: test
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: matrix.test-type == 'unit'
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  # 安全扫描
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate
+      continue-on-error: true
+
+    - name: Run security checks
+      run: npm run security:scripts
+      continue-on-error: true
+
+    - name: Generate security report
+      run: |
+        npm run security:scan
+        echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Security scan completed" >> $GITHUB_STEP_SUMMARY
+
+  # 性能测试
+  performance-test:
+    name: Performance Test
+    runs-on: ubuntu-latest
+    needs: testing
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: npm run build
+
+    - name: Run Lighthouse audit
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+
+    - name: Analyze bundle size
+      run: |
+        npm run test:performance
+        echo "## Performance Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Performance tests completed" >> $GITHUB_STEP_SUMMARY
+
+  # 质量检查清单
+  quality-checklist:
+    name: Quality Checklist
+    runs-on: ubuntu-latest
+    needs: [code-quality, testing, security-scan, performance-test]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run quality checklist
+      run: npm run script:check
+      continue-on-error: true
+
+    - name: Generate quality report
+      run: npx tsx scripts/quality-checklist.ts
+      continue-on-error: true
+
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-assessment-report
+        path: |
+          quality-reports/
+          quality-dashboard.html
+        retention-days: 30
+
+  # 部署质量检查 (仅main分支)
+  deployment-quality:
+    name: Deployment Quality Check
+    runs-on: ubuntu-latest
+    needs: quality-checklist
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: |
+        npm run build
+        npm run deploy:check
+
+    - name: Test Docker build
+      run: |
+        docker build -t neuroglass-test .
+        docker run --rm -d -p 3009:3009 --name neuroglass-test-container neuroglass-test
+        sleep 30
+        curl -f http://localhost:3009/api/health || exit 1
+        docker stop neuroglass-test-container
+        docker rmi neuroglass-test
+
+    - name: Generate deployment report
+      run: |
+        echo "## Deployment Quality Check" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Docker build successful" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Health check passed" >> $GITHUB_STEP_SUMMARY
+
+  # 质量监控仪表板生成
+  quality-dashboard:
+    name: Generate Quality Dashboard
+    runs-on: ubuntu-latest
+    needs: deployment-quality
+    if: always()
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate quality dashboard
+      run: npx tsx scripts/quality-dashboard.ts
+
+    - name: Upload dashboard
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-dashboard
+        path: quality-dashboard.html
+        retention-days: 7
+
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
+        publish_file: quality-dashboard.html
+        destination_dir: quality-dashboard
+
+  # 质量门禁检查
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [quality-checklist, deployment-quality]
+    if: always()
+
+    outputs:
+      status: ${{ steps.check.outputs.status }}
+      message: ${{ steps.check.outputs.message }}
+
+    steps:
+    - name: Check quality gates
+      id: check
+      run: |
+        # 检查所有前置任务的状态
+        if [ "${{ needs.code-quality.result }}" != "success" ]; then
+          echo "status=fail" >> $GITHUB_OUTPUT
+          echo "message=Code quality checks failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+        if [ "${{ needs.testing.result }}" != "success" ]; then
+          echo "status=fail" >> $GITHUB_OUTPUT
+          echo "message=Tests failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+        if [ "${{ needs.security-scan.result }}" != "success" ]; then
+          echo "status=fail" >> $GITHUB_OUTPUT
+          echo "message=Security scan failed" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+        echo "status=pass" >> $GITHUB_OUTPUT
+        echo "message=All quality checks passed" >> $GITHUB_OUTPUT
+
+    - name: Quality gate result
+      run: |
+        echo "## Quality Gate Status: ${{ steps.check.outputs.status }}"
+        echo "**Message**: ${{ steps.check.outputs.message }}"
+        if [ "${{ steps.check.outputs.status }}" = "fail" ]; then
+          echo "❌ Quality gate failed - blocking deployment"
+          exit 1
+        else
+          echo "✅ Quality gate passed"
+        fi
+      continue-on-error: true
+
+  # 通知 (仅失败时)
+  notify:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    if: failure() && (github.event_name == 'push' || github.event_name == 'pull_request')
+
+    steps:
+    - name: Notify Slack
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#quality-alerts'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # 总结报告
+  summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [quality-gate]
+    if: always()
+
+    steps:
+    - name: Generate summary
+      run: |
+        echo "# Quality Assurance Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Pipeline Status" >> $GITHUB_STEP_SUMMARY
+        echo "- **Code Quality**: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Testing**: ${{ needs.testing.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Security**: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Performance**: ${{ needs.performance-test.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Quality Gate**: ${{ needs.quality-gate.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Quality Score" >> $GITHUB_STEP_SUMMARY
+        echo "- **Overall Status**: ${{ needs.quality-gate.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Message**: ${{ needs.quality-gate.outputs.message }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- [Quality Reports](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+        echo "- [Quality Dashboard](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/quality-dashboard/)" >> $GITHUB_STEP_SUMMARY

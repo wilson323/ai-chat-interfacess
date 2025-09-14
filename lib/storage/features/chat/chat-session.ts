@@ -1,10 +1,10 @@
-import type { Message } from "@/types/message"
-import type { ChatSessionIndexItem, StorageProvider } from "../../shared/types"
+import type { Message } from '@/types/message';
+import type { ChatSessionIndexItem, StorageProvider } from '../../shared/types';
 import {
   CHAT_INDEX_KEY,
   MESSAGES_PREFIX,
   STORAGE_META_KEY,
-} from "../../shared/constants"
+} from '../../shared/constants';
 import {
   defaultStorageProvider,
   safeJSONParse,
@@ -12,48 +12,53 @@ import {
   formatTitleText,
   formatPreviewText,
   getStorageMeta,
-} from "../../shared/storage-utils"
-import { loadMessagesFromStorage, saveMessagesToStorage } from "./message-storage"
+} from '../../shared/storage-utils';
+import {
+  loadMessagesFromStorage,
+  saveMessagesToStorage,
+} from './message-storage';
 
 /**
  * 重建聊天索引
  */
-export function rebuildChatIndex(provider: StorageProvider = defaultStorageProvider): void {
+export function rebuildChatIndex(
+  provider: StorageProvider = defaultStorageProvider
+): void {
   try {
-    console.log("Rebuilding chat index...")
-    const newIndex: Record<string, ChatSessionIndexItem> = {}
-    
+    console.log('Rebuilding chat index...');
+    const newIndex: Record<string, ChatSessionIndexItem> = {};
+
     // 获取所有键
-    const allKeys: string[] = []
+    const allKeys: string[] = [];
     for (let i = 0; i < provider.length; i++) {
-      const key = provider.key(i)
-      if (key) allKeys.push(key)
+      const key = provider.key(i);
+      if (key) allKeys.push(key);
     }
 
     // 过滤聊天键
-    const chatKeys = allKeys.filter(key => key.startsWith(MESSAGES_PREFIX))
+    const chatKeys = allKeys.filter(key => key.startsWith(MESSAGES_PREFIX));
 
     for (const chatKey of chatKeys) {
-      const chatId = chatKey.replace(MESSAGES_PREFIX, "")
-      const messagesJson = provider.getItem(chatKey)
+      const chatId = chatKey.replace(MESSAGES_PREFIX, '');
+      const messagesJson = provider.getItem(chatKey);
       if (messagesJson) {
         try {
-          const messages = safeJSONParse<Message[]>(messagesJson, [])
+          const messages = safeJSONParse<Message[]>(messagesJson, []);
           if (messages && messages.length > 0) {
-            const firstUserMessage = messages.find(msg => msg.role === "user")
-            const lastMessage = messages[messages.length - 1]
+            const firstUserMessage = messages.find(msg => msg.role === 'user');
+            const lastMessage = messages[messages.length - 1];
 
             const title = firstUserMessage
               ? formatTitleText(firstUserMessage.content)
-              : "对话"
+              : '对话';
 
             const preview = lastMessage
               ? formatPreviewText(lastMessage.content)
-              : "内容"
+              : '内容';
 
             const timestamp = lastMessage
               ? new Date(lastMessage.timestamp).getTime()
-              : Date.now()
+              : Date.now();
 
             newIndex[chatId] = {
               id: chatId,
@@ -62,18 +67,21 @@ export function rebuildChatIndex(provider: StorageProvider = defaultStorageProvi
               timestamp,
               agentId: messages[0]?.metadata?.agentId,
               messageCount: messages.length,
-            }
+            };
           }
         } catch (parseError) {
-          console.error(`Failed to parse messages for chat ID ${chatId} during rebuild:`, parseError)
+          console.error(
+            `Failed to parse messages for chat ID ${chatId} during rebuild:`,
+            parseError
+          );
         }
       }
     }
 
-    provider.setItem(CHAT_INDEX_KEY, safeJSONStringify(newIndex))
-    console.log("Chat index rebuilt successfully.")
+    provider.setItem(CHAT_INDEX_KEY, safeJSONStringify(newIndex));
+    console.log('Chat index rebuilt successfully.');
   } catch (error) {
-    console.error("Failed to rebuild chat index:", error)
+    console.error('Failed to rebuild chat index:', error);
   }
 }
 
@@ -84,24 +92,30 @@ export function getAllChatSessions(
   provider: StorageProvider = defaultStorageProvider
 ): ChatSessionIndexItem[] {
   try {
-    const indexJson = provider.getItem(CHAT_INDEX_KEY)
+    const indexJson = provider.getItem(CHAT_INDEX_KEY);
     if (!indexJson) {
-      console.log("No chat index found, attempting to rebuild...")
-      rebuildChatIndex(provider)
-      const newIndexJson = provider.getItem(CHAT_INDEX_KEY)
+      console.log('No chat index found, attempting to rebuild...');
+      rebuildChatIndex(provider);
+      const newIndexJson = provider.getItem(CHAT_INDEX_KEY);
       if (!newIndexJson) {
-        console.log("Rebuild failed or no chats found")
-        return []
+        console.log('Rebuild failed or no chats found');
+        return [];
       }
-      const index = safeJSONParse<Record<string, ChatSessionIndexItem>>(newIndexJson, {})
-      return Object.values(index).sort((a, b) => b.timestamp - a.timestamp)
+      const index = safeJSONParse<Record<string, ChatSessionIndexItem>>(
+        newIndexJson,
+        {}
+      );
+      return Object.values(index).sort((a, b) => b.timestamp - a.timestamp);
     }
 
-    const index = safeJSONParse<Record<string, ChatSessionIndexItem>>(indexJson, {})
-    return Object.values(index).sort((a, b) => b.timestamp - a.timestamp)
+    const index = safeJSONParse<Record<string, ChatSessionIndexItem>>(
+      indexJson,
+      {}
+    );
+    return Object.values(index).sort((a, b) => b.timestamp - a.timestamp);
   } catch (error) {
-    console.error("Failed to get chat sessions:", error)
-    return []
+    console.error('Failed to get chat sessions:', error);
+    return [];
   }
 }
 
@@ -113,41 +127,43 @@ export function searchChatSessions(
   provider: StorageProvider = defaultStorageProvider
 ): ChatSessionIndexItem[] {
   try {
-    if (!query.trim()) return getAllChatSessions(provider)
+    if (!query.trim()) return getAllChatSessions(provider);
 
-    const sessions = getAllChatSessions(provider)
-    const lowerQuery = query.toLowerCase()
+    const sessions = getAllChatSessions(provider);
+    const lowerQuery = query.toLowerCase();
 
     return sessions.filter(
       session =>
         session.title.toLowerCase().includes(lowerQuery) ||
         session.preview.toLowerCase().includes(lowerQuery)
-    )
+    );
   } catch (error) {
-    console.error("Failed to search chat sessions:", error)
-    return []
+    console.error('Failed to search chat sessions:', error);
+    return [];
   }
 }
 
 /**
  * 导出所有聊天会话
  */
-export function exportAllChatSessions(provider: StorageProvider = defaultStorageProvider): string {
+export function exportAllChatSessions(
+  provider: StorageProvider = defaultStorageProvider
+): string {
   try {
-    const meta = getStorageMeta(provider)
-    const exportData: Record<string, any[]> = {}
+    const meta = getStorageMeta(provider);
+    const exportData: Record<string, any[]> = {};
 
     for (const chatId of meta.chatIds) {
-      const messages = loadMessagesFromStorage(chatId, provider)
+      const messages = loadMessagesFromStorage(chatId, provider);
       if (messages) {
-        exportData[chatId] = messages
+        exportData[chatId] = messages;
       }
     }
 
-    return safeJSONStringify(exportData)
+    return safeJSONStringify(exportData);
   } catch (error) {
-    console.error("Failed to export all chat sessions:", error)
-    return ""
+    console.error('Failed to export all chat sessions:', error);
+    return '';
   }
 }
 
@@ -159,59 +175,68 @@ export function importChatSessions(
   provider: StorageProvider = defaultStorageProvider
 ): boolean {
   try {
-    const importData = safeJSONParse<Record<string, Message[]>>(jsonData, {})
+    const importData = safeJSONParse<Record<string, Message[]>>(jsonData, {});
 
     for (const chatId in importData) {
       if (Object.hasOwn(importData, chatId)) {
-        const messages = importData[chatId]
-        saveMessagesToStorage(chatId, messages, provider)
+        const messages = importData[chatId];
+        saveMessagesToStorage(chatId, messages, provider);
       }
     }
 
-    console.log("All chat sessions imported successfully.")
-    return true
+    console.log('All chat sessions imported successfully.');
+    return true;
   } catch (error) {
-    console.error("Failed to import chat sessions:", error)
-    return false
+    console.error('Failed to import chat sessions:', error);
+    return false;
   }
 }
 
 /**
  * 调试存储状态
  */
-export function debugStorageState(provider: StorageProvider = defaultStorageProvider): any {
+export function debugStorageState(
+  provider: StorageProvider = defaultStorageProvider
+): any {
   try {
-    const allKeys: string[] = []
+    const allKeys: string[] = [];
     for (let i = 0; i < provider.length; i++) {
-      const key = provider.key(i)
-      if (key) allKeys.push(key)
+      const key = provider.key(i);
+      if (key) allKeys.push(key);
     }
 
-    console.log("All storage keys:", allKeys)
+    console.log('All storage keys:', allKeys);
 
-    const metaJson = provider.getItem(STORAGE_META_KEY)
-    console.log("Storage Meta:", metaJson ? JSON.parse(metaJson) : "No meta found")
+    const metaJson = provider.getItem(STORAGE_META_KEY);
+    console.log(
+      'Storage Meta:',
+      metaJson ? JSON.parse(metaJson) : 'No meta found'
+    );
 
-    const chatIndexJson = provider.getItem(CHAT_INDEX_KEY)
-    console.log("Chat Index:", chatIndexJson ? JSON.parse(chatIndexJson) : "No chat index found")
+    const chatIndexJson = provider.getItem(CHAT_INDEX_KEY);
+    console.log(
+      'Chat Index:',
+      chatIndexJson ? JSON.parse(chatIndexJson) : 'No chat index found'
+    );
 
     const storageInfo = {
       sizeInMB: (JSON.stringify(provider).length * 2) / (1024 * 1024),
-    }
-    console.log("Storage Size Info:", storageInfo)
+    };
+    console.log('Storage Size Info:', storageInfo);
 
     return {
       success: true,
       keysCount: allKeys.length,
-      chatKeysCount: allKeys.filter(key => key.startsWith(MESSAGES_PREFIX)).length,
+      chatKeysCount: allKeys.filter(key => key.startsWith(MESSAGES_PREFIX))
+        .length,
       hasChatIndex: !!chatIndexJson,
       storageInfo,
-    }
+    };
   } catch (error) {
-    console.error("Failed to debug storage state:", error)
+    console.error('Failed to debug storage state:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    }
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
-} 
+}

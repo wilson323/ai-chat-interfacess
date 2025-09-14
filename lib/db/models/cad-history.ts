@@ -21,9 +21,13 @@ export interface CadHistoryAttributes {
   createdAt?: Date;
 }
 
-export interface CadHistoryCreationAttributes extends Optional<CadHistoryAttributes, 'id' | 'createdAt'> {}
+export interface CadHistoryCreationAttributes
+  extends Optional<CadHistoryAttributes, 'id' | 'createdAt'> {}
 
-export class CadHistory extends Model<CadHistoryAttributes, CadHistoryCreationAttributes> implements CadHistoryAttributes {
+export class CadHistory
+  extends Model<CadHistoryAttributes, CadHistoryCreationAttributes>
+  implements CadHistoryAttributes
+{
   public id!: number;
   public agentId!: number;
   public userId!: number;
@@ -72,4 +76,4 @@ CadHistory.init(
   }
 );
 
-export default CadHistory; 
+export default CadHistory;

@@ -3,8 +3,8 @@
  * 统一处理所有类型的错误，提供一致的错误响应和日志记录
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { ZodError } from 'zod'
+import { NextRequest, NextResponse } from 'next/server';
+import { ZodError } from 'zod';
 
 // 错误类型枚举
 export enum ErrorType {
@@ -18,7 +18,7 @@ export enum ErrorType {
   NETWORK_ERROR = 'NETWORK_ERROR',
   EXTERNAL_API_ERROR = 'EXTERNAL_API_ERROR',
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
 }
 
 // 错误严重级别
@@ -26,51 +26,51 @@ export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 // 统一错误接口
 export interface GlobalError {
-  type: ErrorType
-  code: string
-  message: string
-  details?: any
-  severity: ErrorSeverity
-  timestamp: string
-  requestId?: string
-  userId?: string
-  stack?: string
+  type: ErrorType;
+  code: string;
+  message: string;
+  details?: any;
+  severity: ErrorSeverity;
+  timestamp: string;
+  requestId?: string;
+  userId?: string;
+  stack?: string;
   context?: {
-    url?: string
-    method?: string
-    userAgent?: string
-    ip?: string
-  }
+    url?: string;
+    method?: string;
+    userAgent?: string;
+    ip?: string;
+  };
 }
 
 // 错误响应接口
 export interface ErrorResponse {
-  success: false
+  success: false;
   error: {
-    type: string
-    code: string
-    message: string
-    details?: any
-  }
+    type: string;
+    code: string;
+    message: string;
+    details?: any;
+  };
   meta: {
-    timestamp: string
-    requestId: string
-    traceId?: string
-  }
+    timestamp: string;
+    requestId: string;
+    traceId?: string;
+  };
 }
 
 // 自定义错误类
 export class AppError extends Error {
-  public readonly type: ErrorType
-  public readonly code: string
-  public readonly severity: ErrorSeverity
-  public readonly details?: any
-  public readonly statusCode: number
+  public readonly type: ErrorType;
+  public readonly code: string;
+  public readonly severity: ErrorSeverity;
+  public readonly details?: any;
+  public readonly statusCode: number;
 
   constructor(
     type: ErrorType,
@@ -80,17 +80,17 @@ export class AppError extends Error {
     statusCode: number = 500,
     details?: any
   ) {
-    super(message)
-    this.name = 'AppError'
-    this.type = type
-    this.code = code
-    this.severity = severity
-    this.statusCode = statusCode
-    this.details = details
+    super(message);
+    this.name = 'AppError';
+    this.type = type;
+    this.code = code;
+    this.severity = severity;
+    this.statusCode = statusCode;
+    this.details = details;
 
     // 确保堆栈跟踪正确
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, AppError)
+      Error.captureStackTrace(this, AppError);
     }
   }
 }
@@ -105,7 +105,7 @@ export class ValidationError extends AppError {
       ErrorSeverity.LOW,
       400,
       details
-    )
+    );
   }
 }
 
@@ -117,7 +117,7 @@ export class AuthenticationError extends AppError {
       'AUTHENTICATION_ERROR',
       ErrorSeverity.MEDIUM,
       401
-    )
+    );
   }
 }
 
@@ -129,7 +129,7 @@ export class AuthorizationError extends AppError {
       'AUTHORIZATION_ERROR',
       ErrorSeverity.MEDIUM,
       403
-    )
+    );
   }
 }
 
@@ -141,7 +141,7 @@ export class NotFoundError extends AppError {
       'NOT_FOUND_ERROR',
       ErrorSeverity.LOW,
       404
-    )
+    );
   }
 }
 
@@ -154,7 +154,7 @@ export class ConflictError extends AppError {
       ErrorSeverity.MEDIUM,
       409,
       details
-    )
+    );
   }
 }
 
@@ -166,7 +166,7 @@ export class RateLimitError extends AppError {
       'RATE_LIMIT_ERROR',
       ErrorSeverity.MEDIUM,
       429
-    )
+    );
   }
 }
 
@@ -179,7 +179,7 @@ export class DatabaseError extends AppError {
       ErrorSeverity.HIGH,
       500,
       details
-    )
+    );
   }
 }
 
@@ -192,7 +192,7 @@ export class NetworkError extends AppError {
       ErrorSeverity.MEDIUM,
       502,
       details
-    )
+    );
   }
 }
 
@@ -205,23 +205,23 @@ export class ExternalApiError extends AppError {
       ErrorSeverity.MEDIUM,
       502,
       details
-    )
+    );
   }
 }
 
 // 全局错误处理器类
 export class GlobalErrorHandler {
-  private static instance: GlobalErrorHandler
-  private errorLog: GlobalError[] = []
-  private maxLogSize = 1000
+  private static instance: GlobalErrorHandler;
+  private errorLog: GlobalError[] = [];
+  private maxLogSize = 1000;
 
   private constructor() {}
 
   public static getInstance(): GlobalErrorHandler {
     if (!GlobalErrorHandler.instance) {
-      GlobalErrorHandler.instance = new GlobalErrorHandler()
+      GlobalErrorHandler.instance = new GlobalErrorHandler();
     }
-    return GlobalErrorHandler.instance
+    return GlobalErrorHandler.instance;
   }
 
   /**
@@ -230,15 +230,15 @@ export class GlobalErrorHandler {
   public handleError(
     error: unknown,
     context?: {
-      request?: NextRequest
-      userId?: string
-      requestId?: string
+      request?: NextRequest;
+      userId?: string;
+      requestId?: string;
     }
   ): NextResponse<ErrorResponse> {
-    const globalError = this.normalizeError(error, context)
-    this.logError(globalError)
-    
-    return this.createErrorResponse(globalError)
+    const globalError = this.normalizeError(error, context);
+    this.logError(globalError);
+
+    return this.createErrorResponse(globalError);
   }
 
   /**
@@ -247,13 +247,13 @@ export class GlobalErrorHandler {
   private normalizeError(
     error: unknown,
     context?: {
-      request?: NextRequest
-      userId?: string
-      requestId?: string
+      request?: NextRequest;
+      userId?: string;
+      requestId?: string;
     }
   ): GlobalError {
-    const timestamp = new Date().toISOString()
-    const requestId = context?.requestId || this.generateRequestId()
+    const timestamp = new Date().toISOString();
+    const requestId = context?.requestId || this.generateRequestId();
 
     // 处理已知错误类型
     if (error instanceof AppError) {
@@ -267,8 +267,8 @@ export class GlobalErrorHandler {
         requestId,
         userId: context?.userId,
         stack: error.stack,
-        context: this.extractContext(context?.request)
-      }
+        context: this.extractContext(context?.request),
+      };
     }
 
     // 处理Zod验证错误
@@ -282,13 +282,13 @@ export class GlobalErrorHandler {
         timestamp,
         requestId,
         userId: context?.userId,
-        context: this.extractContext(context?.request)
-      }
+        context: this.extractContext(context?.request),
+      };
     }
 
     // 处理Sequelize错误
     if (error && typeof error === 'object' && 'name' in error) {
-      const sequelizeError = error as any
+      const sequelizeError = error as any;
       if (sequelizeError.name?.includes('Sequelize')) {
         return {
           type: ErrorType.DATABASE_ERROR,
@@ -300,8 +300,8 @@ export class GlobalErrorHandler {
           requestId,
           userId: context?.userId,
           stack: sequelizeError.stack,
-          context: this.extractContext(context?.request)
-        }
+          context: this.extractContext(context?.request),
+        };
       }
     }
 
@@ -317,13 +317,14 @@ export class GlobalErrorHandler {
         requestId,
         userId: context?.userId,
         stack: error.stack,
-        context: this.extractContext(context?.request)
-      }
+        context: this.extractContext(context?.request),
+      };
     }
 
     // 处理其他错误
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    const errorStack = error instanceof Error ? error.stack : undefined
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorStack = error instanceof Error ? error.stack : undefined;
 
     return {
       type: ErrorType.UNKNOWN_ERROR,
@@ -335,32 +336,34 @@ export class GlobalErrorHandler {
       requestId,
       userId: context?.userId,
       stack: errorStack,
-      context: this.extractContext(context?.request)
-    }
+      context: this.extractContext(context?.request),
+    };
   }
 
   /**
    * 创建错误响应
    */
-  private createErrorResponse(globalError: GlobalError): NextResponse<ErrorResponse> {
+  private createErrorResponse(
+    globalError: GlobalError
+  ): NextResponse<ErrorResponse> {
     const response: ErrorResponse = {
       success: false,
       error: {
         type: globalError.type,
         code: globalError.code,
         message: globalError.message,
-        details: globalError.details
+        details: globalError.details,
       },
       meta: {
         timestamp: globalError.timestamp,
-        requestId: globalError.requestId
-      }
-    }
+        requestId: globalError.requestId,
+      },
+    };
 
     // 根据错误类型设置HTTP状态码
-    const statusCode = this.getStatusCode(globalError.type)
+    const statusCode = this.getStatusCode(globalError.type);
 
-    return NextResponse.json(response, { status: statusCode })
+    return NextResponse.json(response, { status: statusCode });
   }
 
   /**
@@ -368,34 +371,34 @@ export class GlobalErrorHandler {
    */
   private logError(globalError: GlobalError): void {
     // 添加到内存日志
-    this.errorLog.unshift(globalError)
-    
+    this.errorLog.unshift(globalError);
+
     // 保持日志大小限制
     if (this.errorLog.length > this.maxLogSize) {
-      this.errorLog = this.errorLog.slice(0, this.maxLogSize)
+      this.errorLog = this.errorLog.slice(0, this.maxLogSize);
     }
 
     // 根据严重级别记录日志
-    const logMessage = `[${globalError.type}] ${globalError.message} (${globalError.requestId})`
-    
+    const logMessage = `[${globalError.type}] ${globalError.message} (${globalError.requestId})`;
+
     switch (globalError.severity) {
       case ErrorSeverity.CRITICAL:
-        console.error('🚨 CRITICAL:', logMessage, globalError)
-        break
+        console.error('🚨 CRITICAL:', logMessage, globalError);
+        break;
       case ErrorSeverity.HIGH:
-        console.error('❌ HIGH:', logMessage, globalError)
-        break
+        console.error('❌ HIGH:', logMessage, globalError);
+        break;
       case ErrorSeverity.MEDIUM:
-        console.warn('⚠️  MEDIUM:', logMessage, globalError)
-        break
+        console.warn('⚠️  MEDIUM:', logMessage, globalError);
+        break;
       case ErrorSeverity.LOW:
-        console.info('ℹ️  LOW:', logMessage, globalError)
-        break
+        console.info('ℹ️  LOW:', logMessage, globalError);
+        break;
     }
 
     // 在生产环境中，可以发送到外部监控服务
     if (process.env.NODE_ENV === 'production') {
-      this.sendToMonitoring(globalError)
+      this.sendToMonitoring(globalError);
     }
   }
 
@@ -411,10 +414,10 @@ export class GlobalErrorHandler {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(globalError)
+        body: JSON.stringify(globalError),
       }).catch(err => {
-        console.error('Failed to send error to monitoring service:', err)
-      })
+        console.error('Failed to send error to monitoring service:', err);
+      });
     }
   }
 
@@ -422,16 +425,17 @@ export class GlobalErrorHandler {
    * 提取请求上下文
    */
   private extractContext(request?: NextRequest): GlobalError['context'] {
-    if (!request) return undefined
+    if (!request) return undefined;
 
     return {
       url: request.url,
       method: request.method,
       userAgent: request.headers.get('user-agent') || undefined,
-      ip: request.headers.get('x-forwarded-for') || 
-          request.headers.get('x-real-ip') || 
-          'unknown'
-    }
+      ip:
+        request.headers.get('x-forwarded-for') ||
+        request.headers.get('x-real-ip') ||
+        'unknown',
+    };
   }
 
   /**
@@ -439,15 +443,15 @@ export class GlobalErrorHandler {
    */
   private getSequelizeErrorMessage(error: any): string {
     if (error.parent?.code === '23505') {
-      return 'Data already exists'
+      return 'Data already exists';
     }
     if (error.parent?.code === '23503') {
-      return 'Foreign key constraint violation'
+      return 'Foreign key constraint violation';
     }
     if (error.parent?.code === '23502') {
-      return 'Required field is missing'
+      return 'Required field is missing';
     }
-    return error.message || 'Database operation failed'
+    return error.message || 'Database operation failed';
   }
 
   /**
@@ -465,67 +469,75 @@ export class GlobalErrorHandler {
       [ErrorType.NETWORK_ERROR]: 502,
       [ErrorType.EXTERNAL_API_ERROR]: 502,
       [ErrorType.INTERNAL_SERVER_ERROR]: 500,
-      [ErrorType.UNKNOWN_ERROR]: 500
-    }
+      [ErrorType.UNKNOWN_ERROR]: 500,
+    };
 
-    return statusMap[errorType] || 500
+    return statusMap[errorType] || 500;
   }
 
   /**
    * 生成请求ID
    */
   private generateRequestId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
    * 获取错误统计
    */
   public getErrorStats(): {
-    total: number
-    byType: Record<ErrorType, number>
-    bySeverity: Record<ErrorSeverity, number>
-    recent: GlobalError[]
+    total: number;
+    byType: Record<ErrorType, number>;
+    bySeverity: Record<ErrorSeverity, number>;
+    recent: GlobalError[];
   } {
-    const byType = Object.values(ErrorType).reduce((acc, type) => {
-      acc[type] = this.errorLog.filter(error => error.type === type).length
-      return acc
-    }, {} as Record<ErrorType, number>)
+    const byType = Object.values(ErrorType).reduce(
+      (acc, type) => {
+        acc[type] = this.errorLog.filter(error => error.type === type).length;
+        return acc;
+      },
+      {} as Record<ErrorType, number>
+    );
 
-    const bySeverity = Object.values(ErrorSeverity).reduce((acc, severity) => {
-      acc[severity] = this.errorLog.filter(error => error.severity === severity).length
-      return acc
-    }, {} as Record<ErrorSeverity, number>)
+    const bySeverity = Object.values(ErrorSeverity).reduce(
+      (acc, severity) => {
+        acc[severity] = this.errorLog.filter(
+          error => error.severity === severity
+        ).length;
+        return acc;
+      },
+      {} as Record<ErrorSeverity, number>
+    );
 
     return {
       total: this.errorLog.length,
       byType,
       bySeverity,
-      recent: this.errorLog.slice(0, 10)
-    }
+      recent: this.errorLog.slice(0, 10),
+    };
   }
 
   /**
    * 清理错误日志
    */
   public clearErrorLog(): void {
-    this.errorLog = []
+    this.errorLog = [];
   }
 }
 
 // 导出单例实例
-export const globalErrorHandler = GlobalErrorHandler.getInstance()
+export const globalErrorHandler = GlobalErrorHandler.getInstance();
 
 // 便捷函数
 export function handleError(
   error: unknown,
   context?: {
-    request?: NextRequest
-    userId?: string
-    requestId?: string
+    request?: NextRequest;
+    userId?: string;
+    requestId?: string;
   }
 ): NextResponse<ErrorResponse> {
-  return globalErrorHandler.handleError(error, context)
+  return globalErrorHandler.handleError(error, context);
 }
 
 // 错误边界组件（用于React组件）
@@ -534,34 +546,37 @@ export function withErrorBoundary<T extends React.ComponentType<any>>(
   fallback?: React.ComponentType<{ error: Error; resetError: () => void }>
 ) {
   return function ErrorBoundaryComponent(props: React.ComponentProps<T>) {
-    const [error, setError] = React.useState<Error | null>(null)
+    const [error, setError] = React.useState<Error | null>(null);
 
     React.useEffect(() => {
       const handleError = (event: ErrorEvent) => {
         const globalError = globalErrorHandler.normalizeError(event.error, {
-          requestId: globalErrorHandler['generateRequestId']()
-        })
-        globalErrorHandler['logError'](globalError)
-        setError(event.error)
-      }
+          requestId: globalErrorHandler['generateRequestId'](),
+        });
+        globalErrorHandler['logError'](globalError);
+        setError(event.error);
+      };
 
-      window.addEventListener('error', handleError)
-      return () => window.removeEventListener('error', handleError)
-    }, [])
+      window.addEventListener('error', handleError);
+      return () => window.removeEventListener('error', handleError);
+    }, []);
 
     if (error) {
       if (fallback) {
         return React.createElement(fallback, {
           error,
-          resetError: () => setError(null)
-        })
+          resetError: () => setError(null),
+        });
       }
-      return React.createElement('div', {
-        className: 'error-boundary'
-      }, 'Something went wrong. Please try again.')
+      return React.createElement(
+        'div',
+        {
+          className: 'error-boundary',
+        },
+        'Something went wrong. Please try again.'
+      );
     }
 
-    return React.createElement(Component, props)
-  }
+    return React.createElement(Component, props);
+  };
 }
-

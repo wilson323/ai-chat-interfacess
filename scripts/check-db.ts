@@ -18,7 +18,8 @@ const agentsToEnsure = [
     type: 'chat',
     apiKey: '',
     appId: '',
-    systemPrompt: '你是一位专业、友好的AI助手，能够回答用户的各种问题并提供帮助。',
+    systemPrompt:
+      '你是一位专业、友好的AI助手，能够回答用户的各种问题并提供帮助。',
     temperature: 0.7,
     maxTokens: 2000,
     isPublished: true,
@@ -29,7 +30,8 @@ const agentsToEnsure = [
     type: 'cad-analyzer',
     apiKey: '',
     appId: '',
-    systemPrompt: '你是一位专业的安防系统工程师和CAD图纸分析专家，能够分析CAD图纸并提供详细的安防设备分析报告。',
+    systemPrompt:
+      '你是一位专业的安防系统工程师和CAD图纸分析专家，能够分析CAD图纸并提供详细的安防设备分析报告。',
     temperature: 0.7,
     maxTokens: 4000,
     isPublished: true,

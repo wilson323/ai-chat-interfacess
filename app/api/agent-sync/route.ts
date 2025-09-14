@@ -29,14 +29,17 @@ export async function GET(req: NextRequest) {
   if (agentId) {
     const agent = await getCustomAgentById(agentId);
     if (!agent) {
-      return NextResponse.json({ error: 'Agent not found or not a custom agent' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Agent not found or not a custom agent' },
+        { status: 404 }
+      );
     }
     // 转为纯 JSON
     return NextResponse.json({ code: 0, agent: agent.toJSON() });
   }
 
   // 全量同步
-  let version = Number(await getCache(AGENT_VERSION_KEY) || 1);
+  let version = Number((await getCache(AGENT_VERSION_KEY)) || 1);
   if (!version) version = 1;
 
   if (clientVersion < version) {
@@ -61,11 +64,19 @@ export async function GET(req: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { deviceId, currentAgentIds, lastSyncTime, forceSync, locallyModifiedAgentIds = [] } = body;
+    const {
+      deviceId,
+      currentAgentIds,
+      lastSyncTime,
+      forceSync,
+      locallyModifiedAgentIds = [],
+    } = body;
 
     // 这里可根据实际业务扩展
     if (forceSync) {
-      const agentsToUpdate = currentAgentIds.filter((id: string) => !locallyModifiedAgentIds.includes(id));
+      const agentsToUpdate = currentAgentIds.filter(
+        (id: string) => !locallyModifiedAgentIds.includes(id)
+      );
       if (agentsToUpdate.length === 0) {
         return NextResponse.json({
           hasUpdates: false,
@@ -78,16 +89,17 @@ export async function POST(request: Request) {
         hasUpdates: true,
         agents: [
           {
-            id: "default-assistant",
-            name: "NeuroGlass 助手 (已更新)",
-            description: "全能型人工智能助手 - 最新版本",
-            apiEndpoint: "https://zktecoaihub.com/api/v1/chat/completions",
-            apiKey: "",
-            appId: "",
-            type: "chat",
-            model: "GPT-4o-mini",
+            id: 'default-assistant',
+            name: 'NeuroGlass 助手 (已更新)',
+            description: '全能型人工智能助手 - 最新版本',
+            apiEndpoint: 'https://zktecoaihub.com/api/v1/chat/completions',
+            apiKey: '',
+            appId: '',
+            type: 'chat',
+            model: 'GPT-4o-mini',
             isPublished: true,
-            systemPrompt: "你是一位专业、友好的AI助手，能够回答用户的各种问题并提供帮助。版本已更新。",
+            systemPrompt:
+              '你是一位专业、友好的AI助手，能够回答用户的各种问题并提供帮助。版本已更新。',
             temperature: 0.7,
             maxTokens: 2000,
             streamResponse: true,
@@ -103,7 +115,10 @@ export async function POST(request: Request) {
       lastUpdateTime: lastSyncTime,
     });
   } catch (error) {
-    console.error("Agent sync error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error('Agent sync error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

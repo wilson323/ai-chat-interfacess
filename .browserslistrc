@@ -1,0 +1,24 @@
+# 支持的浏览器配置
+# 基于全球使用率 > 0.5% 的浏览器
+
+# 现代浏览器
+> 1%
+last 2 versions
+not dead
+
+# 移动端浏览器
+iOS >= 12
+Android >= 8
+
+# 桌面浏览器
+Chrome >= 80
+Firefox >= 75
+Safari >= 13
+Edge >= 80
+
+# 排除已停止支持的浏览器
+not IE 11
+not IE_Mob 11
+not OperaMini all
+not Android < 8
+not iOS < 12

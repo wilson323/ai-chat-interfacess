@@ -5,28 +5,28 @@
  * 用于配置生产环境、安全检查、性能优化、监控设置
  */
 
-import fs from 'fs'
-import path from 'path'
-import { execSync } from 'child_process'
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
 
 interface ProductionSetupOptions {
-  checkSecurity?: boolean
-  optimizePerformance?: boolean
-  setupMonitoring?: boolean
-  generateConfig?: boolean
-  verbose?: boolean
+  checkSecurity?: boolean;
+  optimizePerformance?: boolean;
+  setupMonitoring?: boolean;
+  generateConfig?: boolean;
+  verbose?: boolean;
 }
 
 interface SecurityCheck {
-  category: string
-  status: 'pass' | 'fail' | 'warning'
-  message: string
-  recommendation?: string
+  category: string;
+  status: 'pass' | 'fail' | 'warning';
+  message: string;
+  recommendation?: string;
 }
 
 class ProductionSetup {
-  private options: ProductionSetupOptions
-  private securityChecks: SecurityCheck[] = []
+  private options: ProductionSetupOptions;
+  private securityChecks: SecurityCheck[] = [];
 
   constructor(options: ProductionSetupOptions = {}) {
     this.options = {
@@ -35,15 +35,15 @@ class ProductionSetup {
       setupMonitoring: true,
       generateConfig: true,
       verbose: false,
-      ...options
-    }
+      ...options,
+    };
   }
 
   /**
    * 检查生产环境配置
    */
   checkProductionConfiguration(): void {
-    console.log('🔍 检查生产环境配置...')
+    console.log('🔍 检查生产环境配置...');
 
     const requiredEnvVars = [
       'NODE_ENV',
@@ -52,85 +52,131 @@ class ProductionSetup {
       'DB_NAME',
       'DB_USER',
       'DB_PASSWORD',
-      'REDIS_URL'
-    ]
+      'REDIS_URL',
+    ];
 
-    let missingVars = 0
+    let missingVars = 0;
     for (const varName of requiredEnvVars) {
       if (!process.env[varName]) {
-        this.addSecurityCheck('环境变量', 'fail', `缺少必需的环境变量: ${varName}`)
-        missingVars++
+        this.addSecurityCheck(
+          '环境变量',
+          'fail',
+          `缺少必需的环境变量: ${varName}`
+        );
+        missingVars++;
       } else {
-        this.addSecurityCheck('环境变量', 'pass', `✓ ${varName} 已设置`)
+        this.addSecurityCheck('环境变量', 'pass', `✓ ${varName} 已设置`);
       }
     }
 
     // 检查NODE_ENV
     if (process.env.NODE_ENV !== 'production') {
-      this.addSecurityCheck('环境配置', 'warning', 'NODE_ENV 不是 production', '建议设置为 production')
+      this.addSecurityCheck(
+        '环境配置',
+        'warning',
+        'NODE_ENV 不是 production',
+        '建议设置为 production'
+      );
     }
 
     // 检查JWT密钥强度
-    const jwtSecret = process.env.JWT_SECRET
+    const jwtSecret = process.env.JWT_SECRET;
     if (jwtSecret && jwtSecret.length < 32) {
-      this.addSecurityCheck('安全配置', 'fail', 'JWT_SECRET 太短', '建议使用至少32个字符的强密钥')
+      this.addSecurityCheck(
+        '安全配置',
+        'fail',
+        'JWT_SECRET 太短',
+        '建议使用至少32个字符的强密钥'
+      );
     } else if (jwtSecret) {
-      this.addSecurityCheck('安全配置', 'pass', '✓ JWT_SECRET 长度合适')
+      this.addSecurityCheck('安全配置', 'pass', '✓ JWT_SECRET 长度合适');
     }
 
-    console.log(`✅ 生产环境配置检查完成，${missingVars} 个问题`)
+    console.log(`✅ 生产环境配置检查完成，${missingVars} 个问题`);
   }
 
   /**
    * 添加安全检查结果
    */
-  private addSecurityCheck(category: string, status: 'pass' | 'fail' | 'warning', message: string, recommendation?: string): void {
-    this.securityChecks.push({ category, status, message, recommendation })
+  private addSecurityCheck(
+    category: string,
+    status: 'pass' | 'fail' | 'warning',
+    message: string,
+    recommendation?: string
+  ): void {
+    this.securityChecks.push({ category, status, message, recommendation });
   }
 
   /**
    * 执行安全检查
    */
   performSecurityChecks(): void {
-    console.log('🔒 执行安全检查...')
+    console.log('🔒 执行安全检查...');
 
     // 检查敏感文件
-    const sensitiveFiles = ['.env', '.env.local', '.env.production']
+    const sensitiveFiles = ['.env', '.env.local', '.env.production'];
     for (const file of sensitiveFiles) {
       if (fs.existsSync(file)) {
-        this.addSecurityCheck('文件安全', 'warning', `敏感文件存在: ${file}`, '确保文件权限正确设置')
+        this.addSecurityCheck(
+          '文件安全',
+          'warning',
+          `敏感文件存在: ${file}`,
+          '确保文件权限正确设置'
+        );
       }
     }
 
     // 检查依赖漏洞
     try {
-      const output = execSync('npm audit --audit-level moderate', { encoding: 'utf8' })
+      const output = execSync('npm audit --audit-level moderate', {
+        encoding: 'utf8',
+      });
       if (output.includes('found 0 vulnerabilities')) {
-        this.addSecurityCheck('依赖安全', 'pass', '✓ 没有发现依赖漏洞')
+        this.addSecurityCheck('依赖安全', 'pass', '✓ 没有发现依赖漏洞');
       } else {
-        this.addSecurityCheck('依赖安全', 'warning', '发现依赖漏洞', '运行 npm audit fix 修复')
+        this.addSecurityCheck(
+          '依赖安全',
+          'warning',
+          '发现依赖漏洞',
+          '运行 npm audit fix 修复'
+        );
       }
     } catch (error) {
-      this.addSecurityCheck('依赖安全', 'fail', '依赖安全检查失败', '手动运行 npm audit')
+      this.addSecurityCheck(
+        '依赖安全',
+        'fail',
+        '依赖安全检查失败',
+        '手动运行 npm audit'
+      );
     }
 
     // 检查HTTPS配置
-    const apiUrl = process.env.API_BASE_URL
+    const apiUrl = process.env.API_BASE_URL;
     if (apiUrl && !apiUrl.startsWith('https://')) {
-      this.addSecurityCheck('网络安全', 'warning', 'API_BASE_URL 不是HTTPS', '生产环境建议使用HTTPS')
+      this.addSecurityCheck(
+        '网络安全',
+        'warning',
+        'API_BASE_URL 不是HTTPS',
+        '生产环境建议使用HTTPS'
+      );
     } else if (apiUrl) {
-      this.addSecurityCheck('网络安全', 'pass', '✓ API_BASE_URL 使用HTTPS')
+      this.addSecurityCheck('网络安全', 'pass', '✓ API_BASE_URL 使用HTTPS');
     }
 
     // 检查CORS配置
-    const corsOrigins = process.env.CORS_ORIGINS
+    const corsOrigins = process.env.CORS_ORIGINS;
     if (corsOrigins && corsOrigins.includes('*')) {
-      this.addSecurityCheck('网络安全', 'fail', 'CORS_ORIGINS 包含通配符', '生产环境不应使用通配符CORS')
+      this.addSecurityCheck(
+        '网络安全',
+        'fail',
+        'CORS_ORIGINS 包含通配符',
+        '生产环境不应使用通配符CORS'
+      );
     } else if (corsOrigins) {
-      this.addSecurityCheck('网络安全', 'pass', '✓ CORS_ORIGINS 配置正确')
+      this.addSecurityCheck('网络安全', 'pass', '✓ CORS_ORIGINS 配置正确');
     }
 
-    console.log('✅ 安全检查完成')
+    console.log('✅ 安全检查完成');
   }
 
   /**
@@ -138,51 +184,53 @@ class ProductionSetup {
    */
   async optimizePerformance(): Promise<void> {
     if (!this.options.optimizePerformance) {
-      console.log('⏭️ 跳过性能优化')
-      return
+      console.log('⏭️ 跳过性能优化');
+      return;
     }
 
-    console.log('⚡ 配置性能优化...')
+    console.log('⚡ 配置性能优化...');
 
     try {
       // 检查Next.js配置
-      const nextConfigPath = 'next.config.mjs'
+      const nextConfigPath = 'next.config.mjs';
       if (fs.existsSync(nextConfigPath)) {
-        const nextConfig = fs.readFileSync(nextConfigPath, 'utf8')
-        
-        if (!nextConfig.includes('output: \'standalone\'')) {
-          console.log('  ⚠️ 建议启用 standalone 模式以优化生产构建')
+        const nextConfig = fs.readFileSync(nextConfigPath, 'utf8');
+
+        if (!nextConfig.includes("output: 'standalone'")) {
+          console.log('  ⚠️ 建议启用 standalone 模式以优化生产构建');
         }
 
         if (!nextConfig.includes('experimental.optimizePackageImports')) {
-          console.log('  ⚠️ 建议启用包导入优化')
+          console.log('  ⚠️ 建议启用包导入优化');
         }
       }
 
       // 检查TypeScript配置
-      const tsConfigPath = 'tsconfig.json'
+      const tsConfigPath = 'tsconfig.json';
       if (fs.existsSync(tsConfigPath)) {
-        const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'))
-        
+        const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
+
         if (!tsConfig.compilerOptions?.strict) {
-          console.log('  ⚠️ 建议启用严格模式')
+          console.log('  ⚠️ 建议启用严格模式');
         }
       }
 
       // 运行构建测试
-      console.log('  🔨 测试生产构建...')
+      console.log('  🔨 测试生产构建...');
       try {
-        execSync('npm run build', { stdio: this.options.verbose ? 'inherit' : 'pipe' })
-        console.log('  ✅ 生产构建成功')
+        execSync('npm run build', {
+          stdio: this.options.verbose ? 'inherit' : 'pipe',
+        });
+        console.log('  ✅ 生产构建成功');
       } catch (error) {
-        console.error('  ❌ 生产构建失败:', error)
-        throw error
+        console.error('  ❌ 生产构建失败:', error);
+        throw error;
       }
 
-      console.log('✅ 性能优化配置完成')
+      console.log('✅ 性能优化配置完成');
     } catch (error) {
-      console.error('❌ 性能优化配置失败:', error)
-      throw error
+      console.error('❌ 性能优化配置失败:', error);
+      throw error;
     }
   }
 
@@ -191,11 +239,11 @@ class ProductionSetup {
    */
   setupMonitoring(): void {
     if (!this.options.setupMonitoring) {
-      console.log('⏭️ 跳过监控设置')
-      return
+      console.log('⏭️ 跳过监控设置');
+      return;
     }
 
-    console.log('📊 设置监控配置...')
+    console.log('📊 设置监控配置...');
 
     // 创建监控配置文件
     const monitoringConfig = {
@@ -203,12 +251,12 @@ class ProductionSetup {
       metrics: {
         enabled: true,
         endpoint: process.env.MONITORING_ENDPOINT || 'http://localhost:9090',
-        interval: 30000
+        interval: 30000,
       },
       logging: {
         level: process.env.LOG_LEVEL || 'info',
         format: 'json',
-        outputs: ['console', 'file']
+        outputs: ['console', 'file'],
       },
       alerts: {
         enabled: true,
@@ -216,14 +264,14 @@ class ProductionSetup {
           cpu: 80,
           memory: 80,
           disk: 90,
-          responseTime: 5000
-        }
-      }
-    }
+          responseTime: 5000,
+        },
+      },
+    };
 
-    const configPath = 'monitoring.config.json'
-    fs.writeFileSync(configPath, JSON.stringify(monitoringConfig, null, 2))
-    console.log(`  ✅ 监控配置已保存到: ${configPath}`)
+    const configPath = 'monitoring.config.json';
+    fs.writeFileSync(configPath, JSON.stringify(monitoringConfig, null, 2));
+    console.log(`  ✅ 监控配置已保存到: ${configPath}`);
 
     // 创建健康检查端点
     const healthCheckCode = `
@@ -248,17 +296,17 @@ export async function GET() {
     }, { status: 500 })
   }
 }
-`
+`;
 
-    const healthCheckPath = 'app/api/health/route.ts'
-    const healthCheckDir = path.dirname(healthCheckPath)
+    const healthCheckPath = 'app/api/health/route.ts';
+    const healthCheckDir = path.dirname(healthCheckPath);
     if (!fs.existsSync(healthCheckDir)) {
-      fs.mkdirSync(healthCheckDir, { recursive: true })
+      fs.mkdirSync(healthCheckDir, { recursive: true });
     }
-    fs.writeFileSync(healthCheckPath, healthCheckCode)
-    console.log(`  ✅ 健康检查端点已创建: ${healthCheckPath}`)
+    fs.writeFileSync(healthCheckPath, healthCheckCode);
+    console.log(`  ✅ 健康检查端点已创建: ${healthCheckPath}`);
 
-    console.log('✅ 监控设置完成')
+    console.log('✅ 监控设置完成');
   }
 
   /**
@@ -266,11 +314,11 @@ export async function GET() {
    */
   generateProductionConfig(): void {
     if (!this.options.generateConfig) {
-      console.log('⏭️ 跳过配置生成')
-      return
+      console.log('⏭️ 跳过配置生成');
+      return;
     }
 
-    console.log('📝 生成生产环境配置...')
+    console.log('📝 生成生产环境配置...');
 
     // 生成Docker配置
     const dockerfile = `FROM node:18-alpine AS base
@@ -330,10 +378,10 @@ ENV HOSTNAME "0.0.0.0"
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
 CMD ["node", "server.js"]
-`
+`;
 
-    fs.writeFileSync('Dockerfile.production', dockerfile)
-    console.log('  ✅ Dockerfile.production 已创建')
+    fs.writeFileSync('Dockerfile.production', dockerfile);
+    console.log('  ✅ Dockerfile.production 已创建');
 
     // 生成docker-compose配置
     const dockerCompose = `version: '3.8'
@@ -374,10 +422,10 @@ services:
 volumes:
   postgres_data:
   redis_data:
-`
+`;
 
-    fs.writeFileSync('docker-compose.production.yml', dockerCompose)
-    console.log('  ✅ docker-compose.production.yml 已创建')
+    fs.writeFileSync('docker-compose.production.yml', dockerCompose);
+    console.log('  ✅ docker-compose.production.yml 已创建');
 
     // 生成nginx配置
     const nginxConfig = `server {
@@ -425,19 +473,19 @@ server {
         add_header Cache-Control "public, immutable";
     }
 }
-`
+`;
 
-    fs.writeFileSync('nginx.conf', nginxConfig)
-    console.log('  ✅ nginx.conf 已创建')
+    fs.writeFileSync('nginx.conf', nginxConfig);
+    console.log('  ✅ nginx.conf 已创建');
 
-    console.log('✅ 生产环境配置生成完成')
+    console.log('✅ 生产环境配置生成完成');
   }
 
   /**
    * 生成部署脚本
    */
   generateDeploymentScripts(): void {
-    console.log('🚀 生成部署脚本...')
+    console.log('🚀 生成部署脚本...');
 
     // 生成部署脚本
     const deployScript = `#!/bin/bash
@@ -478,11 +526,11 @@ echo "▶️ 启动应用..."
 pm2 start ecosystem.config.js --env production
 
 echo "✅ 部署完成!"
-`
+`;
 
-    fs.writeFileSync('deploy.sh', deployScript)
-    fs.chmodSync('deploy.sh', '755')
-    console.log('  ✅ deploy.sh 已创建')
+    fs.writeFileSync('deploy.sh', deployScript);
+    fs.chmodSync('deploy.sh', '755');
+    console.log('  ✅ deploy.sh 已创建');
 
     // 生成PM2配置
     const pm2Config = `module.exports = {
@@ -506,132 +554,147 @@ echo "✅ 部署完成!"
     node_args: '--max-old-space-size=1024'
   }]
 }
-`
+`;
 
-    fs.writeFileSync('ecosystem.config.js', pm2Config)
-    console.log('  ✅ ecosystem.config.js 已创建')
+    fs.writeFileSync('ecosystem.config.js', pm2Config);
+    console.log('  ✅ ecosystem.config.js 已创建');
 
-    console.log('✅ 部署脚本生成完成')
+    console.log('✅ 部署脚本生成完成');
   }
 
   /**
    * 生成安全报告
    */
   generateSecurityReport(): string {
-    const report = []
-    report.push('# 生产环境安全检查报告\n')
-    report.push(`生成时间: ${new Date().toISOString()}\n`)
+    const report = [];
+    report.push('# 生产环境安全检查报告\n');
+    report.push(`生成时间: ${new Date().toISOString()}\n`);
 
     // 按类别分组安全检查
-    const categories = [...new Set(this.securityChecks.map(c => c.category))]
-    
-    for (const category of categories) {
-      const categoryChecks = this.securityChecks.filter(c => c.category === category)
-      const passCount = categoryChecks.filter(c => c.status === 'pass').length
-      const failCount = categoryChecks.filter(c => c.status === 'fail').length
-      const warningCount = categoryChecks.filter(c => c.status === 'warning').length
+    const categories = [...new Set(this.securityChecks.map(c => c.category))];
 
-      report.push(`## ${category}`)
-      report.push(`- ✅ 通过: ${passCount}`)
-      report.push(`- ❌ 失败: ${failCount}`)
-      report.push(`- ⚠️ 警告: ${warningCount}\n`)
+    for (const category of categories) {
+      const categoryChecks = this.securityChecks.filter(
+        c => c.category === category
+      );
+      const passCount = categoryChecks.filter(c => c.status === 'pass').length;
+      const failCount = categoryChecks.filter(c => c.status === 'fail').length;
+      const warningCount = categoryChecks.filter(
+        c => c.status === 'warning'
+      ).length;
+
+      report.push(`## ${category}`);
+      report.push(`- ✅ 通过: ${passCount}`);
+      report.push(`- ❌ 失败: ${failCount}`);
+      report.push(`- ⚠️ 警告: ${warningCount}\n`);
 
       for (const check of categoryChecks) {
-        const icon = check.status === 'pass' ? '✅' : check.status === 'fail' ? '❌' : '⚠️'
-        report.push(`- ${icon} ${check.message}`)
+        const icon =
+          check.status === 'pass'
+            ? '✅'
+            : check.status === 'fail'
+              ? '❌'
+              : '⚠️';
+        report.push(`- ${icon} ${check.message}`);
         if (check.recommendation) {
-          report.push(`  - 建议: ${check.recommendation}`)
+          report.push(`  - 建议: ${check.recommendation}`);
         }
       }
-      report.push('')
+      report.push('');
     }
 
     // 总结
-    const totalPass = this.securityChecks.filter(c => c.status === 'pass').length
-    const totalFail = this.securityChecks.filter(c => c.status === 'fail').length
-    const totalWarning = this.securityChecks.filter(c => c.status === 'warning').length
+    const totalPass = this.securityChecks.filter(
+      c => c.status === 'pass'
+    ).length;
+    const totalFail = this.securityChecks.filter(
+      c => c.status === 'fail'
+    ).length;
+    const totalWarning = this.securityChecks.filter(
+      c => c.status === 'warning'
+    ).length;
 
-    report.push('## 总结')
-    report.push(`- 总检查项: ${this.securityChecks.length}`)
-    report.push(`- 通过: ${totalPass}`)
-    report.push(`- 失败: ${totalFail}`)
-    report.push(`- 警告: ${totalWarning}`)
+    report.push('## 总结');
+    report.push(`- 总检查项: ${this.securityChecks.length}`);
+    report.push(`- 通过: ${totalPass}`);
+    report.push(`- 失败: ${totalFail}`);
+    report.push(`- 警告: ${totalWarning}`);
 
     if (totalFail === 0) {
-      report.push('\n🎉 所有安全检查都通过了！')
+      report.push('\n🎉 所有安全检查都通过了！');
     } else {
-      report.push(`\n❌ 有 ${totalFail} 个安全检查失败，请修复后部署。`)
+      report.push(`\n❌ 有 ${totalFail} 个安全检查失败，请修复后部署。`);
     }
 
-    return report.join('\n')
+    return report.join('\n');
   }
 
   /**
    * 执行完整的生产环境设置
    */
   async setup(): Promise<void> {
-    console.log('🚀 开始生产环境设置...\n')
+    console.log('🚀 开始生产环境设置...\n');
 
     try {
       // 1. 检查生产环境配置
-      this.checkProductionConfiguration()
+      this.checkProductionConfiguration();
 
       // 2. 执行安全检查
-      this.performSecurityChecks()
+      this.performSecurityChecks();
 
       // 3. 性能优化
-      await this.optimizePerformance()
+      await this.optimizePerformance();
 
       // 4. 设置监控
-      this.setupMonitoring()
+      this.setupMonitoring();
 
       // 5. 生成配置
-      this.generateProductionConfig()
+      this.generateProductionConfig();
 
       // 6. 生成部署脚本
-      this.generateDeploymentScripts()
+      this.generateDeploymentScripts();
 
       // 7. 生成安全报告
-      const securityReport = this.generateSecurityReport()
-      fs.writeFileSync('production-security-report.md', securityReport)
-      console.log('📄 安全报告已保存到: production-security-report.md')
+      const securityReport = this.generateSecurityReport();
+      fs.writeFileSync('production-security-report.md', securityReport);
+      console.log('📄 安全报告已保存到: production-security-report.md');
 
-      console.log('\n🎉 生产环境设置完成!')
-      console.log('\n📋 下一步:')
-      console.log('1. 检查 production-security-report.md')
-      console.log('2. 配置环境变量')
-      console.log('3. 运行 ./deploy.sh 进行部署')
+      console.log('\n🎉 生产环境设置完成!');
+      console.log('\n📋 下一步:');
+      console.log('1. 检查 production-security-report.md');
+      console.log('2. 配置环境变量');
+      console.log('3. 运行 ./deploy.sh 进行部署');
     } catch (error) {
-      console.error('❌ 生产环境设置失败:', error)
-      throw error
+      console.error('❌ 生产环境设置失败:', error);
+      throw error;
     }
   }
 }
 
 // 命令行接口
 async function main() {
-  const args = process.argv.slice(2)
+  const args = process.argv.slice(2);
   const options: ProductionSetupOptions = {
     checkSecurity: !args.includes('--no-security'),
     optimizePerformance: !args.includes('--no-performance'),
     setupMonitoring: !args.includes('--no-monitoring'),
     generateConfig: !args.includes('--no-config'),
-    verbose: args.includes('--verbose')
-  }
+    verbose: args.includes('--verbose'),
+  };
 
   try {
-    const setup = new ProductionSetup(options)
-    await setup.setup()
-    process.exit(0)
+    const setup = new ProductionSetup(options);
+    await setup.setup();
+    process.exit(0);
   } catch (error) {
-    console.error('设置失败:', error)
-    process.exit(1)
+    console.error('设置失败:', error);
+    process.exit(1);
   }
 }
 
 // 如果直接运行此脚本
 if (require.main === module) {
-  main()
+  main();
 }
 
-export { ProductionSetup }
+export { ProductionSetup };

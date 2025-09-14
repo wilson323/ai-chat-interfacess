@@ -1,6 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../sequelize';
-import { encrypt, decrypt } from '@/lib/security'
+import { encrypt, decrypt } from '@/lib/security';
 
 export interface AgentConfigAttributes {
   id: number;
@@ -31,9 +31,16 @@ export interface AgentConfigAttributes {
   welcomeText?: string; // 欢迎语
 }
 
-export interface AgentConfigCreationAttributes extends Optional<AgentConfigAttributes, 'id' | 'multimodalModel' | 'updatedAt'> {}
+export interface AgentConfigCreationAttributes
+  extends Optional<
+    AgentConfigAttributes,
+    'id' | 'multimodalModel' | 'updatedAt'
+  > {}
 
-export class AgentConfig extends Model<AgentConfigAttributes, AgentConfigCreationAttributes> implements AgentConfigAttributes {
+export class AgentConfig
+  extends Model<AgentConfigAttributes, AgentConfigCreationAttributes>
+  implements AgentConfigAttributes
+{
   public id!: number;
   public name!: string;
   public type!: string;
@@ -148,7 +155,7 @@ AgentConfig.init(
     tableName: 'agent_config',
     timestamps: true,
     updatedAt: 'updatedAt',
-    createdAt: false
+    createdAt: false,
   }
 );
 

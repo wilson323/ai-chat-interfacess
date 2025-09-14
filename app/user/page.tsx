@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
 
 export default function UserHomePage() {
-  redirect("/user/chat");
+  redirect('/user/chat');
   return null;
-} 
+}

@@ -11,9 +11,13 @@ export interface ChatHistoryAttributes {
   updatedAt?: Date;
 }
 
-export interface ChatHistoryCreationAttributes extends Optional<ChatHistoryAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface ChatHistoryCreationAttributes
+  extends Optional<ChatHistoryAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
 
-export class ChatHistory extends Model<ChatHistoryAttributes, ChatHistoryCreationAttributes> implements ChatHistoryAttributes {
+export class ChatHistory
+  extends Model<ChatHistoryAttributes, ChatHistoryCreationAttributes>
+  implements ChatHistoryAttributes
+{
   public id!: number;
   public chatId!: string;
   public userId!: string;
@@ -62,4 +66,4 @@ ChatHistory.init(
   }
 );
 
-export default ChatHistory; 
+export default ChatHistory;

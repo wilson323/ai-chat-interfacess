@@ -13,9 +13,13 @@ export interface ChatMessageAttributes {
   meta?: object;
 }
 
-export interface ChatMessageCreationAttributes extends Optional<ChatMessageAttributes, 'id'> {}
+export interface ChatMessageCreationAttributes
+  extends Optional<ChatMessageAttributes, 'id'> {}
 
-export class ChatMessage extends Model<ChatMessageAttributes, ChatMessageCreationAttributes> implements ChatMessageAttributes {
+export class ChatMessage
+  extends Model<ChatMessageAttributes, ChatMessageCreationAttributes>
+  implements ChatMessageAttributes
+{
   public id!: string;
   public sessionId!: string;
   public userId!: string;
@@ -79,4 +83,4 @@ ChatMessage.init(
   }
 );
 
-export default ChatMessage; 
+export default ChatMessage;

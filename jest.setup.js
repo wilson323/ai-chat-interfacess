@@ -3,7 +3,7 @@
 
 // Used for __tests__/testing-library.js
 // Learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -24,9 +24,9 @@ jest.mock('next/router', () => ({
         off: jest.fn(),
         emit: jest.fn(),
       },
-    }
+    };
   },
-}))
+}));
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -38,15 +38,15 @@ jest.mock('next/navigation', () => ({
       back: jest.fn(),
       forward: jest.fn(),
       refresh: jest.fn(),
-    }
+    };
   },
   useSearchParams() {
-    return new URLSearchParams()
+    return new URLSearchParams();
   },
   usePathname() {
-    return '/'
+    return '/';
   },
-}))
+}));
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -61,7 +61,7 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
-})
+});
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
@@ -69,7 +69,7 @@ global.IntersectionObserver = class IntersectionObserver {
   disconnect() {}
   observe() {}
   unobserve() {}
-}
+};
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -77,7 +77,7 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
   observe() {}
   unobserve() {}
-}
+};
 
 // Mock performance
 Object.defineProperty(window, 'performance', {
@@ -91,7 +91,7 @@ Object.defineProperty(window, 'performance', {
     clearMarks: jest.fn(),
     clearMeasures: jest.fn(),
   },
-})
+});
 
 // Mock localStorage
 const localStorageMock = {
@@ -99,8 +99,8 @@ const localStorageMock = {
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
-}
-global.localStorage = localStorageMock
+};
+global.localStorage = localStorageMock;
 
 // Mock sessionStorage
 const sessionStorageMock = {
@@ -108,15 +108,60 @@ const sessionStorageMock = {
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
-}
-global.sessionStorage = sessionStorageMock
+};
+global.sessionStorage = sessionStorageMock;
 
-// Mock fetch
-global.fetch = jest.fn()
+// Mock fetch with proper test data
+global.fetch = jest.fn((url) => {
+  // Mock API responses for testing
+  if (url.includes('/api/agent-config')) {
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        success: true,
+        data: [
+          {
+            id: 'test-agent-1',
+            name: 'Test Agent',
+            description: 'Test agent for testing',
+            type: 'fastgpt',
+            isPublished: true,
+            globalVariables: []
+          }
+        ]
+      })
+    });
+  }
+  
+  if (url.includes('/api/admin/agent-config')) {
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({
+        success: true,
+        data: [
+          {
+            id: 'test-admin-agent-1',
+            name: 'Test Admin Agent',
+            description: 'Test admin agent for testing',
+            type: 'fastgpt',
+            isPublished: true,
+            globalVariables: []
+          }
+        ]
+      })
+    });
+  }
+  
+  // Default mock response
+  return Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({ success: true, data: [] })
+  });
+});
 
 // Mock console methods to reduce noise in tests
-const originalError = console.error
-const originalWarn = console.warn
+const originalError = console.error;
+const originalWarn = console.warn;
 
 beforeAll(() => {
   console.error = (...args) => {
@@ -124,29 +169,29 @@ beforeAll(() => {
       typeof args[0] === 'string' &&
       args[0].includes('Warning: ReactDOM.render is no longer supported')
     ) {
-      return
+      return;
     }
-    originalError.call(console, ...args)
-  }
+    originalError.call(console, ...args);
+  };
   console.warn = (...args) => {
     if (
       typeof args[0] === 'string' &&
       args[0].includes('componentWillReceiveProps')
     ) {
-      return
+      return;
     }
-    originalWarn.call(console, ...args)
-  }
-})
+    originalWarn.call(console, ...args);
+  };
+});
 
 afterAll(() => {
-  console.error = originalError
-  console.warn = originalWarn
-})
+  console.error = originalError;
+  console.warn = originalWarn;
+});
 
 // Clean up after each test
 afterEach(() => {
-  jest.clearAllMocks()
-  localStorageMock.clear()
-  sessionStorageMock.clear()
-})
+  jest.clearAllMocks();
+  localStorageMock.clear();
+  sessionStorageMock.clear();
+});

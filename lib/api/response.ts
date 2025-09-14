@@ -3,7 +3,7 @@
  * 提供标准化的API响应格式和错误处理
  */
 
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
 
 /**
  * API错误码枚举
@@ -16,7 +16,7 @@ export enum ApiErrorCode {
   NOT_FOUND = 'NOT_FOUND',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
-  
+
   // 业务错误
   AGENT_NOT_FOUND = 'AGENT_NOT_FOUND',
   CHAT_SESSION_EXPIRED = 'CHAT_SESSION_EXPIRED',
@@ -24,68 +24,68 @@ export enum ApiErrorCode {
   VOICE_TRANSCRIPTION_FAILED = 'VOICE_TRANSCRIPTION_FAILED',
   CAD_ANALYSIS_FAILED = 'CAD_ANALYSIS_FAILED',
   IMAGE_PROCESSING_FAILED = 'IMAGE_PROCESSING_FAILED',
-  
+
   // 外部服务错误
   EXTERNAL_API_ERROR = 'EXTERNAL_API_ERROR',
   DATABASE_ERROR = 'DATABASE_ERROR',
   REDIS_ERROR = 'REDIS_ERROR',
-  STORAGE_ERROR = 'STORAGE_ERROR'
+  STORAGE_ERROR = 'STORAGE_ERROR',
 }
 
 /**
  * 成功响应接口
  */
 export interface ApiSuccessResponse<T = any> {
-  success: true
-  data: T
-  message?: string
+  success: true;
+  data: T;
+  message?: string;
   meta?: {
-    pagination?: PaginationMeta
-    timestamp: string
-    requestId: string
-    version?: string
-  }
+    pagination?: PaginationMeta;
+    timestamp: string;
+    requestId: string;
+    version?: string;
+  };
 }
 
 /**
  * 错误响应接口
  */
 export interface ApiErrorResponse {
-  success: false
+  success: false;
   error: {
-    code: string
-    message: string
-    details?: any
-    timestamp: string
-    requestId: string
-    version?: string
-  }
+    code: string;
+    message: string;
+    details?: any;
+    timestamp: string;
+    requestId: string;
+    version?: string;
+  };
 }
 
 /**
  * 分页元数据接口
  */
 export interface PaginationMeta {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-  hasNext: boolean
-  hasPrev: boolean
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 /**
  * 生成请求ID
  */
 function generateRequestId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
  * 获取API版本
  */
 function getApiVersion(): string {
-  return process.env.API_VERSION || 'v1'
+  return process.env.API_VERSION || 'v1';
 }
 
 /**
@@ -99,7 +99,10 @@ function getApiVersion(): string {
 export function createSuccessResponse<T>(
   data: T,
   message?: string,
-  meta?: Omit<ApiSuccessResponse['meta'], 'timestamp' | 'requestId' | 'version'>,
+  meta?: Omit<
+    ApiSuccessResponse['meta'],
+    'timestamp' | 'requestId' | 'version'
+  >,
   status: number = 200
 ): NextResponse<ApiSuccessResponse<T>> {
   const response: ApiSuccessResponse<T> = {
@@ -110,11 +113,11 @@ export function createSuccessResponse<T>(
       ...meta,
       timestamp: new Date().toISOString(),
       requestId: generateRequestId(),
-      version: getApiVersion()
-    }
-  }
+      version: getApiVersion(),
+    },
+  };
 
-  return NextResponse.json(response, { status })
+  return NextResponse.json(response, { status });
 }
 
 /**
@@ -139,11 +142,11 @@ export function createErrorResponse(
       details,
       timestamp: new Date().toISOString(),
       requestId: generateRequestId(),
-      version: getApiVersion()
-    }
-  }
+      version: getApiVersion(),
+    },
+  };
 
-  return NextResponse.json(response, { status })
+  return NextResponse.json(response, { status });
 }
 
 /**
@@ -160,7 +163,7 @@ export function createPaginatedResponse<T>(
   message?: string,
   status: number = 200
 ): NextResponse<ApiSuccessResponse<T[]>> {
-  return createSuccessResponse(data, message, { pagination }, status)
+  return createSuccessResponse(data, message, { pagination }, status);
 }
 
 /**
@@ -168,13 +171,15 @@ export function createPaginatedResponse<T>(
  * @param errors 验证错误详情
  * @returns NextResponse
  */
-export function createValidationErrorResponse(errors: any[]): NextResponse<ApiErrorResponse> {
+export function createValidationErrorResponse(
+  errors: any[]
+): NextResponse<ApiErrorResponse> {
   return createErrorResponse(
     ApiErrorCode.VALIDATION_ERROR,
     '请求参数验证失败',
     errors,
     400
-  )
+  );
 }
 
 /**
@@ -182,13 +187,15 @@ export function createValidationErrorResponse(errors: any[]): NextResponse<ApiEr
  * @param message 错误消息
  * @returns NextResponse
  */
-export function createAuthErrorResponse(message: string = '认证失败'): NextResponse<ApiErrorResponse> {
+export function createAuthErrorResponse(
+  message: string = '认证失败'
+): NextResponse<ApiErrorResponse> {
   return createErrorResponse(
     ApiErrorCode.AUTHENTICATION_ERROR,
     message,
     undefined,
     401
-  )
+  );
 }
 
 /**
@@ -196,13 +203,15 @@ export function createAuthErrorResponse(message: string = '认证失败'): NextR
  * @param message 错误消息
  * @returns NextResponse
  */
-export function createPermissionErrorResponse(message: string = '权限不足'): NextResponse<ApiErrorResponse> {
+export function createPermissionErrorResponse(
+  message: string = '权限不足'
+): NextResponse<ApiErrorResponse> {
   return createErrorResponse(
     ApiErrorCode.AUTHORIZATION_ERROR,
     message,
     undefined,
     403
-  )
+  );
 }
 
 /**
@@ -210,13 +219,15 @@ export function createPermissionErrorResponse(message: string = '权限不足'):
  * @param resource 资源名称
  * @returns NextResponse
  */
-export function createNotFoundErrorResponse(resource: string = '资源'): NextResponse<ApiErrorResponse> {
+export function createNotFoundErrorResponse(
+  resource: string = '资源'
+): NextResponse<ApiErrorResponse> {
   return createErrorResponse(
     ApiErrorCode.NOT_FOUND,
     `${resource}不存在`,
     undefined,
     404
-  )
+  );
 }
 
 /**
@@ -234,7 +245,7 @@ export function createInternalErrorResponse(
     message,
     details,
     500
-  )
+  );
 }
 
 /**
@@ -250,7 +261,7 @@ export function createRateLimitErrorResponse(
     message,
     undefined,
     429
-  )
+  );
 }
 
 /**
@@ -267,7 +278,7 @@ export function createBusinessErrorResponse(
   details?: any,
   status: number = 400
 ): NextResponse<ApiErrorResponse> {
-  return createErrorResponse(code, message, details, status)
+  return createErrorResponse(code, message, details, status);
 }
 
 /**
@@ -287,7 +298,7 @@ export function createExternalServiceErrorResponse(
     `${service}服务错误: ${message}`,
     details,
     502
-  )
+  );
 }
 
 /**
@@ -305,7 +316,7 @@ export function createDatabaseErrorResponse(
     message,
     details,
     500
-  )
+  );
 }
 
 /**
@@ -318,12 +329,7 @@ export function createStorageErrorResponse(
   message: string = '存储操作失败',
   details?: any
 ): NextResponse<ApiErrorResponse> {
-  return createErrorResponse(
-    ApiErrorCode.STORAGE_ERROR,
-    message,
-    details,
-    500
-  )
+  return createErrorResponse(ApiErrorCode.STORAGE_ERROR, message, details, 500);
 }
 
 /**
@@ -334,35 +340,35 @@ export class ResponseUtils {
    * 检查响应是否成功
    */
   static isSuccess(response: any): response is ApiSuccessResponse {
-    return response && response.success === true
+    return response && response.success === true;
   }
 
   /**
    * 检查响应是否失败
    */
   static isError(response: any): response is ApiErrorResponse {
-    return response && response.success === false
+    return response && response.success === false;
   }
 
   /**
    * 从响应中提取数据
    */
   static extractData<T>(response: ApiSuccessResponse<T>): T {
-    return response.data
+    return response.data;
   }
 
   /**
    * 从响应中提取错误信息
    */
   static extractError(response: ApiErrorResponse): string {
-    return response.error.message
+    return response.error.message;
   }
 
   /**
    * 从响应中提取错误码
    */
   static extractErrorCode(response: ApiErrorResponse): string {
-    return response.error.code
+    return response.error.code;
   }
 
   /**
@@ -373,16 +379,16 @@ export class ResponseUtils {
     limit: number,
     total: number
   ): PaginationMeta {
-    const totalPages = Math.ceil(total / limit)
-    
+    const totalPages = Math.ceil(total / limit);
+
     return {
       page,
       limit,
       total,
       totalPages,
       hasNext: page < totalPages,
-      hasPrev: page > 1
-    }
+      hasPrev: page > 1,
+    };
   }
 }
 
@@ -404,5 +410,5 @@ export default {
   createDatabaseErrorResponse,
   createStorageErrorResponse,
   ResponseUtils,
-  ApiErrorCode
-}
+  ApiErrorCode,
+};

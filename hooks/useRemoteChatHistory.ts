@@ -1,19 +1,32 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from 'react';
 
 interface UseRemoteChatHistoryParams {
-  userId?: string
-  agentId?: string
-  keyword?: string
-  page?: number
-  pageSize?: number
+  userId?: string;
+  agentId?: string;
+  keyword?: string;
+  page?: number;
+  pageSize?: number;
 }
 
-export function useRemoteChatHistory({ userId, agentId, keyword, page = 1, pageSize = 20 }: UseRemoteChatHistoryParams) {
-  const [data, setData] = useState<{ total: number; list: any[]; loading: boolean; error: any }>({ total: 0, list: [], loading: true, error: null })
+export function useRemoteChatHistory({
+  userId,
+  agentId,
+  keyword,
+  page = 1,
+  pageSize = 20,
+}: UseRemoteChatHistoryParams) {
+  const [data, setData] = useState<{
+    total: number;
+    list: any[];
+    loading: boolean;
+    error: any;
+  }>({ total: 0, list: [], loading: true, error: null });
 
   useEffect(() => {
     // 检查当前是否在user界面
-    const isUserInterface = typeof window !== 'undefined' && window.location.pathname.includes('/user');
+    const isUserInterface =
+      typeof window !== 'undefined' &&
+      window.location.pathname.includes('/user');
 
     // 如果是user界面，直接返回空数据，不请求服务器
     if (isUserInterface) {
@@ -23,13 +36,13 @@ export function useRemoteChatHistory({ userId, agentId, keyword, page = 1, pageS
     }
 
     // 如果不是user界面，正常请求服务器
-    setData(d => ({ ...d, loading: true }))
-    const params = new URLSearchParams()
-    if (userId) params.append("userId", userId)
-    if (agentId) params.append("agentId", agentId)
-    if (keyword) params.append("keyword", keyword)
-    params.append("page", String(page))
-    params.append("pageSize", String(pageSize))
+    setData(d => ({ ...d, loading: true }));
+    const params = new URLSearchParams();
+    if (userId) params.append('userId', userId);
+    if (agentId) params.append('agentId', agentId);
+    if (keyword) params.append('keyword', keyword);
+    params.append('page', String(page));
+    params.append('pageSize', String(pageSize));
 
     fetch(`/api/chat-history?${params.toString()}`)
       .then(res => {
@@ -57,8 +70,8 @@ export function useRemoteChatHistory({ userId, agentId, keyword, page = 1, pageS
       .catch(e => {
         console.error('获取聊天历史失败:', e);
         setData(d => ({ ...d, loading: false, error: e }));
-      })
-  }, [userId, agentId, keyword, page, pageSize])
+      });
+  }, [userId, agentId, keyword, page, pageSize]);
 
-  return data
+  return data;
 }

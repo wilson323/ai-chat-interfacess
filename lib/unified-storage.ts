@@ -4,4 +4,4 @@
  */
 
 // 重新导出新存储模块中的所有内容
-export * from "./storage"
+export * from './storage';

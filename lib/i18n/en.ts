@@ -26,4 +26,4 @@ export default {
     memory: 'Memory Usage',
   },
   // ...other modules
-} 
+};

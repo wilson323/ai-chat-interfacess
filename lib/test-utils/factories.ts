@@ -3,16 +3,16 @@
  * 生成测试用的模拟数据
  */
 
-import { faker } from '@faker-js/faker'
-import type { 
-  Agent, 
-  ChatMessage, 
-  User, 
+import { faker } from '@faker-js/faker';
+import type {
+  Agent,
+  ChatMessage,
+  User,
   ChatHistory,
   AgentConfig,
   GlobalVariable,
-  ApiResponse
-} from '@/types'
+  ApiResponse,
+} from '@/types';
 
 // 基础数据工厂
 export class BaseFactory {
@@ -20,62 +20,56 @@ export class BaseFactory {
    * 生成随机ID
    */
   static generateId(): string {
-    return faker.string.uuid()
+    return faker.string.uuid();
   }
-  
+
   /**
    * 生成随机时间戳
    */
   static generateTimestamp(): number {
-    return faker.date.recent().getTime()
+    return faker.date.recent().getTime();
   }
-  
+
   /**
    * 生成随机布尔值
    */
   static generateBoolean(): boolean {
-    return faker.datatype.boolean()
+    return faker.datatype.boolean();
   }
-  
+
   /**
    * 生成随机数字
    */
   static generateNumber(min: number = 0, max: number = 100): number {
-    return faker.number.int({ min, max })
+    return faker.number.int({ min, max });
   }
-  
+
   /**
    * 生成随机字符串
    */
   static generateString(length: number = 10): string {
-    return faker.string.alphanumeric(length)
+    return faker.string.alphanumeric(length);
   }
-  
+
   /**
    * 生成随机数组
    */
-  static generateArray<T>(
-    generator: () => T,
-    length: number = 5
-  ): T[] {
-    return Array.from({ length }, generator)
+  static generateArray<T>(generator: () => T, length: number = 5): T[] {
+    return Array.from({ length }, generator);
   }
-  
+
   /**
    * 生成随机选择
    */
   static generateChoice<T>(choices: T[]): T {
-    return faker.helpers.arrayElement(choices)
+    return faker.helpers.arrayElement(choices);
   }
-  
+
   /**
    * 生成随机子集
    */
-  static generateSubset<T>(
-    array: T[],
-    count: number = 3
-  ): T[] {
-    return faker.helpers.arrayElements(array, count)
+  static generateSubset<T>(array: T[], count: number = 3): T[] {
+    return faker.helpers.arrayElements(array, count);
   }
 }
 
@@ -94,10 +88,10 @@ export class UserFactory extends BaseFactory {
       isActive: this.generateBoolean(),
       createdAt: this.generateTimestamp(),
       updatedAt: this.generateTimestamp(),
-      ...overrides
-    }
+      ...overrides,
+    };
   }
-  
+
   /**
    * 生成管理员用户
    */
@@ -105,10 +99,10 @@ export class UserFactory extends BaseFactory {
     return this.generate({
       role: 'admin',
       isActive: true,
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成普通用户
    */
@@ -116,15 +110,15 @@ export class UserFactory extends BaseFactory {
     return this.generate({
       role: 'user',
       isActive: true,
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成用户数组
    */
   static generateMany(count: number = 5): User[] {
-    return this.generateArray(() => this.generate(), count)
+    return this.generateArray(() => this.generate(), count);
   }
 }
 
@@ -144,10 +138,10 @@ export class AgentFactory extends BaseFactory {
       config: AgentConfigFactory.generate(),
       createdAt: this.generateTimestamp(),
       updatedAt: this.generateTimestamp(),
-      ...overrides
-    }
+      ...overrides,
+    };
   }
-  
+
   /**
    * 生成FastGPT智能体
    */
@@ -156,10 +150,10 @@ export class AgentFactory extends BaseFactory {
       type: 'fastgpt',
       name: 'FastGPT助手',
       description: '通用对话智能体',
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成CAD分析智能体
    */
@@ -168,10 +162,10 @@ export class AgentFactory extends BaseFactory {
       type: 'cad-analyzer',
       name: 'CAD分析器',
       description: 'CAD文件分析智能体',
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成图像编辑智能体
    */
@@ -180,15 +174,15 @@ export class AgentFactory extends BaseFactory {
       type: 'image-editor',
       name: '图像编辑器',
       description: '图像编辑智能体',
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成智能体数组
    */
   static generateMany(count: number = 5): Agent[] {
-    return this.generateArray(() => this.generate(), count)
+    return this.generateArray(() => this.generate(), count);
   }
 }
 
@@ -212,10 +206,10 @@ export class AgentConfigFactory extends BaseFactory {
       isActive: this.generateBoolean(),
       createdAt: this.generateTimestamp(),
       updatedAt: this.generateTimestamp(),
-      ...overrides
-    }
+      ...overrides,
+    };
   }
-  
+
   /**
    * 生成FastGPT配置
    */
@@ -229,14 +223,16 @@ export class AgentConfigFactory extends BaseFactory {
       supportsImageUpload: true,
       supportsVoiceInput: false,
       supportsVoiceOutput: false,
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成CAD分析器配置
    */
-  static generateCADAnalyzer(overrides: Partial<AgentConfig> = {}): AgentConfig {
+  static generateCADAnalyzer(
+    overrides: Partial<AgentConfig> = {}
+  ): AgentConfig {
     return this.generate({
       model: 'gpt-4',
       temperature: 0.3,
@@ -246,14 +242,16 @@ export class AgentConfigFactory extends BaseFactory {
       supportsImageUpload: false,
       supportsVoiceInput: false,
       supportsVoiceOutput: false,
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成图像编辑器配置
    */
-  static generateImageEditor(overrides: Partial<AgentConfig> = {}): AgentConfig {
+  static generateImageEditor(
+    overrides: Partial<AgentConfig> = {}
+  ): AgentConfig {
     return this.generate({
       model: 'gpt-4-vision',
       temperature: 0.5,
@@ -263,8 +261,8 @@ export class AgentConfigFactory extends BaseFactory {
       supportsImageUpload: true,
       supportsVoiceInput: false,
       supportsVoiceOutput: false,
-      ...overrides
-    })
+      ...overrides,
+    });
   }
 }
 
@@ -284,69 +282,75 @@ export class ChatMessageFactory extends BaseFactory {
         agentId: this.generateId(),
         model: this.generateChoice(['gpt-4', 'gpt-3.5-turbo']),
         tokens: this.generateNumber(10, 1000),
-        processingTime: this.generateNumber(100, 5000)
+        processingTime: this.generateNumber(100, 5000),
       },
-      ...overrides
-    }
+      ...overrides,
+    };
   }
-  
+
   /**
    * 生成用户消息
    */
-  static generateUserMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
+  static generateUserMessage(
+    overrides: Partial<ChatMessage> = {}
+  ): ChatMessage {
     return this.generate({
       role: 'user',
       content: faker.lorem.sentence(),
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成助手消息
    */
-  static generateAssistantMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
+  static generateAssistantMessage(
+    overrides: Partial<ChatMessage> = {}
+  ): ChatMessage {
     return this.generate({
       role: 'assistant',
       content: faker.lorem.paragraph(),
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成系统消息
    */
-  static generateSystemMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
+  static generateSystemMessage(
+    overrides: Partial<ChatMessage> = {}
+  ): ChatMessage {
     return this.generate({
       role: 'system',
       content: faker.lorem.sentence(),
-      ...overrides
-    })
+      ...overrides,
+    });
   }
-  
+
   /**
    * 生成消息数组
    */
   static generateMany(count: number = 5): ChatMessage[] {
-    return this.generateArray(() => this.generate(), count)
+    return this.generateArray(() => this.generate(), count);
   }
-  
+
   /**
    * 生成对话历史
    */
   static generateConversation(count: number = 10): ChatMessage[] {
-    const messages: ChatMessage[] = []
-    
+    const messages: ChatMessage[] = [];
+
     for (let i = 0; i < count; i++) {
-      const isUser = i % 2 === 0
-      const message = isUser 
+      const isUser = i % 2 === 0;
+      const message = isUser
         ? this.generateUserMessage()
-        : this.generateAssistantMessage()
-      
-      message.timestamp = Date.now() - (count - i) * 1000
-      messages.push(message)
+        : this.generateAssistantMessage();
+
+      message.timestamp = Date.now() - (count - i) * 1000;
+      messages.push(message);
     }
-    
-    return messages
+
+    return messages;
   }
 }
 
@@ -364,15 +368,15 @@ export class ChatHistoryFactory extends BaseFactory {
       messages: ChatMessageFactory.generateMany(5),
       createdAt: this.generateTimestamp(),
       updatedAt: this.generateTimestamp(),
-      ...overrides
-    }
+      ...overrides,
+    };
   }
-  
+
   /**
    * 生成聊天历史数组
    */
   static generateMany(count: number = 5): ChatHistory[] {
-    return this.generateArray(() => this.generate(), count)
+    return this.generateArray(() => this.generate(), count);
   }
 }
 
@@ -391,15 +395,15 @@ export class GlobalVariableFactory extends BaseFactory {
       isActive: this.generateBoolean(),
       createdAt: this.generateTimestamp(),
       updatedAt: this.generateTimestamp(),
-      ...overrides
-    }
+      ...overrides,
+    };
   }
-  
+
   /**
    * 生成全局变量数组
    */
   static generateMany(count: number = 5): GlobalVariable[] {
-    return this.generateArray(() => this.generate(), count)
+    return this.generateArray(() => this.generate(), count);
   }
 }
 
@@ -417,10 +421,10 @@ export class ApiResponseFactory extends BaseFactory {
       data,
       message: 'Success',
       timestamp: this.generateTimestamp(),
-      ...overrides
-    }
+      ...overrides,
+    };
   }
-  
+
   /**
    * 生成错误响应
    */
@@ -435,10 +439,10 @@ export class ApiResponseFactory extends BaseFactory {
       message,
       code,
       timestamp: this.generateTimestamp(),
-      ...overrides
-    }
+      ...overrides,
+    };
   }
-  
+
   /**
    * 生成分页响应
    */
@@ -458,10 +462,10 @@ export class ApiResponseFactory extends BaseFactory {
         page,
         pageSize,
         total,
-        totalPages: Math.ceil(total / pageSize)
+        totalPages: Math.ceil(total / pageSize),
       },
-      ...overrides
-    }
+      ...overrides,
+    };
   }
 }
 
@@ -471,57 +475,57 @@ export class TestScenarioFactory extends BaseFactory {
    * 生成完整测试场景
    */
   static generateCompleteScenario() {
-    const user = UserFactory.generate()
-    const agent = AgentFactory.generate()
+    const user = UserFactory.generate();
+    const agent = AgentFactory.generate();
     const chatHistory = ChatHistoryFactory.generate({
       userId: user.id,
-      agentId: agent.id
-    })
-    const messages = ChatMessageFactory.generateConversation(10)
-    
+      agentId: agent.id,
+    });
+    const messages = ChatMessageFactory.generateConversation(10);
+
     return {
       user,
       agent,
       chatHistory: {
         ...chatHistory,
-        messages
+        messages,
       },
-      globalVariables: GlobalVariableFactory.generateMany(3)
-    }
+      globalVariables: GlobalVariableFactory.generateMany(3),
+    };
   }
-  
+
   /**
    * 生成管理员测试场景
    */
   static generateAdminScenario() {
-    const admin = UserFactory.generateAdmin()
-    const agents = AgentFactory.generateMany(5)
-    const users = UserFactory.generateMany(10)
-    
+    const admin = UserFactory.generateAdmin();
+    const agents = AgentFactory.generateMany(5);
+    const users = UserFactory.generateMany(10);
+
     return {
       admin,
       agents,
       users,
-      globalVariables: GlobalVariableFactory.generateMany(5)
-    }
+      globalVariables: GlobalVariableFactory.generateMany(5),
+    };
   }
-  
+
   /**
    * 生成用户测试场景
    */
   static generateUserScenario() {
-    const user = UserFactory.generateUser()
-    const agent = AgentFactory.generateFastGPT()
+    const user = UserFactory.generateUser();
+    const agent = AgentFactory.generateFastGPT();
     const chatHistory = ChatHistoryFactory.generate({
       userId: user.id,
-      agentId: agent.id
-    })
-    
+      agentId: agent.id,
+    });
+
     return {
       user,
       agent,
-      chatHistory
-    }
+      chatHistory,
+    };
   }
 }
 
@@ -535,5 +539,5 @@ export default {
   ChatHistoryFactory,
   GlobalVariableFactory,
   ApiResponseFactory,
-  TestScenarioFactory
-}
+  TestScenarioFactory,
+};

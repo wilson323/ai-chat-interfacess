@@ -1,2 +1,2 @@
-import CadAnalyzerConfigPage from "./cad-analyzer-config/page";
+import CadAnalyzerConfigPage from './cad-analyzer-config/page';
 export default CadAnalyzerConfigPage;

@@ -3,8 +3,16 @@
  * 提供统一的懒加载功能和性能优化
  */
 
-import { lazy, Suspense, ComponentType, ReactNode, useRef, useEffect, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import {
+  lazy,
+  Suspense,
+  ComponentType,
+  ReactNode,
+  useRef,
+  useEffect,
+  useState,
+} from 'react';
+import { Loader2 } from 'lucide-react';
 
 /**
  * 懒加载组件包装器
@@ -13,15 +21,15 @@ export function withLazyLoading<T extends ComponentType<any>>(
   importFunc: () => Promise<{ default: T }>,
   fallback?: ReactNode
 ) {
-  const LazyComponent = lazy(importFunc)
-  
+  const LazyComponent = lazy(importFunc);
+
   return function LazyWrapper(props: any) {
     return (
       <Suspense fallback={fallback || <DefaultFallback />}>
         <LazyComponent {...props} />
       </Suspense>
-    )
-  }
+    );
+  };
 }
 
 /**
@@ -29,30 +37,30 @@ export function withLazyLoading<T extends ComponentType<any>>(
  */
 function DefaultFallback() {
   return (
-    <div className="flex items-center justify-center p-8">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className='flex items-center justify-center p-8'>
+      <Loader2 className='h-8 w-8 animate-spin text-primary' />
     </div>
-  )
+  );
 }
 
 /**
  * 自定义加载组件
  */
-export function CustomFallback({ 
-  message = '加载中...', 
-  className = '' 
-}: { 
-  message?: string
-  className?: string 
+export function CustomFallback({
+  message = '加载中...',
+  className = '',
+}: {
+  message?: string;
+  className?: string;
 }) {
   return (
     <div className={`flex items-center justify-center p-8 ${className}`}>
-      <div className="flex flex-col items-center space-y-2">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="text-sm text-muted-foreground">{message}</span>
+      <div className='flex flex-col items-center space-y-2'>
+        <Loader2 className='h-8 w-8 animate-spin text-primary' />
+        <span className='text-sm text-muted-foreground'>{message}</span>
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -60,63 +68,61 @@ export function CustomFallback({
  */
 export function preloadComponent(importFunc: () => Promise<any>) {
   return () => {
-    importFunc()
-  }
+    importFunc();
+  };
 }
 
 /**
  * 懒加载容器组件
  * 当组件进入视口时才加载
  */
-export function LazyContainer({ 
-  children, 
+export function LazyContainer({
+  children,
   fallback,
   rootMargin = '100px',
-  threshold = 0.1
+  threshold = 0.1,
 }: {
-  children: ReactNode
-  fallback?: ReactNode
-  rootMargin?: string
-  threshold?: number
+  children: ReactNode;
+  fallback?: ReactNode;
+  rootMargin?: string;
+  threshold?: number;
 }) {
-  const [isVisible, setIsVisible] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [isVisible, setIsVisible] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting) {
-          setIsVisible(true)
-          observer.disconnect()
+          setIsVisible(true);
+          observer.disconnect();
         }
       },
       { rootMargin, threshold }
-    )
+    );
 
     if (ref.current) {
-      observer.observe(ref.current)
+      observer.observe(ref.current);
     }
 
-    return () => observer.disconnect()
-  }, [rootMargin, threshold])
+    return () => observer.disconnect();
+  }, [rootMargin, threshold]);
 
   useEffect(() => {
     if (isVisible) {
       // 延迟加载，避免阻塞渲染
       const timer = setTimeout(() => {
-        setIsLoaded(true)
-      }, 100)
-      
-      return () => clearTimeout(timer)
+        setIsLoaded(true);
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
-  }, [isVisible])
+  }, [isVisible]);
 
   return (
-    <div ref={ref}>
-      {isLoaded ? children : (fallback || <DefaultFallback />)}
-    </div>
-  )
+    <div ref={ref}>{isLoaded ? children : fallback || <DefaultFallback />}</div>
+  );
 }
 
 /**
@@ -133,66 +139,68 @@ export function LazyImage({
   threshold = 0.01,
   ...props
 }: {
-  src: string
-  alt: string
-  className?: string
-  fallbackSrc?: string
-  blurPlaceholder?: boolean
-  loadingComponent?: ReactNode
-  rootMargin?: string
-  threshold?: number
+  src: string;
+  alt: string;
+  className?: string;
+  fallbackSrc?: string;
+  blurPlaceholder?: boolean;
+  loadingComponent?: ReactNode;
+  rootMargin?: string;
+  threshold?: number;
 } & React.ImgHTMLAttributes<HTMLImageElement>) {
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [isError, setIsError] = useState(false)
-  const [isInView, setIsInView] = useState(false)
-  const imgRef = useRef<HTMLImageElement>(null)
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // 使用IntersectionObserver检测图片是否在视口中
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting) {
-          setIsInView(true)
+          setIsInView(true);
           // 一旦图片进入视口，就不再需要观察它
           if (imgRef.current) {
-            observer.unobserve(imgRef.current)
+            observer.unobserve(imgRef.current);
           }
         }
       },
       { rootMargin, threshold }
-    )
+    );
 
     if (imgRef.current) {
-      observer.observe(imgRef.current)
+      observer.observe(imgRef.current);
     }
 
     return () => {
       if (imgRef.current) {
-        observer.unobserve(imgRef.current)
+        observer.unobserve(imgRef.current);
       }
-    }
-  }, [rootMargin, threshold])
+    };
+  }, [rootMargin, threshold]);
 
   // 处理图片加载完成
   const handleLoad = () => {
-    setIsLoaded(true)
-  }
+    setIsLoaded(true);
+  };
 
   // 处理图片加载错误
   const handleError = () => {
-    setIsError(true)
-    console.error(`Failed to load image: ${src}`)
-  }
+    setIsError(true);
+    console.error(`Failed to load image: ${src}`);
+  };
 
   // 实际显示的图片源
-  const displaySrc = isError ? fallbackSrc : isInView ? src : fallbackSrc
+  const displaySrc = isError ? fallbackSrc : isInView ? src : fallbackSrc;
 
   return (
-    <div className="relative">
+    <div className='relative'>
       {/* 加载状态 */}
       {isInView && !isLoaded && !isError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm">
-          {loadingComponent || <Loader2 className="h-6 w-6 text-primary animate-spin" />}
+        <div className='absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm'>
+          {loadingComponent || (
+            <Loader2 className='h-6 w-6 text-primary animate-spin' />
+          )}
         </div>
       )}
 
@@ -206,11 +214,11 @@ export function LazyImage({
         } ${blurPlaceholder && !isLoaded && !isError ? 'blur-sm' : 'blur-0'} ${className || ''}`}
         onLoad={handleLoad}
         onError={handleError}
-        loading="lazy"
+        loading='lazy'
         {...props}
       />
     </div>
-  )
+  );
 }
 
 /**
@@ -226,60 +234,62 @@ export function LazyVideo({
   threshold = 0.1,
   ...props
 }: {
-  src: string
-  poster?: string
-  className?: string
-  fallbackSrc?: string
-  loadingComponent?: ReactNode
-  rootMargin?: string
-  threshold?: number
+  src: string;
+  poster?: string;
+  className?: string;
+  fallbackSrc?: string;
+  loadingComponent?: ReactNode;
+  rootMargin?: string;
+  threshold?: number;
 } & React.VideoHTMLAttributes<HTMLVideoElement>) {
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [isError, setIsError] = useState(false)
-  const [isInView, setIsInView] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting) {
-          setIsInView(true)
+          setIsInView(true);
           if (videoRef.current) {
-            observer.unobserve(videoRef.current)
+            observer.unobserve(videoRef.current);
           }
         }
       },
       { rootMargin, threshold }
-    )
+    );
 
     if (videoRef.current) {
-      observer.observe(videoRef.current)
+      observer.observe(videoRef.current);
     }
 
     return () => {
       if (videoRef.current) {
-        observer.unobserve(videoRef.current)
+        observer.unobserve(videoRef.current);
       }
-    }
-  }, [rootMargin, threshold])
+    };
+  }, [rootMargin, threshold]);
 
   const handleLoad = () => {
-    setIsLoaded(true)
-  }
+    setIsLoaded(true);
+  };
 
   const handleError = () => {
-    setIsError(true)
-    console.error(`Failed to load video: ${src}`)
-  }
+    setIsError(true);
+    console.error(`Failed to load video: ${src}`);
+  };
 
-  const displaySrc = isError ? fallbackSrc : isInView ? src : fallbackSrc
+  const displaySrc = isError ? fallbackSrc : isInView ? src : fallbackSrc;
 
   return (
-    <div className="relative">
+    <div className='relative'>
       {/* 加载状态 */}
       {isInView && !isLoaded && !isError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm">
-          {loadingComponent || <Loader2 className="h-6 w-6 text-primary animate-spin" />}
+        <div className='absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm'>
+          {loadingComponent || (
+            <Loader2 className='h-6 w-6 text-primary animate-spin' />
+          )}
         </div>
       )}
 
@@ -293,11 +303,11 @@ export function LazyVideo({
         } ${className || ''}`}
         onLoadedData={handleLoad}
         onError={handleError}
-        preload="none"
+        preload='none'
         {...props}
       />
     </div>
-  )
+  );
 }
 
 /**
@@ -313,60 +323,62 @@ export function LazyIframe({
   threshold = 0.1,
   ...props
 }: {
-  src: string
-  title?: string
-  className?: string
-  fallbackSrc?: string
-  loadingComponent?: ReactNode
-  rootMargin?: string
-  threshold?: number
+  src: string;
+  title?: string;
+  className?: string;
+  fallbackSrc?: string;
+  loadingComponent?: ReactNode;
+  rootMargin?: string;
+  threshold?: number;
 } & React.IframeHTMLAttributes<HTMLIFrameElement>) {
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [isError, setIsError] = useState(false)
-  const [isInView, setIsInView] = useState(false)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting) {
-          setIsInView(true)
+          setIsInView(true);
           if (iframeRef.current) {
-            observer.unobserve(iframeRef.current)
+            observer.unobserve(iframeRef.current);
           }
         }
       },
       { rootMargin, threshold }
-    )
+    );
 
     if (iframeRef.current) {
-      observer.observe(iframeRef.current)
+      observer.observe(iframeRef.current);
     }
 
     return () => {
       if (iframeRef.current) {
-        observer.unobserve(iframeRef.current)
+        observer.unobserve(iframeRef.current);
       }
-    }
-  }, [rootMargin, threshold])
+    };
+  }, [rootMargin, threshold]);
 
   const handleLoad = () => {
-    setIsLoaded(true)
-  }
+    setIsLoaded(true);
+  };
 
   const handleError = () => {
-    setIsError(true)
-    console.error(`Failed to load iframe: ${src}`)
-  }
+    setIsError(true);
+    console.error(`Failed to load iframe: ${src}`);
+  };
 
-  const displaySrc = isError ? fallbackSrc : isInView ? src : fallbackSrc
+  const displaySrc = isError ? fallbackSrc : isInView ? src : fallbackSrc;
 
   return (
-    <div className="relative">
+    <div className='relative'>
       {/* 加载状态 */}
       {isInView && !isLoaded && !isError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm">
-          {loadingComponent || <Loader2 className="h-6 w-6 text-primary animate-spin" />}
+        <div className='absolute inset-0 flex items-center justify-center bg-muted/20 backdrop-blur-sm'>
+          {loadingComponent || (
+            <Loader2 className='h-6 w-6 text-primary animate-spin' />
+          )}
         </div>
       )}
 
@@ -380,80 +392,82 @@ export function LazyIframe({
         } ${className || ''}`}
         onLoad={handleLoad}
         onError={handleError}
-        loading="lazy"
+        loading='lazy'
         {...props}
       />
     </div>
-  )
+  );
 }
 
 /**
  * 懒加载Hook
  */
-export function useLazyLoading(options: {
-  rootMargin?: string
-  threshold?: number
-} = {}) {
-  const [isVisible, setIsVisible] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const ref = useRef<HTMLElement>(null)
+export function useLazyLoading(
+  options: {
+    rootMargin?: string;
+    threshold?: number;
+  } = {}
+) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting) {
-          setIsVisible(true)
-          observer.disconnect()
+          setIsVisible(true);
+          observer.disconnect();
         }
       },
       {
         rootMargin: options.rootMargin || '100px',
-        threshold: options.threshold || 0.1
+        threshold: options.threshold || 0.1,
       }
-    )
+    );
 
     if (ref.current) {
-      observer.observe(ref.current)
+      observer.observe(ref.current);
     }
 
     return () => {
       if (ref.current) {
-        observer.unobserve(ref.current)
+        observer.unobserve(ref.current);
       }
-    }
-  }, [options.rootMargin, options.threshold])
+    };
+  }, [options.rootMargin, options.threshold]);
 
   useEffect(() => {
     if (isVisible) {
       const timer = setTimeout(() => {
-        setIsLoaded(true)
-      }, 100)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [isVisible])
+        setIsLoaded(true);
+      }, 100);
 
-  return { ref, isVisible, isLoaded }
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible]);
+
+  return { ref, isVisible, isLoaded };
 }
 
 /**
  * 预加载Hook
  */
 export function usePreload() {
-  const preloadedComponents = useRef<Set<string>>(new Set())
+  const preloadedComponents = useRef<Set<string>>(new Set());
 
   const preload = (importFunc: () => Promise<any>, key: string) => {
     if (!preloadedComponents.current.has(key)) {
-      preloadedComponents.current.add(key)
-      importFunc()
+      preloadedComponents.current.add(key);
+      importFunc();
     }
-  }
+  };
 
   const isPreloaded = (key: string) => {
-    return preloadedComponents.current.has(key)
-  }
+    return preloadedComponents.current.has(key);
+  };
 
-  return { preload, isPreloaded }
+  return { preload, isPreloaded };
 }
 
 /**
@@ -468,5 +482,5 @@ export default {
   LazyVideo,
   LazyIframe,
   useLazyLoading,
-  usePreload
-}
+  usePreload,
+};

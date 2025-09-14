@@ -98,4 +98,4 @@ test.describe('全功能E2E自动化测试', () => {
     await page.goto(ADMIN_PAGE);
     await expect(page).toHaveURL(ADMIN_URL);
   });
-}); 
+});
