@@ -157,5 +157,3 @@ export function getGlobalChatService(): ChatService {
 export function resetGlobalChatService(): void {
   globalChatService = null;
 }
-
-

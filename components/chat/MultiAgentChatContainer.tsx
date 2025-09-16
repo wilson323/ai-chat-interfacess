@@ -19,8 +19,9 @@ import { ChatInput } from './ChatInput';
 import { ChatHistory } from '../chat-history';
 import { HistoryManager } from '../history-manager';
 import { useAgent } from '@/context/agent-context';
-import { getGlobalChatService } from '@/lib/services/multi-agent-chat-service';
+// Deprecated: component removed from runtime usage. Keeping placeholder import removed.
 import { saveMessagesToStorage } from '@/lib/storage/index';
+import { getGlobalChatService } from '@/lib/services/chat-service';
 import type { Agent } from '@/types/agent';
 import type { GlobalVariable } from '@/types';
 import type { Message, ProcessingStep } from '@/types/message';
@@ -275,10 +276,10 @@ export function MultiAgentChatContainer({
           setProcessingSteps(prev => [...prev, step as ProcessingStep]);
           setShowProcessingFlow(true);
         },
-        onIntermediateValue: (value, eventType) => {
+        onIntermediateValue: (value: unknown, eventType: string) => {
           console.log('🔄 Intermediate value:', eventType, value);
         },
-        onError: error => {
+        onError: (error: Error) => {
           console.error('Chat error:', error);
           setMessages(prev =>
             prev.map(msg =>
