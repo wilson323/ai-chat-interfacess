@@ -86,12 +86,8 @@ export interface StreamOptions {
   variables?: Record<string, any>;
   onStart?: () => void;
   onChunk?: (chunk: string) => void;
-  onIntermediateValue?: (value: string | object, eventType: string) => void;
-  onProcessingStep?: (step: {
-    type: string;
-    description: string;
-    progress?: number;
-  }) => void;
+  onIntermediateValue?: (value: unknown, eventType: string) => void;
+  onProcessingStep?: (step: unknown) => void;
   onError?: (error: Error) => void;
   onFinish?: () => void;
   signal?: AbortSignal;

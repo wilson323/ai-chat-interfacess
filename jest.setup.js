@@ -215,9 +215,15 @@ beforeAll(() => {
   console.error = (...args) => {
     if (
       typeof args[0] === 'string' &&
-      (args[0].includes('Warning: ReactDOM.render is no longer supported') ||
-       args[0].includes('Warning: An update to') ||
-       args[0].includes('Warning: A component is changing'))
+      (
+        args[0].startsWith('Warning:') ||
+        args[0].includes('Warning: ReactDOM.render is no longer supported') ||
+        args[0].includes('Warning: An update to') ||
+        args[0].includes('Warning: A component is changing') ||
+        args[0].includes('ReactDOMTestUtils.act is deprecated') ||
+        args[0].includes('Failed to load theme preference') ||
+        args[0].includes('Invalid theme configuration:')
+      )
     ) {
       return;
     }
@@ -226,8 +232,11 @@ beforeAll(() => {
   console.warn = (...args) => {
     if (
       typeof args[0] === 'string' &&
-      (args[0].includes('componentWillReceiveProps') ||
-       args[0].includes('Warning: An update to'))
+      (
+        args[0].includes('componentWillReceiveProps') ||
+        args[0].includes('Warning: An update to') ||
+        args[0].includes('IndexedDB not available in server environment')
+      )
     ) {
       return;
     }
@@ -246,3 +255,20 @@ afterEach(() => {
   localStorageMock.clear();
   sessionStorageMock.clear();
 });
+
+// ---- Media element safe mocks for jsdom ----
+// 在测试环境下统一重写，避免 jsdom 的 Not implemented 错误。
+(() => {
+  try {
+    const proto = (globalThis.HTMLMediaElement && globalThis.HTMLMediaElement.prototype) || null;
+    if (!proto) return;
+    // @ts-ignore
+    proto.play = jest.fn(() => Promise.resolve());
+    // @ts-ignore
+    proto.pause = jest.fn(() => undefined);
+    // @ts-ignore
+    proto.load = jest.fn(() => undefined);
+  } catch {}
+})();
+
+// 将噪声过滤合入现有 beforeAll 包装，避免覆盖原有过滤逻辑

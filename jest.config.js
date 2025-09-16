@@ -13,6 +13,7 @@ const customJestConfig = {
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/api-server/',
+    '<rootDir>/tests/e2e/',
     '<rootDir>/__tests__/e2e/',
     '<rootDir>/__tests__/storage.test.ts',
     // 忽略多智能体相关测试，当前项目使用单智能体模式
@@ -71,7 +72,8 @@ const customJestConfig = {
   // 移除workerIdleMemoryLimit，在WSL2中会导致内存分配问题
   // workerIdleMemoryLimit: '512MB',
   detectOpenHandles: false, // 在WSL2中禁用，避免进程死锁
-  forceExit: true,
+  // 让 Jest 自然退出，避免 Force exiting 提示
+  forceExit: false,
   // 增加超时时间
         testTimeout: 120000, // 2分钟超时
   // 清理模块

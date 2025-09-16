@@ -302,6 +302,8 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
       >
         {/* 文件输入 */}
         <input
+          id='sharedFileUploadInput'
+          name='sharedFileUploadInput'
           ref={fileInputRef}
           type='file'
           accept={accept}
@@ -309,6 +311,8 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
           onChange={handleFileInputChange}
           className='hidden'
           disabled={disabled}
+          aria-label='选择文件'
+          autoComplete='off'
         />
 
         {/* 上传区域 */}

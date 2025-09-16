@@ -421,12 +421,16 @@ export function VoiceChatInput({
 
       {/* 隐藏的文件输入 */}
       <input
+        id='voiceChatFileInput'
+        name='voiceChatFileInput'
         ref={fileInputRef}
         type='file'
         multiple
         accept='image/*,audio/*,video/*,.pdf,.doc,.docx,.txt'
         onChange={handleFileSelect}
         className='hidden'
+        aria-label='选择文件'
+        autoComplete='off'
       />
     </div>
   );

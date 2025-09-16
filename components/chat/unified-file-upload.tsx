@@ -304,6 +304,8 @@ export function UnifiedFileUpload({
         onChange={handleInputChange}
         className='hidden'
         disabled={disabled}
+        aria-label='选择文件'
+        autoComplete='off'
       />
 
       {/* 已上传文件列表 */}
