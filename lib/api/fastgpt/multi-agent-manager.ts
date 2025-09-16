@@ -3,10 +3,9 @@
  * 支持多个FastGPT智能体的配置管理、动态切换和负载均衡
  */
 
-import type { Agent } from '../../../types/agent';
+import type { Agent, GlobalVariable } from '@/types/agent';
 import { FastGPTClient } from './index';
-import { simpleCacheManager } from '@/lib/cache/simple-cache';
-import { API_CONSTANTS } from '@/lib/storage/shared/constants';
+import { logger } from '@/lib/utils/logger';
 
 export interface AgentConfig {
   id: string;
@@ -20,7 +19,7 @@ export interface AgentConfig {
   multimodalModel: string;
   supportsStream: boolean;
   supportsDetail: boolean;
-  globalVariables: Record<string, any>[];
+  globalVariables: GlobalVariable[];
   welcomeText: string;
   isEnabled: boolean;
   order: number;
@@ -68,11 +67,13 @@ export class FastGPTMultiAgentManager {
   constructor(options: MultiAgentOptions = {}) {
     this.options = {
       cacheEnabled: options.cacheEnabled ?? true,
-      loadBalanceStrategy: options.loadBalanceStrategy ?? { type: 'round-robin' },
+      loadBalanceStrategy: options.loadBalanceStrategy ?? {
+        type: 'round-robin',
+      },
       healthCheckInterval: options.healthCheckInterval ?? 30000, // 30秒
       maxRetriesPerAgent: options.maxRetriesPerAgent ?? 3,
       circuitBreakerThreshold: options.circuitBreakerThreshold ?? 5,
-      fallbackAgentId: options.fallbackAgentId,
+      fallbackAgentId: options.fallbackAgentId || '',
     };
 
     // 初始化健康检查
@@ -101,14 +102,63 @@ export class FastGPTMultiAgentManager {
         appId: config.appId,
         apiUrl: config.apiUrl,
         systemPrompt: config.systemPrompt,
+        isActive: true,
         temperature: config.temperature,
         maxTokens: config.maxTokens,
         multimodalModel: config.multimodalModel,
         supportsStream: config.supportsStream,
         supportsDetail: config.supportsDetail,
-        globalVariables: config.globalVariables,
+        globalVariables: config.globalVariables as GlobalVariable[],
         welcomeText: config.welcomeText,
         chatId: '',
+        config: {
+          version: '1.0.0',
+          type: 'fastgpt',
+          id: config.id,
+          name: config.name,
+          description: (config as any).description || '',
+          apiKey: config.apiKey,
+          appId: config.appId,
+          apiUrl: config.apiUrl,
+          systemPrompt: config.systemPrompt,
+          temperature: config.temperature,
+          maxTokens: config.maxTokens,
+          multimodalModel: config.multimodalModel,
+          supportsFileUpload: (config as any).supportsFileUpload || false,
+          supportsImageUpload: (config as any).supportsImageUpload || false,
+          supportsStream: config.supportsStream,
+          supportsDetail: config.supportsDetail,
+          globalVariables: config.globalVariables,
+          welcomeText: config.welcomeText,
+          order: config.order,
+          isPublished: (config as any).isPublished || true,
+          isActive: true,
+          settings: {
+            timeout: 30000,
+            retryCount: 3,
+            cacheEnabled: true,
+            logLevel: 'info',
+            healthCheckInterval: 30000,
+            circuitBreakerThreshold: 5
+          },
+          features: {
+            streaming: config.supportsStream || true,
+            fileUpload: (config as any).supportsFileUpload || false,
+            imageUpload: (config as any).supportsImageUpload || false,
+            voiceInput: false,
+            voiceOutput: false,
+            multimodal: !!config.multimodalModel,
+            detail: config.supportsDetail || true,
+            questionGuide: true
+          },
+          limits: {
+            maxTokens: config.maxTokens || 2048,
+            maxFileSize: 10 * 1024 * 1024,
+            maxRequests: 1000,
+            rateLimit: 100,
+            maxConnections: 10
+          }
+        }
       };
 
       const client = new FastGPTClient(agent);
@@ -135,9 +185,9 @@ export class FastGPTMultiAgentManager {
         await this.warmupAgentCache(config.id);
       }
 
-      console.log(`✅ 智能体注册成功: ${config.name} (${config.id})`);
+      logger.debug(`✅ 智能体注册成功: ${config.name} (${config.id})`);
     } catch (error) {
-      console.error(`❌ 智能体注册失败: ${config.name}`, error);
+      logger.error(`❌ 智能体注册失败: ${config.name}`, error);
       throw error;
     }
   }
@@ -168,9 +218,9 @@ export class FastGPTMultiAgentManager {
       this.clients.delete(agentId);
       this.metrics.delete(agentId);
 
-      console.log(`✅ 智能体注销成功: ${config.name} (${agentId})`);
+      logger.debug(`✅ 智能体注销成功: ${config.name} (${agentId})`);
     } catch (error) {
-      console.error(`❌ 智能体注销失败: ${agentId}`, error);
+      logger.error(`❌ 智能体注销失败: ${agentId}`, error);
       throw error;
     }
   }
@@ -178,7 +228,10 @@ export class FastGPTMultiAgentManager {
   /**
    * 更新智能体配置
    */
-  async updateAgentConfig(agentId: string, updates: Partial<AgentConfig>): Promise<void> {
+  async updateAgentConfig(
+    agentId: string,
+    updates: Partial<AgentConfig>
+  ): Promise<void> {
     try {
       const existingConfig = this.agents.get(agentId);
       if (!existingConfig) {
@@ -192,9 +245,9 @@ export class FastGPTMultiAgentManager {
       await this.unregisterAgent(agentId);
       await this.registerAgent(updatedConfig);
 
-      console.log(`✅ 智能体配置更新成功: ${updatedConfig.name} (${agentId})`);
+      logger.debug(`✅ 智能体配置更新成功: ${updatedConfig.name} (${agentId})`);
     } catch (error) {
-      console.error(`❌ 智能体配置更新失败: ${agentId}`, error);
+      logger.error(`❌ 智能体配置更新失败: ${agentId}`, error);
       throw error;
     }
   }
@@ -243,12 +296,15 @@ export class FastGPTMultiAgentManager {
    * 流式聊天（自动选择最佳智能体）
    */
   async streamChat(
-    messages: any[],
+    messages: Array<{
+      role: 'system' | 'user' | 'assistant';
+      content: string;
+    }>,
     options: Parameters<FastGPTClient['streamChat']>[1] = {},
     preferredAgentId?: string
   ): Promise<{ agentId: string; response: Promise<void> }> {
     const startTime = Date.now();
-    let agentId: string;
+    let agentId: string = '';
     let client: FastGPTClient;
 
     try {
@@ -290,14 +346,22 @@ export class FastGPTMultiAgentManager {
       return { agentId, response };
     } catch (error) {
       // 如果有回退智能体，尝试使用回退
-      if (this.options.fallbackAgentId && this.options.fallbackAgentId !== agentId) {
+      if (
+        this.options.fallbackAgentId &&
+        this.options.fallbackAgentId !== agentId
+      ) {
         try {
-          console.log(`🔄 尝试使用回退智能体: ${this.options.fallbackAgentId}`);
-          const fallbackClient = await this.getAgentById(this.options.fallbackAgentId);
+          logger.debug(`🔄 尝试使用回退智能体: ${this.options.fallbackAgentId}`);
+          const fallbackClient = await this.getAgentById(
+            this.options.fallbackAgentId
+          );
           const fallbackResponse = fallbackClient.streamChat(messages, options);
-          return { agentId: this.options.fallbackAgentId, response: fallbackResponse };
+          return {
+            agentId: this.options.fallbackAgentId,
+            response: fallbackResponse,
+          };
         } catch (fallbackError) {
-          console.error('❌ 回退智能体也失败:', fallbackError);
+          logger.error('❌ 回退智能体也失败:', fallbackError);
         }
       }
 
@@ -336,7 +400,9 @@ export class FastGPTMultiAgentManager {
     }
 
     config.isEnabled = enabled;
-    console.log(`✅ 智能体 ${enabled ? '启用' : '禁用'}: ${config.name} (${agentId})`);
+    logger.debug(
+      `✅ 智能体 ${enabled ? '启用' : '禁用'}: ${config.name} (${agentId})`
+    );
   }
 
   /**
@@ -345,7 +411,7 @@ export class FastGPTMultiAgentManager {
   async healthCheck(): Promise<Record<string, boolean>> {
     const results: Record<string, boolean> = {};
 
-    for (const [agentId, config] of this.agents) {
+    for (const [agentId, config] of Array.from(this.agents)) {
       if (!config.isEnabled) {
         results[agentId] = false;
         continue;
@@ -393,7 +459,7 @@ export class FastGPTMultiAgentManager {
         });
       }
     } else {
-      for (const metrics of this.metrics.values()) {
+      for (const metrics of Array.from(this.metrics.values())) {
         Object.assign(metrics, {
           totalRequests: 0,
           successfulRequests: 0,
@@ -416,13 +482,13 @@ export class FastGPTMultiAgentManager {
     }
 
     // 清理所有客户端
-    for (const client of this.clients.values()) {
+    for (const client of Array.from(this.clients.values())) {
       await client.clearCache();
     }
 
     // 清理缓存
     if (this.options.cacheEnabled) {
-      for (const agentId of this.agents.keys()) {
+      for (const agentId of Array.from(this.agents.keys())) {
         await this.clearAgentCache(agentId);
       }
     }
@@ -431,7 +497,7 @@ export class FastGPTMultiAgentManager {
     this.clients.clear();
     this.metrics.clear();
 
-    console.log('✅ FastGPT多智能体管理器已销毁');
+    logger.debug('✅ FastGPT多智能体管理器已销毁');
   }
 
   // ================ 私有方法 ================
@@ -482,7 +548,7 @@ export class FastGPTMultiAgentManager {
         await client.warmupCache();
       }
     } catch (error) {
-      console.warn(`智能体缓存预热失败: ${agentId}`, error);
+      logger.warn(`智能体缓存预热失败: ${agentId}`, error);
     }
   }
 
@@ -496,7 +562,7 @@ export class FastGPTMultiAgentManager {
         await client.clearCache();
       }
     } catch (error) {
-      console.warn(`智能体缓存清理失败: ${agentId}`, error);
+      logger.warn(`智能体缓存清理失败: ${agentId}`, error);
     }
   }
 
@@ -531,8 +597,13 @@ export class FastGPTMultiAgentManager {
   /**
    * 按权重选择智能体
    */
-  private selectByWeight(agentIds: string[], weights: Record<string, number>): string {
-    const availableAgents = agentIds.filter(id => this.agents.get(id)?.isEnabled);
+  private selectByWeight(
+    agentIds: string[],
+    weights: Record<string, number>
+  ): string {
+    const availableAgents = agentIds.filter(
+      id => this.agents.get(id)?.isEnabled
+    );
     if (availableAgents.length === 0) return agentIds[0];
 
     // 计算总权重
@@ -630,9 +701,10 @@ export class FastGPTMultiAgentManager {
     }
 
     // 计算错误率
-    metrics.errorRate = metrics.totalRequests > 0
-      ? metrics.failedRequests / metrics.totalRequests
-      : 0;
+    metrics.errorRate =
+      metrics.totalRequests > 0
+        ? metrics.failedRequests / metrics.totalRequests
+        : 0;
   }
 
   /**
@@ -660,11 +732,13 @@ export class FastGPTMultiAgentManager {
     config.errorCount = (config.errorCount || 0) + 1;
     config.lastError = error.message;
 
-    console.error(`智能体错误: ${config.name} (${agentId}) - ${error.message}`);
+    logger.error(`智能体错误: ${config.name} (${agentId}) - ${error.message}`);
 
     // 如果错误次数超过阈值，禁用智能体
     if (config.errorCount >= this.options.circuitBreakerThreshold) {
-      console.warn(`🔥 智能体错误次数超过阈值，自动禁用: ${config.name} (${agentId})`);
+      logger.warn(
+        `🔥 智能体错误次数超过阈值，自动禁用: ${config.name} (${agentId})`
+      );
       config.isEnabled = false;
     }
   }
@@ -677,7 +751,7 @@ export class FastGPTMultiAgentManager {
       try {
         await this.healthCheck();
       } catch (error) {
-        console.error('健康检查失败:', error);
+        logger.error('健康检查失败:', error);
       }
     }, this.options.healthCheckInterval);
   }
@@ -723,34 +797,43 @@ export async function initializeMultiAgentManagerFromDB(): Promise<FastGPTMultiA
     const response = await fetch('/api/agent-config');
     const result = await response.json();
 
+    let fastgptAgents: unknown[] = [];
     if (result.success && result.data) {
-      const fastgptAgents = result.data.filter((agent: any) => agent.type === 'fastgpt');
+      fastgptAgents = result.data.filter(
+        (agent: unknown) => {
+          const agentData = agent as Record<string, unknown>;
+          return agentData.type === 'fastgpt' || agentData.type === 'chat';
+        }
+      );
 
       for (const agent of fastgptAgents) {
+        const agentData = agent as Record<string, unknown>;
         await manager.registerAgent({
-          id: String(agent.id),
-          name: agent.name,
-          appId: agent.appId,
-          apiKey: agent.apiKey,
-          apiUrl: agent.apiUrl,
-          systemPrompt: agent.systemPrompt,
-          temperature: agent.temperature,
-          maxTokens: agent.maxTokens,
-          multimodalModel: agent.multimodalModel,
-          supportsStream: agent.supportsStream,
-          supportsDetail: agent.supportsDetail,
-          globalVariables: agent.globalVariables || [],
-          welcomeText: agent.welcomeText,
-          isEnabled: agent.isPublished,
-          order: agent.order,
+          id: String(agentData.id),
+          name: String(agentData.name),
+          appId: String(agentData.appId),
+          apiKey: String(agentData.apiKey),
+          apiUrl: String(agentData.apiUrl),
+          systemPrompt: String(agentData.systemPrompt),
+          temperature: Number(agentData.temperature),
+          maxTokens: Number(agentData.maxTokens),
+          multimodalModel: String(agentData.multimodalModel),
+          supportsStream: Boolean(agentData.supportsStream),
+          supportsDetail: Boolean(agentData.supportsDetail),
+          globalVariables: agentData.globalVariables as any[] || [],
+          welcomeText: String(agentData.welcomeText),
+          isEnabled: Boolean(agentData.isPublished),
+          order: Number(agentData.order),
         });
       }
     }
 
-    console.log(`✅ 多智能体管理器初始化完成，加载了 ${fastgptAgents?.length || 0} 个FastGPT智能体`);
+    logger.debug(
+      `✅ 多智能体管理器初始化完成，加载了 ${fastgptAgents.length || 0} 个FastGPT智能体`
+    );
     return manager;
   } catch (error) {
-    console.error('❌ 多智能体管理器初始化失败:', error);
+    logger.error('❌ 多智能体管理器初始化失败:', error);
     throw error;
   }
 }
@@ -760,8 +843,11 @@ export async function initializeMultiAgentManagerFromDB(): Promise<FastGPTMultiA
  */
 export function getAgentSelectionSuggestion(
   agents: AgentConfig[],
-  userQuery: string,
-  conversationHistory?: any[]
+  _userQuery: string,
+  _conversationHistory?: Array<{
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+  }>
 ): { agentId: string; reason: string } | null {
   // 这里可以实现更复杂的智能体选择逻辑
   // 基于用户查询内容、对话历史等因素选择最适合的智能体

@@ -1,63 +1,67 @@
 'use client';
-
-import { useState, useMemo, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAgent } from '@/context/agent-context';
-import { Bot, Plus, Search, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { AgentForm } from './agent-form';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/toast/use-toast';
-import { useLanguage } from '@/context/language-context';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { CadIcon } from '@/components/ui/icons/CadIcon';
-import { AgentForm } from '@/components/admin/agent-form';
-import { Switch } from '@/components/ui/switch';
-import {
-  fetchAgents,
-  createAgent,
-  updateAgent,
-  deleteAgent,
-} from '@/lib/services/admin-agent-service';
-import { AgentType } from '@/types/agent';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { CadIcon } from '@/components/ui/icons/CadIcon';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/components/ui/toast/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useLanguage } from '../../context/language-context';
+import {
+  createAgent,
+  fetchAgents,
+  updateAgent,
+} from '@/lib/services/admin-agent-service';
+import { cn } from '@/lib/utils';
+import { logger } from '@/lib/utils/logger';
+import { Bot, Plus, Search, Settings } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import type React from 'react';
+
+import { Agent } from '@/types/agent';
 
 export interface AgentListProps {
   typeFilter?: string;
 }
 
+export interface AgentFormProps {
+  agent?: Agent | null;
+  onSave: (agentData: Partial<Agent>) => void;
+  onClose: () => void;
+}
+
 export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const [agents, setAgents] = useState<any[]>([]);
-  const [selectedAgent, setSelectedAgent] = useState<any>(null);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>(
     propTypeFilter || 'fastgpt'
   );
-  const [editingAgent, setEditingAgent] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [showAgentForm, setShowAgentForm] = useState(false);
   const [switchLoadingId, setSwitchLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (propTypeFilter) setTypeFilter(propTypeFilter);
-    setLoading(true);
     fetchAgents()
       .then(setAgents)
-      .catch(err => {
+      .catch((err: Error) => {
         toast({
           title: '加载失败',
           description: String(err?.message || err),
@@ -68,12 +72,9 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
             window.location.href = '/admin/login';
           }, 1500);
         }
-      })
-      .finally(() => setLoading(false));
-  }, [propTypeFilter]);
+      });
+  }, [propTypeFilter, toast]);
 
-  const isFastgptType = (type: string) =>
-    type === 'fastgpt' || type === 'cad-analyzer' || type === 'image-editor';
 
   const filteredAgents = useMemo(() => {
     // 根据typeFilter过滤不同类型的智能体
@@ -102,7 +103,7 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
     );
   }, [agents, searchQuery, typeFilter]);
 
-  const typeLabel = (type: string) => {
+  const typeLabel = (type: string): string => {
     switch (type) {
       case 'fastgpt':
         return 'FastGPT';
@@ -117,48 +118,45 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
     }
   };
 
-  const getAgentIcon = (agent: any) => {
+  const getAgentIcon = (agent: Agent): React.ReactNode => {
     if (agent.iconType === 'cad') return <CadIcon className='h-5 w-5' />;
     return (
       <Bot className='h-5 w-5 text-pantone369-600 dark:text-pantone369-400' />
     );
   };
 
-  const handleAddAgentClick = () => {
-    setEditingAgent(null);
-    setShowAgentForm(true);
-  };
 
-  const handleEditAgentClick = (agent: any) => {
+  const handleEditAgentClick = (agent: Agent): void => {
     setEditingAgent(agent);
     setShowAgentForm(true);
   };
 
-  const handleAgentFormSave = async (agentData: any) => {
-    console.log(
-      'AgentList - handleAgentFormSave 开始执行, 编辑模式:',
-      !!editingAgent
-    );
-    let newAgentId = null;
+  const handleAgentFormSave = async (agentData: Partial<Agent>) => {
+    logger.debug(`AgentList - handleAgentFormSave 开始执行, 编辑模式: ${!!editingAgent}`);
+    let newAgentId: string | null = null;
     try {
       if (editingAgent) {
-        console.log('更新现有智能体:', editingAgent.id);
-        await handleUpdateAgent({ ...editingAgent, ...agentData });
+        logger.debug('更新现有智能体:', editingAgent.id);
+        await handleUpdateAgent({ ...editingAgent, ...agentData } as Agent);
       } else {
         // 根据当前的typeFilter设置智能体类型
         const agentType = typeFilter || 'fastgpt';
-        console.log('创建新智能体, 类型:', agentType);
+        logger.debug('创建新智能体, 类型:', agentType);
 
         try {
           const newAgent = await createAgent({
             ...agentData,
-            type: agentType, // 使用当前选中的类型
-          });
-          console.log('新智能体创建成功:', newAgent);
+            type: agentType as Agent['type'], // 使用当前选中的类型
+            description: agentData.description || '', // 确保必需字段
+            isActive: agentData.isActive ?? true, // 确保必需字段
+            supportsStream: agentData.supportsStream ?? true, // 确保必需字段
+            supportsDetail: agentData.supportsDetail ?? true, // 确保必需字段
+          } as Agent);
+          logger.debug(`新智能体创建成功: ${JSON.stringify(newAgent)}`);
           newAgentId = newAgent.id;
           toast({ title: '智能体创建成功', variant: 'default' });
         } catch (createError) {
-          console.error('创建智能体失败:', createError);
+          logger.error('创建智能体失败:', createError);
           toast({
             title: '创建智能体失败',
             description: String(createError),
@@ -168,27 +166,29 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
         }
       }
 
-      setLoading(true);
+      // Note: setLoading is not defined, removing this line
       // 刷新列表后自动选中新建的智能体
       fetchAgents()
-        .then(fetched => {
-          console.log('刷新智能体列表成功, 数量:', fetched.length);
+        .then((fetched: Agent[]) => {
+          logger.debug(`刷新智能体列表成功, 数量: ${fetched.length}`);
           setAgents(fetched);
           if (newAgentId) {
-            const created = fetched.find(a => a.id === newAgentId);
-            console.log('查找新创建的智能体:', created ? '找到' : '未找到');
+            const created = fetched.find((a: Agent) => a.id === newAgentId);
+            logger.debug('查找新创建的智能体:', created ? '找到' : '未找到');
             setSelectedAgent(created || null);
           }
         })
-        .catch(error => {
-          console.error('刷新智能体列表失败:', error);
+        .catch((error: Error) => {
+          logger.error('刷新智能体列表失败:', error);
         })
-        .finally(() => setLoading(false));
+        .finally(() => {
+          // setLoading is not defined, removing this line
+        });
 
       setShowAgentForm(false);
       setEditingAgent(null);
     } catch (error) {
-      console.error('handleAgentFormSave 执行失败:', error);
+      logger.error('handleAgentFormSave 执行失败:', error);
       toast({
         title: '操作失败',
         description: String(error),
@@ -197,51 +197,43 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
     }
   };
 
-  const handleUpdateAgent = async (agent: any) => {
-    console.log(`开始更新智能体[${agent.id}:${agent.name}]，数据:`, {
+  const handleUpdateAgent = async (agent: Partial<Agent>): Promise<Agent> => {
+    if (!agent.id) {
+      throw new Error('Agent ID is required for update');
+    }
+
+    logger.debug(`开始更新智能体[${agent.id}:${agent.name || 'unknown'}]，数据: ${JSON.stringify({
       id: agent.id,
       name: agent.name,
       isPublished: agent.isPublished,
       type: agent.type,
-    });
+    })}`);
 
     try {
       // 调用API更新智能体
       const updated = await updateAgent(agent);
 
-      console.log(`智能体[${agent.id}:${agent.name}]更新成功，返回数据:`, {
+      logger.debug(`智能体[${agent.id}:${agent.name}]更新成功，返回数据: ${JSON.stringify({
         id: updated.id,
         name: updated.name,
         isPublished: updated.isPublished,
         type: updated.type,
-      });
+      })}`);
 
       // 更新本地状态
       setAgents(prev => prev.map(a => (a.id === updated.id ? updated : a)));
 
       // 显示成功提示
-      toast({ title: t('agentUpdated'), description: agent.name });
+      toast({ title: t('agentUpdated'), description: agent.name || 'Agent' });
 
       return updated;
     } catch (e) {
-      console.error(`更新智能体[${agent.id}:${agent.name}]失败:`, e);
+      logger.error(`更新智能体[${agent.id}:${agent.name || 'unknown'}]失败:`, e);
       toast({ title: '错误', description: String(e), variant: 'destructive' });
       throw e; // 重新抛出错误，让调用者可以处理
     }
   };
 
-  const handleDeleteAgent = async (id: string) => {
-    try {
-      await deleteAgent(id);
-      setLoading(true);
-      fetchAgents()
-        .then(setAgents)
-        .finally(() => setLoading(false));
-      toast({ title: t('agentDeleted') });
-    } catch (e) {
-      toast({ title: '错误', description: String(e), variant: 'destructive' });
-    }
-  };
 
   return (
     <>
@@ -422,36 +414,35 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
                                 )
                               );
 
-                              console.log(
-                                `尝试更新智能体[${agent.id}:${agent.name}]发布状态: ${prev} -> ${checked}`
+                              logger.debug(
+                                `尝试更新智能体[${agent.id}:${agent.name || 'unknown'}]发布状态: ${prev} -> ${checked}`
                               );
 
                               try {
                                 // 确保isPublished字段是布尔值
-                                const updated = {
+                                const updated: Partial<Agent> = {
                                   ...agent,
                                   isPublished: checked,
                                 };
 
                                 // 调用API更新
                                 const result = await handleUpdateAgent(updated);
-                                console.log(
-                                  `智能体[${agent.id}:${agent.name}]发布状态更新结果:`,
-                                  result
+                                logger.debug(
+                                  `智能体[${agent.id}:${agent.name || 'unknown'}]发布状态更新结果: ${JSON.stringify(result)}`
                                 );
 
                                 // 刷新智能体列表
                                 fetchAgents()
-                                  .then(newAgents => {
+                                  .then((newAgents: Agent[]) => {
                                     setAgents(newAgents);
-                                    console.log('已刷新智能体列表');
+                                    logger.debug('已刷新智能体列表');
                                   })
-                                  .catch(err =>
-                                    console.error('刷新智能体列表失败:', err)
+                                  .catch((err: Error) =>
+                                    logger.error('刷新智能体列表失败:', err)
                                   );
                               } catch (e) {
-                                console.error(
-                                  `更新智能体[${agent.id}:${agent.name}]发布状态失败:`,
+                                logger.error(
+                                  `更新智能体[${agent.id}:${agent.name || 'unknown'}]发布状态失败:`,
                                   e
                                 );
 
@@ -524,8 +515,8 @@ export function AgentList({ typeFilter: propTypeFilter }: AgentListProps) {
             </DialogTitle>
           </DialogHeader>
           <AgentForm
-            agent={editingAgent}
-            onSave={handleAgentFormSave}
+            agent={editingAgent || undefined}
+            onSave={(agentData) => agentData && handleAgentFormSave(agentData)}
             onClose={() => {
               setShowAgentForm(false);
               setEditingAgent(null);

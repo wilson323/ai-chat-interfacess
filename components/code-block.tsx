@@ -1,6 +1,6 @@
 'use client';
 
-import { SimpleCodeBlock } from '@/components/simple-code-block';
+import { SimpleCodeBlock } from './simple-code-block';
 
 interface CodeBlockProps {
   code: string;

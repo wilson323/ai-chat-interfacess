@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { ScrollArea } from './ui/scroll-area';
 import {
   ChevronDown,
   ChevronUp,
@@ -14,13 +14,13 @@ import {
   Brain,
   Zap,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '../lib/utils';
+import { Badge } from './ui/badge';
 
 interface IntermediateValue {
   id: string;
   type: string;
-  value: any;
+  value: unknown;
   timestamp: Date;
 }
 
@@ -40,7 +40,7 @@ export function IntermediateValuesDisplay({
   }
 
   const toggleExpand = (id: string) => {
-    setExpanded(prev => ({
+    setExpanded((prev: Record<string, boolean>) => ({
       ...prev,
       [id]: !prev[id],
     }));
@@ -66,7 +66,7 @@ export function IntermediateValuesDisplay({
     }
   };
 
-  const formatValue = (value: any): string => {
+  const formatValue = (value: unknown): string => {
     try {
       return JSON.stringify(value, null, 2);
     } catch (e) {

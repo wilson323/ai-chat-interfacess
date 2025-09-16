@@ -4,13 +4,12 @@ import type React from 'react';
 
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { cn } from '@/lib/utils';
-import { AgentSidebar } from '@/components/agent-sidebar';
-import { HistorySidebar } from '@/components/history-sidebar';
-import { Header } from '@/components/header';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { useAgent } from '@/context/agent-context';
-import { useMobile } from '@/hooks/use-mobile';
+import { cn } from '../lib/utils';
+import { AgentSidebar } from './agent-sidebar';
+import { HistorySidebar } from './history-sidebar';
+import { Header } from './header';
+import { useAgent } from '../context/agent-context';
+import { useMobile } from '../hooks/use-mobile';
 
 // Add isAdmin prop to the LayoutProps interface
 interface LayoutProps {
@@ -22,14 +21,22 @@ interface LayoutProps {
 export function Layout({ children, isAdmin = false }: LayoutProps) {
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
-  const { sidebarOpen, historySidebarOpen, closeSidebars, toggleSidebar } =
-    useAgent();
+  const agentContext = useAgent();
   const isMobile = useMobile();
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 服务端渲染保护 - 只有在客户端才使用 agentContext
+  const { sidebarOpen, historySidebarOpen, closeSidebars, toggleSidebar } =
+    (typeof window !== 'undefined' ? agentContext : null) || {
+      sidebarOpen: false,
+      historySidebarOpen: false,
+      closeSidebars: () => {},
+      toggleSidebar: () => {},
+    };
 
   useEffect(() => {
     if (!isMobile) return;

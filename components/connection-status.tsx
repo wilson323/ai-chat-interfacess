@@ -2,18 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Wifi, WifiOff, AlertCircle, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '../lib/utils';
+import { Badge } from './ui/badge';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useAgent } from '@/context/agent-context';
-import { Button } from '@/components/ui/button';
-import { useMobile } from '@/hooks/use-mobile';
-import { useLanguage } from '@/context/language-context';
+} from './ui/tooltip';
+import { useAgent } from '../context/agent-context';
+import { Button } from './ui/button';
+import { useMobile } from '../hooks/use-mobile';
+import { useLanguage } from '../context/language-context';
 
 interface ConnectionStatusProps {
   className?: string;

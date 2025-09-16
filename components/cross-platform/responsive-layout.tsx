@@ -45,7 +45,7 @@ export function ResponsiveLayout({
     desktop: 1024,
   },
 }: ResponsiveLayoutProps) {
-  const { screenWidth, isMobile, isTablet, isDesktop } = useCrossPlatform();
+  const { screenWidth } = useCrossPlatform();
 
   // 根据屏幕宽度确定当前布局
   const getCurrentLayout = () => {

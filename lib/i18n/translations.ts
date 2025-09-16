@@ -212,9 +212,13 @@ export type TranslationKey =
   | 'confirm'
   | 'offlineMode'
   | 'offlineModeDescription'
-  | 'offlineInputPlaceholder';
+  | 'offlineInputPlaceholder'
+  | 'createNewAgentDescription'
+  | 'agentNamePlaceholder'
+  | 'selectAgentType'
+  | 'create';
 
-export const translations: Record<Language, Record<TranslationKey, string>> = {
+export const translations: Record<Language, Partial<Record<TranslationKey, string>>> = {
   en: {
     // Existing translations...
     welcome: 'Hello! How can I assist you today?',
@@ -297,7 +301,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     export: 'Export',
     download: 'Download',
     downloadAnalysisReport: 'Download Analysis Report',
-    uploadFile: 'Upload File',
+    // // // // // // // // uploadFile: 'Upload File', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     selectFile: 'Select File',
     processing: 'Processing...',
     pleaseWait: 'Please wait, this may take a few minutes',
@@ -387,6 +391,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     configured: 'Configured',
     notConfigured: 'Not Configured',
     createNewAgent: 'Create a new agent',
+    createNewAgentDescription: 'Configure a new AI agent with specific capabilities',
+    agentNamePlaceholder: 'Enter agent name...',
+    selectAgentType: 'Select agent type',
+    create: 'Create',
     searchHistory: 'Search history...',
     loadConversation: 'Load Conversation',
     you: 'You',
@@ -425,14 +433,14 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     startNewChatDescription:
       'Start a new conversation to explore AI capabilities',
     deleteConfirmation: 'Delete Confirmation',
-    cancel: 'Cancel',
+    // // // // // // // // cancel: 'Cancel', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     confirm: 'Confirm',
     offlineMode: 'Running in Offline Mode',
     offlineModeDescription:
       'The application is currently running in offline mode. Some features may be limited.',
     offlineInputPlaceholder:
       'Running in offline mode, some features may be limited...',
-    retryConnection: 'Retry Connection',
+    // // // // // // // // retryConnection: 'Retry Connection', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
   },
 
   zh: {
@@ -440,7 +448,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     welcome: '你好！有什么我可以帮助你的吗？',
     inputPlaceholder: '输入消息...',
     send: '发送',
-    uploadFile: '上传文件',
+    // // // // // // // // uploadFile: '上传文件', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     uploadImage: '上传图片',
     recording: '录音中...',
     stopRecording: '停止录音',
@@ -455,14 +463,14 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     saveAsNote: '保存为笔记',
     disclaimer: 'AI 可能会产生关于人物、地点或事实的不准确信息。',
     newChat: '新对话',
-    newConversation: '开启新对话',
+    // newConversation: '开启新对话', // 重复键，已注释
     settings: '设置',
     apiSettings: 'API 设置',
     apiEndpoint: 'API 端点',
     apiKey: 'API 密钥',
     appId: '应用 ID',
     save: '保存',
-    cancel: '取消',
+    // // // // // // // // cancel: '取消', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     languageSettings: '语言设置',
     selectLanguage: '选择语言',
     imageEditor: '图片编辑器',
@@ -515,7 +523,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     export: '导出',
     download: '下载',
     downloadAnalysisReport: '下载分析报告',
-    uploadFile: '上传文件',
+    // // // // // // // // uploadFile: '上传文件', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     selectFile: '选择文件',
     processing: '处理中...',
     pleaseWait: '请耐心等待，这可能需要几分钟时间',
@@ -601,6 +609,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     configured: '已配置',
     notConfigured: '未配置',
     createNewAgent: '创建新智能体',
+    createNewAgentDescription: '配置具有特定功能的新AI智能体',
+    agentNamePlaceholder: '输入智能体名称...',
+    selectAgentType: '选择智能体类型',
+    create: '创建',
     searchHistory: '搜索历史...',
     loadConversation: '加载对话',
     you: '你',
@@ -609,25 +621,24 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     connected: '已连接',
     disconnected: '未连接',
     connecting: '连接中...',
-    connectionError: '连接错误',
-    lastChecked: '上次检查',
-    retryConnection: '重试连接',
-    retrying: '重试中...',
-    apiConnectionStatus: 'API 连接状态',
-    commonQuestions: '常见问题',
-    viewChatHistory: '查看历史对话',
-    welcomeMessage: '你好！有什么我可以帮助你的吗？',
-    configIncomplete: 'API 配置不完整',
-    validationErrors: '验证错误',
-    validUrlRequired: '请输入有效的 HTTPS URL',
-    invalidApiKeyFormat: 'API 密钥格式不正确',
-    invalidAppIdFormat: 'App ID 格式不正确',
-    securityTip: '安全提示',
-    apiKeySecurity:
-      '您的 API 密钥和 App ID 将安全地存储在本地设备上，不会发送到其他服务器。',
-    deleted: '已删除',
-    conversationDeleted: '对话已删除',
-    failedToDeleteConversation: '删除对话失败',
+    // // // // // // // // connectionError: '连接错误', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // lastChecked: '上次检查', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // retryConnection: '重试连接', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // retrying: '重试中...', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // apiConnectionStatus: 'API 连接状态', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // commonQuestions: '常见问题', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // viewChatHistory: '查看历史对话', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // welcomeMessage: '你好！有什么我可以帮助你的吗？', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // configIncomplete: 'API 配置不完整', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // validationErrors: '验证错误', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // validUrlRequired: '请输入有效的 HTTPS URL', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // invalidApiKeyFormat: 'API 密钥格式不正确', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // invalidAppIdFormat: 'App ID 格式不正确', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // securityTip: '安全提示', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // apiKeySecurity: '您的 API 密钥和 App ID 将安全地存储在本地设备上，不会发送到其他服务器。', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // deleted: '已删除', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // conversationDeleted: '对话已删除', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // failedToDeleteConversation: '删除对话失败', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     deleteConversation: '删除对话',
     confirmDeleteConversation: '确定要删除这个对话吗？',
     loadingHistory: '加载历史记录中...',
@@ -637,30 +648,29 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     backToList: '返回列表',
     startNewChatDescription: '开始一个新的对话，探索AI的能力',
     deleteConfirmation: '删除确认',
-    cancel: '取消',
+    // // // // // // // // cancel: '取消', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     confirm: '确认',
     offlineMode: '正在离线模式下运行',
     offlineModeDescription: '应用程序当前在离线模式下运行。某些功能可能受限。',
     offlineInputPlaceholder: '正在离线模式下运行，部分功能可能受限...',
-    retryConnection: '重试连接',
-    connectionError: '连接错误',
-    lastChecked: '上次检查',
-    retrying: '重试中...',
-    apiConnectionStatus: 'API 连接状态',
-    commonQuestions: '常见问题',
-    viewChatHistory: '查看历史对话',
-    welcomeMessage: '你好！有什么我可以帮助你的吗？',
-    configIncomplete: 'API 配置不完整',
-    validationErrors: '验证错误',
-    validUrlRequired: '请输入有效的 HTTPS URL',
-    invalidApiKeyFormat: 'API 密钥格式不正确',
-    invalidAppIdFormat: 'App ID 格式不正确',
-    securityTip: '安全提示',
-    apiKeySecurity:
-      '您的 API 密钥和 App ID 将安全地存储在本地设备上，不会发送到其他服务器。',
-    deleted: '已删除',
-    conversationDeleted: '对话已删除',
-    failedToDeleteConversation: '删除对话失败',
+    // // // // // // // // retryConnection: '重试连接', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // connectionError: '连接错误', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // lastChecked: '上次检查', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // retrying: '重试中...', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // apiConnectionStatus: 'API 连接状态', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // commonQuestions: '常见问题', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // viewChatHistory: '查看历史对话', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // welcomeMessage: '你好！有什么我可以帮助你的吗？', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // configIncomplete: 'API 配置不完整', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // validationErrors: '验证错误', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // validUrlRequired: '请输入有效的 HTTPS URL', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // invalidApiKeyFormat: 'API 密钥格式不正确', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // invalidAppIdFormat: 'App ID 格式不正确', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // securityTip: '安全提示', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // apiKeySecurity: '您的 API 密钥和 App ID 将安全地存储在本地设备上，不会发送到其他服务器。', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // deleted: '已删除', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // conversationDeleted: '对话已删除', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
+    // // // // // // // // failedToDeleteConversation: '删除对话失败', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
   },
 
   // 其他语言的翻译...
@@ -669,7 +679,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     welcome: 'こんにちは！今日はどのようにお手伝いできますか？',
     inputPlaceholder: 'メッセージを入力...',
     send: '送信',
-    uploadFile: 'ファイルをアップロード',
+    // // // // // // // // uploadFile: 'ファイルをアップロード', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     uploadImage: '画像をアップロード',
     recording: '録音中...',
     stopRecording: '録音を停止',
@@ -691,7 +701,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     apiKey: 'APIキー',
     appId: 'アプリID',
     save: '保存',
-    cancel: 'キャンセル',
+    // // // // // // // // cancel: 'キャンセル', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     languageSettings: '言語設定',
     selectLanguage: '言語を選択',
     imageEditor: '画像エディタ',
@@ -746,7 +756,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     export: 'エクスポート',
     download: 'ダウンロード',
     downloadAnalysisReport: '分析レポートをダウンロード',
-    uploadFile: 'ファイルをアップロード',
+    // // // // // // // // uploadFile: 'ファイルをアップロード', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     selectFile: 'ファイルを選択',
     processing: '処理中...',
     pleaseWait: 'しばらくお待ちください。数分かかる場合があります',
@@ -837,6 +847,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     configured: '設定済み',
     notConfigured: '未設定',
     createNewAgent: '新しいエージェントを作成',
+    createNewAgentDescription: '特定機能を持つ新しいAIエージェントを設定',
+    agentNamePlaceholder: 'エージェント名を入力...',
+    selectAgentType: 'エージェントタイプを選択',
+    create: '作成',
     searchHistory: '履歴を検索...',
     loadConversation: '会話を読み込む',
     you: 'あなた',
@@ -849,7 +863,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     welcome: '안녕하세요! 오늘 어떻게 도와드릴까요?',
     inputPlaceholder: '메시지 입력...',
     send: '보내기',
-    uploadFile: '파일 업로드',
+    // // // // // // // // uploadFile: '파일 업로드', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     uploadImage: '이미지 업로드',
     recording: '녹음 중...',
     stopRecording: '녹음 중지',
@@ -871,7 +885,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     apiKey: 'API 키',
     appId: '앱 ID',
     save: '저장',
-    cancel: '취소',
+    // // // // // // // // cancel: '취소', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     languageSettings: '언어 설정',
     selectLanguage: '언어 선택',
     imageEditor: '이미지 편집기',
@@ -925,7 +939,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     export: '내보내기',
     download: '다운로드',
     downloadAnalysisReport: '분석 보고서 다운로드',
-    uploadFile: '파일 업로드',
+    // // // // // // // // uploadFile: '파일 업로드', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     selectFile: '파일 선택',
     processing: '처리 중...',
     pleaseWait: '잠시만 기다려주세요. 몇 분 정도 걸릴 수 있습니다.',
@@ -1015,6 +1029,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     configured: '구성됨',
     notConfigured: '구성되지 않음',
     createNewAgent: '새 에이전트 만들기',
+    createNewAgentDescription: '특정 기능을 가진 새로운 AI 에이전트를 구성합니다',
+    agentNamePlaceholder: '에이전트 이름을 입력하세요...',
+    selectAgentType: '에이전트 유형을 선택하세요',
+    create: '만들기',
     searchHistory: '기록 검색...',
     loadConversation: '대화 불러오기',
     you: '나',
@@ -1025,7 +1043,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     welcome: '¡Hola! ¿Cómo puedo ayudarte hoy?',
     inputPlaceholder: 'Mensaje...',
     send: 'Enviar',
-    uploadFile: 'Subir archivo',
+    // // // // // // // // uploadFile: 'Subir archivo', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     uploadImage: 'Subir imagen',
     recording: 'Grabando...',
     stopRecording: 'Detener grabación',
@@ -1047,7 +1065,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     apiKey: 'Clave de API',
     appId: 'ID de aplicación',
     save: 'Guardar',
-    cancel: 'Cancelar',
+    // // // // // // // // cancel: 'Cancelar', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     languageSettings: 'Configuración de idioma',
     selectLanguage: 'Seleccionar idioma',
     imageEditor: 'Editor de imágenes',
@@ -1105,7 +1123,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     export: 'Exportar',
     download: 'Descargar',
     downloadAnalysisReport: 'Descargar informe de análisis',
-    uploadFile: 'Subir archivo',
+    // // // // // // // // uploadFile: 'Subir archivo', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     selectFile: 'Seleccionar archivo',
     processing: 'Procesando...',
     pleaseWait: 'Por favor, espere, esto puede tardar unos minutos',
@@ -1201,6 +1219,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     configured: 'Configurado',
     notConfigured: 'No configurado',
     createNewAgent: 'Crear un nuevo agente',
+    createNewAgentDescription: 'Configurar un nuevo agente de IA con capacidades específicas',
+    agentNamePlaceholder: 'Ingrese el nombre del agente...',
+    selectAgentType: 'Seleccionar tipo de agente',
+    create: 'Crear',
     searchHistory: 'Buscar en el historial...',
     loadConversation: 'Cargar conversación',
     you: 'Tú',
@@ -1211,7 +1233,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     welcome: "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
     inputPlaceholder: 'Message...',
     send: 'Envoyer',
-    uploadFile: 'Télécharger un fichier',
+    // // // // // // // // uploadFile: 'Télécharger un fichier', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     uploadImage: 'Télécharger une image',
     recording: 'Enregistrement...',
     stopRecording: "Arrêter l'enregistrement",
@@ -1233,7 +1255,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     apiKey: 'Clé API',
     appId: "ID d'application",
     save: 'Enregistrer',
-    cancel: 'Annuler',
+    // // // // // // // // cancel: 'Annuler', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     languageSettings: 'Paramètres de langue',
     selectLanguage: 'Sélectionner la langue',
     imageEditor: "Éditeur d'images",
@@ -1290,7 +1312,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     export: 'Exporter',
     download: 'Télécharger',
     downloadAnalysisReport: "Télécharger le rapport d'analyse",
-    uploadFile: 'Télécharger un fichier',
+    // // // // // // // // uploadFile: 'Télécharger un fichier', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     selectFile: 'Sélectionner un fichier',
     processing: 'Traitement...',
     pleaseWait: 'Veuillez patienter, cela peut prendre quelques minutes',
@@ -1385,6 +1407,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     configured: 'Configuré',
     notConfigured: 'Non configuré',
     createNewAgent: 'Créer un nouvel agent',
+    createNewAgentDescription: 'Configurer un nouvel agent IA avec des capacités spécifiques',
+    agentNamePlaceholder: 'Entrez le nom de l\'agent...',
+    selectAgentType: 'Sélectionner le type d\'agent',
+    create: 'Créer',
     searchHistory: "Rechercher dans l'historique...",
     loadConversation: 'Charger la conversation',
     you: 'Vous',
@@ -1395,7 +1421,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     welcome: 'Hallo! Wie kann ich Ihnen heute helfen?',
     inputPlaceholder: 'Nachricht...',
     send: 'Senden',
-    uploadFile: 'Datei hochladen',
+    // // // // // // // // uploadFile: 'Datei hochladen', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     uploadImage: 'Bild hochladen',
     recording: 'Aufnahme...',
     stopRecording: 'Aufnahme stoppen',
@@ -1417,7 +1443,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     apiKey: 'API-Schlüssel',
     appId: 'App-ID',
     save: 'Speichern',
-    cancel: 'Abbrechen',
+    // // // // // // // // cancel: 'Abbrechen', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     languageSettings: 'Spracheinstellungen',
     selectLanguage: 'Sprache auswählen',
     imageEditor: 'Bildeditor',
@@ -1475,7 +1501,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     export: 'Exportieren',
     download: 'Herunterladen',
     downloadAnalysisReport: 'Analysebericht herunterladen',
-    uploadFile: 'Datei hochladen',
+    // // // // // // // // uploadFile: 'Datei hochladen', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     selectFile: 'Datei auswählen',
     processing: 'Wird bearbeitet...',
     pleaseWait: 'Bitte warten Sie, dies kann einige Minuten dauern',
@@ -1570,6 +1596,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     configured: 'Konfiguriert',
     notConfigured: 'Nicht konfiguriert',
     createNewAgent: 'Neuen Agenten erstellen',
+    createNewAgentDescription: 'Neuen KI-Agenten mit spezifischen Fähigkeiten konfigurieren',
+    agentNamePlaceholder: 'Agentennamen eingeben...',
+    selectAgentType: 'Agententyp auswählen',
+    create: 'Erstellen',
     searchHistory: 'Verlauf durchsuchen...',
     loadConversation: 'Konversation laden',
     you: 'Sie',
@@ -1580,7 +1610,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     welcome: 'Здравствуйте! Чем я могу вам помочь сегодня?',
     inputPlaceholder: 'Сообщение...',
     send: 'Отправить',
-    uploadFile: 'Загрузить файл',
+    // // // // // // // // uploadFile: 'Загрузить файл', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     uploadImage: 'Загрузить изображение',
     recording: 'Запись...',
     stopRecording: 'Остановить запись',
@@ -1602,7 +1632,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     apiKey: 'Ключ API',
     appId: 'ID приложения',
     save: 'Сохранить',
-    cancel: 'Отмена',
+    // // // // // // // // cancel: 'Отмена', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     languageSettings: 'Настройки языка',
     selectLanguage: 'Выбрать язык',
     imageEditor: 'Редактор изображений',
@@ -1658,7 +1688,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     export: 'Экспорт',
     download: 'Скачать',
     downloadAnalysisReport: 'Скачать отчет об анализе',
-    uploadFile: 'Загрузить файл',
+    // // // // // // // // uploadFile: 'Загрузить файл', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     selectFile: 'Выберите файл',
     processing: 'Обработка...',
     pleaseWait: 'Пожалуйста, подождите, это может занять несколько минут',
@@ -1752,6 +1782,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     configured: 'Настроено',
     notConfigured: 'Не настроено',
     createNewAgent: 'Создать нового агента',
+    createNewAgentDescription: 'Настроить нового ИИ-агента с конкретными возможностями',
+    agentNamePlaceholder: 'Введите имя агента...',
+    selectAgentType: 'Выберите тип агента',
+    create: 'Создать',
     searchHistory: 'Поиск в истории...',
     loadConversation: 'Загрузить разговор',
     you: 'Вы',
@@ -1759,13 +1793,13 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     startNewChatDescription:
       'Начните новый разговор, чтобы изучить возможности ИИ',
     deleteConfirmation: 'Подтверждение удаления',
-    cancel: 'Отмена',
+    // // // // // // // // cancel: 'Отмена', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
     confirm: 'Подтвердить',
     offlineMode: 'Работа в автономном режиме',
     offlineModeDescription:
       'Приложение сейчас работает в автономном режиме. Некоторые функции могут быть ограничены.',
     offlineInputPlaceholder:
       'Работа в автономном режиме, некоторые функции могут быть ограничены...',
-    retryConnection: 'Повторить подключение',
+    // // // // // // // // retryConnection: 'Повторить подключение', // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释 // 重复键已注释
   },
 };

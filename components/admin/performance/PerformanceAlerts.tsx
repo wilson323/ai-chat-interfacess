@@ -1,13 +1,19 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -23,15 +29,15 @@ import {
   Bell,
   BellOff,
   Settings,
-  Filter,
   Search,
-  Mail,
-  MessageSquare,
   Download,
   Trash2,
   RefreshCw,
 } from 'lucide-react';
-import { enhancedMonitor, type PerformanceAlert } from '@/lib/performance/enhanced-monitor';
+import {
+  enhancedMonitor,
+  type PerformanceAlert,
+} from '@/lib/performance/enhanced-monitor';
 
 interface AlertConfig {
   enabled: boolean;
@@ -49,14 +55,47 @@ interface AlertConfig {
   };
 }
 
+const getDefaultConfig = (): AlertConfig => ({
+  enabled: true,
+  notifications: {
+    console: true,
+    toast: true,
+    email: false,
+    webhook: false,
+  },
+  thresholds: {
+    pageLoadTime: { warning: 3000, critical: 5000 },
+    apiResponseTime: { warning: 1000, critical: 2000 },
+    memoryUsage: { warning: 100 * 1024 * 1024, critical: 200 * 1024 * 1024 },
+    errorRate: { warning: 0.05, critical: 0.1 },
+  },
+});
+
+
 export function PerformanceAlerts() {
   const [alerts, setAlerts] = useState<PerformanceAlert[]>([]);
   const [config, setConfig] = useState<AlertConfig>(getDefaultConfig());
   const [filter, setFilter] = useState<'all' | 'active' | 'resolved'>('all');
-  const [severityFilter, setSeverityFilter] = useState<'all' | 'warning' | 'error' | 'critical'>('all');
+  const [severityFilter, setSeverityFilter] = useState<
+    'all' | 'warning' | 'error' | 'critical'
+  >('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showConfig, setShowConfig] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleNewAlert = useCallback(
+    (alert: PerformanceAlert) => {
+      // 添加新告警到列表
+      setAlerts(prev => [alert, ...prev]);
+
+      // 显示通知
+      if (config.notifications.toast) {
+        // 这里可以集成toast通知系统
+        logger.warn(`[Performance Alert] ${alert.message}`);
+      }
+    },
+    [config.notifications.toast, setAlerts]
+  );
 
   useEffect(() => {
     loadAlerts();
@@ -67,43 +106,16 @@ export function PerformanceAlerts() {
     return () => {
       enhancedMonitor.removeAlertCallback(handleNewAlert);
     };
-  }, []);
-
-  const getDefaultConfig = (): AlertConfig => ({
-    enabled: true,
-    notifications: {
-      console: true,
-      toast: true,
-      email: false,
-      webhook: false,
-    },
-    thresholds: {
-      pageLoadTime: { warning: 3000, critical: 5000 },
-      apiResponseTime: { warning: 1000, critical: 2000 },
-      memoryUsage: { warning: 100 * 1024 * 1024, critical: 200 * 1024 * 1024 },
-      errorRate: { warning: 0.05, critical: 0.1 },
-    },
-  });
+  }, [handleNewAlert]);
 
   const loadAlerts = async () => {
     setIsLoading(true);
     try {
       setAlerts(enhancedMonitor.getAlerts());
     } catch (error) {
-      console.error('Failed to load alerts:', error);
+      logger.error('Failed to load alerts:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleNewAlert = (alert: PerformanceAlert) => {
-    // 添加新告警到列表
-    setAlerts(prev => [alert, ...prev]);
-
-    // 显示通知
-    if (config.notifications.toast) {
-      // 这里可以集成toast通知系统
-      console.warn(`[Performance Alert] ${alert.message}`);
     }
   };
 
@@ -131,7 +143,9 @@ export function PerformanceAlerts() {
         debounceMs: 5000,
         notificationMethods: Object.entries(updatedConfig.notifications)
           .filter(([_, enabled]) => enabled)
-          .map(([method]) => method as 'console' | 'toast' | 'email' | 'webhook'),
+          .map(
+            ([method]) => method as 'console' | 'toast' | 'email' | 'webhook'
+          ),
       },
       thresholds: {
         ...updatedConfig.thresholds,
@@ -154,7 +168,10 @@ export function PerformanceAlerts() {
     if (severityFilter !== 'all' && alert.type !== severityFilter) return false;
 
     // 搜索过滤
-    if (searchTerm && !alert.message.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (
+      searchTerm &&
+      !alert.message.toLowerCase().includes(searchTerm.toLowerCase())
+    ) {
       return false;
     }
 
@@ -222,7 +239,9 @@ export function PerformanceAlerts() {
   };
 
   const activeAlerts = alerts.filter(alert => !alert.resolved);
-  const criticalAlerts = activeAlerts.filter(alert => alert.type === 'critical');
+  const criticalAlerts = activeAlerts.filter(
+    alert => alert.type === 'critical'
+  );
 
   return (
     <div className='space-y-6'>
@@ -237,7 +256,11 @@ export function PerformanceAlerts() {
             variant={config.enabled ? 'default' : 'outline'}
             onClick={() => updateConfig({ enabled: !config.enabled })}
           >
-            {config.enabled ? <Bell className='h-4 w-4 mr-2' /> : <BellOff className='h-4 w-4 mr-2' />}
+            {config.enabled ? (
+              <Bell className='h-4 w-4 mr-2' />
+            ) : (
+              <BellOff className='h-4 w-4 mr-2' />
+            )}
             {config.enabled ? '告警开启' : '告警关闭'}
           </Button>
           <Button variant='outline' onClick={() => setShowConfig(!showConfig)}>
@@ -249,7 +272,9 @@ export function PerformanceAlerts() {
             导出
           </Button>
           <Button variant='outline' onClick={loadAlerts} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
+            />
             刷新
           </Button>
         </div>
@@ -274,7 +299,9 @@ export function PerformanceAlerts() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm font-medium text-gray-600'>活跃告警</p>
-                <p className='text-2xl font-bold text-orange-600'>{activeAlerts.length}</p>
+                <p className='text-2xl font-bold text-orange-600'>
+                  {activeAlerts.length}
+                </p>
               </div>
               <XCircle className='h-8 w-8 text-orange-600' />
             </div>
@@ -286,7 +313,9 @@ export function PerformanceAlerts() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm font-medium text-gray-600'>严重告警</p>
-                <p className='text-2xl font-bold text-red-600'>{criticalAlerts.length}</p>
+                <p className='text-2xl font-bold text-red-600'>
+                  {criticalAlerts.length}
+                </p>
               </div>
               <XCircle className='h-8 w-8 text-red-600' />
             </div>
@@ -326,9 +355,12 @@ export function PerformanceAlerts() {
                   <Switch
                     id='console'
                     checked={config.notifications.console}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       updateConfig({
-                        notifications: { ...config.notifications, console: checked },
+                        notifications: {
+                          ...config.notifications,
+                          console: checked,
+                        },
                       })
                     }
                   />
@@ -338,9 +370,12 @@ export function PerformanceAlerts() {
                   <Switch
                     id='toast'
                     checked={config.notifications.toast}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       updateConfig({
-                        notifications: { ...config.notifications, toast: checked },
+                        notifications: {
+                          ...config.notifications,
+                          toast: checked,
+                        },
                       })
                     }
                   />
@@ -350,9 +385,12 @@ export function PerformanceAlerts() {
                   <Switch
                     id='email'
                     checked={config.notifications.email}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       updateConfig({
-                        notifications: { ...config.notifications, email: checked },
+                        notifications: {
+                          ...config.notifications,
+                          email: checked,
+                        },
                       })
                     }
                   />
@@ -362,9 +400,12 @@ export function PerformanceAlerts() {
                   <Switch
                     id='webhook'
                     checked={config.notifications.webhook}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={checked =>
                       updateConfig({
-                        notifications: { ...config.notifications, webhook: checked },
+                        notifications: {
+                          ...config.notifications,
+                          webhook: checked,
+                        },
                       })
                     }
                   />
@@ -378,12 +419,14 @@ export function PerformanceAlerts() {
               <h3 className='text-lg font-medium mb-4'>告警阈值</h3>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
-                  <Label htmlFor='pageLoadWarning'>页面加载时间 - 警告 (ms)</Label>
+                  <Label htmlFor='pageLoadWarning'>
+                    页面加载时间 - 警告 (ms)
+                  </Label>
                   <Input
                     id='pageLoadWarning'
                     type='number'
                     value={config.thresholds.pageLoadTime.warning}
-                    onChange={(e) =>
+                    onChange={e =>
                       updateConfig({
                         thresholds: {
                           ...config.thresholds,
@@ -397,12 +440,14 @@ export function PerformanceAlerts() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor='pageLoadCritical'>页面加载时间 - 严重 (ms)</Label>
+                  <Label htmlFor='pageLoadCritical'>
+                    页面加载时间 - 严重 (ms)
+                  </Label>
                   <Input
                     id='pageLoadCritical'
                     type='number'
                     value={config.thresholds.pageLoadTime.critical}
-                    onChange={(e) =>
+                    onChange={e =>
                       updateConfig({
                         thresholds: {
                           ...config.thresholds,
@@ -416,12 +461,14 @@ export function PerformanceAlerts() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor='apiResponseWarning'>API响应时间 - 警告 (ms)</Label>
+                  <Label htmlFor='apiResponseWarning'>
+                    API响应时间 - 警告 (ms)
+                  </Label>
                   <Input
                     id='apiResponseWarning'
                     type='number'
                     value={config.thresholds.apiResponseTime.warning}
-                    onChange={(e) =>
+                    onChange={e =>
                       updateConfig({
                         thresholds: {
                           ...config.thresholds,
@@ -435,12 +482,14 @@ export function PerformanceAlerts() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor='apiResponseCritical'>API响应时间 - 严重 (ms)</Label>
+                  <Label htmlFor='apiResponseCritical'>
+                    API响应时间 - 严重 (ms)
+                  </Label>
                   <Input
                     id='apiResponseCritical'
                     type='number'
                     value={config.thresholds.apiResponseTime.critical}
-                    onChange={(e) =>
+                    onChange={e =>
                       updateConfig({
                         thresholds: {
                           ...config.thresholds,
@@ -469,13 +518,16 @@ export function PerformanceAlerts() {
                 <Input
                   placeholder='搜索告警消息...'
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className='pl-10'
                 />
               </div>
             </div>
             <div className='flex gap-2'>
-              <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+              <Select
+                value={filter}
+                onValueChange={(value: 'all' | 'active' | 'resolved') => setFilter(value)}
+              >
                 <SelectTrigger className='w-32'>
                   <SelectValue />
                 </SelectTrigger>
@@ -485,7 +537,10 @@ export function PerformanceAlerts() {
                   <SelectItem value='resolved'>已解决</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={severityFilter} onValueChange={(value: any) => setSeverityFilter(value)}>
+              <Select
+                value={severityFilter}
+                onValueChange={(value: 'all' | 'warning' | 'error' | 'critical') => setSeverityFilter(value)}
+              >
                 <SelectTrigger className='w-32'>
                   <SelectValue />
                 </SelectTrigger>
@@ -531,8 +586,11 @@ export function PerformanceAlerts() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAlerts.map((alert) => (
-                  <TableRow key={alert.id} className={alert.resolved ? 'opacity-50' : ''}>
+                {filteredAlerts.map(alert => (
+                  <TableRow
+                    key={alert.id}
+                    className={alert.resolved ? 'opacity-50' : ''}
+                  >
                     <TableCell>
                       <div className='flex items-center gap-2'>
                         {getAlertIcon(alert.type)}
@@ -543,25 +601,43 @@ export function PerformanceAlerts() {
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell className='font-mono text-sm'>{alert.metric}</TableCell>
+                    <TableCell className='font-mono text-sm'>
+                      {alert.metric}
+                    </TableCell>
                     <TableCell>
-                      <span className={alert.value > alert.threshold ? 'text-red-600' : 'text-gray-600'}>
+                      <span
+                        className={
+                          alert.value > alert.threshold
+                            ? 'text-red-600'
+                            : 'text-gray-600'
+                        }
+                      >
                         {formatValue(alert.metric, alert.value)}
                       </span>
                     </TableCell>
-                    <TableCell>{formatValue(alert.metric, alert.threshold)}</TableCell>
-                    <TableCell className='max-w-xs truncate'>{alert.message}</TableCell>
+                    <TableCell>
+                      {formatValue(alert.metric, alert.threshold)}
+                    </TableCell>
+                    <TableCell className='max-w-xs truncate'>
+                      {alert.message}
+                    </TableCell>
                     <TableCell className='text-sm text-gray-500'>
                       {formatTime(alert.timestamp)}
                     </TableCell>
                     <TableCell>
                       {alert.resolved ? (
-                        <Badge variant='outline' className='bg-green-100 text-green-800'>
+                        <Badge
+                          variant='outline'
+                          className='bg-green-100 text-green-800'
+                        >
                           <CheckCircle className='h-3 w-3 mr-1' />
                           已解决
                         </Badge>
                       ) : (
-                        <Badge variant='outline' className='bg-red-100 text-red-800'>
+                        <Badge
+                          variant='outline'
+                          className='bg-red-100 text-red-800'
+                        >
                           <XCircle className='h-3 w-3 mr-1' />
                           活跃
                         </Badge>

@@ -223,13 +223,21 @@ module.exports = {
     });
 
     // 创建复合索引以优化查询性能
-    await queryInterface.addIndex('agent_usage', ['userId', 'agentId', 'startTime'], {
-      name: 'user_agent_time_index',
-    });
+    await queryInterface.addIndex(
+      'agent_usage',
+      ['userId', 'agentId', 'startTime'],
+      {
+        name: 'user_agent_time_index',
+      }
+    );
 
-    await queryInterface.addIndex('agent_usage', ['geoLocationId', 'startTime'], {
-      name: 'geo_time_index',
-    });
+    await queryInterface.addIndex(
+      'agent_usage',
+      ['geoLocationId', 'startTime'],
+      {
+        name: 'geo_time_index',
+      }
+    );
 
     await queryInterface.addIndex('agent_usage', ['messageType', 'startTime'], {
       name: 'message_type_time_index',
@@ -345,15 +353,29 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     // 删除视图
-    await queryInterface.sequelize.query(`DROP VIEW IF EXISTS geo_activity_stats`);
-    await queryInterface.sequelize.query(`DROP VIEW IF EXISTS agent_usage_stats`);
-    await queryInterface.sequelize.query(`DROP VIEW IF EXISTS user_activity_stats`);
+    await queryInterface.sequelize.query(
+      `DROP VIEW IF EXISTS geo_activity_stats`
+    );
+    await queryInterface.sequelize.query(
+      `DROP VIEW IF EXISTS agent_usage_stats`
+    );
+    await queryInterface.sequelize.query(
+      `DROP VIEW IF EXISTS user_activity_stats`
+    );
 
     // 删除触发器和函数
-    await queryInterface.sequelize.query(`DROP TRIGGER IF EXISTS agent_usage_before_insert_or_update ON agent_usage`);
-    await queryInterface.sequelize.query(`DROP FUNCTION IF EXISTS update_session_duration`);
-    await queryInterface.sequelize.query(`DROP FUNCTION IF EXISTS cleanup_old_usage_data`);
-    await queryInterface.sequelize.query(`DROP FUNCTION IF EXISTS cleanup_old_geo_data`);
+    await queryInterface.sequelize.query(
+      `DROP TRIGGER IF EXISTS agent_usage_before_insert_or_update ON agent_usage`
+    );
+    await queryInterface.sequelize.query(
+      `DROP FUNCTION IF EXISTS update_session_duration`
+    );
+    await queryInterface.sequelize.query(
+      `DROP FUNCTION IF EXISTS cleanup_old_usage_data`
+    );
+    await queryInterface.sequelize.query(
+      `DROP FUNCTION IF EXISTS cleanup_old_geo_data`
+    );
 
     // 删除表
     await queryInterface.dropTable('agent_usage');

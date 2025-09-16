@@ -28,7 +28,7 @@ async function getSafeConfig(): Promise<
   }
 }
 
-async function logApiError(api: string, error: any) {
+async function logApiError(api: string, error: unknown) {
   const saveDir = path.join(process.cwd(), 'data');
   await fs.mkdir(saveDir, { recursive: true });
   const filePath = path.join(saveDir, 'api-error.log');

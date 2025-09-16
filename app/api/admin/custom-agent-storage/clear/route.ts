@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clearAllCustomAgentData } from '@/lib/storage/features/management/custom-agent-management';
 import { ErrorHandler } from '@/lib/utils/error-handler';
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     const result = await clearAllCustomAgentData();
 
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     const standardError = ErrorHandler.handle(error, {
+      context: 'clearAllCustomAgentData',
       operation: 'clearAllCustomAgentData',
     });
     const response = ErrorHandler.toApiResponse(standardError, true);

@@ -1,0 +1,219 @@
+---
+globs: *.ts,*.tsx
+description: TypeScript严格类型检查规范
+---
+
+# TypeScript严格类型检查规范
+
+## 核心配置
+基于 [tsconfig.json](mdc:tsconfig.json) 的严格配置：
+
+```typescript
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  }
+}
+```
+
+## 类型安全要求
+
+### 禁止使用any类型
+```typescript
+// ❌ 错误：使用any类型
+function processData(data: any): any {
+  return data;
+}
+
+// ✅ 正确：使用具体类型
+function processData(data: UserData): ProcessedUserData {
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email
+  };
+}
+```
+
+### 严格null检查
+```typescript
+// ❌ 错误：忽略null检查
+function getUserName(user: User | null): string {
+  return user.name; // 可能为null
+}
+
+// ✅ 正确：处理null情况
+function getUserName(user: User | null): string {
+  if (user === null) {
+    return '未知用户';
+  }
+  return user.name;
+}
+```
+
+### 函数类型安全
+```typescript
+// ❌ 错误：函数类型不安全
+function processUser(user: User, callback: Function) {
+  callback(user);
+}
+
+// ✅ 正确：函数类型安全
+function processUser(user: User, callback: (user: User) => void) {
+  callback(user);
+}
+```
+
+## 接口和类型定义
+
+### 接口定义规范
+```typescript
+// ✅ 正确：接口定义
+interface UserData {
+  readonly id: string;
+  name: string;
+  email: string;
+  age?: number; // 可选属性
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ✅ 正确：泛型接口
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
+```
+
+### 类型别名规范
+```typescript
+// ✅ 正确：类型别名
+type UserStatus = 'active' | 'inactive' | 'pending';
+type UserRole = 'admin' | 'user' | 'guest';
+
+// ✅ 正确：联合类型
+type UserWithRole = UserData & { role: UserRole };
+```
+
+## 错误处理类型
+
+### 错误类型定义
+```typescript
+// ✅ 正确：错误类型定义
+interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+type Result<T, E = ApiError> = 
+  | { success: true; data: T }
+  | { success: false; error: E };
+```
+
+### 错误处理函数
+```typescript
+// ✅ 正确：类型安全的错误处理
+async function fetchUser(id: string): Promise<Result<UserData>> {
+  try {
+    const response = await fetch(`/api/users/${id}`);
+    if (!response.ok) {
+      return {
+        success: false,
+        error: {
+          code: 'FETCH_ERROR',
+          message: `HTTP ${response.status}: ${response.statusText}`
+        }
+      };
+    }
+    
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        code: 'NETWORK_ERROR',
+        message: error instanceof Error ? error.message : '未知错误'
+      }
+    };
+  }
+}
+```
+
+## 组件类型安全
+
+### Props类型定义
+```typescript
+// ✅ 正确：组件Props类型
+interface UserFormProps {
+  userId: string;
+  onSubmit: (data: UserData) => Promise<void>;
+  onCancel: () => void;
+  initialData?: Partial<UserData>;
+  disabled?: boolean;
+}
+
+export function UserForm({ 
+  userId, 
+  onSubmit, 
+  onCancel, 
+  initialData,
+  disabled = false 
+}: UserFormProps) {
+  // 组件实现
+}
+```
+
+### 事件处理类型
+```typescript
+// ✅ 正确：事件处理类型
+const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  // 处理逻辑
+};
+
+const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const value = event.target.value;
+  // 处理逻辑
+};
+```
+
+## 工具类型使用
+
+### 内置工具类型
+```typescript
+// ✅ 正确：使用内置工具类型
+type PartialUser = Partial<UserData>;
+type RequiredUser = Required<UserData>;
+type UserEmail = Pick<UserData, 'email'>;
+type UserWithoutId = Omit<UserData, 'id'>;
+```
+
+### 自定义工具类型
+```typescript
+// ✅ 正确：自定义工具类型
+type NonNullable<T> = T extends null | undefined ? never : T;
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+```
+
+## 检查清单
+- [ ] 所有函数都有明确的返回类型
+- [ ] 所有变量都有明确的类型
+- [ ] 没有使用any类型
+- [ ] 正确处理null和undefined
+- [ ] 使用严格的函数类型
+- [ ] 接口和类型定义完整
+- [ ] 错误处理类型安全
+
+参考配置文件：[tsconfig.json](mdc:tsconfig.json)

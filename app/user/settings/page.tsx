@@ -1,37 +1,46 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import type { Viewport } from 'next';
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
+};
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
+import { Switch } from '../../../components/ui/switch';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from '../../../components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import {
-  Settings,
   User,
-  Globe,
   Mic,
   Palette,
   Bell,
   Shield,
   ArrowLeft,
 } from 'lucide-react';
-import { useLanguage } from '@/context/language-context';
-import { useAgent } from '@/context/agent-context';
+import { useLanguage } from '../../../context/language-context';
+import { useAgent } from '../../../context/agent-context';
 import { useRouter } from 'next/navigation';
-import type { Language } from '@/lib/i18n/translations';
+import type { Language } from '../../../lib/i18n/translations';
 
 export default function UserSettingsPage() {
   const router = useRouter();
-  const { t, language, setLanguage, availableLanguages } = useLanguage();
+  const { language, setLanguage, availableLanguages } = useLanguage();
   const { selectedAgent } = useAgent();
 
   // 用户偏好设置
@@ -71,7 +80,7 @@ export default function UserSettingsPage() {
   });
 
   // 保存设置到localStorage
-  const saveSetting = (key: string, value: any) => {
+  const saveSetting = (key: string, value: string | number | boolean) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(key, value.toString());
     }
@@ -172,9 +181,9 @@ export default function UserSettingsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableLanguages.map(lang => (
-                        <SelectItem key={lang.code} value={lang.code}>
-                          {lang.name}
+                      {Object.entries(availableLanguages).map(([code, name]) => (
+                        <SelectItem key={code} value={code}>
+                          {name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -301,6 +310,23 @@ export default function UserSettingsPage() {
                 <p className='text-sm text-gray-600 mt-1'>
                   选择您喜欢的主题模式
                 </p>
+              </div>
+
+              <div className='pt-4 border-t'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <h4 className='font-medium'>主题风格</h4>
+                    <p className='text-sm text-gray-600'>
+                      选择不同的主题风格和色彩搭配
+                    </p>
+                  </div>
+                  <Button
+                    variant='outline'
+                    onClick={() => router.push('/user/settings/theme')}
+                  >
+                    选择主题
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

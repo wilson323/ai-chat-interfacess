@@ -1,263 +1,277 @@
 /**
- * 语音功能相关类型定义
- * 基于 Next.js 15 + React 18 + TypeScript 5
+ * 语音功能类型定义
+ * 包含ASR、TTS、配置等相关类型
  */
 
-// 语音配置接口
-export interface VoiceConfig {
-  /** API 端点 URL */
-  apiUrl: string;
-  /** API 密钥 */
-  apiKey: string;
-  /** 最大录音时长（秒） */
-  maxDuration: number;
-  /** 采样率 */
-  sampleRate: number;
-  /** 语言代码 */
-  language: string;
-  /** 是否启用语音功能 */
-  enabled: boolean;
-}
-
-// 语音录音状态
+// 语音录制状态
 export interface VoiceRecordingState {
-  /** 是否正在录音 */
   isRecording: boolean;
-  /** 是否正在处理（识别中） */
   isProcessing: boolean;
-  /** 录音时长（秒） */
-  duration: number;
-  /** 音频音量级别 (0-1) */
-  audioLevel: number;
-  /** 错误信息 */
   error: string | null;
-  /** 是否已准备就绪 */
-  isReady: boolean;
+  stream: MediaStream | null;
+  duration: number;
+  audioBlob: Blob | null;
 }
 
-// 语音权限状态
-export type VoicePermissionState = 'granted' | 'denied' | 'prompt' | 'unknown';
-
-// 语音权限接口
-export interface VoicePermission {
-  /** 权限状态 */
-  state: VoicePermissionState;
-  /** 浏览器是否支持语音功能 */
-  isSupported: boolean;
-  /** 是否可以请求权限 */
-  canRequest: boolean;
+// 语音播放状态
+export interface VoicePlaybackState {
+  isPlaying: boolean;
+  isPaused: boolean;
+  currentTime: number;
+  duration: number;
+  error: string | null;
 }
 
 // 语音识别结果
-export interface VoiceTranscriptionResult {
-  /** 识别的文本 */
+export interface VoiceRecognitionResult {
   text: string;
-  /** 置信度 (0-1) */
   confidence: number;
-  /** 音频时长（秒） */
-  duration: number;
-  /** 识别的语言 */
   language: string;
-  /** 时间戳 */
-  timestamp: number;
-}
-
-// 语音错误类型
-export interface VoiceError {
-  /** 错误代码 */
-  code: string;
-  /** 错误消息 */
-  message: string;
-  /** 解决建议 */
-  suggestion?: string;
-  /** 错误详情 */
-  details?: any;
-}
-
-// 音频可视化数据
-export interface AudioVisualizationData {
-  /** 当前音量级别 (0-1) */
-  audioLevel: number;
-  /** 波形数据数组 */
-  waveformData: number[];
-  /** 频谱数据 */
-  frequencyData?: Uint8Array;
-}
-
-// 语音组件属性
-export interface VoiceInputProps {
-  /** 识别结果回调 */
-  onTranscript: (text: string) => void;
-  /** 是否禁用 */
-  disabled?: boolean;
-  /** 自定义样式类名 */
-  className?: string;
-  /** 占位符文本 */
-  placeholder?: string;
-  /** 按钮大小 */
-  size?: 'sm' | 'md' | 'lg';
-  /** 按钮变体 */
-  variant?: 'default' | 'minimal' | 'floating';
-}
-
-// 语音按钮属性
-export interface VoiceButtonProps {
-  /** 是否正在录音 */
-  isRecording: boolean;
-  /** 是否正在处理 */
-  isProcessing: boolean;
-  /** 是否启用 */
-  isEnabled: boolean;
-  /** 点击回调 */
-  onToggle: () => void;
-  /** 按钮大小 */
-  size?: 'sm' | 'md' | 'lg';
-  /** 按钮变体 */
-  variant?: 'default' | 'minimal';
-  /** 自定义样式类名 */
-  className?: string;
-}
-
-// 语音状态显示属性
-export interface VoiceStatusProps {
-  /** 是否正在录音 */
-  isRecording: boolean;
-  /** 录音时长 */
   duration: number;
-  /** 音频级别 */
-  audioLevel: number;
-  /** 错误信息 */
-  error: string | null;
-  /** 最大录音时长 */
+  timestamp: Date;
+  // 兼容使用场景：某些逻辑会读取识别到的音频Blob
+  audioBlob?: Blob;
+}
+
+// 语音合成选项
+export interface TTSOptions {
+  voice?: string;
+  speed?: number;
+  volume?: number;
+  language?: string;
+  provider?: 'web' | 'aliyun' | 'baidu' | 'xunfei';
+  pitch?: number;
+  rate?: number;
+}
+
+// 语音配置
+export interface VoiceConfig {
+  id: string;
+  userId: string;
+  asrProvider: 'web' | 'aliyun' | 'baidu' | 'xunfei' | 'tencent';
+  ttsProvider: 'web' | 'aliyun' | 'baidu' | 'xunfei' | 'tencent';
+  voice: string;
+  speed: number;
+  volume: number;
+  language: string;
+  autoPlay: boolean;
+  maxDuration: number;
+  sampleRate: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 语音服务提供商配置
+export interface VoiceProviderConfig {
+  name: string;
+  type: 'asr' | 'tts' | 'both';
+  apiKey: string;
+  apiUrl: string;
+  region?: string;
+  supportedLanguages: string[];
+  maxFileSize: number;
   maxDuration: number;
 }
 
-// 音频波形属性
-export interface VoiceWaveformProps {
-  /** 音频级别 (0-1) */
-  audioLevel: number;
-  /** 波形条数 */
-  bars?: number;
-  /** 动画持续时间 */
-  animationDuration?: number;
-  /** 自定义样式类名 */
-  className?: string;
+// 语音识别请求
+export interface VoiceRecognitionRequest {
+  audio: Blob;
+  language?: string;
+  provider?: string;
+  options?: {
+    enableAutomaticPunctuation?: boolean;
+    enableSpeakerDiarization?: boolean;
+    maxAlternatives?: number;
+  };
 }
 
-// 语音权限组件属性
-export interface VoicePermissionProps {
-  /** 权限请求回调 */
-  onRequest: () => void;
-  /** 权限状态 */
-  permission: VoicePermission;
-  /** 自定义样式类名 */
-  className?: string;
+// 语音合成请求
+export interface VoiceSynthesisRequest {
+  text: string;
+  options: TTSOptions;
+  provider?: string;
 }
 
-// Hook 返回类型
-export interface UseVoiceRecorderReturn {
-  /** 录音状态 */
-  state: VoiceRecordingState;
-  /** 开始录音 */
-  startRecording: () => Promise<void>;
-  /** 停止录音 */
-  stopRecording: () => Promise<Blob | null>;
-  /** 重置状态 */
-  reset: () => void;
-}
-
-export interface UseVoicePermissionReturn {
-  /** 权限信息 */
-  permission: VoicePermission;
-  /** 请求权限 */
-  requestPermission: () => Promise<VoicePermissionState>;
-  /** 检查权限 */
-  checkPermission: () => Promise<VoicePermissionState>;
-}
-
-export interface UseAudioVisualizationReturn {
-  /** 可视化数据 */
-  data: AudioVisualizationData;
-  /** 是否活跃 */
-  isActive: boolean;
-}
-
-export interface UseVoiceConfigReturn {
-  /** 配置信息 */
-  config: VoiceConfig;
-  /** 更新配置 */
-  updateConfig: (config: Partial<VoiceConfig>) => void;
-  /** 重置配置 */
-  resetConfig: () => void;
-}
-
-// API 响应类型
-export interface VoiceTranscribeResponse {
-  /** 识别成功 */
+// 语音识别响应
+export interface VoiceRecognitionResponse {
   success: boolean;
-  /** 识别结果 */
-  result?: VoiceTranscriptionResult;
-  /** 错误信息 */
-  error?: VoiceError;
+  result?: VoiceRecognitionResult;
+  error?: string;
+  provider: string;
+  processingTime: number;
 }
 
-export interface VoiceConfigResponse {
-  /** 配置信息 */
-  config: VoiceConfig;
-  /** 支持的格式 */
-  supportedFormats: string[];
-  /** 服务状态 */
-  status: 'online' | 'offline' | 'error';
+// 语音合成响应
+export interface VoiceSynthesisResponse {
+  success: boolean;
+  audioUrl?: string;
+  audioBlob?: Blob;
+  error?: string;
+  provider: string;
+  processingTime: number;
 }
 
-// 常量定义
+// 语音错误类型（采用字符串字面量联合，便于与现有代码字符串常量对齐）
+export type VoiceErrorType =
+  | 'RECORDING_FAILED'
+  | 'RECOGNITION_FAILED'
+  | 'SYNTHESIS_FAILED'
+  | 'PERMISSION_DENIED'
+  | 'NOT_SUPPORTED'
+  | 'NETWORK_ERROR'
+  | 'API_ERROR'
+  | 'CONFIG_ERROR'
+  | 'STORAGE_ERROR'
+  | 'TRANSCRIPTION_FAILED'
+  | 'UNKNOWN_ERROR';
+
+// 语音错误
+export interface VoiceError {
+  type: VoiceErrorType;
+  message: string;
+  code?: string;
+  details?: Record<string, unknown>;
+  timestamp: Date;
+}
+
+// 语音常量
 export const VOICE_CONSTANTS = {
-  /** 默认最大录音时长（秒） */
-  DEFAULT_MAX_DURATION: 60,
-  /** 默认采样率 */
+  DEFAULT_MAX_DURATION: 60000, // 60秒
   DEFAULT_SAMPLE_RATE: 16000,
-  /** 默认语言 */
-  DEFAULT_LANGUAGE: 'zh',
-  /** 支持的音频格式 */
-  SUPPORTED_FORMATS: ['audio/wav', 'audio/webm', 'audio/mp4', 'audio/ogg'],
-  /** 最大文件大小（字节） */
-  MAX_FILE_SIZE: 25 * 1024 * 1024, // 25MB
-  /** 请求超时时间（毫秒） */
-  REQUEST_TIMEOUT: 30000, // 30秒
+  DEFAULT_LANGUAGE: 'zh-CN',
+  DEFAULT_VOICE: 'default',
+  DEFAULT_SPEED: 1.0,
+  DEFAULT_VOLUME: 1.0,
+  MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+  SUPPORTED_AUDIO_FORMATS: [
+    'audio/wav',
+    'audio/mp3',
+    'audio/webm',
+    'audio/ogg',
+  ],
+  SUPPORTED_LANGUAGES: ['zh-CN', 'en-US', 'ja-JP', 'ko-KR'],
 } as const;
 
-// 错误代码常量
+// 语音错误代码
 export const VOICE_ERROR_CODES = {
-  // 权限相关
+  RECORDING_FAILED: 'RECORDING_FAILED',
+  RECOGNITION_FAILED: 'RECOGNITION_FAILED',
+  SYNTHESIS_FAILED: 'SYNTHESIS_FAILED',
   PERMISSION_DENIED: 'PERMISSION_DENIED',
-  PERMISSION_UNAVAILABLE: 'PERMISSION_UNAVAILABLE',
-
-  // 设备相关
-  DEVICE_NOT_FOUND: 'DEVICE_NOT_FOUND',
-  DEVICE_NOT_READABLE: 'DEVICE_NOT_READABLE',
-  DEVICE_IN_USE: 'DEVICE_IN_USE',
-
-  // 浏览器支持
-  BROWSER_NOT_SUPPORTED: 'BROWSER_NOT_SUPPORTED',
-  MEDIA_RECORDER_NOT_SUPPORTED: 'MEDIA_RECORDER_NOT_SUPPORTED',
-
-  // 网络相关
+  NOT_SUPPORTED: 'NOT_SUPPORTED',
   NETWORK_ERROR: 'NETWORK_ERROR',
-  REQUEST_TIMEOUT: 'REQUEST_TIMEOUT',
-
-  // API 相关
   API_ERROR: 'API_ERROR',
-  CONFIG_MISSING: 'CONFIG_MISSING',
-  INVALID_RESPONSE: 'INVALID_RESPONSE',
-
-  // 文件相关
-  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
-  UNSUPPORTED_FORMAT: 'UNSUPPORTED_FORMAT',
-  NO_AUDIO_DATA: 'NO_AUDIO_DATA',
-
-  // 其他
+  CONFIG_ERROR: 'CONFIG_ERROR',
+  STORAGE_ERROR: 'STORAGE_ERROR',
+  TRANSCRIPTION_FAILED: 'TRANSCRIPTION_FAILED',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 } as const;
 
-export type VoiceErrorCode =
-  (typeof VOICE_ERROR_CODES)[keyof typeof VOICE_ERROR_CODES];
+// 语音状态类型
+export type VoiceState =
+  | 'idle'
+  | 'recording'
+  | 'processing'
+  | 'playing'
+  | 'paused'
+  | 'error';
+
+// 语音事件类型
+export type VoiceEventType =
+  // 当前实现使用的事件名
+  | 'recordingStart'
+  | 'recordingStop'
+  | 'recordingError'
+  | 'playbackStart'
+  | 'playbackEnd'
+  | 'playbackError'
+  // 兼容旧事件名，避免外部引用报错
+  | 'recordingStarted'
+  | 'recordingStopped'
+  | 'recognitionStarted'
+  | 'recognitionCompleted'
+  | 'recognitionError'
+  | 'synthesisStarted'
+  | 'synthesisCompleted'
+  | 'synthesisError'
+  | 'playbackStarted'
+  | 'playbackPaused'
+  | 'playbackResumed'
+  | 'playbackStopped';
+
+// 语音事件
+export interface VoiceEvent {
+  type: VoiceEventType;
+  data?: Record<string, unknown>;
+  timestamp: Date;
+}
+
+// 语音事件监听器
+export type VoiceEventListener = (event: VoiceEvent) => void;
+
+// 语音服务接口
+export interface IVoiceService {
+  // ASR方法
+  recognizeSpeech(
+    request: VoiceRecognitionRequest
+  ): Promise<VoiceRecognitionResponse>;
+  startRealTimeRecognition(options?: { language?: string }): Promise<void>;
+  stopRealTimeRecognition(): Promise<VoiceRecognitionResult>;
+
+  // TTS方法
+  synthesizeSpeech(
+    request: VoiceSynthesisRequest
+  ): Promise<VoiceSynthesisResponse>;
+  playAudio(audioBlob: Blob): Promise<void>;
+  stopAudio(): void;
+  pauseAudio(): void;
+  resumeAudio(): void;
+
+  // 配置方法
+  getConfig(): Promise<VoiceConfig>;
+  updateConfig(config: Partial<VoiceConfig>): Promise<void>;
+
+  // 事件监听
+  addEventListener(type: VoiceEventType, listener: VoiceEventListener): void;
+  removeEventListener(type: VoiceEventType, listener: VoiceEventListener): void;
+
+  // 状态查询
+  getRecordingState(): VoiceRecordingState;
+  getPlaybackState(): VoicePlaybackState;
+  isSupported(): boolean;
+}
+
+// 语音存储接口
+export interface IVoiceStorage {
+  saveAudio(
+    audioBlob: Blob,
+    metadata: Record<string, unknown>
+  ): Promise<string>;
+  getAudio(id: string): Promise<Blob | null>;
+  deleteAudio(id: string): Promise<void>;
+  saveConfig(config: VoiceConfig): Promise<void>;
+  getConfig(userId: string): Promise<VoiceConfig | null>;
+  deleteConfig(userId: string): Promise<void>;
+}
+
+// 语音状态管理接口
+export interface IVoiceStore {
+  // 状态
+  recordingState: VoiceRecordingState;
+  playbackState: VoicePlaybackState;
+  config: VoiceConfig | null;
+  error: VoiceError | null;
+
+  // 动作
+  startRecording: () => Promise<void>;
+  stopRecording: () => Promise<void>;
+  startPlayback: (audioBlob: Blob) => Promise<void>;
+  pausePlayback: () => void;
+  resumePlayback: () => void;
+  stopPlayback: () => void;
+  updateConfig: (config: Partial<VoiceConfig>) => Promise<void>;
+  clearError: () => void;
+
+  // 订阅
+  subscribe: (listener: () => void) => () => void;
+}

@@ -1,0 +1,361 @@
+---
+globs: *.tsx,*.ts
+description: 性能优化标准和最佳实践
+---
+
+# 性能优化标准和最佳实践
+
+## 核心性能原则
+- 合理使用React.memo、useMemo、useCallback
+- 避免不必要的重渲染
+- 优化组件拆分
+- 使用虚拟化处理大列表
+- 优化图片和资源加载
+
+## React性能优化
+
+### 组件优化
+```typescript
+// ✅ 正确：使用React.memo
+export const ExpensiveComponent = React.memo(({ data }: Props) => {
+  return <div>{data}</div>;
+});
+
+// ✅ 正确：使用useMemo
+export function OptimizedComponent({ items }: Props) {
+  const expensiveValue = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.value, 0);
+  }, [items]);
+
+  return <div>{expensiveValue}</div>;
+}
+
+// ✅ 正确：使用useCallback
+export function EventComponent({ onItemClick }: Props) {
+  const handleClick = useCallback((id: string) => {
+    onItemClick(id);
+  }, [onItemClick]);
+
+  return <button onClick={handleClick}>点击</button>;
+}
+```
+
+### 避免性能陷阱
+```typescript
+// ❌ 错误：在render中创建新对象
+export function BadComponent({ items }: Props) {
+  return (
+    <div>
+      {items.map(item => (
+        <ItemComponent
+          key={item.id}
+          item={item}
+          style={{ margin: '10px' }} // 每次render都创建新对象
+        />
+      ))}
+    </div>
+  );
+}
+
+// ✅ 正确：使用useMemo或常量
+const itemStyle = { margin: '10px' };
+
+export function GoodComponent({ items }: Props) {
+  return (
+    <div>
+      {items.map(item => (
+        <ItemComponent
+          key={item.id}
+          item={item}
+          style={itemStyle} // 使用常量
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+## 列表性能优化
+
+### 虚拟化长列表
+```typescript
+// ✅ 正确：使用虚拟化
+import { FixedSizeList as List } from 'react-window';
+
+export function VirtualizedList({ items }: { items: Item[] }) {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
+    <div style={style}>
+      <ItemComponent item={items[index]} />
+    </div>
+  );
+
+  return (
+    <List
+      height={600}
+      itemCount={items.length}
+      itemSize={50}
+    >
+      {Row}
+    </List>
+  );
+}
+```
+
+### 分页加载
+```typescript
+// ✅ 正确：分页加载
+export function PaginatedList() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const loadMore = useCallback(async () => {
+    if (loading) return;
+
+    setLoading(true);
+    try {
+      const newItems = await fetchItems(page);
+      setItems(prev => [...prev, ...newItems]);
+      setPage(prev => prev + 1);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, loading]);
+
+  return (
+    <div>
+      {items.map(item => (
+        <ItemComponent key={item.id} item={item} />
+      ))}
+      <button onClick={loadMore} disabled={loading}>
+        {loading ? '加载中...' : '加载更多'}
+      </button>
+    </div>
+  );
+}
+```
+
+## 图片优化
+
+### Next.js图片优化
+```typescript
+// ✅ 正确：使用Next.js Image组件
+import Image from 'next/image';
+
+export function OptimizedImage({ src, alt }: { src: string; alt: string }) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={300}
+      height={200}
+      placeholder="blur"
+      blurDataURL="data:image/jpeg;base64,..."
+      priority={false} // 非关键图片
+    />
+  );
+}
+
+// ✅ 正确：关键图片优先加载
+export function HeroImage({ src, alt }: { src: string; alt: string }) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={800}
+      height={600}
+      priority={true} // 关键图片优先加载
+    />
+  );
+}
+```
+
+### 图片懒加载
+```typescript
+// ✅ 正确：图片懒加载
+export function LazyImage({ src, alt }: { src: string; alt: string }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={imgRef}>
+      {isInView && (
+        <Image
+          src={src}
+          alt={alt}
+          onLoad={() => setIsLoaded(true)}
+          style={{ opacity: isLoaded ? 1 : 0 }}
+        />
+      )}
+    </div>
+  );
+}
+```
+
+## 代码分割
+
+### 动态导入
+```typescript
+// ✅ 正确：动态导入组件
+import dynamic from 'next/dynamic';
+
+const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
+  loading: () => <div>加载中...</div>,
+  ssr: false // 如果不需要SSR
+});
+
+export function App() {
+  return (
+    <div>
+      <h1>应用标题</h1>
+      <HeavyComponent />
+    </div>
+  );
+}
+```
+
+### 路由级代码分割
+```typescript
+// ✅ 正确：路由级代码分割
+// pages/admin/users.tsx
+export default function UsersPage() {
+  return <UsersComponent />;
+}
+
+// 自动代码分割，无需额外配置
+```
+
+## 数据获取优化
+
+### 缓存策略
+```typescript
+// ✅ 正确：使用SWR缓存
+import useSWR from 'swr';
+
+export function UserProfile({ userId }: { userId: string }) {
+  const { data, error } = useSWR(`/api/users/${userId}`, fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 60000 // 1分钟去重
+  });
+
+  if (error) return <div>加载失败</div>;
+  if (!data) return <div>加载中...</div>;
+
+  return <div>{data.name}</div>;
+}
+```
+
+### 预加载
+```typescript
+// ✅ 正确：预加载数据
+export function UserList() {
+  const { data: users } = useSWR('/api/users', fetcher);
+
+  // 预加载用户详情
+  users?.forEach(user => {
+    useSWR(`/api/users/${user.id}`, fetcher, { revalidateOnMount: false });
+  });
+
+  return (
+    <div>
+      {users?.map(user => (
+        <UserCard key={user.id} user={user} />
+      ))}
+    </div>
+  );
+}
+```
+
+## 性能监控
+
+### 性能指标监控
+```typescript
+// ✅ 正确：性能监控
+export function PerformanceMonitor() {
+  useEffect(() => {
+    // 监控Core Web Vitals
+    if (typeof window !== 'undefined') {
+      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+        getCLS(console.log);
+        getFID(console.log);
+        getFCP(console.log);
+        getLCP(console.log);
+        getTTFB(console.log);
+      });
+    }
+  }, []);
+
+  return null;
+}
+```
+
+### 性能分析
+```typescript
+// ✅ 正确：性能分析
+export function ProfiledComponent() {
+  const [renderCount, setRenderCount] = useState(0);
+
+  useEffect(() => {
+    setRenderCount(prev => prev + 1);
+  });
+
+  // 开发环境下显示渲染次数
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`组件渲染次数: ${renderCount}`);
+  }
+
+  return <div>内容</div>;
+}
+```
+
+## 性能检查清单
+
+### 组件优化
+- [ ] 使用React.memo包装昂贵组件
+- [ ] 合理使用useMemo和useCallback
+- [ ] 避免在render中创建新对象
+- [ ] 使用key属性优化列表渲染
+- [ ] 避免不必要的重渲染
+
+### 资源优化
+- [ ] 使用Next.js Image组件
+- [ ] 实现图片懒加载
+- [ ] 使用代码分割
+- [ ] 优化字体加载
+- [ ] 压缩静态资源
+
+### 数据优化
+- [ ] 实现数据缓存
+- [ ] 使用分页加载
+- [ ] 预加载关键数据
+- [ ] 避免重复请求
+- [ ] 优化API响应
+
+### 监控优化
+- [ ] 监控Core Web Vitals
+- [ ] 分析渲染性能
+- [ ] 监控网络请求
+- [ ] 跟踪用户交互
+- [ ] 定期性能审计
+
+参考配置文件：[next.config.mjs](mdc:next.config.mjs)

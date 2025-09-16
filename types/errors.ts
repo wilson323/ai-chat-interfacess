@@ -13,5 +13,5 @@ export type VoiceErrorType = (typeof VOICE_ERRORS)[keyof typeof VOICE_ERRORS];
 export interface VoiceError {
   type: VoiceErrorType;
   message: string;
-  details?: any;
+  details?: unknown;
 }

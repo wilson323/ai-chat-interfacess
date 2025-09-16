@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2025-09-14T12:35:27.725Z",
+  "themes": {
+    "modern": {
+      "name": "现代简约",
+      "previewImage": null,
+      "localPath": "/theme-previews/modern-preview.png"
+    },
+    "business": {
+      "name": "商务专业",
+      "previewImage": null,
+      "localPath": "/theme-previews/business-preview.png"
+    },
+    "tech": {
+      "name": "科技未来",
+      "previewImage": null,
+      "localPath": "/theme-previews/tech-preview.png"
+    },
+    "nature": {
+      "name": "自然清新",
+      "previewImage": null,
+      "localPath": "/theme-previews/nature-preview.png"
+    },
+    "art": {
+      "name": "艺术创意",
+      "previewImage": "lovart-avatar.png",
+      "localPath": "/theme-previews/art-preview.png"
+    }
+  }
+}

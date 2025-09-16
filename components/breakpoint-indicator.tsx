@@ -1,6 +1,6 @@
 'use client';
 
-import { useResponsive } from '@/hooks/use-responsive';
+import { useResponsive } from '../hooks/use-responsive';
 
 export function BreakpointIndicator() {
   const { breakpoint, width, isXs, isSm, isMd, isLg, isXl, is2xl } =

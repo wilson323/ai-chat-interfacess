@@ -1,7 +1,8 @@
 'use client';
 
 import { Typography } from 'antd';
-import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import { cn } from '../lib/utils';
 
 const { Title } = Typography;
 
@@ -45,7 +46,7 @@ const products: Product[] = [
   },
 ];
 
-export default function ProductCarousel() {
+function ProductCarousel() {
   return (
     <div
       className={cn(
@@ -71,9 +72,11 @@ export default function ProductCarousel() {
               'hover:-translate-y-1 vertical-align-top whitespace-normal'
             )}
           >
-            <img
+            <Image
               src={product.image || '/placeholder.svg'}
               alt={product.title}
+              width={140}
+              height={120}
               className={cn(
                 'w-full h-[120px] rounded-[14px] object-cover mb-2.5',
                 'border border-border-color shadow-md transition-all duration-400',
@@ -92,3 +95,5 @@ export default function ProductCarousel() {
     </div>
   );
 }
+
+export default ProductCarousel;

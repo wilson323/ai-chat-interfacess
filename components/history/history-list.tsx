@@ -1,23 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
-import { useAgent } from '@/context/agent-context';
+import { useAgent } from '../../context/agent-context';
 import { MessageSquare, Trash2, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useLanguage } from '@/context/language-context';
-import { useResponsive } from '@/hooks/use-responsive';
-import type { Message } from '@/types/message';
-import type { ChatSessionIndexItem } from '@/lib/storage/index';
+import { useLanguage } from '../../context/language-context';
+import type { TranslationKey } from '../../lib/i18n/translations';
+import { useResponsive } from '../../hooks/use-responsive';
+import type { Message } from '../../types/message';
+import type { ChatSessionIndexItem } from '../../lib/storage/index';
 import {
   loadMessagesFromStorage,
   getAllChatSessions,
   deleteChatSession,
   searchChatSessions,
-} from '@/lib/storage/index';
+} from '../../lib/storage/index';
 
 interface HistoryListProps {
   onSelect: (messages: Message[], chatId: string) => void;
@@ -32,11 +33,11 @@ interface HistoryListProps {
 export const HistoryList: React.FC<HistoryListProps> = ({
   onSelect,
   onDelete,
-  onEditTag,
+  // onEditTag, // 未使用的参数，保留用于未来扩展
   filterAgentId,
   viewType = 'dialog',
   onNewChat,
-  selectable = false,
+  // selectable = false, // 未使用的参数，保留用于未来扩展
 }) => {
   const { t } = useLanguage();
   const { selectedAgent } = useAgent();
@@ -48,19 +49,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
     null
   );
 
-  useEffect(() => {
-    loadHistory();
-  }, [selectedAgent, filterAgentId]);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      setSessions(searchChatSessions(searchQuery));
-    } else {
-      setSessions(getAllChatSessions());
-    }
-  }, [searchQuery]);
-
-  const loadHistory = () => {
+  const loadHistory = useCallback(() => {
     setIsLoading(true);
     try {
       // 尝试获取所有聊天会话
@@ -87,7 +76,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filterAgentId]);
 
   const handleSelect = async (session: ChatSessionIndexItem) => {
     setIsLoading(true);
@@ -127,6 +116,18 @@ export const HistoryList: React.FC<HistoryListProps> = ({
       setSessions(prev => prev.filter(s => s.id !== sessionId));
     }
   };
+
+  useEffect(() => {
+    loadHistory();
+  }, [selectedAgent, filterAgentId, loadHistory]);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setSessions(searchChatSessions(searchQuery));
+    } else {
+      setSessions(getAllChatSessions());
+    }
+  }, [searchQuery]);
 
   return (
     <div
@@ -173,7 +174,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
               isMdAndDown ? 'text-sm py-6' : ''
             )}
           >
-            {t('loading' as any)}
+            {t('loading' as TranslationKey)}
           </div>
         ) : sessions.length === 0 ? (
           <div
@@ -182,7 +183,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
               isMdAndDown ? 'text-sm py-6' : ''
             )}
           >
-            {t('noConversations' as any)}
+            {t('noConversations' as TranslationKey)}
           </div>
         ) : (
           <div className={cn('space-y-2', isMdAndDown && 'space-y-1.5')}>

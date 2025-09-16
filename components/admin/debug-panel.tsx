@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useAgent } from '@/context/agent-context';
+import { useAgent } from '../../context/agent-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { safeStringify } from '@/lib/debug-utils';
 import { useAgentStore } from '@/lib/store/agentStore';
 
 export function DebugPanel() {
-  const { agents, selectedAgent, updateAgent } = useAgent();
+  const { agents, selectedAgent, updateAgentConfig } = useAgent();
   const [isVisible, setIsVisible] = useState(false);
   const [storageData, setStorageData] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export function DebugPanel() {
   const forceRefresh = () => {
     if (selectedAgent) {
       // 强制刷新当前选中的智能体
-      updateAgent({ ...selectedAgent });
+      updateAgentConfig({ ...selectedAgent });
     }
 
     // 刷新存储数据显示

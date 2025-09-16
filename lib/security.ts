@@ -158,7 +158,11 @@ export function encodeJsonSafely(obj: Record<string, unknown>): string {
 /**
  * 速率限制验证
  */
-export function validateRateLimit(requestCount: number, windowStart: number, config = { windowMs: 15 * 60 * 1000, max: 100 }): boolean {
+export function validateRateLimit(
+  requestCount: number,
+  windowStart: number,
+  config = { windowMs: 15 * 60 * 1000, max: 100 }
+): boolean {
   const now = Date.now();
   const windowElapsed = now - windowStart;
 
@@ -246,6 +250,7 @@ export function validateAppId(appId: string): boolean {
 
 import crypto from 'crypto';
 
+// Record is a built-in TypeScript utility type, no need to import
 const AES_SECRET_RAW =
   process.env.AES_SECRET || 'neuroglass_default_secret_32bytes!';
 // 兼容任意长度密钥，自动 hash 成 32 字节

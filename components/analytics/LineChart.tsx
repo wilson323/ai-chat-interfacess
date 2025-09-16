@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   LineChart,
   Line,
@@ -86,7 +87,7 @@ export default function LineChartComponent({
   }, []);
 
   // 获取数据
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -106,7 +107,7 @@ export default function LineChartComponent({
       }
 
       // 格式化数据
-      const formattedData = result.data.map((item: any) => ({
+      const formattedData = result.data.map((item: { period: string; value: string | number | null }) => ({
         period: item.period,
         value: item.value ? Number(item.value) : null,
       }));
@@ -118,13 +119,13 @@ export default function LineChartComponent({
     } finally {
       setLoading(false);
     }
-  };
+  }, [metric, groupBy, startDate, endDate]);
 
   useEffect(() => {
     if (startDate && endDate) {
       fetchData();
     }
-  }, [metric, groupBy, startDate, endDate]);
+  }, [metric, groupBy, startDate, endDate, fetchData]);
 
   // 获取Y轴标签
   const getYAxisLabel = () => {
@@ -195,13 +196,22 @@ export default function LineChartComponent({
       const date = new Date(value);
       switch (groupBy) {
         case 'hour':
-          return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+          return date.toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
         case 'day':
-          return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+          return date.toLocaleDateString('zh-CN', {
+            month: 'short',
+            day: 'numeric',
+          });
         case 'week':
           return `第${Math.ceil(date.getDate() / 7)}周`;
         case 'month':
-          return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short' });
+          return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'short',
+          });
         default:
           return value;
       }
@@ -211,16 +221,23 @@ export default function LineChartComponent({
   };
 
   // 自定义工具提示
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: {
+    active?: boolean;
+    payload?: Array<{ value?: number | null }>;
+    label?: string;
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900 mb-1">
-            {formatXAxisLabel(label)}
+        <div className='bg-white p-3 border border-gray-200 rounded-lg shadow-lg'>
+          <p className='font-medium text-gray-900 mb-1'>
+            {formatXAxisLabel(label || '')}
           </p>
-          <p className="text-sm text-gray-600">
-            {getYAxisLabel()}: <span className="font-medium">{data.value?.toLocaleString() || 'N/A'}</span>
+          <p className='text-sm text-gray-600'>
+            {getYAxisLabel()}:{' '}
+            <span className='font-medium'>
+              {data.value?.toLocaleString() || 'N/A'}
+            </span>
           </p>
         </div>
       );
@@ -236,8 +253,8 @@ export default function LineChartComponent({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center" style={{ height }}>
-            <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+          <div className='flex items-center justify-center' style={{ height }}>
+            <RefreshCw className='h-8 w-8 animate-spin text-gray-400' />
           </div>
         </CardContent>
       </Card>
@@ -252,10 +269,10 @@ export default function LineChartComponent({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center" style={{ height }}>
-            <div className="text-center">
-              <p className="text-red-500 mb-2">{error}</p>
-              <Button onClick={fetchData} variant="outline" size="sm">
+          <div className='flex items-center justify-center' style={{ height }}>
+            <div className='text-center'>
+              <p className='text-red-500 mb-2'>{error}</p>
+              <Button onClick={fetchData} variant='outline' size='sm'>
                 重试
               </Button>
             </div>
@@ -268,55 +285,64 @@ export default function LineChartComponent({
   return (
     <Card className={className}>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className='flex items-center justify-between'>
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className='flex items-center gap-2'>
               {title}
-              <Badge variant="outline">{metricOptions.find(m => m.value === metric)?.label}</Badge>
+              <Badge variant='outline'>
+                {metricOptions.find(m => m.value === metric)?.label}
+              </Badge>
             </CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Button
               onClick={exportData}
-              variant="outline"
-              size="sm"
-              className="h-8"
+              variant='outline'
+              size='sm'
+              className='h-8'
             >
-              <Download className="h-4 w-4 mr-1" />
+              <Download className='h-4 w-4 mr-1' />
               导出
             </Button>
             <Button
               onClick={fetchData}
-              variant="outline"
-              size="sm"
-              className="h-8"
+              variant='outline'
+              size='sm'
+              className='h-8'
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className='h-4 w-4' />
             </Button>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 pt-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
+        <div className='flex flex-wrap gap-4 pt-4'>
+          <div className='flex items-center gap-2'>
+            <Calendar className='h-4 w-4 text-gray-500' />
             <input
-              type="date"
+              id='lineChartStartDate'
+              name='lineChartStartDate'
+              type='date'
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-sm"
+              onChange={e => setStartDate(e.target.value)}
+              className='px-2 py-1 border border-gray-300 rounded text-sm'
             />
-            <span className="text-gray-500">至</span>
+            <span className='text-gray-500'>至</span>
             <input
-              type="date"
+              id='lineChartEndDate'
+              name='lineChartEndDate'
+              type='date'
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-sm"
+              onChange={e => setEndDate(e.target.value)}
+              className='px-2 py-1 border border-gray-300 rounded text-sm'
             />
           </div>
 
-          <Select value={metric} onValueChange={(value) => setMetric(value as any)}>
-            <SelectTrigger className="w-40">
+          <Select
+            value={metric}
+            onValueChange={value => setMetric(value as 'duration' | 'responseTime' | 'sessions' | 'users' | 'tokens')}
+          >
+            <SelectTrigger className='w-40'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -328,8 +354,11 @@ export default function LineChartComponent({
             </SelectContent>
           </Select>
 
-          <Select value={groupBy} onValueChange={(value) => setGroupBy(value as any)}>
-            <SelectTrigger className="w-32">
+          <Select
+            value={groupBy}
+            onValueChange={value => setGroupBy(value as 'hour' | 'day' | 'week' | 'month')}
+          >
+            <SelectTrigger className='w-32'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -344,7 +373,7 @@ export default function LineChartComponent({
       </CardHeader>
 
       <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
+        <ResponsiveContainer width='100%' height={height}>
           <LineChart
             data={data}
             margin={{
@@ -354,9 +383,9 @@ export default function LineChartComponent({
               bottom: 5,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
             <XAxis
-              dataKey="period"
+              dataKey='period'
               tickFormatter={formatXAxisLabel}
               tick={{ fontSize: 12 }}
               tickLine={false}
@@ -376,8 +405,8 @@ export default function LineChartComponent({
             <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Line
-              type="monotone"
-              dataKey="value"
+              type='monotone'
+              dataKey='value'
               stroke={getLineColor()}
               strokeWidth={2}
               dot={{ fill: getLineColor(), strokeWidth: 2, r: 4 }}
@@ -385,14 +414,12 @@ export default function LineChartComponent({
               name={getYAxisLabel()}
               connectNulls={false}
             />
-            <Brush dataKey="period" height={30} stroke="#94a3b8" />
+            <Brush dataKey='period' height={30} stroke='#94a3b8' />
           </LineChart>
         </ResponsiveContainer>
 
         {data.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            暂无数据
-          </div>
+          <div className='text-center py-8 text-gray-500'>暂无数据</div>
         )}
       </CardContent>
     </Card>

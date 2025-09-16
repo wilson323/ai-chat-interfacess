@@ -169,23 +169,25 @@ module.exports = {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash('admin123456', saltRounds);
 
-    await queryInterface.bulkInsert('users', [{
-      id: 1,
-      username: 'admin',
-      email: 'admin@example.com',
-      password: hashedPassword,
-      role: 'super_admin',
-      status: 'active',
-      permissions: [
-        'agent:manage',
-        'system:config',
-        'user:manage',
-        'data:export',
-        'system:monitor',
-      ],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }]);
+    await queryInterface.bulkInsert('users', [
+      {
+        id: 1,
+        username: 'admin',
+        email: 'admin@example.com',
+        password: hashedPassword,
+        role: 'super_admin',
+        status: 'active',
+        permissions: [
+          'agent:manage',
+          'system:config',
+          'user:manage',
+          'data:export',
+          'system:monitor',
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
 
     console.log('用户管理表创建完成，默认管理员账户: admin/admin123456');
   },
@@ -207,5 +209,5 @@ module.exports = {
     // 删除表
     await queryInterface.dropTable('operation_logs');
     await queryInterface.dropTable('users');
-  }
+  },
 };

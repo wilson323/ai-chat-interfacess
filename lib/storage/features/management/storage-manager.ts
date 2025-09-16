@@ -40,14 +40,14 @@ export function emergencyCleanup(
     console.warn('Running emergency cleanup due to storage error.');
 
     // 获取所有存储键
-    const allKeys: string[] = [];
+    // 查找所有聊天键
+    const chatKeys: string[] = [];
     for (let i = 0; i < provider.length; i++) {
       const key = provider.key(i);
-      if (key) allKeys.push(key);
+      if (key && key.startsWith(MESSAGES_PREFIX)) {
+        chatKeys.push(key);
+      }
     }
-
-    // 查找所有聊天键
-    const chatKeys = allKeys.filter(key => key.startsWith(MESSAGES_PREFIX));
 
     // 删除最旧的一半聊天
     const deleteCount = Math.ceil(chatKeys.length / 2);
@@ -73,7 +73,7 @@ export function emergencyCleanup(
 
     // 最后的手段：清除所有聊天数据
     try {
-      const allKeys: string[] = [];
+      // const allKeys: string[] = [];
       for (let i = 0; i < provider.length; i++) {
         const key = provider.key(i);
         if (key && key.startsWith(MESSAGES_PREFIX)) {

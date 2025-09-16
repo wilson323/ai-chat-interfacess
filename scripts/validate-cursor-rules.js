@@ -16,7 +16,7 @@ const colors = {
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
-  reset: '\x1b[0m'
+  reset: '\x1b[0m',
 };
 
 function log(message, color = 'reset') {
@@ -60,7 +60,7 @@ function validateCursorRules() {
     'automation-standards.mdc',
     'comprehensive-standards.mdc',
     'eslint-configuration.mdc',
-    'pre-commit-hooks.mdc'
+    'pre-commit-hooks.mdc',
   ];
 
   let allValid = true;
@@ -82,20 +82,20 @@ function validateCursorRules() {
   const contentChecks = [
     {
       file: 'jsx-special-characters.mdc',
-      content: ['&lt;', '&gt;', '&amp;', "{'<'}", "{'>'}", "{'&'}"]
+      content: ['&lt;', '&gt;', '&amp;', "{'<'}", "{'>'}", "{'&'}"],
     },
     {
       file: 'typescript-strict.mdc',
-      content: ['strict: true', 'noImplicitAny', 'strictNullChecks']
+      content: ['strict: true', 'noImplicitAny', 'strictNullChecks'],
     },
     {
       file: 'error-handling.mdc',
-      content: ['try-catch', '错误处理', 'Error']
+      content: ['try-catch', '错误处理', 'Error'],
     },
     {
       file: 'testing-standards.mdc',
-      content: ['测试优先', '真实数据', '覆盖率']
-    }
+      content: ['测试优先', '真实数据', '覆盖率'],
+    },
   ];
 
   contentChecks.forEach(check => {
@@ -118,7 +118,7 @@ function validateCursorRules() {
     'tsconfig.json',
     'package.json',
     'next.config.mjs',
-    'tailwind.config.ts'
+    'tailwind.config.ts',
   ];
 
   configFiles.forEach(config => {
@@ -140,7 +140,7 @@ function validateCursorRules() {
     'hooks',
     'context',
     '__tests__',
-    'docs'
+    'docs',
   ];
 
   requiredDirs.forEach(dir => {

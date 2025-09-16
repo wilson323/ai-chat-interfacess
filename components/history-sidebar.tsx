@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { useAgent } from '@/context/agent-context';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { ScrollArea } from './ui/scroll-area';
+import { cn } from '../lib/utils';
+import { useAgent } from '../context/agent-context';
 import {
   X,
   Search,
@@ -17,10 +17,9 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useMobile } from '@/hooks/use-mobile';
-import { useLanguage } from '@/context/language-context';
-import { HistoryList } from '@/components/history/history-list';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
+import { useLanguage } from '../context/language-context';
+import { HistoryList } from './history/history-list';
 
 interface HistorySidebarProps {
   isOpen: boolean;
@@ -32,7 +31,7 @@ export function HistorySidebar({ isOpen, onClose }: HistorySidebarProps) {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const isMobile = useMobile();
+  // const isMobile = useMobile(); // 未使用的变量，保留用于未来扩展
 
   // 模拟历史记录数据
   const chatHistory = [

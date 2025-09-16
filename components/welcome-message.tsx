@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
 import {
   ChevronDown,
   ChevronUp,
@@ -10,14 +10,20 @@ import {
   History,
   Sparkles,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { MarkdownMessage } from '@/components/markdown-message';
-import { useMobile } from '@/hooks/use-mobile';
+import { cn } from '../lib/utils';
+import { MarkdownMessage } from './markdown-message';
+import { useMobile } from '../hooks/use-mobile';
 import { useTranslation } from 'react-i18next';
+
+interface InteractiveItem {
+  text: string;
+  content?: string;
+  [key: string]: unknown;
+}
 
 interface WelcomeMessageProps {
   message: string;
-  interacts?: any[];
+  interacts?: InteractiveItem[];
   onInteractClick?: (text: string) => void;
 }
 
@@ -39,7 +45,7 @@ export function WelcomeMessage({
     typeof message === 'string'
       ? message
       : message && typeof message === 'object' && 'content' in message
-        ? String(message.content)
+        ? String((message as any).content)
         : '你好！有什么我可以帮助你的吗？';
 
   // 防止水合不匹配
@@ -117,10 +123,10 @@ export function WelcomeMessage({
                         )}
                         onClick={() =>
                           onInteractClick &&
-                          onInteractClick(interact.text || interact)
+                          onInteractClick(interact.text)
                         }
                       >
-                        {interact.text || interact}
+                        {interact.text}
                       </Button>
                     ))}
                   </div>

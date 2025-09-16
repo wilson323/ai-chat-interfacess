@@ -10,13 +10,13 @@ export async function POST(req: NextRequest) {
   const saveDir = path.join(process.cwd(), 'data');
   await fs.mkdir(saveDir, { recursive: true });
   const filePath = path.join(saveDir, 'message-feedback.json');
-  let list: any[] = [];
+  let list: Array<{messageId: string; type: string; time: number}> = [];
   try {
     const raw = await fs.readFile(filePath, 'utf-8');
     list = JSON.parse(raw);
   } catch {}
   // 去重：同一messageId只保留最新一条
-  list = list.filter(item => item.messageId !== messageId);
+  list = list.filter((item) => item.messageId !== messageId);
   list.push({ messageId, type, time: Date.now() });
   await fs.writeFile(filePath, JSON.stringify(list, null, 2));
   return NextResponse.json({ ok: true });

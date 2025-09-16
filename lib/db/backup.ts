@@ -2,11 +2,12 @@
  * 数据库备份和恢复工具
  * 提供数据库备份、恢复、迁移管理等功能
  */
-
-import { execSync, spawn } from 'child_process';
-import fs from 'fs';
-import path from 'path';
-import { appConfig } from '@/lib/config';
+import { logger } from '../utils/logger';
+import { ErrorFactory } from '../utils/error-utils';
+import { spawn } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import { appConfig } from '../config';
 
 interface BackupConfig {
   // 备份配置
@@ -96,7 +97,7 @@ class DatabaseBackupManager {
           });
         }
       } catch (error) {
-        console.error('加载备份历史失败:', error);
+        logger.error('加载备份历史失败:', error);
       }
     }
   }
@@ -142,11 +143,11 @@ class DatabaseBackupManager {
       backupInfo.status = 'success';
       backupInfo.size = fs.statSync(filePath).size;
 
-      console.log(`全量备份完成: ${backupId}`);
+      logger.debug(`全量备份完成: ${backupId}`);
     } catch (error) {
       backupInfo.status = 'failed';
       backupInfo.error = error instanceof Error ? error.message : String(error);
-      console.error(`全量备份失败: ${backupId}`, error);
+      logger.error(`全量备份失败: ${backupId}`, error);
     }
 
     this.saveBackupHistory();
@@ -184,11 +185,11 @@ class DatabaseBackupManager {
       backupInfo.status = 'success';
       backupInfo.size = fs.statSync(filePath).size;
 
-      console.log(`增量备份完成: ${backupId}`);
+      logger.debug(`增量备份完成: ${backupId}`);
     } catch (error) {
       backupInfo.status = 'failed';
       backupInfo.error = error instanceof Error ? error.message : String(error);
-      console.error(`增量备份失败: ${backupId}`, error);
+      logger.error(`增量备份失败: ${backupId}`, error);
     }
 
     this.saveBackupHistory();
@@ -230,7 +231,7 @@ class DatabaseBackupManager {
    */
   private async executeBackupCommand(
     command: string,
-    backupInfo: BackupInfo
+    _backupInfo: BackupInfo
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const child = spawn('sh', ['-c', command], {
@@ -263,15 +264,15 @@ class DatabaseBackupManager {
   async restoreDatabase(options: RestoreOptions): Promise<void> {
     const backup = this.backups.get(options.backupId);
     if (!backup) {
-      throw new Error(`备份不存在: ${options.backupId}`);
+      throw ErrorFactory.notFound('备份', options.backupId);
     }
 
     if (backup.status !== 'success') {
-      throw new Error(`备份状态异常: ${backup.status}`);
+      throw ErrorFactory.database(`备份状态异常: ${backup.status}`);
     }
 
     if (!fs.existsSync(backup.path)) {
-      throw new Error(`备份文件不存在: ${backup.path}`);
+      throw ErrorFactory.notFound('备份文件', backup.path);
     }
 
     try {
@@ -296,9 +297,9 @@ class DatabaseBackupManager {
         options.targetDatabase || this.config.database
       );
 
-      console.log(`数据库恢复完成: ${options.backupId}`);
+      logger.debug(`数据库恢复完成: ${options.backupId}`);
     } catch (error) {
-      console.error(`数据库恢复失败: ${options.backupId}`, error);
+      logger.error(`数据库恢复失败: ${options.backupId}`, error);
       throw error;
     }
   }
@@ -378,7 +379,7 @@ class DatabaseBackupManager {
 
     const expiredBackups: string[] = [];
 
-    for (const [id, backup] of this.backups) {
+    for (const [id, backup] of Array.from(this.backups.entries())) {
       if (backup.timestamp < cutoffDate) {
         expiredBackups.push(id);
       }
@@ -398,7 +399,7 @@ class DatabaseBackupManager {
     }
 
     this.saveBackupHistory();
-    console.log(`清理了 ${expiredBackups.length} 个过期备份`);
+    logger.debug(`清理了 ${expiredBackups.length} 个过期备份`);
   }
 
   /**
@@ -473,7 +474,7 @@ class DatabaseBackupManager {
 
       return true;
     } catch (error) {
-      console.error('验证备份失败:', error);
+      logger.error('验证备份失败:', error);
       return false;
     }
   }

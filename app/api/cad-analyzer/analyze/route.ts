@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs/promises';
-import { CadAnalyzerConfig } from '@/types/api/agent-config/cad-analyzer';
-import AgentConfig from '@/lib/db/models/agent-config';
-import DxfParser from 'dxf-parser';
+import { CadAnalyzerConfig } from '../../../../types/api/agent-config/cad-analyzer';
+import AgentConfig from '../../../../lib/db/models/agent-config';
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'admin123';
 
@@ -81,7 +80,7 @@ const CAD_ANALYSIS_PROMPT = `请对上传的CAD图纸或图片进行安防设备
   "summary": "简要描述本图纸安防布局、异常点、布线信息等"
 }`;
 
-async function logApiError(api: string, error: any) {
+async function logApiError(api: string, error: unknown) {
   const saveDir = path.join(process.cwd(), 'data');
   await fs.mkdir(saveDir, { recursive: true });
   const filePath = path.join(saveDir, 'api-error.log');
@@ -89,16 +88,22 @@ async function logApiError(api: string, error: any) {
   await fs.appendFile(filePath, msg);
 }
 
+// CAD分析结果接口
+interface CadAnalysisResult {
+  devices: Array<{
+    type: string;
+    count: number;
+    coordinates: Array<{ x: number; y: number }>;
+  }>;
+  summary: string;
+  analysis?: string;
+  preview_image?: string;
+  metadata?: Record<string, unknown>;
+}
+
 // 调用AI大模型API进行智能分析，返回结构化内容
-async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
+async function analyzeWithAI(filePath: string, ext: string): Promise<CadAnalysisResult> {
   try {
-    // 从数据库获取CAD解读智能体配置
-    const cadAgent = await AgentConfig.findOne({
-      where: {
-        type: 'cad-analyzer',
-        isPublished: true,
-      },
-    });
     // 读取文件内容
     const fileBuffer = await fs.readFile(filePath);
     const isImageFile = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(
@@ -125,6 +130,12 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
           },
         ],
       });
+
+      // TODO: 实现图片文件的分析逻辑
+      return {
+        devices: [],
+        summary: '图片文件分析功能待实现',
+      };
     } else if (ext === 'dxf' || ext === 'dwg') {
       // 调用本地 Python 服务的 /parse_dxf 接口
       const apiUrl = 'http://127.0.0.1:8000/parse_dxf';
@@ -161,9 +172,19 @@ async function analyzeWithAI(filePath: string, ext: string): Promise<any> {
           summary: 'DXF解析服务调用失败，返回默认结果。',
         };
       }
+    } else {
+      // 不支持的文件类型
+      return {
+        devices: [],
+        summary: '不支持的文件类型',
+      };
     }
   } catch (error) {
     console.error('CAD解读智能体分析过程中发生错误:', error);
+    return {
+      devices: [],
+      summary: '分析过程中发生错误',
+    };
   }
 }
 
@@ -226,11 +247,12 @@ export async function POST(req: NextRequest) {
     try {
       await fs.writeFile(filePath, buffer);
       console.log(`文件保存成功: ${filePath}`);
-    } catch (err: any) {
-      console.error(`文件保存失败: ${filePath}`, err);
-      throw new Error(`文件保存失败: ${err.message || String(err)}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error(`文件保存失败: ${filePath}`, errorMessage);
+      throw new Error(`文件保存失败: ${errorMessage}`);
     }
-    const url = `/cad-analyzer/${fileName}`;
+    const url = `/cad-analyzer/${fileName}` || '';
 
     // 简单模拟分析逻辑
     let analysis = '';
@@ -242,7 +264,7 @@ export async function POST(req: NextRequest) {
       // AI大模型分析
       structured = await analyzeWithAI(filePath, ext);
       // 更新分析文本，包含设备总数
-      analysis = structured.analysis;
+      analysis = structured?.analysis || '';
     } else {
       return NextResponse.json({ error: '不支持的文件类型' }, { status: 400 });
     }

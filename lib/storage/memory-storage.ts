@@ -18,7 +18,7 @@ interface AgentData {
   multimodalModel: string;
   supportsStream: boolean;
   supportsDetail: boolean;
-  globalVariables: any[];
+  globalVariables?: string; // JSON字符串存储全局变量
   welcomeText: string;
   apiKey: string;
   appId: string;
@@ -48,11 +48,13 @@ class MemoryStorage {
       multimodalModel: '',
       supportsStream: true,
       supportsDetail: true,
-      globalVariables: [],
+      globalVariables: '',
       welcomeText: '您好！我是您的AI助手，有什么可以帮助您的吗？',
       apiKey: process.env.NEXT_PUBLIC_FASTGPT_API_KEY || '',
       appId: process.env.NEXT_PUBLIC_FASTGPT_APP_ID || '',
-      apiUrl: process.env.NEXT_PUBLIC_FASTGPT_API_URL || 'https://zktecoaihub.com/api/v1/chat/completions',
+      apiUrl:
+        process.env.NEXT_PUBLIC_FASTGPT_API_URL ||
+        'https://zktecoaihub.com/api/v1/chat/completions',
       configType: 'fastgpt',
     },
     {
@@ -70,7 +72,7 @@ class MemoryStorage {
       multimodalModel: '',
       supportsStream: true,
       supportsDetail: true,
-      globalVariables: [],
+      globalVariables: '',
       welcomeText: '欢迎使用图像编辑器！请上传您需要处理的图片。',
       apiKey: '',
       appId: '',
@@ -97,7 +99,7 @@ class MemoryStorage {
       multimodalModel: '',
       supportsStream: true,
       supportsDetail: true,
-      globalVariables: [],
+      globalVariables: '',
       welcomeText: '欢迎使用CAD分析器！请上传您的CAD图纸。',
       apiKey: '',
       appId: '',
@@ -111,37 +113,75 @@ class MemoryStorage {
     },
   ];
 
-  async findAll(where: any = {}, order: any[] = []): Promise<AgentData[]> {
+  async findAll(
+    where: Record<string, unknown> = {},
+    order: Array<[keyof AgentData, 'ASC' | 'DESC']> = []
+  ): Promise<AgentData[]> {
     // 简单过滤
     let filteredAgents = [...this.agents];
 
     if (where.isPublished !== undefined) {
-      filteredAgents = filteredAgents.filter(agent => agent.isPublished === where.isPublished);
+      filteredAgents = filteredAgents.filter(
+        agent => agent.isPublished === where.isPublished
+      );
     }
 
     // 简单排序
     if (order.length > 0) {
       const [field, direction] = order[0];
-      filteredAgents.sort((a: any, b: any) => {
-        const aVal = a[field];
-        const bVal = b[field];
-        return direction === 'ASC' ? aVal - bVal : bVal - aVal;
+      filteredAgents.sort((a: AgentData, b: AgentData) => {
+        const aVal = a[field as keyof AgentData];
+        const bVal = b[field as keyof AgentData];
+
+        // 类型安全的比较
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return direction === 'ASC' ? aVal - bVal : bVal - aVal;
+        }
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return direction === 'ASC'
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        }
+        return 0;
       });
     }
 
     return filteredAgents;
   }
 
-  async create(data: any): Promise<AgentData> {
-    const newAgent: AgentData = {
+  async create(data: Partial<AgentData>): Promise<AgentData> {
+    const base: AgentData = {
       id: String(this.agents.length + 1),
-      ...data,
+      name: data.name ?? '未命名智能体',
+      description: data.description ?? '',
+      type: (data.type as string) ?? 'fastgpt',
+      iconType: data.iconType ?? '',
+      avatar: data.avatar ?? '',
+      order: data.order ?? this.agents.length + 1,
+      isPublished: data.isPublished ?? false,
+      systemPrompt: data.systemPrompt ?? '',
+      temperature: data.temperature ?? 0.7,
+      maxTokens: data.maxTokens ?? 2000,
+      multimodalModel: data.multimodalModel ?? '',
+      supportsStream: data.supportsStream ?? true,
+      supportsDetail: data.supportsDetail ?? true,
+      globalVariables: data.globalVariables ?? '',
+      welcomeText: data.welcomeText ?? '',
+      apiKey: data.apiKey ?? '',
+      appId: data.appId ?? '',
+      apiUrl: data.apiUrl ?? '',
+      configType: (data.configType as 'fastgpt' | 'selfbuilt') ?? 'fastgpt',
+      selfBuiltConfig: data.selfBuiltConfig,
     };
+    const newAgent: AgentData = base;
     this.agents.push(newAgent);
     return newAgent;
   }
 
-  async update(id: string, data: any): Promise<[number, AgentData[]]> {
+  async update(
+    id: string,
+    data: Partial<AgentData>
+  ): Promise<[number, AgentData[]]> {
     const index = this.agents.findIndex(agent => agent.id === id);
     if (index !== -1) {
       this.agents[index] = { ...this.agents[index], ...data };
@@ -159,9 +199,12 @@ class MemoryStorage {
     return 0;
   }
 
-  async findOne(where: any): Promise<AgentData | null> {
+  async findOne(where: Record<string, unknown>): Promise<AgentData | null> {
     const filteredAgents = this.agents.filter(agent => {
-      return Object.entries(where).every(([key, value]) => (agent as any)[key] === value);
+      return Object.entries(where).every(([key, value]) => {
+        const agentValue = agent[key as keyof AgentData];
+        return agentValue === value;
+      });
     });
     return filteredAgents[0] || null;
   }
@@ -172,23 +215,26 @@ export const memoryStorage = new MemoryStorage();
 
 // 创建一个兼容Sequelize模型的接口
 export class MemoryAgentModel {
-  static async findAll(options: any = {}) {
-    return memoryStorage.findAll(options.where, options.order);
+  static async findAll(options: { where?: Record<string, unknown>; order?: Array<[keyof AgentData, 'ASC' | 'DESC']> } = {}) {
+    return memoryStorage.findAll(options.where ?? {}, options.order ?? []);
   }
 
-  static async create(data: any) {
+  static async create(data: Partial<AgentData>) {
     return memoryStorage.create(data);
   }
 
-  static async update(data: any, options: any) {
+  static async update(
+    data: Partial<AgentData>,
+    options: { where: { id: string } }
+  ) {
     return memoryStorage.update(options.where.id, data);
   }
 
-  static async destroy(options: any) {
+  static async destroy(options: { where: { id: string } }) {
     return memoryStorage.destroy(options.where.id);
   }
 
-  static async findOne(options: any) {
+  static async findOne(options: { where: Record<string, unknown> }) {
     return memoryStorage.findOne(options.where);
   }
 }

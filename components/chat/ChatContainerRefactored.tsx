@@ -16,10 +16,10 @@ import { ChatMessages } from './ChatMessages';
 import { ChatInput } from './ChatInput';
 import { ChatHistory } from '../chat-history';
 import { HistoryManager } from '../history-manager';
-import { Agent } from '@/types/agent';
-import { Message } from '@/types/message';
-import { GlobalVariable } from '@/types/global-variable';
-import { ProcessingStep } from '@/types/message';
+import { Agent } from '../../types/agent';
+import { Message } from '../../types/message';
+import type { GlobalVariable } from '../../types';
+import { ProcessingStep } from '../../types/message';
 
 interface UploadedFile {
   id: string;

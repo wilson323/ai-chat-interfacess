@@ -1,11 +1,10 @@
 'use client';
 
 import { MessageSquare, Settings, History, Menu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useAgent } from '@/context/agent-context';
-import { useResponsive } from '@/hooks/use-responsive';
-import { useLanguage } from '@/context/language-context';
+import { Button } from './ui/button';
+import { useAgent } from '../context/agent-context';
+import { useResponsive } from '../hooks/use-responsive';
+import { useLanguage } from '../context/language-context';
 
 export function MobileNav() {
   const { toggleSidebar, toggleHistorySidebar } = useAgent();
@@ -34,7 +33,7 @@ export function MobileNav() {
           className='flex flex-col items-center gap-1 h-auto py-2'
         >
           <History className='h-5 w-5' />
-          <span className='text-[10px]'>{t('history')}</span>
+          <span className='text-[10px]'>历史</span>
         </Button>
 
         <Button
@@ -43,7 +42,7 @@ export function MobileNav() {
           className='flex flex-col items-center gap-1 h-auto py-2'
         >
           <MessageSquare className='h-5 w-5' />
-          <span className='text-[10px]'>{t('chat')}</span>
+          <span className='text-[10px]'>聊天</span>
         </Button>
 
         <Button

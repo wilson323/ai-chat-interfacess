@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ export default function CustomAgentStoragePage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/admin/custom-agent-storage/stats');
@@ -53,7 +53,7 @@ export default function CustomAgentStoragePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleClearData = async () => {
     if (!confirm('确定要清除所有自研智能体数据吗？此操作不可恢复！')) {

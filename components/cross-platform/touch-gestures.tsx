@@ -38,7 +38,7 @@ export function TouchGestures({
   onDoubleTap,
   onLongPress,
   swipeThreshold = 50,
-  pinchThreshold = 0.1,
+  // pinchThreshold = 0.1, // 未使用的参数，保留用于未来扩展
   tapThreshold = 10,
   longPressDelay = 500,
   disabled = false,
@@ -417,7 +417,7 @@ export function ScrollOptimized({
   bounce = true,
   disabled = false,
 }: ScrollOptimizedProps) {
-  const { isMobile, isTablet } = useCrossPlatform();
+  const { isMobile } = useCrossPlatform();
 
   return (
     <div

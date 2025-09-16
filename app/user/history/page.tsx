@@ -1,12 +1,23 @@
 'use client';
 
+import type { Viewport } from 'next';
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
+};
 import React from 'react';
 import { HistoryList } from '../../../components/history/history-list';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import type { Message } from '@/types/message';
+import type { Message } from '../../../types/message';
 
 export default function UserHistoryPage() {
   const router = useRouter();
@@ -17,7 +28,7 @@ export default function UserHistoryPage() {
   };
 
   // 处理选择聊天
-  const handleSelect = (messages: Message[], chatId: string) => {
+  const handleSelect = (_messages: Message[], chatId: string) => {
     // 保存选中的聊天ID到localStorage
     localStorage.setItem('selectedChatId', chatId);
     // 跳转到聊天页面

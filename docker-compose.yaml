@@ -2,41 +2,53 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - '3009:3009'
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
       - DOCKER_CONTAINER=true
-      - PORT=3009
+      - PORT=3000
       - POSTGRES_USER=${POSTGRES_USER:-root}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ZKTeco##123}
       - POSTGRES_DB=${POSTGRES_DB:-agent_config}
       - POSTGRES_HOST=db
-      - POSTGRES_PORT=5452
+      - POSTGRES_PORT=5432
     depends_on:
-      - db
-    restart: always
+      db:
+        condition: service_healthy
+    restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:3009/api/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    volumes:
+      - app_logs:/app/logs
 
   db:
     image: postgres:14-alpine
     container_name: chat-postgres
     ports:
-      - '5452:5452'
+      - '5432:5432'
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-root}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ZKTeco##123}
       - POSTGRES_DB=${POSTGRES_DB:-agent_config}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-root} -d ${POSTGRES_DB:-agent_config}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   postgres_data:
+  app_logs:

@@ -43,7 +43,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toast/use-toast';
 import {
   MoreHorizontal,
@@ -55,9 +54,6 @@ import {
   UserCheck,
   UserX,
   Ban,
-  RotateCcw,
-  Download,
-  Upload,
 } from 'lucide-react';
 import { User, UserRole, UserStatus } from '@/types/admin';
 import { UserForm } from './user-form';
@@ -311,10 +307,10 @@ export function UserList({ refreshTrigger }: UserListProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className='flex items-center justify-between'>
           <span>用户管理</span>
           <Button onClick={() => setShowCreateForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className='h-4 w-4 mr-2' />
             创建用户
           </Button>
         </CardTitle>
@@ -322,43 +318,56 @@ export function UserList({ refreshTrigger }: UserListProps) {
           管理系统用户，包括角色分配、权限控制和状态管理
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className='space-y-4'>
         {/* 搜索和筛选 */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <div className='flex flex-col md:flex-row gap-4'>
+          <div className='flex-1 relative'>
+            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
             <Input
-              placeholder="搜索用户名或邮箱..."
+              placeholder='搜索用户名或邮箱...'
               value={filters.search}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
+              onChange={e => handleSearch(e.target.value)}
+              className='pl-10'
             />
           </div>
-          <Select value={filters.role} onValueChange={(value) => handleFilterChange('role', value)}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="选择角色" />
+          <Select
+            value={filters.role}
+            onValueChange={value => handleFilterChange('role', value)}
+          >
+            <SelectTrigger className='w-full md:w-40'>
+              <SelectValue placeholder='选择角色' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全部角色</SelectItem>
-              {Object.values(UserRole).map((role) => (
-                <SelectItem key={role} value={role}>
-                  {role === 'super_admin' ? '超级管理员' :
-                   role === 'admin' ? '管理员' :
-                   role === 'operator' ? '操作员' : '查看者'}
+              <SelectItem value=''>全部角色</SelectItem>
+              {Object.values(UserRole).map(role => (
+                <SelectItem key={role} value={role as string}>
+                  {role === 'super_admin'
+                    ? '超级管理员'
+                    : role === 'admin'
+                      ? '管理员'
+                      : role === 'operator'
+                        ? '操作员'
+                        : '查看者'}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="选择状态" />
+          <Select
+            value={filters.status}
+            onValueChange={value => handleFilterChange('status', value)}
+          >
+            <SelectTrigger className='w-full md:w-40'>
+              <SelectValue placeholder='选择状态' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全部状态</SelectItem>
-              {Object.values(UserStatus).map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status === 'active' ? '激活' :
-                   status === 'inactive' ? '未激活' : '暂停'}
+              <SelectItem value=''>全部状态</SelectItem>
+              {Object.values(UserStatus).map(status => (
+                <SelectItem key={status} value={status as string}>
+                  {status === 'active'
+                    ? '激活'
+                    : status === 'inactive'
+                      ? '未激活'
+                      : '暂停'}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -367,56 +376,80 @@ export function UserList({ refreshTrigger }: UserListProps) {
 
         {/* 批量操作 */}
         {selectedUsers.length > 0 && (
-          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-            <span className="text-sm text-gray-600">
+          <div className='flex items-center gap-2 p-2 bg-gray-50 rounded-lg'>
+            <span className='text-sm text-gray-600'>
               已选择 {selectedUsers.length} 个用户
             </span>
             <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setConfirmBulkAction({ action: 'activate', userIds: selectedUsers })}
+              size='sm'
+              variant='outline'
+              onClick={() =>
+                setConfirmBulkAction({
+                  action: 'activate',
+                  userIds: selectedUsers,
+                })
+              }
             >
-              <UserCheck className="h-4 w-4 mr-1" />
+              <UserCheck className='h-4 w-4 mr-1' />
               激活
             </Button>
             <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setConfirmBulkAction({ action: 'deactivate', userIds: selectedUsers })}
+              size='sm'
+              variant='outline'
+              onClick={() =>
+                setConfirmBulkAction({
+                  action: 'deactivate',
+                  userIds: selectedUsers,
+                })
+              }
             >
-              <UserX className="h-4 w-4 mr-1" />
+              <UserX className='h-4 w-4 mr-1' />
               停用
             </Button>
             <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setConfirmBulkAction({ action: 'suspend', userIds: selectedUsers })}
+              size='sm'
+              variant='outline'
+              onClick={() =>
+                setConfirmBulkAction({
+                  action: 'suspend',
+                  userIds: selectedUsers,
+                })
+              }
             >
-              <Ban className="h-4 w-4 mr-1" />
+              <Ban className='h-4 w-4 mr-1' />
               暂停
             </Button>
             <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => setConfirmBulkAction({ action: 'delete', userIds: selectedUsers })}
+              size='sm'
+              variant='destructive'
+              onClick={() =>
+                setConfirmBulkAction({
+                  action: 'delete',
+                  userIds: selectedUsers,
+                })
+              }
             >
-              <Trash2 className="h-4 w-4 mr-1" />
+              <Trash2 className='h-4 w-4 mr-1' />
               删除
             </Button>
           </div>
         )}
 
         {/* 用户表格 */}
-        <div className="rounded-md border">
+        <div className='rounded-md border'>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12">
+                <TableHead className='w-12'>
                   <input
-                    type="checkbox"
-                    checked={selectedUsers.length === users.length && users.length > 0}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-gray-300"
+                    id='selectAllUsers'
+                    name='selectAllUsers'
+                    type='checkbox'
+                    checked={
+                      selectedUsers.length === users.length && users.length > 0
+                    }
+                    onChange={e => handleSelectAll(e.target.checked)}
+                    className='rounded border-gray-300'
                   />
                 </TableHead>
                 <TableHead>用户</TableHead>
@@ -424,38 +457,45 @@ export function UserList({ refreshTrigger }: UserListProps) {
                 <TableHead>状态</TableHead>
                 <TableHead>部门</TableHead>
                 <TableHead>最后登录</TableHead>
-                <TableHead className="text-right">操作</TableHead>
+                <TableHead className='text-right'>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
-                      <span className="ml-2">加载中...</span>
+                  <TableCell colSpan={7} className='text-center py-8'>
+                    <div className='flex items-center justify-center'>
+                      <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900'></div>
+                      <span className='ml-2'>加载中...</span>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={7}
+                    className='text-center py-8 text-gray-500'
+                  >
                     暂无用户数据
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
+                users.map(user => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <input
-                        type="checkbox"
+                        id={`selectUser-${user.id}`}
+                        name={`selectUser-${user.id}`}
+                        type='checkbox'
                         checked={selectedUsers.includes(user.id)}
-                        onChange={(e) => handleUserSelect(user.id, e.target.checked)}
-                        className="rounded border-gray-300"
+                        onChange={e =>
+                          handleUserSelect(user.id, e.target.checked)
+                        }
+                        className='rounded border-gray-300'
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-3">
+                      <div className='flex items-center gap-3'>
                         <Avatar>
                           <AvatarImage src={user.avatar} />
                           <AvatarFallback>
@@ -463,31 +503,43 @@ export function UserList({ refreshTrigger }: UserListProps) {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{user.username}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className='font-medium'>{user.username}</div>
+                          <div className='text-sm text-gray-500'>
+                            {user.email}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={getRoleBadgeVariant(user.role)}>
-                        {user.role === 'super_admin' ? '超级管理员' :
-                         user.role === 'admin' ? '管理员' :
-                         user.role === 'operator' ? '操作员' : '查看者'}
+                        {user.role === 'super_admin'
+                          ? '超级管理员'
+                          : user.role === 'admin'
+                            ? '管理员'
+                            : user.role === 'operator'
+                              ? '操作员'
+                              : '查看者'}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Switch
                         checked={user.status === UserStatus.ACTIVE}
-                        onCheckedChange={(checked) =>
+                        onCheckedChange={checked =>
                           handleStatusChange(
                             user.id,
                             checked ? UserStatus.ACTIVE : UserStatus.INACTIVE
                           )
                         }
                       />
-                      <Badge variant={getStatusBadgeVariant(user.status)} className="ml-2">
-                        {user.status === 'active' ? '激活' :
-                         user.status === 'inactive' ? '未激活' : '暂停'}
+                      <Badge
+                        variant={getStatusBadgeVariant(user.status)}
+                        className='ml-2'
+                      >
+                        {user.status === 'active'
+                          ? '激活'
+                          : user.status === 'inactive'
+                            ? '未激活'
+                            : '暂停'}
                       </Badge>
                     </TableCell>
                     <TableCell>{user.department || '-'}</TableCell>
@@ -496,20 +548,22 @@ export function UserList({ refreshTrigger }: UserListProps) {
                         ? new Date(user.lastLogin).toLocaleString('zh-CN')
                         : '从未登录'}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className='text-right'>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
+                          <Button variant='ghost' className='h-8 w-8 p-0'>
+                            <MoreHorizontal className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align='end'>
                           <DropdownMenuItem onClick={() => setShowDetail(user)}>
-                            <Eye className="h-4 w-4 mr-2" />
+                            <Eye className='h-4 w-4 mr-2' />
                             查看详情
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setShowEditForm(user)}>
-                            <Edit className="h-4 w-4 mr-2" />
+                          <DropdownMenuItem
+                            onClick={() => setShowEditForm(user)}
+                          >
+                            <Edit className='h-4 w-4 mr-2' />
                             编辑
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -525,28 +579,30 @@ export function UserList({ refreshTrigger }: UserListProps) {
                           >
                             {user.status === UserStatus.ACTIVE ? (
                               <>
-                                <UserX className="h-4 w-4 mr-2" />
+                                <UserX className='h-4 w-4 mr-2' />
                                 停用
                               </>
                             ) : (
                               <>
-                                <UserCheck className="h-4 w-4 mr-2" />
+                                <UserCheck className='h-4 w-4 mr-2' />
                                 激活
                               </>
                             )}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleStatusChange(user.id, UserStatus.SUSPENDED)}
+                            onClick={() =>
+                              handleStatusChange(user.id, UserStatus.SUSPENDED)
+                            }
                           >
-                            <Ban className="h-4 w-4 mr-2" />
+                            <Ban className='h-4 w-4 mr-2' />
                             暂停
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => setConfirmDelete(user)}
-                            className="text-red-600"
+                            className='text-red-600'
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
+                            <Trash2 className='h-4 w-4 mr-2' />
                             删除
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -560,24 +616,29 @@ export function UserList({ refreshTrigger }: UserListProps) {
         </div>
 
         {/* 分页 */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+        <div className='flex items-center justify-between'>
+          <div className='text-sm text-gray-600'>
             显示 {(pagination.page - 1) * pagination.limit + 1} -{' '}
-            {Math.min(pagination.page * pagination.limit, pagination.total)} 条，共 {pagination.total} 条
+            {Math.min(pagination.page * pagination.limit, pagination.total)}{' '}
+            条，共 {pagination.total} 条
           </div>
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              variant='outline'
+              size='sm'
+              onClick={() =>
+                setPagination(prev => ({ ...prev, page: prev.page - 1 }))
+              }
               disabled={pagination.page <= 1}
             >
               上一页
             </Button>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              variant='outline'
+              size='sm'
+              onClick={() =>
+                setPagination(prev => ({ ...prev, page: prev.page + 1 }))
+              }
               disabled={pagination.page >= pagination.totalPages}
             >
               下一页
@@ -619,21 +680,27 @@ export function UserList({ refreshTrigger }: UserListProps) {
       )}
 
       {/* 删除确认对话框 */}
-      <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+      <Dialog
+        open={!!confirmDelete}
+        onOpenChange={() => setConfirmDelete(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>
-              确定要删除用户 "{confirmDelete?.username}" 吗？此操作不可撤销。
+              确定要删除用户 &quot;{confirmDelete?.username}&quot;
+              吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDelete(null)}>
+            <Button variant='outline' onClick={() => setConfirmDelete(null)}>
               取消
             </Button>
             <Button
-              variant="destructive"
-              onClick={() => confirmDelete && handleDeleteUser(confirmDelete.id)}
+              variant='destructive'
+              onClick={() =>
+                confirmDelete && handleDeleteUser(confirmDelete.id)
+              }
             >
               删除
             </Button>
@@ -642,7 +709,10 @@ export function UserList({ refreshTrigger }: UserListProps) {
       </Dialog>
 
       {/* 批量操作确认对话框 */}
-      <Dialog open={!!confirmBulkAction} onOpenChange={() => setConfirmBulkAction(null)}>
+      <Dialog
+        open={!!confirmBulkAction}
+        onOpenChange={() => setConfirmBulkAction(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>确认批量操作</DialogTitle>
@@ -656,12 +726,21 @@ export function UserList({ refreshTrigger }: UserListProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmBulkAction(null)}>
+            <Button
+              variant='outline'
+              onClick={() => setConfirmBulkAction(null)}
+            >
               取消
             </Button>
             <Button
-              variant={confirmBulkAction?.action === 'delete' ? 'destructive' : 'default'}
-              onClick={() => confirmBulkAction && handleBulkAction(confirmBulkAction.action)}
+              variant={
+                confirmBulkAction?.action === 'delete'
+                  ? 'destructive'
+                  : 'default'
+              }
+              onClick={() =>
+                confirmBulkAction && handleBulkAction(confirmBulkAction.action)
+              }
             >
               确认
             </Button>

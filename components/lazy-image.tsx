@@ -3,7 +3,8 @@
 import type React from 'react';
 
 import { useState, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import NextImage from 'next/image';
+import { cn } from '../lib/utils';
 import { Loader2 } from 'lucide-react';
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -19,7 +20,6 @@ export function LazyImage({
   fallbackSrc = '/placeholder.svg',
   blurPlaceholder = true,
   loadingComponent,
-  ...props
 }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -44,13 +44,14 @@ export function LazyImage({
       }
     );
 
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
+    const currentImg = imgRef.current;
+    if (currentImg) {
+      observer.observe(currentImg);
     }
 
     return () => {
-      if (imgRef.current) {
-        observer.unobserve(imgRef.current);
+      if (currentImg) {
+        observer.unobserve(currentImg);
       }
     };
   }, []);
@@ -81,10 +82,11 @@ export function LazyImage({
       )}
 
       {/* 图片 */}
-      <img
+      <NextImage
         ref={imgRef}
         src={displaySrc || '/placeholder.svg'}
         alt={alt || ''}
+        fill
         className={cn(
           'transition-opacity duration-300',
           isLoaded ? 'opacity-100' : 'opacity-0',
@@ -93,8 +95,7 @@ export function LazyImage({
         )}
         onLoad={handleLoad}
         onError={handleError}
-        loading='lazy'
-        {...props}
+        sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
       />
     </div>
   );

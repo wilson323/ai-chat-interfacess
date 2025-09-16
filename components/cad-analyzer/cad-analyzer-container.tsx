@@ -3,9 +3,9 @@
 import type React from 'react';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAgent } from '@/context/agent-context';
 import {
   FileText,
   Loader2,
@@ -33,29 +33,11 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useLanguage } from '@/context/language-context';
-import { MarkdownMessage } from '@/components/markdown-message';
+import { useLanguage } from '../../context/language-context';
+import { MarkdownMessage } from '../markdown-message';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import DxfParser from 'dxf-parser';
+// import DxfParser from 'dxf-parser'; // Unused import
 
-// 安防设备关键词列表
-const SECURITY_KEYWORDS = [
-  '考勤',
-  '门禁',
-  '消费机',
-  '道闸',
-  '摄像机',
-  '读卡器',
-  '电锁',
-  '门磁',
-  '闸机',
-  '访客机',
-  '指纹机',
-  '人脸机',
-  '车位锁',
-  '巡更点',
-  '报警',
-];
 
 interface CADEntity {
   type: string;
@@ -96,7 +78,6 @@ interface AnalysisResult {
 }
 
 export function CADAnalyzerContainer() {
-  const { selectedAgent } = useAgent();
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -107,7 +88,6 @@ export function CADAnalyzerContainer() {
   const [currentResult, setCurrentResult] = useState<AnalysisResult | null>(
     null
   );
-  const [fileType, setFileType] = useState<'cad' | 'image' | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
@@ -123,10 +103,13 @@ export function CADAnalyzerContainer() {
       if (savedResults) {
         const parsedResults = JSON.parse(savedResults);
         // 确保时间戳是Date对象
-        const processedResults = parsedResults.map((result: any) => ({
-          ...result,
-          time: result.time || new Date().toLocaleString(),
-        }));
+        const processedResults = parsedResults.map((result: unknown) => {
+          const typedResult = result as AnalysisResult;
+          return {
+            ...typedResult,
+            time: typedResult.time || new Date().toLocaleString(),
+          };
+        });
         console.log('从localStorage恢复CAD分析结果:', processedResults.length);
         setAnalysisResults(processedResults);
       }
@@ -157,6 +140,7 @@ export function CADAnalyzerContainer() {
       }, 500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isLoading, progress]);
 
   const handleFileUpload = async (
@@ -197,7 +181,6 @@ export function CADAnalyzerContainer() {
           });
           continue;
         }
-        setFileType(isImageFile ? 'image' : 'cad');
         // === 后端API分析 ===
         console.log(`开始上传文件: ${file.name}, 大小: ${file.size} 字节`);
         const formData = new FormData();
@@ -358,288 +341,6 @@ export function CADAnalyzerContainer() {
     }
   };
 
-  // 读取文件为ArrayBuffer
-  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.result) {
-          resolve(reader.result as ArrayBuffer);
-        } else {
-          reject(new Error('Failed to read file as ArrayBuffer'));
-        }
-      };
-      reader.onerror = event => {
-        console.error('FileReader error:', event);
-        reject(
-          new Error(
-            'Error reading file: ' + (reader.error?.message || 'Unknown error')
-          )
-        );
-      };
-      try {
-        reader.readAsArrayBuffer(file);
-      } catch (error) {
-        console.error('Exception during readAsArrayBuffer:', error);
-        reject(error);
-      }
-    });
-  };
-
-  // 读取文件为DataURL
-  const readFileAsDataURL = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.result) {
-          resolve(reader.result as string);
-        } else {
-          reject(new Error('Failed to read file as DataURL'));
-        }
-      };
-      reader.onerror = event => {
-        console.error('FileReader error:', event);
-        reject(
-          new Error(
-            'Error reading file: ' + (reader.error?.message || 'Unknown error')
-          )
-        );
-      };
-      try {
-        reader.readAsDataURL(file);
-      } catch (error) {
-        console.error('Exception during readAsDataURL:', error);
-        reject(error);
-      }
-    });
-  };
-
-  // 解析CAD文件（模拟）
-  const parseCADFile = async (
-    file: File,
-    fileContent: ArrayBuffer
-  ): Promise<CADData> => {
-    // 在实际应用中，这里应该使用专门的CAD解析库
-    // 这里我们模拟解析过程
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // 模拟CAD数据
-    return {
-      metadata: {
-        layers: ['0', '安防设备', '线缆', '标注'],
-        units: 0,
-        total_entities: Math.floor(Math.random() * 5000) + 1000,
-      },
-      security_devices: Array(Math.floor(Math.random() * 20) + 5)
-        .fill(0)
-        .map((_, i) => ({
-          type: 'block_reference',
-          name: SECURITY_KEYWORDS[
-            Math.floor(Math.random() * SECURITY_KEYWORDS.length)
-          ],
-          layer: '安防设备',
-          position: [Math.random() * 1000, Math.random() * 1000, 0],
-        })),
-      text_annotations: Array(Math.floor(Math.random() * 15) + 5)
-        .fill(0)
-        .map((_, i) => ({
-          type: 'TEXT',
-          text: `${SECURITY_KEYWORDS[Math.floor(Math.random() * SECURITY_KEYWORDS.length)]}${i}`,
-          layer: '标注',
-          position: [Math.random() * 1000, Math.random() * 1000, 0],
-        })),
-      dimensions: [],
-      wiring: Array(Math.floor(Math.random() * 30) + 10)
-        .fill(0)
-        .map((_, i) => ({
-          type: 'LINE',
-          layer: '线缆',
-          points: [
-            [Math.random() * 1000, Math.random() * 1000, 0],
-            [Math.random() * 1000, Math.random() * 1000, 0],
-          ],
-        })),
-    };
-  };
-
-  // 生成预览图（模拟）
-  const generatePreview = async (cadData: CADData): Promise<string> => {
-    // 在实际应用中，这里应该使用Canvas或SVG绘制预览图
-    // 这里我们返回一个占位图
-    return `/placeholder.svg?height=400&width=600&query=CAD安防设备布局图`;
-  };
-
-  // 修改analyzeWithAI函数，增强错误处理和兼容性
-  const analyzeWithAI = async (cadData: CADData): Promise<string> => {
-    if (
-      !selectedAgent?.apiUrl ||
-      !selectedAgent?.apiKey ||
-      !selectedAgent?.appId
-    ) {
-      return '错误：未配置API密钥或端点。请在管理员控制台中配置API设置。';
-    }
-
-    try {
-      // 准备发送到API的数据 - 确保数据格式正确
-      const data = JSON.stringify(cadData, null, 2);
-
-      // 系统提示词
-      const systemPrompt =
-        selectedAgent.systemPrompt ||
-        `
-      你是一位专业的安防系统工程师和CAD图纸分析专家。请分析以下CAD图纸数据，提供详细的安防设备分析报告，包括：
-      1. 设备类型统计（考勤、门禁、消费、停车等设备的类型和数量）
-      2. 摄像头信息分析
-      3. 安装调试建议
-      4. 预估布线数据
-      5. 使用Mermaid语法描述系统拓扑关系
-
-      请以结构化文本形式输出，包括设备统计表、摄像头信息表、安装调试建议、预估布线数据以及系统拓扑图。
-    `;
-
-      // 使用代理API而不是直接调用，以避免CORS问题
-      const proxyData = {
-        targetUrl: selectedAgent.apiUrl,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${selectedAgent.apiKey}`,
-        },
-        body: {
-          model: selectedAgent.multimodalModel || 'gpt-4o',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `请分析以下CAD数据:\n\n${data}` },
-          ],
-          temperature: 0.7,
-          max_tokens: selectedAgent.maxTokens || 4000,
-        },
-      };
-
-      // 使用代理API
-      const response = await fetch('/api/chat-proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(proxyData),
-      });
-
-      if (!response.ok) {
-        console.error(`API请求失败: ${response.status}`);
-        return `分析过程中发生错误: HTTP ${response.status}。请检查API配置或重试。`;
-      }
-
-      const responseData = await response.json();
-
-      // 检查响应格式
-      if (
-        responseData.status !== 200 ||
-        !responseData.data ||
-        !responseData.data.choices
-      ) {
-        console.error('API响应格式错误:', responseData);
-        return 'API返回了无效的响应格式。请检查API配置或重试。';
-      }
-
-      return (
-        responseData.data.choices[0].message.content || '无法获取分析结果。'
-      );
-    } catch (error) {
-      console.error('AI分析失败:', error);
-      return `分析过程中发生错误: ${error instanceof Error ? error.message : '未知错误'}。请检查API配置或重试。`;
-    }
-  };
-
-  // 同样修改多模态AI分析函数，使用相同的代理方式
-  const analyzeWithMultimodalAI = async (
-    imageData: string
-  ): Promise<string> => {
-    if (
-      !selectedAgent?.apiUrl ||
-      !selectedAgent?.apiKey ||
-      !selectedAgent?.appId
-    ) {
-      return '错误：未配置API密钥或端点。请在管理员控制台中配置API设置。';
-    }
-
-    try {
-      // 系统提示词
-      const systemPrompt =
-        selectedAgent.systemPrompt ||
-        `
-      你是一位专业的安防系统工程师和CAD图纸分析专家。请分析以下CAD图纸图片，提供详细的安防设备分析报告，包括：
-      1. 设备类型统计（考勤、门禁、消费、停车等设备的类型和数量）
-      2. 摄像头信息分析
-      3. 安装调试建议
-      4. 预估布线数据
-      5. 使用Mermaid语法描述系统拓扑关系
-
-      请以结构化文本形式输出，包括设备统计表、摄像头信息表、安装调试建议、预估布线数据以及系统拓扑图。
-      请特别注意识别图片中的安防设备符号和标注。
-    `;
-
-      // 使用代理API
-      const proxyData = {
-        targetUrl: selectedAgent.apiUrl,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${selectedAgent.apiKey}`,
-        },
-        body: {
-          model: selectedAgent.multimodalModel || 'gpt-4-vision-preview',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: '请分析这张CAD图纸图片，识别其中的安防设备并提供详细分析报告。',
-                },
-                { type: 'image_url', image_url: { url: imageData } },
-              ],
-            },
-          ],
-          max_tokens: selectedAgent.maxTokens || 4000,
-        },
-      };
-
-      const response = await fetch('/api/chat-proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(proxyData),
-      });
-
-      if (!response.ok) {
-        console.error(`API请求失败: ${response.status}`);
-        return `分析过程中发生错误: HTTP ${response.status}。请检查API配置或重试。`;
-      }
-
-      const responseData = await response.json();
-
-      // 检查响应格式
-      if (
-        responseData.status !== 200 ||
-        !responseData.data ||
-        !responseData.data.choices
-      ) {
-        console.error('API响应格式错误:', responseData);
-        return 'API返回了无效的响应格式。请检查API配置或重试。';
-      }
-
-      return (
-        responseData.data.choices[0].message.content || '无法获取分析结果。'
-      );
-    } catch (error) {
-      console.error('多模态AI分析失败:', error);
-      return `分析图片过程中发生错误: ${error instanceof Error ? error.message : '未知错误'}。请检查API配置或重试。`;
-    }
-  };
-
   // 处理图片点击，打开放大查看模态框
   const handleImageClick = (imageUrl: string) => {
     setExpandedImage(imageUrl);
@@ -716,11 +417,14 @@ export function CADAnalyzerContainer() {
           <DialogTitle className='sr-only'>CAD图纸预览</DialogTitle>
           <div className='relative w-full h-full max-h-[80vh] flex items-center justify-center'>
             {expandedImage && (
-              <img
+              <Image
                 src={expandedImage}
                 alt='放大查看'
+                width={1200}
+                height={800}
                 className='max-w-full max-h-[80vh] object-contain'
-                onClick={e => e.stopPropagation()}
+                style={{ objectFit: 'contain' }}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
               />
             )}
             <button
@@ -1002,7 +706,7 @@ export function CADAnalyzerContainer() {
                                         )
                                       }
                                     >
-                                      <img
+                                      <Image
                                         src={
                                           currentResult.preview ||
                                           currentResult.imageData ||
@@ -1013,8 +717,11 @@ export function CADAnalyzerContainer() {
                                             ? '图片预览'
                                             : 'CAD预览'
                                         }
+                                        width={400}
+                                        height={300}
                                         className='w-full h-full object-contain'
-                                        onError={e => {
+                                        style={{ objectFit: 'contain' }}
+                                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                                           console.error('预览图加载失败:', e);
                                           // 如果图片加载失败，显示占位图
                                           e.currentTarget.src =

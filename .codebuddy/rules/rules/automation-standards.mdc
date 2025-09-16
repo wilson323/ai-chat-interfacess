@@ -1,0 +1,385 @@
+---
+alwaysApply: true
+description: 自动化工具和流程规范
+---
+
+# 自动化工具和流程规范
+
+## 核心自动化原则
+- 每个阶段落实好且也测试验证后请自动提交git
+- 禁止代码组件功能等的冗余
+- 新增前先全局梳理确保不冗余再去新增
+- 建立完整的自动化质量检查流程
+- 实现持续集成和持续部署
+
+## Git自动化流程
+
+### 自动提交规范
+```bash
+# ✅ 正确：阶段性提交
+git add .
+git commit -m "feat: 实现用户管理功能
+
+- 添加用户表单组件
+- 实现用户CRUD操作
+- 添加用户权限验证
+- 完成单元测试覆盖
+
+测试通过: ✅
+类型检查: ✅
+代码规范: ✅"
+
+git push origin feature/user-management
+```
+
+### 提交信息规范
+```bash
+# 提交类型
+feat:     新功能
+fix:      修复问题
+docs:     文档更新
+style:    代码格式
+refactor: 重构代码
+test:     测试相关
+chore:    构建过程或辅助工具的变动
+
+# 提交格式
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+## 代码质量自动化
+
+### Pre-commit钩子
+```json
+// package.json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.{json,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  }
+}
+```
+
+### 自动化检查脚本
+```bash
+# ✅ 正确：质量检查脚本
+#!/bin/bash
+echo "🔍 开始代码质量检查..."
+
+# 1. 类型检查
+echo "📋 运行TypeScript类型检查..."
+npm run check-types
+if [ $? -ne 0 ]; then
+  echo "❌ 类型检查失败"
+  exit 1
+fi
+
+# 2. 代码规范检查
+echo "📋 运行ESLint检查..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ 代码规范检查失败"
+  exit 1
+fi
+
+# 3. 格式化检查
+echo "📋 运行Prettier检查..."
+npm run format:check
+if [ $? -ne 0 ]; then
+  echo "❌ 代码格式化检查失败"
+  exit 1
+fi
+
+# 4. 测试运行
+echo "📋 运行测试..."
+npm run test
+if [ $? -ne 0 ]; then
+  echo "❌ 测试失败"
+  exit 1
+fi
+
+echo "✅ 所有检查通过"
+```
+
+## 构建自动化
+
+### 构建流程
+```bash
+# ✅ 正确：构建流程
+#!/bin/bash
+echo "🏗️ 开始构建流程..."
+
+# 1. 清理
+echo "🧹 清理构建目录..."
+rm -rf .next
+rm -rf dist
+
+# 2. 安装依赖
+echo "📦 安装依赖..."
+npm ci
+
+# 3. 类型检查
+echo "📋 类型检查..."
+npm run check-types
+
+# 4. 代码规范检查
+echo "📋 代码规范检查..."
+npm run lint
+
+# 5. 测试
+echo "🧪 运行测试..."
+npm run test
+
+# 6. 构建
+echo "🏗️ 构建应用..."
+npm run build
+
+# 7. 验证构建结果
+echo "✅ 验证构建结果..."
+if [ -d ".next" ]; then
+  echo "✅ 构建成功"
+else
+  echo "❌ 构建失败"
+  exit 1
+fi
+```
+
+### 部署自动化
+```bash
+# ✅ 正确：部署流程
+#!/bin/bash
+echo "🚀 开始部署流程..."
+
+# 1. 构建
+echo "🏗️ 构建应用..."
+npm run build
+
+# 2. 测试构建结果
+echo "🧪 测试构建结果..."
+npm run start &
+SERVER_PID=$!
+sleep 10
+
+# 3. 健康检查
+echo "🏥 健康检查..."
+curl -f http://localhost:3000/api/health
+if [ $? -ne 0 ]; then
+  echo "❌ 健康检查失败"
+  kill $SERVER_PID
+  exit 1
+fi
+
+# 4. 停止测试服务器
+kill $SERVER_PID
+
+# 5. 部署到生产环境
+echo "🚀 部署到生产环境..."
+# 部署逻辑
+
+echo "✅ 部署完成"
+```
+
+## 测试自动化
+
+### 测试流程
+```bash
+# ✅ 正确：测试流程
+#!/bin/bash
+echo "🧪 开始测试流程..."
+
+# 1. 单元测试
+echo "📋 运行单元测试..."
+npm run test:unit
+if [ $? -ne 0 ]; then
+  echo "❌ 单元测试失败"
+  exit 1
+fi
+
+# 2. 集成测试
+echo "📋 运行集成测试..."
+npm run test:integration
+if [ $? -ne 0 ]; then
+  echo "❌ 集成测试失败"
+  exit 1
+fi
+
+# 3. E2E测试
+echo "📋 运行E2E测试..."
+npm run test:e2e
+if [ $? -ne 0 ]; then
+  echo "❌ E2E测试失败"
+  exit 1
+fi
+
+# 4. 覆盖率检查
+echo "📊 检查测试覆盖率..."
+npm run test:coverage
+COVERAGE=$(npm run test:coverage:check)
+if [ $COVERAGE -lt 80 ]; then
+  echo "❌ 测试覆盖率不足: $COVERAGE%"
+  exit 1
+fi
+
+echo "✅ 所有测试通过"
+```
+
+## 代码审查自动化
+
+### 自动代码审查
+```bash
+# ✅ 正确：代码审查脚本
+#!/bin/bash
+echo "🔍 开始代码审查..."
+
+# 1. 检查代码重复
+echo "📋 检查代码重复..."
+npx jscpd --min-lines 5 --min-tokens 50 src/
+if [ $? -ne 0 ]; then
+  echo "❌ 发现代码重复"
+  exit 1
+fi
+
+# 2. 检查代码复杂度
+echo "📋 检查代码复杂度..."
+npx complexity-report src/
+if [ $? -ne 0 ]; then
+  echo "❌ 代码复杂度过高"
+  exit 1
+fi
+
+# 3. 检查依赖漏洞
+echo "📋 检查依赖漏洞..."
+npm audit
+if [ $? -ne 0 ]; then
+  echo "❌ 发现依赖漏洞"
+  exit 1
+fi
+
+echo "✅ 代码审查通过"
+```
+
+## 监控自动化
+
+### 性能监控
+```typescript
+// ✅ 正确：性能监控
+export function PerformanceMonitor() {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // 监控Core Web Vitals
+      import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+        getCLS((metric) => {
+          console.log('CLS:', metric);
+          // 发送到监控服务
+        });
+
+        getFID((metric) => {
+          console.log('FID:', metric);
+          // 发送到监控服务
+        });
+      });
+    }
+  }, []);
+
+  return null;
+}
+```
+
+### 错误监控
+```typescript
+// ✅ 正确：错误监控
+export function ErrorMonitor() {
+  useEffect(() => {
+    const handleError = (error: ErrorEvent) => {
+      console.error('全局错误:', error);
+      // 发送到错误监控服务
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  return null;
+}
+```
+
+## CI/CD配置
+
+### GitHub Actions
+```yaml
+# ✅ 正确：GitHub Actions配置
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run check-types
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm ci
+      - run: npm run build
+      - run: npm run deploy
+```
+
+## 自动化检查清单
+
+### 开发阶段
+- [ ] Pre-commit钩子配置
+- [ ] 代码质量检查脚本
+- [ ] 自动格式化配置
+- [ ] 类型检查自动化
+- [ ] 测试运行自动化
+
+### 构建阶段
+- [ ] 构建流程自动化
+- [ ] 构建验证自动化
+- [ ] 部署流程自动化
+- [ ] 回滚机制配置
+- [ ] 环境变量管理
+
+### 监控阶段
+- [ ] 性能监控配置
+- [ ] 错误监控配置
+- [ ] 日志收集配置
+- [ ] 告警机制配置
+- [ ] 健康检查配置
+
+参考配置文件：[package.json](mdc:package.json), [jest.config.js](mdc:jest.config.js)

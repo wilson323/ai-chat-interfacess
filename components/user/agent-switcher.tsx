@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useAgent } from '@/context/agent-context';
-import { useMobile } from '@/hooks/use-mobile';
+import { useAgent } from '../../context/agent-context';
+import { useMobile } from '../../hooks/use-mobile';
 import { Avatar } from 'antd';
 import { cn } from '@/lib/utils';
 
@@ -106,6 +106,8 @@ export default function AgentSwitcher() {
         <div className='text-muted-foreground text-sm'>无可用智能体</div>
       ) : (
         <select
+          id='agentSelect'
+          name='agentSelect'
           value={selectedAgent?.id || ''}
           onChange={e => {
             const agent = agents.find(a => a.id === e.target.value);

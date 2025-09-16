@@ -1,5 +1,6 @@
 // 暂时注释掉复杂的认证配置，避免构建依赖问题
 // import { NextAuthOptions } from 'next-auth';
+// Record is a built-in TypeScript utility type
 // import CredentialsProvider from 'next-auth/providers/credentials';
 // import { PrismaAdapter } from '@next-auth/prisma-adapter';
 // import { PrismaClient } from '@prisma/client';
@@ -20,7 +21,9 @@ export const authOptions = {
 /**
  * 验证用户权限
  */
-export async function verifyAuth(request: Request): Promise<{ user: any; error?: string }> {
+export async function verifyAuth(
+  _request: Request
+): Promise<{ user: Record<string, unknown> | null; error?: string }> {
   try {
     // 这里应该实现JWT token验证
     // 暂时返回模拟用户
@@ -28,13 +31,13 @@ export async function verifyAuth(request: Request): Promise<{ user: any; error?:
       user: {
         id: '1',
         email: 'admin@example.com',
-        role: 'admin'
-      }
+        role: 'admin',
+      },
     };
-  } catch (error) {
+  } catch {
     return {
       user: null,
-      error: 'Authentication failed'
+      error: 'Authentication failed',
     };
   }
 }
@@ -42,26 +45,31 @@ export async function verifyAuth(request: Request): Promise<{ user: any; error?:
 /**
  * 检查管理员权限
  */
-export function isAdmin(user: any): boolean {
-  return user?.role === 'admin';
+export function isAdmin(user: Record<string, unknown> | null): boolean {
+  return (user as { role?: string })?.role === 'admin';
 }
 
 /**
  * 检查用户权限
  */
-export function hasPermission(user: any, permission: string): boolean {
+export function hasPermission(
+  user: Record<string, unknown> | null,
+  permission: string
+): boolean {
   if (!user) return false;
 
+  const userWithRole = user as { role?: string };
+
   // 管理员拥有所有权限
-  if (user.role === 'admin') return true;
+  if (userWithRole.role === 'admin') return true;
 
   // 根据用户角色检查权限
   const rolePermissions: Record<string, string[]> = {
     user: ['read'],
     moderator: ['read', 'write'],
-    admin: ['read', 'write', 'delete', 'admin']
+    admin: ['read', 'write', 'delete', 'admin'],
   };
 
-  const permissions = rolePermissions[user.role] || [];
+  const permissions = rolePermissions[userWithRole.role || ''] || [];
   return permissions.includes(permission);
 }

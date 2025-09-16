@@ -1,5 +1,5 @@
 // UI 组件
-export { Button } from '@/components/ui/button';
+export { Button } from './ui/button';
 export {
   Card,
   CardContent,
@@ -7,26 +7,26 @@ export {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-export { Input } from '@/components/ui/input';
-export { Textarea } from '@/components/ui/textarea';
-export { Label } from '@/components/ui/label';
-export { Checkbox } from '@/components/ui/checkbox';
-export { Switch } from '@/components/ui/switch';
+} from './ui/card';
+export { Input } from './ui/input';
+export { Textarea } from './ui/textarea';
+export { Label } from './ui/label';
+export { Checkbox } from './ui/checkbox';
+export { Switch } from './ui/switch';
 export {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-export { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from './ui/select';
+export { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 export {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from './ui/tooltip';
 export {
   Dialog,
   DialogContent,
@@ -35,54 +35,54 @@ export {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from './ui/dialog';
 export {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-export { ScrollArea } from '@/components/ui/scroll-area';
-export { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-export { Badge } from '@/components/ui/badge';
-export { Skeleton } from '@/components/ui/skeleton';
-export { toast, useToast } from '@/components/ui/toast/use-toast';
-export { Toaster } from '@/components/ui/toast';
+} from './ui/dropdown-menu';
+export { ScrollArea } from './ui/scroll-area';
+export { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+export { Badge } from './ui/badge';
+export { Skeleton } from './ui/skeleton';
+export { toast, useToast } from './ui/toast/use-toast';
+export { Toaster } from './ui/toast';
 
 // 自定义组件
-export { SimpleCodeBlock } from '@/components/simple-code-block';
-export { CodeBlock } from '@/components/code-block';
-export { MarkdownMessage } from '@/components/markdown-message';
-export { ChatMessage } from '@/components/chat-message';
-export { ChatInput } from '@/components/chat-input';
-export { MessageList } from '@/components/message-list';
-export { Header } from '@/components/header';
-export { Sidebar } from '@/components/sidebar';
-export { Layout } from '@/components/layout';
-export { ThemeProvider } from '@/components/theme-provider';
-export { ThemeToggle } from '@/components/theme-toggle';
-export { LoadingState } from '@/components/shared/loading-state';
-export { ErrorBoundary } from '@/components/error-boundary';
-export { ConnectionStatus } from '@/components/connection-status';
-export { NetworkStatusIndicator } from '@/components/network-status-indicator';
-export { LazyImage } from '@/components/lazy-image';
-export { WelcomeMessage } from '@/components/welcome-message';
-export { QuestionSuggestions } from '@/components/question-suggestions';
-export { ChatOptions } from '@/components/chat-options';
-export { InputArea } from '@/components/input-area';
-export { FileUploader } from '@/components/file-uploader';
-export { ChatContainer } from '@/components/chat-container';
-export { HistorySidebar } from '@/components/history-sidebar';
-export { AgentSidebar } from '@/components/agent-sidebar';
-export { AgentCard } from '@/components/agent-card';
-export { ChatHistory } from '@/components/chat-history';
-export { HistoryManager } from '@/components/history-manager';
-export { SettingsDialog } from '@/components/settings-dialog';
-export { AgentDialog } from '@/components/agent-dialog';
-export { MobileNav } from '@/components/mobile-nav';
-export { HeaderNav } from '@/components/header-nav';
-export { ResponsiveContainer } from '@/components/responsive-container';
-export { BreakpointIndicator } from '@/components/breakpoint-indicator';
-export { ProductCarousel } from '@/components/product-carousel';
+export { SimpleCodeBlock } from './simple-code-block';
+export { CodeBlock } from './code-block';
+export { MarkdownMessage } from './markdown-message';
+export { ChatMessage } from './chat-message';
+export { ChatInput } from './chat/ChatInput';
+export { MessageList } from './message-list';
+export { Header } from './header';
+export { default as AntdSidebar } from './antd-sidebar';
+export { Layout } from './layout';
+export { ThemeProvider } from './theme-provider';
+export { ThemeToggle } from './theme-toggle';
+export { default as LoadingState } from './shared/loading-state';
+export { ErrorBoundary } from './error-boundary';
+export { ConnectionStatus } from './connection-status';
+export { NetworkStatusIndicator } from './network-status-indicator';
+export { LazyImage } from './lazy-image';
+export { WelcomeMessage } from './welcome-message';
+export { QuestionSuggestions } from './question-suggestions';
+export { ChatOptions } from './chat-options';
+export { default as InputArea } from './input-area';
+export { FileUploader } from './file-uploader';
+// export { ChatContainer } from './chat-container'; // File not found
+export { HistorySidebar } from './history-sidebar';
+export { AgentSidebar } from './agent-sidebar';
+export { AgentCard } from './business/AgentCard';
+export { ChatHistory } from './chat-history';
+export { HistoryManager } from './history-manager';
+export { SettingsDialog } from './settings-dialog';
+export { AgentDialog } from './agent-dialog';
+export { MobileNav } from './mobile-nav';
+export { default as HeaderNav } from './header-nav';
+export { ResponsiveContainer } from './responsive-container';
+export { BreakpointIndicator } from './breakpoint-indicator';
+export { default as ProductCarousel } from './product-carousel';
 
-export { IntermediateValuesDisplay } from '@/components/intermediate-values-display';
+export { IntermediateValuesDisplay } from './intermediate-values-display';

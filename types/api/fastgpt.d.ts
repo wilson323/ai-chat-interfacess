@@ -3,7 +3,7 @@ export interface ChatCompletionRequest {
   messages: Array<{
     role: 'system' | 'user' | 'assistant' | 'function';
     content: string;
-    function_call?: any;
+    function_call?: FunctionCall;
   }>;
   model?: string;
   agent_id?: string;
@@ -13,7 +13,7 @@ export interface ChatCompletionRequest {
   temperature?: number;
   stream?: boolean;
   stop?: string[];
-  tools?: any[];
+  tools?: ToolCall[];
 }
 
 // FastGPT Chat Completion 非流式响应体
@@ -27,7 +27,7 @@ export interface ChatCompletionResponse {
     message: {
       role: string;
       content: string;
-      function_call?: any;
+      function_call?: FunctionCall;
     };
     finish_reason: string;
   }>;
@@ -45,7 +45,7 @@ export interface ChatCompletionChunk {
   choices: Array<{
     delta: {
       content?: string;
-      function_call?: any;
+      function_call?: FunctionCall;
     };
     index: number;
   }>;
@@ -72,8 +72,8 @@ export interface InitChatResponse {
     description: string;
   };
   user: string;
-  tools?: any[];
-  interacts?: any[];
+  tools?: ToolCall[];
+  interacts?: ToolCall[];
 }
 
 // FastGPT 历史会话
@@ -107,21 +107,31 @@ export interface MessageFeedbackResponse {
   message: string;
 }
 
+// 工具参数类型
+export interface ToolArguments {
+  [key: string]: string | number | boolean | null | undefined | ToolArguments;
+}
+
 // 新增/补全工具调用、插件、节点、resume等类型定义
 export interface ToolCall {
   name: string;
-  arguments: Record<string, any>;
+  arguments: ToolArguments;
 }
 
 export interface FunctionCall {
   name: string;
-  arguments: Record<string, any>;
+  arguments: ToolArguments;
+}
+
+// 节点输出类型
+export interface NodeOutputs {
+  [key: string]: string | number | boolean | null | undefined | NodeOutputs;
 }
 
 export interface NodeResponse {
   nodeId: string;
   status: 'success' | 'error' | 'wait' | 'continue' | 'pending';
-  outputs: Record<string, any>;
+  outputs: NodeOutputs;
   message?: string;
   error?: string | null;
   awaitInput?: boolean;
@@ -130,9 +140,14 @@ export interface NodeResponse {
   runTime?: number;
 }
 
+// 恢复节点数据类型
+export interface ResumeNodeData {
+  [key: string]: string | number | boolean | null | undefined | ResumeNodeData;
+}
+
 export interface ResumeNodeRequest {
   nodeId: string;
-  resumeData: Record<string, any>;
+  resumeData: ResumeNodeData;
 }
 
 export interface ResumeNodeResponse extends NodeResponse {}

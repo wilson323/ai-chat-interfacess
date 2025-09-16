@@ -9,11 +9,11 @@ import {
   withDatabaseErrorHandler,
   withValidationErrorHandler,
   withAuthErrorHandler,
+  handleApiError,
 } from '@/lib/middleware/error-handler';
 import {
   ValidationError,
   NotFoundError,
-  DatabaseError,
   AuthenticationError,
 } from '@/lib/errors/global-error-handler';
 import { z } from 'zod';
@@ -124,7 +124,7 @@ export const PATCH = handleApiError(
   {
     logLevel: 'warn',
     includeStack: true,
-    customErrorHandler: (error, context) => {
+    customErrorHandler: (_error, context) => {
       return NextResponse.json(
         {
           success: false,
@@ -135,7 +135,7 @@ export const PATCH = handleApiError(
           },
           meta: {
             timestamp: new Date().toISOString(),
-            requestId: context.requestId,
+            requestId: (context as any).requestId || 'unknown',
           },
         },
         { status: 400 }

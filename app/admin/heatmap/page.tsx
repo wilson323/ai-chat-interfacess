@@ -1,6 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import type { Viewport } from 'next';
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
+};
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -80,7 +91,7 @@ export default function HeatmapPage() {
   });
 
   // 获取统计数据
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
       const queryString = new URLSearchParams();
@@ -101,10 +112,10 @@ export default function HeatmapPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params]);
 
   // 获取热点地图数据
-  const fetchHeatmapData = async () => {
+  const fetchHeatmapData = useCallback(async () => {
     setLoading(true);
     try {
       const queryString = new URLSearchParams();
@@ -125,7 +136,7 @@ export default function HeatmapPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params]);
 
   // 导出数据
   const exportData = async (format: 'csv' | 'json') => {
@@ -158,7 +169,7 @@ export default function HeatmapPage() {
   useEffect(() => {
     fetchStats();
     fetchHeatmapData();
-  }, [params]);
+  }, [params, fetchStats, fetchHeatmapData]); // 添加缺失的依赖
 
   return (
     <div className='p-6 space-y-6'>
@@ -185,8 +196,8 @@ export default function HeatmapPage() {
               <label className='text-sm font-medium'>时间范围</label>
               <Select
                 value={params.timeRange}
-                onValueChange={value =>
-                  setParams({ ...params, timeRange: value as any })
+                onValueChange={(value: '1h' | '24h' | '7d' | '30d' | '90d' | '1y') =>
+                  setParams({ ...params, timeRange: value })
                 }
               >
                 <SelectTrigger>
@@ -227,10 +238,10 @@ export default function HeatmapPage() {
               <label className='text-sm font-medium'>消息类型</label>
               <Select
                 value={params.messageType || ''}
-                onValueChange={value =>
+                onValueChange={(value: 'text' | 'image' | 'file' | 'voice' | 'mixed' | '') =>
                   setParams({
                     ...params,
-                    messageType: (value as any) || undefined,
+                    messageType: value || undefined,
                   })
                 }
               >
@@ -252,8 +263,8 @@ export default function HeatmapPage() {
               <label className='text-sm font-medium'>聚合粒度</label>
               <Select
                 value={params.granularity}
-                onValueChange={value =>
-                  setParams({ ...params, granularity: value as any })
+                onValueChange={(value: 'hour' | 'day' | 'week' | 'month') =>
+                  setParams({ ...params, granularity: value })
                 }
               >
                 <SelectTrigger>

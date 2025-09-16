@@ -5,6 +5,7 @@
 
 import { ReactNode, CSSProperties, HTMLAttributes } from 'react';
 
+// TypeScript Record type is built-in, no import needed
 // 基础组件属性
 export interface BaseComponentProps {
   className?: string;
@@ -71,10 +72,10 @@ export interface FlexProps extends BaseComponentProps {
 
 // 表单组件属性
 export interface FormProps extends BaseComponentProps {
-  onSubmit?: (data: any) => void | Promise<void>;
+  onSubmit?: (data: unknown) => void | Promise<void>;
   onReset?: () => void;
   initialValues?: Record<string, any>;
-  validationSchema?: any;
+  validationSchema?: unknown;
   disabled?: boolean;
   loading?: boolean;
 }
@@ -151,7 +152,7 @@ export interface ColumnDef<T = any> {
   key: string;
   title: string;
   dataIndex?: keyof T;
-  render?: (value: any, record: T, index: number) => ReactNode;
+  render?: (value: unknown, record: T, index: number) => ReactNode;
   width?: number | string;
   align?: 'left' | 'center' | 'right';
   sortable?: boolean;

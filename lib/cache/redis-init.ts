@@ -3,6 +3,7 @@
  * 在应用启动时自动连接Redis并进行健康检查
  */
 
+import { logger } from '@/lib/utils/logger';
 import { redisManager } from './redis-manager';
 import { appConfig } from '@/lib/config';
 
@@ -23,11 +24,11 @@ export async function initializeRedis(): Promise<void> {
 
   initializationPromise = (async () => {
     try {
-      console.log('🚀 正在初始化Redis缓存连接...');
+      logger.debug('🚀 正在初始化Redis缓存连接...');
 
       // 检查是否配置了Redis
       if (!appConfig.redis.host) {
-        console.warn('⚠️  Redis主机未配置，跳过Redis初始化');
+        logger.warn('⚠️  Redis主机未配置，跳过Redis初始化');
         isInitialized = true;
         return;
       }
@@ -39,14 +40,18 @@ export async function initializeRedis(): Promise<void> {
       const health = await redisManager.healthCheck();
 
       if (health.status === 'healthy') {
-        console.log('✅ Redis缓存连接成功');
-        console.log(`📍 服务器: ${appConfig.redis.host}:${appConfig.redis.port}`);
-        console.log(`⏱️  响应时间: ${health.responseTime}ms`);
+        logger.debug('✅ Redis缓存连接成功');
+        logger.debug(
+          `📍 服务器: ${appConfig.redis.host}:${appConfig.redis.port}`
+        );
+        logger.debug(`⏱️  响应时间: ${health.responseTime}ms`);
 
         if (health.details) {
-          console.log(`💾 内存使用: ${health.details.memory.toFixed(2)}MB`);
-          console.log(`🔌 连接客户端: ${health.details.clients}`);
-          console.log(`⏱️  运行时间: ${Math.floor(health.details.uptime / 3600)}小时`);
+          logger.debug(`💾 内存使用: ${health.details.memory.toFixed(2)}MB`);
+          logger.debug(`🔌 连接客户端: ${health.details.clients}`);
+          logger.debug(
+            `⏱️  运行时间: ${Math.floor(health.details.uptime / 3600)}小时`
+          );
         }
 
         // 启动定期健康检查
@@ -57,8 +62,8 @@ export async function initializeRedis(): Promise<void> {
         throw new Error(`Redis连接失败: ${health.error}`);
       }
     } catch (error) {
-      console.error('❌ Redis缓存初始化失败:', error);
-      console.warn('⚠️  应用将在没有Redis缓存的情况下运行，性能可能受到影响');
+      logger.error('❌ Redis缓存初始化失败:', error);
+      logger.warn('⚠️  应用将在没有Redis缓存的情况下运行，性能可能受到影响');
 
       // 标记为已初始化但连接失败，避免重复尝试
       isInitialized = true;
@@ -73,23 +78,26 @@ export async function initializeRedis(): Promise<void> {
  */
 function startHealthCheck(): void {
   // 每5分钟检查一次健康状态
-  setInterval(async () => {
-    try {
-      const health = await redisManager.healthCheck();
+  setInterval(
+    async () => {
+      try {
+        const health = await redisManager.healthCheck();
 
-      if (health.status !== 'healthy') {
-        console.warn('⚠️  Redis健康检查失败:', health.error);
-        console.log('🔄 尝试重新连接...');
+        if (health.status !== 'healthy') {
+          logger.warn('⚠️  Redis健康检查失败:', health.error);
+          logger.debug('🔄 尝试重新连接...');
 
-        // 尝试重新连接
-        await redisManager.disconnect();
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        await redisManager.connect();
+          // 尝试重新连接
+          await redisManager.disconnect();
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await redisManager.connect();
+        }
+      } catch (error) {
+        logger.error('Redis健康检查异常:', error);
       }
-    } catch (error) {
-      console.error('Redis健康检查异常:', error);
-    }
-  }, 5 * 60 * 1000); // 5分钟
+    },
+    5 * 60 * 1000
+  ); // 5分钟
 }
 
 /**
@@ -120,7 +128,7 @@ export async function safeCacheOperation<T>(
 
     return await operation();
   } catch (error) {
-    console.debug('缓存操作失败，使用降级方案:', error);
+    logger.debug(`缓存操作失败，使用降级方案: ${error}`);
     return fallbackValue ?? null;
   }
 }
@@ -129,18 +137,19 @@ export async function safeCacheOperation<T>(
  * 缓存装饰器
  * 用于自动缓存函数结果
  */
-export function cache<T extends (...args: any[]) => any>(
+export function cache<T extends (...args: Array<unknown>) => unknown>(
   keyPrefix: string,
   ttl: number = 3600
 ) {
   return function (
-    target: any,
+    _target: unknown,
     propertyName: string,
     descriptor: TypedPropertyDescriptor<T>
   ) {
+    // 忽略未使用的 target 参数
     const method = descriptor.value!;
 
-    descriptor.value = (async function (...args: any[]) {
+    descriptor.value = async function (this: any, ...args: Array<unknown>) {
       // 生成缓存键
       const key = `${keyPrefix}:${propertyName}:${JSON.stringify(args)}`;
 
@@ -159,11 +168,11 @@ export function cache<T extends (...args: any[]) => any>(
 
         return result;
       } catch (error) {
-        console.warn(`缓存装饰器执行失败: ${key}`, error);
+        logger.warn(`缓存装饰器执行失败: ${key}`, error);
         // 降级到直接执行方法
         return await method.apply(this, args);
       }
-    }) as any;
+    } as T;
 
     return descriptor;
   };
@@ -175,6 +184,6 @@ export function cache<T extends (...args: any[]) => any>(
 if (typeof window === 'undefined') {
   // 只在服务器端初始化
   initializeRedis().catch(error => {
-    console.error('Redis自动初始化失败:', error);
+    logger.error('Redis自动初始化失败:', error);
   });
 }

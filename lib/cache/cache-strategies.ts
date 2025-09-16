@@ -8,10 +8,10 @@ import { redisManager, type CacheStats } from './redis-manager';
 export interface CacheStrategy {
   name: string;
   description: string;
-  get<T>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T, ttl?: number): Promise<boolean>;
+  get<T extends Record<string, unknown>>(key: string): Promise<T | null>;
+  set<T extends Record<string, unknown>>(key: string, value: T, ttl?: number): Promise<boolean>;
   invalidate(key: string): Promise<boolean>;
-  warmup<T>(
+  warmup<T extends Record<string, unknown>>(
     items: Array<{ key: string; value: T; ttl?: number }>
   ): Promise<boolean>;
 }
@@ -32,7 +32,7 @@ export class LRUCacheStrategy implements CacheStrategy {
   name = 'LRU';
   description = '最近最少使用缓存策略';
 
-  async get<T>(key: string): Promise<T | null> {
+  async get<T extends Record<string, unknown>>(key: string): Promise<T | null> {
     const value = await redisManager.get<T>(key);
 
     if (value) {
@@ -43,7 +43,7 @@ export class LRUCacheStrategy implements CacheStrategy {
     return value;
   }
 
-  async set<T>(key: string, value: T, ttl?: number): Promise<boolean> {
+  async set<T extends Record<string, unknown>>(key: string, value: T, ttl?: number): Promise<boolean> {
     return await redisManager.set(key, value, ttl);
   }
 
@@ -51,7 +51,7 @@ export class LRUCacheStrategy implements CacheStrategy {
     return await redisManager.delete(key);
   }
 
-  async warmup<T>(
+  async warmup<T extends Record<string, unknown>>(
     items: Array<{ key: string; value: T; ttl?: number }>
   ): Promise<boolean> {
     return await redisManager.warmup(items);
@@ -65,7 +65,7 @@ export class LFUCacheStrategy implements CacheStrategy {
   name = 'LFU';
   description = '最少使用频率缓存策略';
 
-  async get<T>(key: string): Promise<T | null> {
+  async get<T extends Record<string, unknown>>(key: string): Promise<T | null> {
     const value = await redisManager.get<T>(key);
 
     if (value) {
@@ -76,7 +76,7 @@ export class LFUCacheStrategy implements CacheStrategy {
     return value;
   }
 
-  async set<T>(key: string, value: T, ttl?: number): Promise<boolean> {
+  async set<T extends Record<string, unknown>>(key: string, value: T, ttl?: number): Promise<boolean> {
     const success = await redisManager.set(key, value, ttl);
 
     if (success) {
@@ -92,7 +92,7 @@ export class LFUCacheStrategy implements CacheStrategy {
     return await redisManager.delete(key);
   }
 
-  async warmup<T>(
+  async warmup<T extends Record<string, unknown>>(
     items: Array<{ key: string; value: T; ttl?: number }>
   ): Promise<boolean> {
     const success = await redisManager.warmup(items);
@@ -109,13 +109,14 @@ export class LFUCacheStrategy implements CacheStrategy {
 
   private async incrementAccessCount(key: string): Promise<void> {
     const countKey = `access_count:${key}`;
-    const currentCount = (await redisManager.get<number>(countKey)) || 0;
-    await redisManager.set(countKey, currentCount + 1, 86400); // 24小时过期
+    const currentCount = (await redisManager.get<Record<string, unknown>>(countKey)) as { value: number } | null;
+    const count = currentCount?.value || 0;
+    await redisManager.set(countKey, { value: count + 1 }, 86400); // 24小时过期
   }
 
   private async setAccessCount(key: string, count: number): Promise<void> {
     const countKey = `access_count:${key}`;
-    await redisManager.set(countKey, count, 86400);
+    await redisManager.set(countKey, { value: count }, 86400);
   }
 
   private async deleteAccessCount(key: string): Promise<void> {
@@ -131,11 +132,11 @@ export class TTLCacheStrategy implements CacheStrategy {
   name = 'TTL';
   description = '基于时间的缓存策略';
 
-  async get<T>(key: string): Promise<T | null> {
+  async get<T extends Record<string, unknown>>(key: string): Promise<T | null> {
     return await redisManager.get<T>(key);
   }
 
-  async set<T>(key: string, value: T, ttl?: number): Promise<boolean> {
+  async set<T extends Record<string, unknown>>(key: string, value: T, ttl?: number): Promise<boolean> {
     return await redisManager.set(key, value, ttl);
   }
 
@@ -143,7 +144,7 @@ export class TTLCacheStrategy implements CacheStrategy {
     return await redisManager.delete(key);
   }
 
-  async warmup<T>(
+  async warmup<T extends Record<string, unknown>>(
     items: Array<{ key: string; value: T; ttl?: number }>
   ): Promise<boolean> {
     return await redisManager.warmup(items);
@@ -167,7 +168,7 @@ export class SmartCacheStrategy implements CacheStrategy {
     }
   >();
 
-  async get<T>(key: string): Promise<T | null> {
+  async get<T extends Record<string, unknown>>(key: string): Promise<T | null> {
     const value = await redisManager.get<T>(key);
 
     if (value) {
@@ -184,7 +185,7 @@ export class SmartCacheStrategy implements CacheStrategy {
     return value;
   }
 
-  async set<T>(key: string, value: T, ttl?: number): Promise<boolean> {
+  async set<T extends Record<string, unknown>>(key: string, value: T, ttl?: number): Promise<boolean> {
     const success = await redisManager.set(key, value, ttl);
 
     if (success) {
@@ -203,7 +204,7 @@ export class SmartCacheStrategy implements CacheStrategy {
     return await redisManager.delete(key);
   }
 
-  async warmup<T>(
+  async warmup<T extends Record<string, unknown>>(
     items: Array<{ key: string; value: T; ttl?: number }>
   ): Promise<boolean> {
     const success = await redisManager.warmup(items);

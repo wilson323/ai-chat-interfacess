@@ -1,0 +1,104 @@
+---
+globs: *.tsx,*.jsx
+description: JSX特殊字符处理规范
+---
+
+# JSX特殊字符处理规范
+
+## 核心原则
+**严格禁止使用HTML实体编码，必须使用JavaScript表达式处理特殊字符**
+
+## 正确做法
+```typescript
+// ✅ 正确：使用JavaScript表达式
+<label>响应时间 {'<'} 50ms</label>
+<label>内存使用 {'<'} 100MB</label>
+<label>价格范围 {'$'}100 - {'$'}500</label>
+<label>包含 {'&'} 符号的文本</label>
+<label>大于 {'>'} 100的值</label>
+<label>引号 {'"'} 和单引号 {'\''} 处理</label>
+
+// ✅ 正确：复杂表达式
+<label>范围: {min} {'<'} 值 {'<'} {max}</label>
+<label>状态: {status === 'active' ? '激活' : '未激活'}</label>
+```
+
+## 错误做法
+```typescript
+// ❌ 错误：直接使用特殊字符
+<label>响应时间 < 50ms</label>
+<label>内存使用 < 100MB</label>
+
+// ❌ 错误：HTML实体编码
+<label>响应时间 &lt; 50ms</label>
+<label>内存使用 &lt; 100MB</label>
+<label>价格范围 &amp; 100 - &amp; 500</label>
+<label>包含 &amp; 符号的文本</label>
+<label>大于 &gt; 100的值</label>
+<label>引号 &quot; 和单引号 &#x27; 处理</label>
+```
+
+## 特殊字符映射表
+| 字符 | HTML实体 | JSX表达式 | 说明 |
+|------|----------|-----------|------|
+| < | &lt; | {'<'} | 小于号 |
+| > | &gt; | {'>'} | 大于号 |
+| & | &amp; | {'&'} | 和号 |
+| " | &quot; | {'"'} | 双引号 |
+| ' | &#x27; | {'\''} | 单引号 |
+| $ | &#36; | {'$'} | 美元符号 |
+
+## 动态内容处理
+```typescript
+// ✅ 正确：动态内容中的特殊字符
+const renderComparison = (value: number, threshold: number) => (
+  <span>
+    当前值 {value} {'<'} 阈值 {threshold}
+  </span>
+);
+
+// ✅ 正确：条件渲染中的特殊字符
+{isValid && (
+  <div>
+    验证通过: 值 {'<'} 100
+  </div>
+)}
+```
+
+## 工具函数
+```typescript
+// ✅ 正确：创建工具函数处理特殊字符
+const formatComparison = (value: number, operator: string, threshold: number) => {
+  const operatorMap = {
+    '<': '<',
+    '>': '>',
+    '>=': '>=',
+    '<=': '<=',
+    '=': '='
+  };
+  
+  return `${value} ${operatorMap[operator]} ${threshold}`;
+};
+
+// 使用
+<label>{formatComparison(50, '<', 100)}</label>
+```
+
+## 检查清单
+- [ ] 所有特殊字符都使用JavaScript表达式
+- [ ] 没有使用HTML实体编码
+- [ ] 动态内容正确处理特殊字符
+- [ ] 条件渲染中特殊字符正确显示
+- [ ] 工具函数处理特殊字符
+
+## 自动化检测
+使用ESLint规则检测HTML实体编码：
+```json
+{
+  "rules": {
+    "no-html-entities": "error"
+  }
+}
+```
+
+参考修复文件：[components/admin/performance/MobilePerformance.tsx](mdc:components/admin/performance/MobilePerformance.tsx)

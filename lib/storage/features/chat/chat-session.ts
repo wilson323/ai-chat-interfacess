@@ -1,4 +1,5 @@
-import type { Message } from '@/types/message';
+import type { Message } from '../../../../types/message';
+// Record is a built-in TypeScript utility type, no need to import
 import type { ChatSessionIndexItem, StorageProvider } from '../../shared/types';
 import {
   CHAT_INDEX_KEY,
@@ -151,7 +152,7 @@ export function exportAllChatSessions(
 ): string {
   try {
     const meta = getStorageMeta(provider);
-    const exportData: Record<string, any[]> = {};
+    const exportData: Record<string, Message[]> = {};
 
     for (const chatId of meta.chatIds) {
       const messages = loadMessagesFromStorage(chatId, provider);
@@ -178,7 +179,7 @@ export function importChatSessions(
     const importData = safeJSONParse<Record<string, Message[]>>(jsonData, {});
 
     for (const chatId in importData) {
-      if (Object.hasOwn(importData, chatId)) {
+      if (Object.prototype.hasOwnProperty.call(importData, chatId)) {
         const messages = importData[chatId];
         saveMessagesToStorage(chatId, messages, provider);
       }
@@ -197,7 +198,12 @@ export function importChatSessions(
  */
 export function debugStorageState(
   provider: StorageProvider = defaultStorageProvider
-): any {
+): {
+  keys: string[];
+  sessions: ChatSessionIndexItem[];
+  messages: Message[];
+  meta: Record<string, unknown>;
+} {
   try {
     const allKeys: string[] = [];
     for (let i = 0; i < provider.length; i++) {
@@ -225,18 +231,26 @@ export function debugStorageState(
     console.log('Storage Size Info:', storageInfo);
 
     return {
-      success: true,
-      keysCount: allKeys.length,
-      chatKeysCount: allKeys.filter(key => key.startsWith(MESSAGES_PREFIX))
-        .length,
-      hasChatIndex: !!chatIndexJson,
-      storageInfo,
+      keys: allKeys,
+      sessions: [],
+      messages: [],
+      meta: {
+        keysCount: allKeys.length,
+        chatKeysCount: allKeys.filter(key => key.startsWith(MESSAGES_PREFIX))
+          .length,
+        hasChatIndex: !!chatIndexJson,
+        storageInfo,
+      },
     };
   } catch (error) {
     console.error('Failed to debug storage state:', error);
     return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      keys: [],
+      sessions: [],
+      messages: [],
+      meta: {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
     };
   }
 }

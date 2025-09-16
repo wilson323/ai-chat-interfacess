@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { saveEditedImage } from '@/lib/api/user';
+import NextImage from 'next/image';
+import { saveEditedImage } from '../../lib/api/user';
 import { useToast } from '@/components/ui/toast/use-toast';
 
 interface ImageEditorProps {
@@ -13,7 +14,7 @@ interface ImageEditorProps {
 const CANVAS_SIZE = 480;
 
 const ImageEditor: React.FC<ImageEditorProps> = ({
-  onSave,
+  // onSave, // 未使用的参数，保留用于未来扩展
   referenceImageUrl,
 }) => {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -79,10 +80,10 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             variant: 'default',
           });
           window.open(data.url, '_blank');
-        } catch (e: any) {
+        } catch (e: unknown) {
           toast({
             title: '保存失败',
-            description: e.message,
+            description: e instanceof Error ? e.message : 'Unknown error',
             variant: 'destructive',
           });
         } finally {
@@ -161,11 +162,15 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
           onDoubleClick={handleMark}
         />
         {referenceImageUrl && (
-          <img
-            src={referenceImageUrl}
-            alt='参考图'
-            className='absolute top-0 right-0 w-24 h-24 object-contain border bg-white/80'
-          />
+          <div className='absolute top-0 right-0 w-24 h-24 border bg-white/80'>
+            <NextImage
+              src={referenceImageUrl}
+              alt='参考图'
+              width={96}
+              height={96}
+              className='w-full h-full object-contain'
+            />
+          </div>
         )}
       </div>
       <div className='text-xs text-gray-500'>

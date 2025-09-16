@@ -1,10 +1,1614 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Redis缓存管理器
  * 提供统一的缓存接口和优化策略
  */
-
+import { logger } from '@/lib/utils/logger';
 import { createClient, RedisClientType } from 'redis';
-import { appConfig } from '@/lib/config';
+// Record is a built-in TypeScript utility type
+import { appConfig } from '../../lib/config';
 
 export interface CacheConfig {
   host: string;
@@ -32,11 +1636,15 @@ export interface CacheStats {
   commandsPerSecond: number;
   averageResponseTime: number;
   slowCommands: number;
-  connectionStatus: 'connected' | 'disconnected' | 'connecting' | 'reconnecting';
+  connectionStatus:
+  | 'connected'
+  | 'disconnected'
+  | 'connecting'
+  | 'reconnecting';
   lastError?: string;
 }
 
-export interface CacheItem<T = any> {
+export interface CacheItem<T = Record<string, unknown>> {
   key: string;
   value: T;
   ttl: number;
@@ -48,8 +1656,6 @@ export interface CacheItem<T = any> {
 class RedisManager {
   private config: CacheConfig;
   private client: RedisClientType;
-  private memoryCache: Map<string, CacheItem> = new Map();
-  private isConnected: boolean = false;
   private stats = {
     hits: 0,
     misses: 0,
@@ -57,13 +1663,16 @@ class RedisManager {
     commandsPerSecond: 0,
     averageResponseTime: 0,
     slowCommands: 0,
-    connectionStatus: 'disconnected' as 'connected' | 'disconnected' | 'connecting' | 'reconnecting',
+    connectionStatus: 'disconnected' as
+      | 'connected'
+      | 'disconnected'
+      | 'connecting'
+      | 'reconnecting',
     lastError: '',
   };
   private commandTimes: number[] = [];
   private commandTimestamps: number[] = [];
   private isConnected = false;
-  private reconnectAttempts = 0;
   private maxReconnectAttempts = 3;
 
   constructor(config: CacheConfig) {
@@ -93,7 +1702,7 @@ class RedisManager {
       database: this.config.db,
       socket: {
         reconnectStrategy: (retries: number) => {
-          this.reconnectAttempts = retries;
+          // this.reconnectAttempts = retries; // 暂时注释，避免未使用变量错误
           this.stats.connectionStatus = 'reconnecting';
 
           if (retries >= this.maxReconnectAttempts) {
@@ -103,17 +1712,18 @@ class RedisManager {
           }
 
           const delay = Math.min(retries * this.config.retryDelay!, 5000);
-          console.log(`Redis reconnecting... attempt ${retries + 1}, delay: ${delay}ms`);
+          logger.debug(
+            `Redis reconnecting... attempt ${retries + 1}, delay: ${delay}ms`
+          );
           return delay;
         },
         connectTimeout: this.config.connectionTimeout,
         keepAlive: true,
       },
       // 连接池配置
-      commandsQueueMaxLength: this.config.poolSize ? this.config.poolSize * 10 : 100,
-      retryDelayOnFailover: this.config.retryDelay,
-      maxRetriesPerRequest: this.config.maxRetries,
-      lazyConnect: true,
+      commandsQueueMaxLength: this.config.poolSize
+        ? this.config.poolSize * 10
+        : 100,
     });
   }
 
@@ -123,30 +1733,30 @@ class RedisManager {
   private setupEventListeners(): void {
     this.client.on('connect', () => {
       this.stats.connectionStatus = 'connecting';
-      console.log('Redis client connecting...');
+      logger.debug('Redis client connecting...');
     });
 
     this.client.on('ready', () => {
       this.isConnected = true;
       this.stats.connectionStatus = 'connected';
-      this.reconnectAttempts = 0;
-      console.log('Redis client ready and connected');
+      // this.reconnectAttempts = 0; // 暂时注释，避免未使用变量错误
+      logger.debug('Redis client ready and connected');
     });
 
     this.client.on('disconnect', () => {
       this.isConnected = false;
       this.stats.connectionStatus = 'disconnected';
-      console.log('Redis client disconnected');
+      logger.debug('Redis client disconnected');
     });
 
     this.client.on('reconnecting', () => {
       this.stats.connectionStatus = 'reconnecting';
-      console.log('Redis client reconnecting...');
+      logger.debug('Redis client reconnecting...');
     });
 
     this.client.on('error', (error: Error) => {
       this.stats.lastError = error.message;
-      console.error('Redis client error:', error);
+      logger.error('Redis client error:', error);
 
       if (!this.isConnected) {
         this.stats.connectionStatus = 'disconnected';
@@ -156,7 +1766,7 @@ class RedisManager {
     this.client.on('end', () => {
       this.isConnected = false;
       this.stats.connectionStatus = 'disconnected';
-      console.log('Redis client connection ended');
+      logger.debug('Redis client connection ended');
     });
   }
 
@@ -179,12 +1789,13 @@ class RedisManager {
       await this.client.ping();
       this.isConnected = true;
       this.stats.connectionStatus = 'connected';
-      console.log('✅ Redis连接成功');
+      logger.debug('✅ Redis连接成功');
     } catch (error) {
       this.isConnected = false;
       this.stats.connectionStatus = 'disconnected';
-      this.stats.lastError = error instanceof Error ? error.message : 'Connection failed';
-      console.error('❌ Redis连接失败:', error);
+      this.stats.lastError =
+        error instanceof Error ? error.message : 'Connection failed';
+      logger.error('❌ Redis连接失败:', error);
       throw error;
     }
   }
@@ -199,9 +1810,9 @@ class RedisManager {
       }
       this.isConnected = false;
       this.stats.connectionStatus = 'disconnected';
-      console.log('Redis连接已断开');
+      logger.debug('Redis连接已断开');
     } catch (error) {
-      console.error('断开Redis连接时出错:', error);
+      logger.error('断开Redis连接时出错:', error);
     }
   }
 
@@ -239,7 +1850,7 @@ class RedisManager {
         lastError = error as Error;
 
         if (attempt < this.config.maxRetries!) {
-          console.warn(
+          logger.warn(
             `${operationName} 失败 (尝试 ${attempt + 1}/${this.config.maxRetries}):`,
             error instanceof Error ? error.message : error
           );
@@ -249,7 +1860,7 @@ class RedisManager {
             setTimeout(resolve, this.config.retryDelay)
           );
         } else {
-          console.error(
+          logger.error(
             `${operationName} 失败，已达最大重试次数:`,
             error instanceof Error ? error.message : error
           );
@@ -276,18 +1887,21 @@ class RedisManager {
 
     // 更新平均响应时间
     this.stats.averageResponseTime =
-      this.commandTimes.reduce((sum, time) => sum + time, 0) / this.commandTimes.length;
+      this.commandTimes.reduce((sum, time) => sum + time, 0) /
+      this.commandTimes.length;
 
     // 计算每秒命令数
     const now = Date.now();
     const oneSecondAgo = now - 1000;
-    const recentCommands = this.commandTimestamps.filter(timestamp => timestamp > oneSecondAgo);
+    const recentCommands = this.commandTimestamps.filter(
+      timestamp => timestamp > oneSecondAgo
+    );
     this.stats.commandsPerSecond = recentCommands.length;
 
     // 记录慢命令
     if (duration > 100) {
       this.stats.slowCommands++;
-      console.warn(`🐌 慢命令检测: ${commandName} 耗时 ${duration}ms`);
+      logger.warn(`🐌 慢命令检测: ${commandName} 耗时 ${duration}ms`);
     }
   }
 
@@ -324,7 +1938,7 @@ class RedisManager {
       this.stats.totalKeys++;
       return true;
     } catch (error) {
-      console.error('Redis SET 操作失败:', error);
+      logger.error('Redis SET 操作失败:', error);
       return false;
     }
   }
@@ -332,7 +1946,7 @@ class RedisManager {
   /**
    * 获取缓存
    */
-  async get<T>(key: string): Promise<T | null> {
+  async get<T extends Record<string, unknown>>(key: string): Promise<T | null> {
     try {
       const fullKey = this.getFullKey(key);
 
@@ -340,15 +1954,15 @@ class RedisManager {
         return await this.client.get(fullKey);
       }, 'GET');
 
-      if (!itemStr) {
+      if (!itemStr || typeof itemStr !== 'string') {
         this.stats.misses++;
         return null;
       }
 
-      const item: CacheItem<T> = JSON.parse(itemStr);
+      const item = JSON.parse(itemStr) as CacheItem<T>;
 
       // 检查是否过期
-      if (this.isExpired(item)) {
+      if (this.isExpired(item as CacheItem<Record<string, unknown>>)) {
         await this.delete(key);
         this.stats.misses++;
         return null;
@@ -371,7 +1985,7 @@ class RedisManager {
       this.stats.hits++;
       return item.value;
     } catch (error) {
-      console.error('Redis GET 操作失败:', error);
+      logger.error('Redis GET 操作失败:', error);
       this.stats.misses++;
       return null;
     }
@@ -394,7 +2008,7 @@ class RedisManager {
 
       return false;
     } catch (error) {
-      console.error('Redis DELETE 操作失败:', error);
+      logger.error('Redis DELETE 操作失败:', error);
       return false;
     }
   }
@@ -411,7 +2025,7 @@ class RedisManager {
 
       return result === 1;
     } catch (error) {
-      console.error('Redis EXISTS 操作失败:', error);
+      logger.error('Redis EXISTS 操作失败:', error);
       return false;
     }
   }
@@ -426,9 +2040,9 @@ class RedisManager {
         return await this.client.expire(fullKey, ttl);
       }, 'EXPIRE');
 
-      return result;
+      return Boolean(result);
     } catch (error) {
-      console.error('Redis EXPIRE 操作失败:', error);
+      logger.error('Redis EXPIRE 操作失败:', error);
       return false;
     }
   }
@@ -443,7 +2057,7 @@ class RedisManager {
         return await this.client.ttl(fullKey);
       }, 'TTL');
     } catch (error) {
-      console.error('Redis TTL 操作失败:', error);
+      logger.error('Redis TTL 操作失败:', error);
       return -1;
     }
   }
@@ -451,7 +2065,7 @@ class RedisManager {
   /**
    * 批量获取
    */
-  async mget<T>(keys: string[]): Promise<(T | null)[]> {
+  async mget<T extends Record<string, unknown>>(keys: string[]): Promise<(T | null)[]> {
     try {
       const fullKeys = keys.map(key => this.getFullKey(key));
       const results = await this.executeWithRetry(async () => {
@@ -465,9 +2079,13 @@ class RedisManager {
         }
 
         try {
-          const item: CacheItem<T> = JSON.parse(itemStr);
+          if (typeof itemStr !== 'string') {
+            this.stats.misses++;
+            return null;
+          }
+          const item = JSON.parse(itemStr) as CacheItem<T>;
 
-          if (this.isExpired(item)) {
+          if (this.isExpired(item as CacheItem<Record<string, unknown>>)) {
             this.delete(keys[index]);
             this.stats.misses++;
             return null;
@@ -481,7 +2099,7 @@ class RedisManager {
         }
       });
     } catch (error) {
-      console.error('Redis MGET 操作失败:', error);
+      logger.error('Redis MGET 操作失败:', error);
       return keys.map(() => null);
     }
   }
@@ -520,7 +2138,7 @@ class RedisManager {
       this.stats.totalKeys += items.length;
       return true;
     } catch (error) {
-      console.error('Redis MSET 操作失败:', error);
+      logger.error('Redis MSET 操作失败:', error);
       return false;
     }
   }
@@ -539,7 +2157,7 @@ class RedisManager {
       this.stats.misses = 0;
       return true;
     } catch (error) {
-      console.error('Redis FLUSHDB 操作失败:', error);
+      logger.error('Redis FLUSHDB 操作失败:', error);
       return false;
     }
   }
@@ -580,7 +2198,7 @@ class RedisManager {
       const hotKeys: Array<{ key: string; accessCount: number }> = [];
 
       // 使用SCAN命令避免阻塞
-      let cursor = 0;
+      let cursor: string = '0';
       do {
         const reply = await this.executeWithRetry(async () => {
           return await this.client.scan(cursor, {
@@ -595,26 +2213,26 @@ class RedisManager {
           try {
             // 获取缓存项以分析访问统计
             const itemStr = await this.client.get(key);
-            if (itemStr) {
+            if (itemStr && typeof itemStr === 'string') {
               const item: CacheItem = JSON.parse(itemStr);
               hotKeys.push({
                 key: key.replace(this.config.keyPrefix!, ''),
                 accessCount: item.accessCount,
               });
             }
-          } catch (error) {
+          } catch {
             // 忽略单个键的错误
             continue;
           }
         }
-      } while (cursor !== 0);
+      } while (cursor !== '0');
 
       // 按访问次数排序并返回前N个
       return hotKeys
         .sort((a, b) => b.accessCount - a.accessCount)
         .slice(0, limit);
     } catch (error) {
-      console.error('获取热点键失败:', error);
+      logger.error('获取热点键失败:', error);
       return [];
     }
   }
@@ -628,7 +2246,7 @@ class RedisManager {
     try {
       return await this.mset(items);
     } catch (error) {
-      console.error('缓存预热失败:', error);
+      logger.error('缓存预热失败:', error);
       return false;
     }
   }
@@ -636,11 +2254,10 @@ class RedisManager {
   /**
    * 检查项是否过期
    */
-  private isExpired(item: CacheItem): boolean {
+  private isExpired(item: CacheItem<Record<string, unknown>>): boolean {
     const now = Date.now();
     return now - item.createdAt > item.ttl * 1000;
   }
-
 
   private async getMemoryUsage(): Promise<number> {
     try {
@@ -657,7 +2274,7 @@ class RedisManager {
       }
       return 0;
     } catch (error) {
-      console.error('获取内存使用信息失败:', error);
+      logger.error('获取内存使用信息失败:', error);
       return 0;
     }
   }
@@ -676,7 +2293,7 @@ class RedisManager {
       }
       return 0;
     } catch (error) {
-      console.error('获取连接客户端数失败:', error);
+      logger.error('获取连接客户端数失败:', error);
       return 0;
     }
   }
@@ -695,7 +2312,7 @@ class RedisManager {
       }
       return 0;
     } catch (error) {
-      console.error('获取运行时间失败:', error);
+      logger.error('获取运行时间失败:', error);
       return 0;
     }
   }
@@ -759,7 +2376,7 @@ class RedisManager {
       const pattern = `${this.config.keyPrefix}*`;
       const allKeys: string[] = [];
 
-      let cursor = 0;
+      let cursor: string = '0';
       do {
         const reply = await this.client.scan(cursor, {
           MATCH: pattern,
@@ -767,7 +2384,7 @@ class RedisManager {
         });
         cursor = reply.cursor;
         allKeys.push(...reply.keys);
-      } while (cursor !== 0);
+      } while (cursor !== '0');
 
       // 如果键数量超过限制，删除最久未使用的
       if (allKeys.length > maxKeys) {
@@ -777,7 +2394,7 @@ class RedisManager {
         for (const key of allKeys) {
           try {
             const itemStr = await this.client.get(key);
-            if (itemStr) {
+            if (itemStr && typeof itemStr === 'string') {
               const item: CacheItem = JSON.parse(itemStr);
               keyAccessTimes.push({ key, accessedAt: item.accessedAt });
             }
@@ -797,11 +2414,14 @@ class RedisManager {
         }
         await pipeline.exec();
 
-        this.stats.totalKeys = Math.max(0, this.stats.totalKeys - keysToDelete.length);
-        console.log(`LRU清理: 删除了 ${keysToDelete.length} 个最久未使用的键`);
+        this.stats.totalKeys = Math.max(
+          0,
+          this.stats.totalKeys - keysToDelete.length
+        );
+        logger.debug(`LRU清理: 删除了 ${keysToDelete.length} 个最久未使用的键`);
       }
     } catch (error) {
-      console.error('LRU缓存清理失败:', error);
+      logger.error('LRU缓存清理失败:', error);
     }
   }
 
@@ -813,7 +2433,7 @@ class RedisManager {
       const pattern = `${this.config.keyPrefix}*`;
       let expiredCount = 0;
 
-      let cursor = 0;
+      let cursor: string = '0';
       do {
         const reply = await this.client.scan(cursor, {
           MATCH: pattern,
@@ -824,9 +2444,9 @@ class RedisManager {
         for (const key of reply.keys) {
           try {
             const itemStr = await this.client.get(key);
-            if (itemStr) {
+            if (itemStr && typeof itemStr === 'string') {
               const item: CacheItem = JSON.parse(itemStr);
-              if (this.isExpired(item)) {
+              if (this.isExpired(item as CacheItem<Record<string, unknown>>)) {
                 await this.client.del(key);
                 expiredCount++;
               }
@@ -835,16 +2455,16 @@ class RedisManager {
             continue;
           }
         }
-      } while (cursor !== 0);
+      } while (cursor !== '0');
 
       if (expiredCount > 0) {
         this.stats.totalKeys = Math.max(0, this.stats.totalKeys - expiredCount);
-        console.log(`过期缓存清理: 删除了 ${expiredCount} 个过期键`);
+        logger.debug(`过期缓存清理: 删除了 ${expiredCount} 个过期键`);
       }
 
       return expiredCount;
     } catch (error) {
-      console.error('过期缓存清理失败:', error);
+      logger.error('过期缓存清理失败:', error);
       return 0;
     }
   }
@@ -877,8 +2497,10 @@ class RedisManager {
       ...basicStats,
       performance: {
         commandTimes: {
-          min: this.commandTimes.length > 0 ? Math.min(...this.commandTimes) : 0,
-          max: this.commandTimes.length > 0 ? Math.max(...this.commandTimes) : 0,
+          min:
+            this.commandTimes.length > 0 ? Math.min(...this.commandTimes) : 0,
+          max:
+            this.commandTimes.length > 0 ? Math.max(...this.commandTimes) : 0,
           average: this.stats.averageResponseTime,
           p95: this.calculatePercentile(95),
           p99: this.calculatePercentile(99),

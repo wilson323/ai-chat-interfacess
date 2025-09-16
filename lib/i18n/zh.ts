@@ -1,4 +1,4 @@
-export default {
+const zhTranslations = {
   dbSchema: {
     title: '数据表结构与同步',
     sync: '手动同步表结构',
@@ -27,3 +27,5 @@ export default {
   },
   // ...其他模块
 };
+
+export default zhTranslations;

@@ -33,15 +33,13 @@ import {
 import type { ModelPerformanceMetrics } from '@/types/model-config';
 
 interface ModelMonitorProps {
-  modelId?: string;
   timeRange?: '24h' | '7d' | '30d';
 }
 
 export function ModelMonitor({
-  modelId,
   timeRange = '24h',
 }: ModelMonitorProps) {
-  const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'24h' | '7d' | '30d'>(timeRange);
   const [metrics, setMetrics] = useState<ModelPerformanceMetrics[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -146,7 +144,7 @@ export function ModelMonitor({
       {/* 时间范围选择 */}
       <div className='flex items-center justify-between'>
         <h2 className='text-2xl font-bold'>模型性能监控</h2>
-        <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
+        <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange as (value: string) => void}>
           <SelectTrigger className='w-40'>
             <SelectValue />
           </SelectTrigger>

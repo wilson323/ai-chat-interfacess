@@ -11,8 +11,10 @@ export interface ChatSessionAttributes {
   isArchived?: boolean;
 }
 
-export interface ChatSessionCreationAttributes
-  extends Optional<ChatSessionAttributes, 'id'> {}
+export type ChatSessionCreationAttributes = Optional<
+  ChatSessionAttributes,
+  'id'
+>;
 
 export class ChatSession
   extends Model<ChatSessionAttributes, ChatSessionCreationAttributes>

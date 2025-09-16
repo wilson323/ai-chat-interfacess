@@ -7,6 +7,7 @@
 ## 系统架构分析
 
 ### 现有架构特点
+
 - **技术栈**: Next.js 15 + React 18 + TypeScript 5 + PostgreSQL
 - **UI框架**: shadcn/ui + Ant Design + Tailwind CSS
 - **状态管理**: React Context API + Zustand
@@ -14,6 +15,7 @@
 - **缓存**: Redis
 
 ### 现有管理端功能
+
 - FastGPT 智能体管理
 - CAD 智能体配置
 - 图像编辑智能体配置
@@ -29,6 +31,7 @@
 ### 1.1 功能模块划分
 
 #### 1.1.1 FastGPT 智能体管理
+
 - **智能体列表管理**
   - 分页显示智能体
   - 搜索和筛选功能
@@ -47,6 +50,7 @@
   - 审计日志：操作记录、变更历史
 
 #### 1.1.2 自研智能体管理
+
 - **CAD 分析器管理**
   - 模型配置：识别算法、参数调优
   - 历史记录：分析结果查看、批量导出
@@ -58,6 +62,7 @@
   - 使用统计：调用次数、用户分布
 
 #### 1.1.3 智能体状态监控
+
 - **实时状态监控**
   - 健康检查：API连通性、响应时间
   - 错误监控：失败率、错误类型分析
@@ -166,6 +171,7 @@ CREATE TABLE agent_audit_log (
 ### 2.1 用户和权限管理
 
 #### 2.1.1 用户管理
+
 - **用户信息管理**
   - 基本信息：用户名、邮箱、手机号
   - 账号状态：启用/禁用/锁定
@@ -177,6 +183,7 @@ CREATE TABLE agent_audit_log (
   - 角色分配：用户-角色关联管理
 
 #### 2.1.2 权限管理
+
 - **权限矩阵设计**
   - 模块权限：智能体管理、系统管理、模型管理
   - 操作权限：读取、创建、修改、删除
@@ -189,6 +196,7 @@ CREATE TABLE agent_audit_log (
 ### 2.2 系统配置管理
 
 #### 2.2.1 全局配置
+
 - **基础配置**
   - 系统名称、Logo、主题色
   - 时区、语言、日期格式
@@ -200,6 +208,7 @@ CREATE TABLE agent_audit_log (
   - 通知设置：邮件通知、短信通知
 
 #### 2.2.2 模块配置
+
 - **智能体配置**
   - 默认参数、限制设置
   - 缓存策略、监控设置
@@ -211,6 +220,7 @@ CREATE TABLE agent_audit_log (
 ### 2.3 日志和监控
 
 #### 2.3.1 操作日志
+
 - **用户操作日志**
   - 登录日志：成功/失败记录
   - 操作记录：增删改查操作
@@ -222,6 +232,7 @@ CREATE TABLE agent_audit_log (
   - 性能日志：响应时间、资源使用
 
 #### 2.3.2 系统监控
+
 - **服务器监控**
   - CPU使用率、内存使用率
   - 磁盘使用率、网络流量
@@ -235,6 +246,7 @@ CREATE TABLE agent_audit_log (
 ### 2.4 数据备份和恢复
 
 #### 2.4.1 备份策略
+
 - **自动备份**
   - 定时备份：每日/每周/每月
   - 增量备份：仅备份变更数据
@@ -245,6 +257,7 @@ CREATE TABLE agent_audit_log (
   - 选择备份：指定表或数据
 
 #### 2.4.2 恢复功能
+
 - **数据恢复**
   - 时间点恢复：选择恢复时间点
   - 表级恢复：恢复指定表
@@ -421,6 +434,7 @@ CREATE TABLE backup_records (
 ### 3.1 模型配置管理
 
 #### 3.1.1 模型基本信息
+
 - **基础配置**
   - 模型名称、显示名称、描述
   - 提供商、版本号、模型类型
@@ -432,6 +446,7 @@ CREATE TABLE backup_records (
   - 支持的语言、地区限制
 
 #### 3.1.2 模型参数配置
+
 - **基础参数**
   - Temperature（温度）、Top P、Top K
   - Max Tokens（最大输出长度）
@@ -444,6 +459,7 @@ CREATE TABLE backup_records (
   - 自定义参数：模型特定配置
 
 #### 3.1.3 成本和限制
+
 - **成本设置**
   - 输入Token单价、输出Token单价
   - 图像处理单价、音频处理单价
@@ -458,6 +474,7 @@ CREATE TABLE backup_records (
 ### 3.2 性能监控
 
 #### 3.2.1 实时监控
+
 - **性能指标**
   - 响应时间：平均、P95、P99
   - 成功率：请求成功率、错误率
@@ -469,6 +486,7 @@ CREATE TABLE backup_records (
   - 模型加载时间、推理时间
 
 #### 3.2.2 历史分析
+
 - **趋势分析**
   - 性能趋势：响应时间变化趋势
   - 使用趋势：调用量增长趋势
@@ -482,6 +500,7 @@ CREATE TABLE backup_records (
 ### 3.3 资源调度
 
 #### 3.3.1 模型部署
+
 - **部署管理**
   - 部署策略：热部署、蓝绿部署
   - 版本管理：版本切换、回滚
@@ -493,6 +512,7 @@ CREATE TABLE backup_records (
   - 网络资源：带宽分配、连接池管理
 
 #### 3.3.2 负载均衡
+
 - **请求分发**
   - 策略配置：轮询、权重、最小响应时间
   - 健康检查：实例状态检查
@@ -506,6 +526,7 @@ CREATE TABLE backup_records (
 ### 3.4 成本控制
 
 #### 3.4.1 成本分析
+
 - **使用统计**
   - Token使用量：输入/输出统计
   - 调用次数：按模型、按用户、按时间
@@ -517,6 +538,7 @@ CREATE TABLE backup_records (
   - 趋势分析：成本增长趋势
 
 #### 3.4.2 优化建议
+
 - **成本优化**
   - 模型选择：推荐性价比高的模型
   - 参数优化：优化模型参数配置
@@ -692,6 +714,7 @@ CREATE TABLE model_alert_rules (
 ### 4.1 智能体管理API
 
 #### 4.1.1 FastGPT智能体管理
+
 ```typescript
 // 智能体列表
 GET /api/admin/agents/fastgpt
@@ -734,6 +757,7 @@ POST /api/admin/agents/fastgpt/:id/test
 ```
 
 #### 4.1.2 智能体监控API
+
 ```typescript
 // 获取监控数据
 GET /api/admin/agents/:id/monitoring
@@ -749,6 +773,7 @@ GET /api/admin/agents/:id/metrics
 ### 4.2 系统管理API
 
 #### 4.2.1 用户管理API
+
 ```typescript
 // 用户列表
 GET /api/admin/users?page=1&limit=10&search=keyword&role=admin
@@ -782,6 +807,7 @@ DELETE /api/admin/users/:id/roles/:roleId
 ```
 
 #### 4.2.2 角色权限API
+
 ```typescript
 // 角色列表
 GET /api/admin/roles
@@ -810,6 +836,7 @@ PUT /api/admin/config
 ```
 
 #### 4.2.3 日志监控API
+
 ```typescript
 // 操作日志
 GET /api/admin/logs/operations?page=1&limit=10&userId=1&action=create
@@ -827,6 +854,7 @@ POST /api/admin/logs/export
 ### 4.3 模型管理API
 
 #### 4.3.1 模型配置API
+
 ```typescript
 // 模型列表
 GET /api/admin/models?page=1&limit=10&type=openai&status=active
@@ -869,6 +897,7 @@ POST /api/admin/models/:id/test
 ```
 
 #### 4.3.2 性能监控API
+
 ```typescript
 // 获取性能数据
 GET /api/admin/models/:id/performance
@@ -918,6 +947,7 @@ interface PaginatedResponse<T> {
 ### 5.1 组件架构
 
 #### 5.1.1 基础组件
+
 - **Layout组件**
   - AdminLayout：管理端布局
   - Sidebar：侧边栏导航
@@ -932,6 +962,7 @@ interface PaginatedResponse<T> {
   - ErrorBoundary：错误边界
 
 #### 5.1.2 业务组件
+
 - **智能体管理组件**
   - AgentList：智能体列表
   - AgentForm：智能体表单
@@ -954,6 +985,7 @@ interface PaginatedResponse<T> {
 ### 5.2 关键组件实现
 
 #### 5.2.1 智能体列表组件
+
 ```typescript
 // components/admin/agents/AgentList.tsx
 interface AgentListProps {
@@ -1024,6 +1056,7 @@ export function AgentList({ type, onEdit, onDelete }: AgentListProps) {
 ```
 
 #### 5.2.2 智能体监控组件
+
 ```typescript
 // components/admin/agents/AgentMonitor.tsx
 interface AgentMonitorProps {
@@ -1093,6 +1126,7 @@ export function AgentMonitor({ agentId }: AgentMonitorProps) {
 ```
 
 #### 5.2.3 用户管理组件
+
 ```typescript
 // components/admin/users/UserList.tsx
 interface UserListProps {
@@ -1288,7 +1322,7 @@ services:
       context: .
       dockerfile: Dockerfile.admin
     ports:
-      - "3001:3000"
+      - '3001:3000'
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://admin:admin_password@postgres:5432/admin_db
@@ -1309,7 +1343,7 @@ services:
     volumes:
       - postgres_admin_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - '5433:5432'
 
   redis-admin:
     image: redis:7-alpine
@@ -1317,19 +1351,19 @@ services:
     volumes:
       - redis_admin_data:/data
     ports:
-      - "6380:6379"
+      - '6380:6379'
 
   prometheus:
     image: prom/prometheus
     ports:
-      - "9090:9090"
+      - '9090:9090'
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
 
   grafana:
     image: grafana/grafana
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - grafana_data:/var/lib/grafana
 
@@ -1342,18 +1376,21 @@ volumes:
 ## 7. 安全考虑
 
 ### 7.1 认证和授权
+
 - **JWT认证**: 使用JWT进行用户认证
 - **角色权限**: 基于角色的访问控制（RBAC）
 - **IP白名单**: 管理端访问IP限制
 - **登录限制**: 登录失败次数限制
 
 ### 7.2 数据安全
+
 - **敏感数据加密**: 密码、API密钥等敏感数据加密存储
 - **SQL注入防护**: 使用参数化查询和ORM
 - **XSS防护**: 输入验证和输出编码
 - **CSRF防护**: CSRF令牌验证
 
 ### 7.3 操作安全
+
 - **操作审计**: 记录所有管理操作
 - **数据备份**: 定期备份重要数据
 - **权限分离**: 最小权限原则
@@ -1362,18 +1399,21 @@ volumes:
 ## 8. 监控和告警
 
 ### 8.1 性能监控
+
 - **APM监控**: 应用性能监控
 - **数据库监控**: 查询性能、连接池状态
 - **缓存监控**: Redis性能和命中率
 - **API监控**: 响应时间、错误率
 
 ### 8.2 业务监控
+
 - **用户行为**: 用户操作统计
 - **智能体使用**: 各智能体调用情况
 - **模型使用**: 模型调用量和成本
 - **系统健康**: 服务状态和资源使用
 
 ### 8.3 告警策略
+
 - **实时告警**: 关键指标异常立即告警
 - **趋势告警**: 指标趋势异常告警
 - **容量告警**: 资源使用率过高告警
@@ -1382,18 +1422,21 @@ volumes:
 ## 9. 扩展性设计
 
 ### 9.1 插件系统
+
 - **智能体插件**: 支持第三方智能体接入
 - **模型插件**: 支持新模型类型扩展
 - **功能插件**: 支持功能模块扩展
 - **主题插件**: 支持界面主题定制
 
 ### 9.2 API扩展
+
 - **RESTful API**: 标准REST API设计
 - **GraphQL**: 支持GraphQL查询
 - **WebSocket**: 实时数据推送
 - **Webhook**: 事件通知机制
 
 ### 9.3 国际化支持
+
 - **多语言**: 支持中文、英文等多语言
 - **时区支持**: 支持多时区显示
 - **本地化**: 数字、日期、货币格式化

@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, DragEvent } from 'react';
+import NextImage from 'next/image';
 import {
   Upload,
   X,
@@ -27,11 +28,11 @@ const getFileIcon = (file: File) => {
   const type = file.type.split('/')[0];
   const extension = file.name.split('.').pop()?.toLowerCase();
 
-  if (type === 'image') return <Image className='h-8 w-8 text-blue-500' />;
-  if (type === 'video') return <Video className='h-8 w-8 text-purple-500' />;
-  if (type === 'audio') return <Music className='h-8 w-8 text-green-500' />;
+  if (type === 'image') return <Image className='h-8 w-8 text-blue-500' aria-label='图片' />;
+  if (type === 'video') return <Video className='h-8 w-8 text-purple-500' aria-label='视频' />;
+  if (type === 'audio') return <Music className='h-8 w-8 text-green-500' aria-label='音频' />;
   if (extension === 'zip' || extension === 'rar' || extension === '7z') {
-    return <Archive className='h-8 w-8 text-orange-500' />;
+    return <Archive className='h-8 w-8 text-orange-500' aria-label='压缩包' />;
   }
   if (
     extension === 'pdf' ||
@@ -39,9 +40,9 @@ const getFileIcon = (file: File) => {
     extension === 'docx' ||
     extension === 'txt'
   ) {
-    return <FileText className='h-8 w-8 text-red-500' />;
+    return <FileText className='h-8 w-8 text-red-500' aria-label='文档' />;
   }
-  return <File className='h-8 w-8 text-gray-500' />;
+  return <File className='h-8 w-8 text-gray-500' aria-label='文件' />;
 };
 
 // 格式化文件大小
@@ -76,9 +77,11 @@ const FilePreview: React.FC<{
         <div className='flex items-start space-x-3'>
           <div className='flex-shrink-0'>
             {preview ? (
-              <img
+              <NextImage
                 src={preview}
-                alt={file.name}
+                alt={`预览图片: ${file.name}`}
+                width={48}
+                height={48}
                 className='h-12 w-12 object-cover rounded'
               />
             ) : (
@@ -109,7 +112,7 @@ const FilePreview: React.FC<{
             onClick={onRemove}
             className='opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0'
           >
-            <X className='h-3 w-3' />
+            <X className='h-3 w-3' aria-label='删除' />
           </Button>
         </div>
       </CardContent>
@@ -325,7 +328,7 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
             onDrop={handleDrop}
             onClick={openFileDialog}
           >
-            <Upload className='mx-auto h-12 w-12 text-gray-400' />
+            <Upload className='mx-auto h-12 w-12 text-gray-400' aria-label='上传文件' />
             <p className='mt-2 text-sm text-gray-600'>
               拖拽文件到此处或{' '}
               <span className='text-blue-600 hover:text-blue-500 cursor-pointer'>
@@ -346,7 +349,7 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
             disabled={disabled || loading}
             className='w-full'
           >
-            <Upload className='mr-2 h-4 w-4' />
+            <Upload className='mr-2 h-4 w-4' aria-label='上传' />
             {loading ? '上传中...' : '选择文件'}
           </Button>
         )}

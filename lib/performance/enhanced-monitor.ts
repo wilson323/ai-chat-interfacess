@@ -3,115 +3,53 @@
  * 扩展基础监控功能，添加历史数据存储、告警系统、性能分析等
  */
 
-import { PerformanceMetrics, PerformanceMonitor as BaseMonitor } from './monitor';
+import {
+  PerformanceMetrics,
+  PerformanceMonitor as BaseMonitor,
+} from './monitor';
+import { logger } from '@/lib/utils/logger';
+import type {
+  PerformanceAlert as PerformanceAlertType,
+  PerformanceHistory as PerformanceHistoryType,
+  PerformanceOptimization as PerformanceOptimizationType,
+  ABTestVersionMetrics as ABTestVersionMetricsType,
+  PerformanceConfig as PerformanceConfigType,
+  MonitoringPerformanceSummary
+} from '@/types/performance-monitoring';
 
-export interface PerformanceAlert {
-  id: string;
-  type: 'warning' | 'error' | 'critical';
-  metric: string;
-  value: number;
-  threshold: number;
-  message: string;
-  timestamp: number;
-  resolved: boolean;
+// BatteryManager 接口声明
+interface BatteryManager extends EventTarget {
+  charging: boolean;
+  chargingTime: number;
+  dischargingTime: number;
+  level: number;
+  addEventListener(type: string, listener: EventListener | EventListenerObject): void;
+  removeEventListener(type: string, listener: EventListener | EventListenerObject): void;
 }
 
-export interface PerformanceHistory {
-  timestamp: number;
-  metrics: PerformanceMetrics;
-  summary: PerformanceSummary;
+// 扩展 Navigator 接口
+interface NavigatorWithBattery extends Navigator {
+  getBattery?: () => Promise<BatteryManager>;
 }
 
-export interface PerformanceOptimization {
-  id: string;
-  title: string;
-  description: string;
-  impact: 'high' | 'medium' | 'low';
-  difficulty: 'easy' | 'medium' | 'hard';
-  category: 'frontend' | 'backend' | 'network' | 'code';
-  estimatedImprovement: string;
-  steps: string[];
-}
+// 使用导入的类型定义，避免重复
+export interface PerformanceAlert extends PerformanceAlertType {}
 
-export interface ABTestMetrics {
-  version: string;
-  metrics: PerformanceMetrics;
-  sampleSize: number;
-  timestamp: number;
-}
+export interface PerformanceHistory extends PerformanceHistoryType {}
 
-export interface PerformanceSummary {
-  // 基础指标
-  pageLoadTime: number;
-  averageApiResponseTime: number;
-  errorCount: number;
-  resourceCount: number;
+export interface PerformanceOptimization extends PerformanceOptimizationType {}
 
-  // Web Vitals
-  firstContentfulPaint: number;
-  largestContentfulPaint: number;
-  firstInputDelay: number;
-  cumulativeLayoutShift: number;
+export interface ABTestVersionMetrics extends ABTestVersionMetricsType {}
 
-  // 新增指标
-  timeToInteractive: number;
-  totalBlockingTime: number;
-  memoryUsage: number;
-  networkRequests: number;
+export interface PerformanceSummary extends MonitoringPerformanceSummary {}
 
-  // 移动端特定指标
-  isMobile: boolean;
-  touchResponseTime: number;
-  batteryLevel?: number;
-  networkType?: string;
-
-  // 趋势数据
-  trend: 'improving' | 'stable' | 'degrading';
-  changePercentage: number;
-}
-
-export interface PerformanceConfig {
-  // 告警阈值
-  thresholds: {
-    pageLoadTime: { warning: number; critical: number };
-    apiResponseTime: { warning: number; critical: number };
-    errorRate: { warning: number; critical: number };
-    memoryUsage: { warning: number; critical: number };
-    webVitals: {
-      fcp: { warning: number; critical: number };
-      lcp: { warning: number; critical: number };
-      fid: { warning: number; critical: number };
-      cls: { warning: number; critical: number };
-    };
-  };
-
-  // 历史数据配置
-  history: {
-    enabled: boolean;
-    maxRecords: number;
-    retentionHours: number;
-  };
-
-  // 告警配置
-  alerts: {
-    enabled: boolean;
-    debounceMs: number;
-    notificationMethods: ('console' | 'toast' | 'email' | 'webhook')[];
-  };
-
-  // 优化建议配置
-  optimization: {
-    enabled: boolean;
-    autoAnalyze: boolean;
-    analysisIntervalMs: number;
-  };
-}
+export interface PerformanceConfig extends PerformanceConfigType {}
 
 export class PerformanceMonitor extends BaseMonitor {
   private alerts: PerformanceAlert[] = [];
   private history: PerformanceHistory[] = [];
   private optimizations: PerformanceOptimization[] = [];
-  private abTestData: ABTestMetrics[] = [];
+  private abTestData: ABTestVersionMetrics[] = [];
   private config: PerformanceConfig;
   private alertCallbacks: Set<(alert: PerformanceAlert) => void> = new Set();
   private historyTimer: NodeJS.Timeout | null = null;
@@ -135,13 +73,32 @@ export class PerformanceMonitor extends BaseMonitor {
         pageLoadTime: { warning: 3000, critical: 5000 },
         apiResponseTime: { warning: 1000, critical: 2000 },
         errorRate: { warning: 0.05, critical: 0.1 },
-        memoryUsage: { warning: 100 * 1024 * 1024, critical: 200 * 1024 * 1024 }, // 100MB, 200MB
+        memoryUsage: {
+          warning: 100 * 1024 * 1024,
+          critical: 200 * 1024 * 1024,
+        }, // 100MB, 200MB
         webVitals: {
           fcp: { warning: 1800, critical: 3000 },
           lcp: { warning: 2500, critical: 4000 },
           fid: { warning: 100, critical: 300 },
           cls: { warning: 0.1, critical: 0.25 },
         },
+      },
+      sampling: {
+        enabled: true,
+        rate: 0.1,
+        minSampleSize: 100,
+      },
+      storage: {
+        maxHistorySize: 10000,
+        cleanupInterval: 3600000,
+        compressionEnabled: true,
+      },
+      reporting: {
+        enabled: true,
+        interval: 300000,
+        includeRawData: false,
+        format: 'json',
       },
       history: {
         enabled: true,
@@ -173,7 +130,10 @@ export class PerformanceMonitor extends BaseMonitor {
     }
 
     // 启动性能分析
-    if (this.config.optimization.enabled && this.config.optimization.autoAnalyze) {
+    if (
+      this.config.optimization.enabled &&
+      this.config.optimization.autoAnalyze
+    ) {
       this.startPerformanceAnalysis();
     }
 
@@ -187,9 +147,10 @@ export class PerformanceMonitor extends BaseMonitor {
   private detectMobileDevice(): void {
     if (typeof window === 'undefined') return;
 
-    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    ) || window.innerWidth <= 768;
+    this.isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      ) || window.innerWidth <= 768;
   }
 
   private handleResize(): void {
@@ -212,9 +173,9 @@ export class PerformanceMonitor extends BaseMonitor {
     const metrics = this.getMetrics();
     const summary = this.calculateEnhancedSummary(metrics);
 
-    const historyRecord: PerformanceHistory = {
+    const historyRecord: PerformanceHistoryType = {
       timestamp: Date.now(),
-      metrics,
+      metrics: metrics as any,
       summary,
     };
 
@@ -228,8 +189,8 @@ export class PerformanceMonitor extends BaseMonitor {
     const now = Date.now();
     const retentionMs = this.config.history.retentionHours * 60 * 60 * 1000;
 
-    this.history = this.history.filter(record =>
-      now - record.timestamp < retentionMs
+    this.history = this.history.filter(
+      record => now - record.timestamp < retentionMs
     );
 
     // 限制记录数量
@@ -238,14 +199,17 @@ export class PerformanceMonitor extends BaseMonitor {
     }
   }
 
-  private calculateEnhancedSummary(metrics: PerformanceMetrics): PerformanceSummary {
+  private calculateEnhancedSummary(
+    metrics: PerformanceMetrics
+  ): MonitoringPerformanceSummary {
     const baseSummary = this.calculateBaseSummary(metrics);
 
     // 计算新增指标
     const timeToInteractive = this.calculateTimeToInteractive(metrics);
     const totalBlockingTime = this.calculateTotalBlockingTime(metrics);
     const memoryUsage = this.getMemoryUsage();
-    const networkRequests = metrics.apiCalls.length + metrics.resourceTimings.length;
+    const networkRequests =
+      metrics.apiCalls.length + metrics.resourceTimings.length;
 
     // 计算趋势
     const trend = this.calculateTrend();
@@ -266,18 +230,42 @@ export class PerformanceMonitor extends BaseMonitor {
     };
   }
 
-  private calculateBaseSummary(metrics: PerformanceMetrics): Omit<PerformanceSummary, 'timeToInteractive' | 'totalBlockingTime' | 'memoryUsage' | 'networkRequests' | 'isMobile' | 'touchResponseTime' | 'batteryLevel' | 'networkType' | 'trend' | 'changePercentage'> {
+  private calculateBaseSummary(
+    metrics: PerformanceMetrics
+  ): Omit<
+    MonitoringPerformanceSummary,
+    | 'timeToInteractive'
+    | 'totalBlockingTime'
+    | 'memoryUsage'
+    | 'networkRequests'
+    | 'isMobile'
+    | 'touchResponseTime'
+    | 'batteryLevel'
+    | 'networkType'
+    | 'trend'
+    | 'changePercentage'
+  > {
     return {
+      overallScore: 0,
+      lastUpdated: new Date().toISOString(),
+      timestamp: Date.now(),
       pageLoadTime: metrics.pageLoadTime,
-      averageApiResponseTime: metrics.apiCalls.length > 0
-        ? metrics.apiCalls.reduce((sum, call) => sum + call.duration, 0) / metrics.apiCalls.length
-        : 0,
-      errorCount: metrics.errors.length,
-      resourceCount: metrics.resourceTimings.length,
+      domContentLoaded: 0,
       firstContentfulPaint: metrics.firstContentfulPaint,
       largestContentfulPaint: metrics.largestContentfulPaint,
       firstInputDelay: metrics.firstInputDelay,
       cumulativeLayoutShift: metrics.cumulativeLayoutShift,
+      averageApiResponseTime:
+        metrics.apiCalls.length > 0
+          ? metrics.apiCalls.reduce((sum, call) => sum + call.duration, 0) /
+            metrics.apiCalls.length
+          : 0,
+      apiCallCount: metrics.apiCalls.length,
+      apiErrorRate: 0,
+      networkErrorRate: 0,
+      errorCount: metrics.errors.length,
+      errorRate: 0,
+      resourceCount: metrics.resourceTimings.length,
     };
   }
 
@@ -285,7 +273,9 @@ export class PerformanceMonitor extends BaseMonitor {
     // 简化的TTI计算，实际应该基于长任务和DOM变化
     if (typeof window === 'undefined') return 0;
 
-    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const nav = performance.getEntriesByType(
+      'navigation'
+    )[0] as PerformanceNavigationTiming;
     if (!nav) return 0;
 
     // 估算TTI为FCP + 第一个长任务的开始时间
@@ -295,7 +285,7 @@ export class PerformanceMonitor extends BaseMonitor {
     return Math.max(metrics.firstContentfulPaint, longTasks[0].startTime);
   }
 
-  private calculateTotalBlockingTime(metrics: PerformanceMetrics): number {
+  private calculateTotalBlockingTime(_metrics: PerformanceMetrics): number {
     if (typeof window === 'undefined') return 0;
 
     const longTasks = performance.getEntriesByType('long-task');
@@ -306,15 +296,16 @@ export class PerformanceMonitor extends BaseMonitor {
   }
 
   private getMemoryUsage(): number {
-    if (typeof window === 'undefined' || !(performance as any).memory) return 0;
+    if (typeof window === 'undefined' || !(performance as Performance & { memory?: { usedJSHeapSize: number } }).memory)
+      return 0;
 
-    return (performance as any).memory.usedJSHeapSize;
+    return (performance as Performance & { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
   }
 
   private getTouchResponseTime(metrics: PerformanceMetrics): number {
     // 简化的触摸响应时间计算
-    const touchInteractions = metrics.userInteractions.filter(i =>
-      i.type === 'touchstart' || i.type === 'touchend'
+    const touchInteractions = metrics.userInteractions.filter(
+      i => i.type === 'touchstart' || i.type === 'touchend'
     );
 
     if (touchInteractions.length < 2) return 0;
@@ -323,8 +314,12 @@ export class PerformanceMonitor extends BaseMonitor {
     let count = 0;
 
     for (let i = 1; i < touchInteractions.length; i++) {
-      if (touchInteractions[i].type === 'touchend' && touchInteractions[i-1].type === 'touchstart') {
-        totalTime += touchInteractions[i].timestamp - touchInteractions[i-1].timestamp;
+      if (
+        touchInteractions[i].type === 'touchend' &&
+        touchInteractions[i - 1].type === 'touchstart'
+      ) {
+        totalTime +=
+          touchInteractions[i].timestamp - touchInteractions[i - 1].timestamp;
         count++;
       }
     }
@@ -333,16 +328,18 @@ export class PerformanceMonitor extends BaseMonitor {
   }
 
   private getBatteryLevel(): number | undefined {
-    if (typeof window === 'undefined' || !(navigator as any).getBattery) return undefined;
+    if (typeof window === 'undefined' || !(navigator as NavigatorWithBattery).getBattery)
+      return undefined;
 
     // 异步获取电池信息，这里返回undefined
     return undefined;
   }
 
   private getNetworkType(): string | undefined {
-    if (typeof window === 'undefined' || !(navigator as any).connection) return undefined;
+    if (typeof window === 'undefined' || !(navigator as Navigator & { connection?: { effectiveType: string } }).connection)
+      return undefined;
 
-    return (navigator as any).connection.effectiveType;
+    return (navigator as Navigator & { connection: { effectiveType: string } }).connection.effectiveType;
   }
 
   private calculateTrend(): 'improving' | 'stable' | 'degrading' {
@@ -353,8 +350,11 @@ export class PerformanceMonitor extends BaseMonitor {
 
     if (older.length === 0) return 'stable';
 
-    const recentAvgLoadTime = recent.reduce((sum, h) => sum + h.summary.pageLoadTime, 0) / recent.length;
-    const olderAvgLoadTime = older.reduce((sum, h) => sum + h.summary.pageLoadTime, 0) / older.length;
+    const recentAvgLoadTime =
+      recent.reduce((sum, h) => sum + h.summary.pageLoadTime, 0) /
+      recent.length;
+    const olderAvgLoadTime =
+      older.reduce((sum, h) => sum + h.summary.pageLoadTime, 0) / older.length;
 
     const change = (recentAvgLoadTime - olderAvgLoadTime) / olderAvgLoadTime;
 
@@ -372,7 +372,9 @@ export class PerformanceMonitor extends BaseMonitor {
     const latestLoadTime = latest.summary.pageLoadTime;
     const previousLoadTime = previous.summary.pageLoadTime;
 
-    return previousLoadTime > 0 ? ((latestLoadTime - previousLoadTime) / previousLoadTime) * 100 : 0;
+    return previousLoadTime > 0
+      ? ((latestLoadTime - previousLoadTime) / previousLoadTime) * 100
+      : 0;
   }
 
   private monitorAdditionalMetrics(): void {
@@ -381,7 +383,7 @@ export class PerformanceMonitor extends BaseMonitor {
     // 监控长任务
     if ('PerformanceObserver' in window) {
       try {
-        const longTaskObserver = new PerformanceObserver((list) => {
+        const longTaskObserver = new PerformanceObserver(list => {
           list.getEntries().forEach(entry => {
             // 长任务监控逻辑
             this.checkLongTaskThreshold(entry as PerformanceEntry);
@@ -389,7 +391,7 @@ export class PerformanceMonitor extends BaseMonitor {
         });
         longTaskObserver.observe({ entryTypes: ['long-task'] });
       } catch (e) {
-        console.warn('Long task monitoring not supported');
+        logger.warn('Long task monitoring not supported');
       }
     }
 
@@ -416,10 +418,11 @@ export class PerformanceMonitor extends BaseMonitor {
   }
 
   private startMemoryMonitoring(): void {
-    if (typeof window === 'undefined' || !(performance as any).memory) return;
+    if (typeof window === 'undefined' || !(performance as Performance & { memory?: { usedJSHeapSize: number } }).memory)
+      return;
 
     setInterval(() => {
-      const memory = (performance as any).memory;
+      const memory = (performance as Performance & { memory: { usedJSHeapSize: number } }).memory;
       const usedJSHeapSize = memory.usedJSHeapSize;
 
       this.checkMemoryThreshold(usedJSHeapSize);
@@ -449,22 +452,35 @@ export class PerformanceMonitor extends BaseMonitor {
   }
 
   private startNetworkMonitoring(): void {
-    if (typeof window === 'undefined' || !(navigator as any).connection) return;
+    if (typeof window === 'undefined' || !(navigator as Navigator & { connection?: { effectiveType: string; addEventListener: (event: string, handler: () => void) => void } }).connection)
+      return;
 
-    const connection = (navigator as any).connection;
+    const connection = (navigator as Navigator & { connection: { effectiveType: string; addEventListener: (event: string, handler: () => void) => void } }).connection;
 
     connection.addEventListener('change', () => {
+      // 将网络类型转换为数值表示
+      const networkTypeMap: Record<string, number> = {
+        'slow-2g': 1,
+        '2g': 2,
+        '3g': 3,
+        '4g': 4,
+        '5g': 5,
+      };
+      const networkValue = networkTypeMap[connection.effectiveType] || 0;
+
       this.createAlert({
         type: 'warning',
         metric: 'networkChange',
-        value: connection.effectiveType,
+        value: networkValue,
         threshold: 0,
         message: `网络状态变化: ${connection.effectiveType}`,
       });
     });
   }
 
-  private createAlert(alertData: Omit<PerformanceAlert, 'id' | 'timestamp' | 'resolved'>): void {
+  private createAlert(
+    alertData: Omit<PerformanceAlert, 'id' | 'timestamp' | 'resolved'>
+  ): void {
     if (!this.config.alerts.enabled) return;
 
     const alert: PerformanceAlert = {
@@ -475,10 +491,11 @@ export class PerformanceMonitor extends BaseMonitor {
     };
 
     // 防抖处理
-    const recentAlert = this.alerts.find(a =>
-      a.metric === alert.metric &&
-      !a.resolved &&
-      Date.now() - a.timestamp < this.config.alerts.debounceMs
+    const recentAlert = this.alerts.find(
+      a =>
+        a.metric === alert.metric &&
+        !a.resolved &&
+        Date.now() - a.timestamp < this.config.alerts.debounceMs
     );
 
     if (recentAlert) return;
@@ -490,7 +507,7 @@ export class PerformanceMonitor extends BaseMonitor {
   private notifyAlert(alert: PerformanceAlert): void {
     // 控制台日志
     if (this.config.alerts.notificationMethods.includes('console')) {
-      console.warn(`[Performance Alert] ${alert.message}`, alert);
+      logger.warn(`[Performance Alert] ${alert.message}`, alert);
     }
 
     // 通知回调
@@ -515,7 +532,10 @@ export class PerformanceMonitor extends BaseMonitor {
     this.checkThresholds(summary);
   }
 
-  private generateOptimizations(metrics: PerformanceMetrics, summary: PerformanceSummary): PerformanceOptimization[] {
+  private generateOptimizations(
+    _metrics: PerformanceMetrics,
+    summary: MonitoringPerformanceSummary
+  ): PerformanceOptimization[] {
     const optimizations: PerformanceOptimization[] = [];
 
     // 页面加载时间优化
@@ -524,35 +544,39 @@ export class PerformanceMonitor extends BaseMonitor {
         id: `opt_page_load_${Date.now()}`,
         title: '优化页面加载时间',
         description: `当前页面加载时间为${summary.pageLoadTime.toFixed(0)}ms，建议进行优化`,
-        impact: summary.pageLoadTime > this.config.thresholds.pageLoadTime.critical ? 'high' : 'medium',
+        impact:
+          summary.pageLoadTime > this.config.thresholds.pageLoadTime.critical
+            ? 'high'
+            : 'medium',
         difficulty: 'medium',
         category: 'frontend',
         estimatedImprovement: '20-40%',
-        steps: [
-          '优化图片资源',
-          '启用代码分割',
-          '使用缓存策略',
-          '优化第三方资源加载'
-        ]
+        implementation: '优化图片资源、启用代码分割、使用缓存策略、优化第三方资源加载',
+        priority: 1,
+        tags: ['performance', 'frontend'],
       });
     }
 
     // API响应时间优化
-    if (summary.averageApiResponseTime > this.config.thresholds.apiResponseTime.warning) {
+    if (
+      summary.averageApiResponseTime >
+      this.config.thresholds.apiResponseTime.warning
+    ) {
       optimizations.push({
         id: `opt_api_response_${Date.now()}`,
         title: '优化API响应时间',
         description: `平均API响应时间为${summary.averageApiResponseTime.toFixed(0)}ms，需要优化`,
-        impact: summary.averageApiResponseTime > this.config.thresholds.apiResponseTime.critical ? 'high' : 'medium',
+        impact:
+          summary.averageApiResponseTime >
+          this.config.thresholds.apiResponseTime.critical
+            ? 'high'
+            : 'medium',
         difficulty: 'medium',
         category: 'backend',
         estimatedImprovement: '30-50%',
-        steps: [
-          '优化数据库查询',
-          '实现API缓存',
-          '使用CDN加速',
-          '优化服务器配置'
-        ]
+        implementation: '优化数据库查询、实现API缓存、使用CDN加速、优化服务器配置',
+        priority: 2,
+        tags: ['performance', 'backend'],
       });
     }
 
@@ -562,16 +586,16 @@ export class PerformanceMonitor extends BaseMonitor {
         id: `opt_memory_${Date.now()}`,
         title: '优化内存使用',
         description: `内存使用过高: ${(summary.memoryUsage / 1024 / 1024).toFixed(1)}MB`,
-        impact: summary.memoryUsage > this.config.thresholds.memoryUsage.critical ? 'high' : 'medium',
+        impact:
+          summary.memoryUsage > this.config.thresholds.memoryUsage.critical
+            ? 'high'
+            : 'medium',
         difficulty: 'medium',
         category: 'code',
         estimatedImprovement: '25-40%',
-        steps: [
-          '检查内存泄漏',
-          '优化数据结构',
-          '使用对象池',
-          '及时清理不用的资源'
-        ]
+        implementation: '检查内存泄漏、优化数据结构、使用对象池、及时清理不用的资源',
+        priority: 3,
+        tags: ['performance', 'memory'],
       });
     }
 
@@ -586,12 +610,9 @@ export class PerformanceMonitor extends BaseMonitor {
           difficulty: 'easy',
           category: 'frontend',
           estimatedImprovement: '15-25%',
-          steps: [
-            '减少DOM操作',
-            '使用CSS transforms',
-            '优化事件监听器',
-            '启用硬件加速'
-          ]
+          implementation: '减少DOM操作、使用CSS transforms、优化事件监听器、启用硬件加速',
+          priority: 4,
+          tags: ['performance', 'mobile', 'frontend'],
         });
       }
     }
@@ -599,7 +620,7 @@ export class PerformanceMonitor extends BaseMonitor {
     return optimizations;
   }
 
-  private checkThresholds(summary: PerformanceSummary): void {
+  private checkThresholds(summary: MonitoringPerformanceSummary): void {
     // 检查页面加载时间
     if (summary.pageLoadTime > this.config.thresholds.pageLoadTime.critical) {
       this.createAlert({
@@ -609,7 +630,9 @@ export class PerformanceMonitor extends BaseMonitor {
         threshold: this.config.thresholds.pageLoadTime.critical,
         message: `页面加载时间过长: ${summary.pageLoadTime.toFixed(0)}ms`,
       });
-    } else if (summary.pageLoadTime > this.config.thresholds.pageLoadTime.warning) {
+    } else if (
+      summary.pageLoadTime > this.config.thresholds.pageLoadTime.warning
+    ) {
       this.createAlert({
         type: 'warning',
         metric: 'pageLoadTime',
@@ -643,7 +666,7 @@ export class PerformanceMonitor extends BaseMonitor {
     }
   }
 
-  private checkWebVitalsThresholds(summary: PerformanceSummary): void {
+  private checkWebVitalsThresholds(summary: MonitoringPerformanceSummary): void {
     const { webVitals } = this.config.thresholds;
 
     // FCP
@@ -730,7 +753,9 @@ export class PerformanceMonitor extends BaseMonitor {
     this.alertCallbacks.add(callback);
   }
 
-  public removeAlertCallback(callback: (alert: PerformanceAlert) => void): void {
+  public removeAlertCallback(
+    callback: (alert: PerformanceAlert) => void
+  ): void {
     this.alertCallbacks.delete(callback);
   }
 
@@ -743,17 +768,17 @@ export class PerformanceMonitor extends BaseMonitor {
 
   public recordABTest(version: string): void {
     const metrics = this.getMetrics();
-    const summary = this.calculateEnhancedSummary(metrics);
+    // const summary = this.calculateEnhancedSummary(metrics);
 
     this.abTestData.push({
       version,
-      metrics,
+      metrics: metrics as any,
       sampleSize: 1,
       timestamp: Date.now(),
     });
   }
 
-  public getABTestResults(): ABTestMetrics[] {
+  public getABTestResults(): ABTestVersionMetrics[] {
     return [...this.abTestData];
   }
 
@@ -762,7 +787,7 @@ export class PerformanceMonitor extends BaseMonitor {
     alerts: PerformanceAlert[];
     optimizations: PerformanceOptimization[];
     history: PerformanceHistory[];
-    abTestResults: ABTestMetrics[];
+    abTestResults: ABTestVersionMetrics[];
     generatedAt: number;
   } {
     return {
@@ -801,12 +826,5 @@ export class PerformanceMonitor extends BaseMonitor {
 // 创建增强的性能监控实例
 export const enhancedMonitor = new PerformanceMonitor();
 
-// 导出类型和实例
-export type {
-  PerformanceAlert,
-  PerformanceHistory,
-  PerformanceOptimization,
-  ABTestMetrics,
-  PerformanceSummary,
-  PerformanceConfig,
-};
+// 导出实例
+// 类型已在上面通过 export interface 导出

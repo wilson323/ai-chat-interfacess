@@ -1,0 +1,77 @@
+---
+globs: *.tsx,*.jsx
+description: React和JSX编码标准
+---
+
+# React/JSX编码标准
+
+## JSX特殊字符处理
+**严格禁止使用HTML实体编码，必须使用JavaScript表达式**
+
+```typescript
+// ✅ 正确：使用JavaScript表达式
+<label>响应时间 {'<'} 50ms</label>
+<label>内存使用 {'<'} 100MB</label>
+<label>价格范围 {'$'}100 - {'$'}500</label>
+
+// ❌ 错误：直接使用特殊字符
+<label>响应时间 < 50ms</label>
+
+// ❌ 错误：HTML实体编码
+<label>响应时间 &lt; 50ms</label>
+<label>内存使用 &lt; 100MB</label>
+```
+
+## 组件定义规范
+```typescript
+// ✅ 正确：函数组件定义
+interface UserFormProps {
+  userId: string;
+  onSubmit: (data: UserData) => void;
+}
+
+export function UserForm({ userId, onSubmit }: UserFormProps) {
+  // 组件逻辑
+}
+```
+
+## 事件处理规范
+```typescript
+// ✅ 正确：类型安全的事件处理
+const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+  // 处理逻辑
+};
+
+// ✅ 正确：异步事件处理
+const handleAsyncSubmit = async (event: React.FormEvent) => {
+  try {
+    await submitData();
+  } catch (error) {
+    console.error('提交失败:', error);
+  }
+};
+```
+
+## 组件结构规范
+1. 导入语句
+2. 类型定义
+3. 组件定义
+4. 状态定义
+5. 副作用（useEffect）
+6. 事件处理函数
+7. 渲染逻辑
+
+## 性能优化要求
+- 使用React.memo包装昂贵组件
+- 合理使用useMemo和useCallback
+- 避免在render中创建新对象
+- 使用key属性优化列表渲染
+
+## 禁止事项
+- ❌ 使用HTML实体编码（&lt;, &gt;, &amp;等）
+- ❌ 使用默认导出（除非特殊情况）
+- ❌ 直接修改props
+- ❌ 在render中创建新函数
+
+参考文件：[components/admin/performance/MobilePerformance.tsx](mdc:components/admin/performance/MobilePerformance.tsx)

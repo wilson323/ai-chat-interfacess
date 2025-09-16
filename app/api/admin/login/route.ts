@@ -15,9 +15,6 @@ async function getAdminPassword() {
   return process.env.ADMIN_PASSWORD || DEFAULT_PASSWORD;
 }
 
-// 用于追踪登录尝试
-const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
-
 export async function POST(req: NextRequest) {
   const { username, password } = await req.json();
   let valid = false;
@@ -25,8 +22,12 @@ export async function POST(req: NextRequest) {
   // 检查默认管理员凭据（仅开发环境）
   const defaultAdminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
   const defaultAdminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin';
-  
-  if (username === defaultAdminUsername && password === defaultAdminPassword && process.env.NODE_ENV !== 'production') {
+
+  if (
+    username === defaultAdminUsername &&
+    password === defaultAdminPassword &&
+    process.env.NODE_ENV !== 'production'
+  ) {
     valid = true;
   } else {
     // 兼容自定义密码和哈希

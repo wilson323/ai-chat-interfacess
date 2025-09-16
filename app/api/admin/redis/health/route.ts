@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         details: {
           ...health.details,
           memory: Number(health.details.memory.toFixed(2)),
-        }
+        },
       });
     }
 
@@ -55,22 +55,25 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Redis健康检查API错误:', error);
 
-    return NextResponse.json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stats: {
-        hits: 0,
-        misses: 0,
-        hitRate: 0,
-        totalKeys: 0,
-        memoryUsage: 0,
-        commandsPerSecond: 0,
-        averageResponseTime: 0,
-        slowCommands: 0,
-        connectionStatus: 'disconnected',
+    return NextResponse.json(
+      {
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stats: {
+          hits: 0,
+          misses: 0,
+          hitRate: 0,
+          totalKeys: 0,
+          memoryUsage: 0,
+          commandsPerSecond: 0,
+          averageResponseTime: 0,
+          slowCommands: 0,
+          connectionStatus: 'disconnected',
+        },
       },
-    }, { status: 503 });
+      { status: 503 }
+    );
   }
 }
 
@@ -80,7 +83,7 @@ export async function GET(request: NextRequest) {
  *
  * 尝试重新连接Redis服务
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // 断开现有连接
     await redisManager.disconnect();
@@ -94,23 +97,30 @@ export async function POST(request: NextRequest) {
     // 执行健康检查
     const health = await redisManager.healthCheck();
 
-    return NextResponse.json({
-      status: health.status,
-      message: health.status === 'healthy'
-        ? 'Redis连接修复成功'
-        : 'Redis连接修复失败',
-      timestamp: new Date().toISOString(),
-      responseTime: health.responseTime,
-      error: health.error,
-    }, { status: health.status === 'healthy' ? 200 : 503 });
+    return NextResponse.json(
+      {
+        status: health.status,
+        message:
+          health.status === 'healthy'
+            ? 'Redis连接修复成功'
+            : 'Redis连接修复失败',
+        timestamp: new Date().toISOString(),
+        responseTime: health.responseTime,
+        error: health.error,
+      },
+      { status: health.status === 'healthy' ? 200 : 503 }
+    );
   } catch (error) {
     console.error('Redis连接修复API错误:', error);
 
-    return NextResponse.json({
-      status: 'unhealthy',
-      message: 'Redis连接修复失败',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 503 });
+    return NextResponse.json(
+      {
+        status: 'unhealthy',
+        message: 'Redis连接修复失败',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 503 }
+    );
   }
 }

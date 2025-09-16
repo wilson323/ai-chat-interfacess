@@ -2,24 +2,13 @@
 // 所有接口严格遵循 FASTGPT API 规范
 // 仅用于会话型智能体的存储、配置、管理
 
-import type {
-  StorageStats,
-  ChatSessionIndexItem,
-  StorageProvider,
-} from '../../shared/types';
+import type { StorageStats, StorageProvider } from '../../shared/types';
 import {
   getStorageMeta,
   saveStorageMeta,
   defaultStorageProvider,
-  safeJSONParse,
-  safeJSONStringify,
 } from '../../shared/storage-utils';
-import {
-  MESSAGES_PREFIX,
-  CHAT_INDEX_KEY,
-  STORAGE_META_KEY,
-  MAX_STORAGE_SIZE_MB,
-} from '../../shared/constants';
+import { MESSAGES_PREFIX, CHAT_INDEX_KEY, MAX_STORAGE_SIZE_MB } from '../../shared/constants';
 import {
   loadMessagesFromStorage,
   saveMessagesToStorage,

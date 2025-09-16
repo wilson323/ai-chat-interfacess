@@ -1,0 +1,275 @@
+---
+globs: *.test.ts,*.test.tsx,*.spec.ts,*.spec.tsx
+description: 测试标准和最佳实践
+---
+
+# 测试标准和最佳实践
+
+## 核心原则
+- 测试优先：先写测试，后写实现
+- 使用真实数据测试，禁止模拟数据
+- 确保100%通过（覆盖率 >80%）
+- 集成钩子执行测试
+- 在任务间验证架构符合度
+
+## 测试文件组织
+基于 [__tests__](mdc:__tests__) 目录结构：
+
+```
+__tests__/
+  components/          # 组件测试
+  api/                # API测试
+  hooks/              # 钩子测试
+  lib/                # 工具函数测试
+  integration/        # 集成测试
+  e2e/                # 端到端测试
+```
+
+## 组件测试规范
+
+### 基础组件测试
+```typescript
+// ✅ 正确：组件测试
+import { render, screen, fireEvent } from '@testing-library/react';
+import { UserForm } from '@/components/admin/user-management/user-form';
+
+describe('UserForm', () => {
+  const mockProps = {
+    userId: '123',
+    onSubmit: jest.fn(),
+    onCancel: jest.fn()
+  };
+
+  it('应该正确渲染用户表单', () => {
+    render(<UserForm {...mockProps} />);
+
+    expect(screen.getByLabelText('用户名')).toBeInTheDocument();
+    expect(screen.getByLabelText('邮箱')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '提交' })).toBeInTheDocument();
+  });
+
+  it('应该处理表单提交', async () => {
+    render(<UserForm {...mockProps} />);
+
+    const submitButton = screen.getByRole('button', { name: '提交' });
+    fireEvent.click(submitButton);
+
+    expect(mockProps.onSubmit).toHaveBeenCalled();
+  });
+});
+```
+
+### 异步组件测试
+```typescript
+// ✅ 正确：异步组件测试
+import { render, screen, waitFor } from '@testing-library/react';
+import { UserList } from '@/components/admin/user-management/user-list';
+
+describe('UserList', () => {
+  it('应该加载并显示用户列表', async () => {
+    render(<UserList />);
+
+    // 等待加载完成
+    await waitFor(() => {
+      expect(screen.getByText('用户列表')).toBeInTheDocument();
+    });
+
+    // 验证用户数据
+    expect(screen.getByText('张三')).toBeInTheDocument();
+    expect(screen.getByText('李四')).toBeInTheDocument();
+  });
+});
+```
+
+## API测试规范
+
+### API路由测试
+```typescript
+// ✅ 正确：API路由测试
+import { NextRequest } from 'next/server';
+import { GET, POST } from '@/app/api/users/route';
+
+describe('/api/users', () => {
+  describe('GET', () => {
+    it('应该返回用户列表', async () => {
+      const request = new NextRequest('http://localhost:3000/api/users');
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(Array.isArray(data.data)).toBe(true);
+    });
+  });
+
+  describe('POST', () => {
+    it('应该创建新用户', async () => {
+      const request = new NextRequest('http://localhost:3000/api/users', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: '测试用户',
+          email: 'test@example.com'
+        })
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(data.success).toBe(true);
+      expect(data.data.name).toBe('测试用户');
+    });
+  });
+});
+```
+
+## 钩子测试规范
+
+### 自定义钩子测试
+```typescript
+// ✅ 正确：钩子测试
+import { renderHook, act } from '@testing-library/react';
+import { useUserData } from '@/hooks/useUserData';
+
+describe('useUserData', () => {
+  it('应该正确管理用户数据状态', () => {
+    const { result } = renderHook(() => useUserData('123'));
+
+    expect(result.current.user).toBeNull();
+    expect(result.current.loading).toBe(true);
+
+    act(() => {
+      result.current.fetchUser();
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.user).toBeDefined();
+  });
+});
+```
+
+## 集成测试规范
+
+### 端到端测试
+```typescript
+// ✅ 正确：端到端测试
+import { test, expect } from '@playwright/test';
+
+test('用户管理流程', async ({ page }) => {
+  // 登录
+  await page.goto('/login');
+  await page.fill('[name="email"]', 'admin@example.com');
+  await page.fill('[name="password"]', 'password');
+  await page.click('button[type="submit"]');
+
+  // 导航到用户管理
+  await page.goto('/admin/users');
+  await expect(page.locator('h1')).toContainText('用户管理');
+
+  // 创建新用户
+  await page.click('button:has-text("添加用户")');
+  await page.fill('[name="name"]', '新用户');
+  await page.fill('[name="email"]', 'newuser@example.com');
+  await page.click('button:has-text("保存")');
+
+  // 验证用户创建成功
+  await expect(page.locator('text=新用户')).toBeVisible();
+});
+```
+
+## 测试数据管理
+
+### 真实数据测试
+```typescript
+// ✅ 正确：使用真实数据
+import { createTestUser, createTestDatabase } from '@/lib/test-utils';
+
+describe('用户服务', () => {
+  beforeEach(async () => {
+    await createTestDatabase();
+  });
+
+  it('应该创建用户', async () => {
+    const userData = createTestUser({
+      name: '测试用户',
+      email: 'test@example.com'
+    });
+
+    const user = await userService.createUser(userData);
+
+    expect(user.id).toBeDefined();
+    expect(user.name).toBe('测试用户');
+    expect(user.email).toBe('test@example.com');
+  });
+});
+```
+
+## 测试覆盖率要求
+
+### 覆盖率配置
+基于 [jest.config.js](mdc:jest.config.js) 配置：
+
+```javascript
+module.exports = {
+  collectCoverage: true,
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    }
+  }
+};
+```
+
+### 覆盖率检查
+```bash
+# 运行测试并生成覆盖率报告
+npm run test:coverage
+
+# 检查覆盖率是否达标
+npm run test:coverage:check
+```
+
+## 测试最佳实践
+
+### 测试命名规范
+```typescript
+// ✅ 正确：描述性测试名称
+describe('UserForm组件', () => {
+  it('应该在提交时验证必填字段', () => {});
+  it('应该在验证失败时显示错误信息', () => {});
+  it('应该在成功提交后调用onSubmit回调', () => {});
+});
+```
+
+### 测试组织
+```typescript
+// ✅ 正确：测试组织
+describe('用户管理功能', () => {
+  describe('用户表单', () => {
+    describe('验证逻辑', () => {
+      it('应该验证邮箱格式', () => {});
+      it('应该验证密码强度', () => {});
+    });
+
+    describe('提交逻辑', () => {
+      it('应该处理成功提交', () => {});
+      it('应该处理提交失败', () => {});
+    });
+  });
+});
+```
+
+## 检查清单
+- [ ] 所有组件都有测试
+- [ ] 所有API路由都有测试
+- [ ] 所有自定义钩子都有测试
+- [ ] 使用真实数据测试
+- [ ] 测试覆盖率 >80%
+- [ ] 测试命名清晰描述
+- [ ] 测试组织合理
+- [ ] 异步测试正确处理
+
+参考测试文件：[__tests__](mdc:__tests__)

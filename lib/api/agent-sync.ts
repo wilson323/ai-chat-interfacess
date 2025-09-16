@@ -1,6 +1,7 @@
-import type { Agent } from '@/types/agent';
+import type { Agent } from '../../types/agent';
 import { getDeviceId } from '@/lib/utils';
-import { API_CONSTANTS } from '@/lib/storage/shared/constants';
+import { API_CONSTANTS } from '../storage/shared/constants';
+import { logger } from '@/lib/utils/logger';
 
 // 存储上次同步时间
 let lastSyncTime = 0;
@@ -36,7 +37,7 @@ export async function syncAgents(
 
   try {
     isSyncing = true;
-    console.log('开始同步智能体...', { force, locallyModifiedAgentIds });
+    logger.debug(`开始同步智能体... force: ${force}, locallyModifiedAgentIds: ${JSON.stringify(locallyModifiedAgentIds)}`);
 
     // 获取设备ID
     const deviceId = getDeviceId();
@@ -60,7 +61,7 @@ export async function syncAgents(
     lastSyncTime = now;
 
     if (!response.ok) {
-      console.warn('同步智能体失败:', response.status);
+      logger.warn('同步智能体失败:', response.status);
       return currentAgents;
     }
 
@@ -68,18 +69,18 @@ export async function syncAgents(
 
     // 如果没有变化，返回当前智能体
     if (!data.hasUpdates) {
-      console.log('智能体没有更新');
+      logger.debug('智能体没有更新');
       return currentAgents;
     }
 
-    console.log('收到智能体更新:', data.agents.length);
+    logger.debug('收到智能体更新:', data.agents.length);
 
     // 合并服务器返回的智能体和本地智能体
     // 保留本地的chatId等状态，以及本地修改的智能体
     const updatedAgents = currentAgents.map(localAgent => {
       // 如果是本地修改的智能体，保留本地版本
       if (locallyModifiedAgentIds.includes(localAgent.id)) {
-        console.log(`保留本地修改的智能体: ${localAgent.id}`);
+        logger.debug(`保留本地修改的智能体: ${localAgent.id}`);
         return localAgent;
       }
 
@@ -87,7 +88,7 @@ export async function syncAgents(
         (a: Agent) => a.id === localAgent.id
       );
       if (serverAgent) {
-        console.log(`更新智能体: ${localAgent.id}`);
+        logger.debug(`更新智能体: ${localAgent.id}`);
         return {
           ...serverAgent,
           chatId: localAgent.chatId, // 保留本地会话ID
@@ -108,13 +109,13 @@ export async function syncAgents(
       }));
 
     if (newAgents.length > 0) {
-      console.log(`添加新智能体: ${newAgents.length}个`);
+      logger.debug(`添加新智能体: ${newAgents.length}个`);
     }
 
     // 返回合并后的智能体列表
     return [...updatedAgents, ...newAgents];
   } catch (error) {
-    console.error('同步智能体时出错:', error);
+    logger.error('同步智能体时出错:', error);
     return currentAgents;
   } finally {
     isSyncing = false;
@@ -171,7 +172,7 @@ export async function checkAgentUpdate(
       apiEndpoint: API_CONSTANTS.FASTGPT_API_ENDPOINT, // 确保更新的智能体使用正确的API端点
     };
   } catch (error) {
-    console.error('检查智能体更新时出错:', error);
+    logger.error('检查智能体更新时出错:', error);
     return null;
   }
 }

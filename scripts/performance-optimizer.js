@@ -60,8 +60,12 @@ function analyzeImages() {
     const stats = fs.statSync(filePath);
     totalSize += stats.size;
 
-    if (stats.size > 1024 * 1024) { // 大于1MB
-      largeFiles.push({ file, size: (stats.size / 1024 / 1024).toFixed(2) + 'MB' });
+    if (stats.size > 1024 * 1024) {
+      // 大于1MB
+      largeFiles.push({
+        file,
+        size: (stats.size / 1024 / 1024).toFixed(2) + 'MB',
+      });
     }
   });
 
@@ -171,7 +175,6 @@ function main() {
 
     console.log('🎉 性能优化分析完成!');
     console.log('📝 详细报告已生成，请根据建议进行优化。');
-
   } catch (error) {
     console.error('❌ 分析过程中出现错误:', error.message);
     process.exit(1);

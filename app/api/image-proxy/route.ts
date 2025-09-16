@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import sequelize from '@/lib/db/sequelize';
 
 // 允许的域名白名单
 const ALLOWED_DOMAINS = [

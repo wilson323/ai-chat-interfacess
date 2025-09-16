@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/toast/use-toast';
@@ -41,7 +40,7 @@ interface FormData {
   confirmPassword: string;
   role: UserRole;
   status: UserStatus;
-  permissions: string[];
+  permissions: Permission[];
   department: string;
   phone: string;
 }
@@ -73,13 +72,8 @@ const roleDefaultPermissions = {
     Permission.DATA_EXPORT,
     Permission.SYSTEM_MONITOR,
   ],
-  [UserRole.OPERATOR]: [
-    Permission.AGENT_MANAGE,
-    Permission.SYSTEM_MONITOR,
-  ],
-  [UserRole.VIEWER]: [
-    Permission.SYSTEM_MONITOR,
-  ],
+  [UserRole.OPERATOR]: [Permission.AGENT_MANAGE, Permission.SYSTEM_MONITOR],
+  [UserRole.VIEWER]: [Permission.SYSTEM_MONITOR],
 };
 
 export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
@@ -138,12 +132,12 @@ export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
   };
 
   // 处理权限变更
-  const handlePermissionChange = (permission: string, checked: boolean) => {
+  const handlePermissionChange = (permission: Permission, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
       permissions: checked
-        ? [...prev.permissions, permission]
-        : prev.permissions.filter(p => p !== permission),
+        ? [...prev.permissions, permission] as Permission[]
+        : prev.permissions.filter(p => p !== permission) as Permission[],
     }));
   };
 
@@ -168,7 +162,8 @@ export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
     }
 
     // 密码验证
-    if (!user) { // 创建用户时需要密码
+    if (!user) {
+      // 创建用户时需要密码
       if (!formData.password) {
         newErrors.password = '密码不能为空';
       } else if (formData.password.length < 6) {
@@ -178,7 +173,8 @@ export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
       } else if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = '两次输入的密码不一致';
       }
-    } else if (formData.password) { // 编辑时如果提供了密码，需要验证
+    } else if (formData.password) {
+      // 编辑时如果提供了密码，需要验证
       if (formData.password.length < 6) {
         newErrors.password = '密码至少6个字符';
       } else if (formData.password.length > 255) {
@@ -260,133 +256,134 @@ export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>
-            {user ? '编辑用户' : '创建用户'}
-          </DialogTitle>
+          <DialogTitle>{user ? '编辑用户' : '创建用户'}</DialogTitle>
           <DialogDescription>
-            {user
-              ? '修改用户信息和权限设置'
-              : '创建新用户并分配相应的权限'}
+            {user ? '修改用户信息和权限设置' : '创建新用户并分配相应的权限'}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className='space-y-6'>
           {/* 基本信息 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">基本信息</CardTitle>
+              <CardTitle className='text-lg'>基本信息</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">用户名 *</Label>
+            <CardContent className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='username'>用户名 *</Label>
                   <Input
-                    id="username"
+                    id='username'
                     value={formData.username}
-                    onChange={(e) =>
-                      setFormData(prev => ({ ...prev, username: e.target.value }))
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        username: e.target.value,
+                      }))
                     }
-                    placeholder="请输入用户名"
+                    placeholder='请输入用户名'
                     className={errors.username ? 'border-red-500' : ''}
                   />
                   {errors.username && (
-                    <p className="text-sm text-red-500">{errors.username}</p>
+                    <p className='text-sm text-red-500'>{errors.username}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">邮箱 *</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='email'>邮箱 *</Label>
                   <Input
-                    id="email"
-                    type="email"
+                    id='email'
+                    type='email'
                     value={formData.email}
-                    onChange={(e) =>
+                    onChange={e =>
                       setFormData(prev => ({ ...prev, email: e.target.value }))
                     }
-                    placeholder="请输入邮箱"
+                    placeholder='请输入邮箱'
                     className={errors.email ? 'border-red-500' : ''}
                   />
                   {errors.email && (
-                    <p className="text-sm text-red-500">{errors.email}</p>
+                    <p className='text-sm text-red-500'>{errors.email}</p>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="role">角色 *</Label>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='role'>角色 *</Label>
                   <Select
                     value={formData.role}
                     onValueChange={handleRoleChange}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="请选择角色" />
+                      <SelectValue placeholder='请选择角色' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={UserRole.SUPER_ADMIN}>
                         超级管理员
                       </SelectItem>
-                      <SelectItem value={UserRole.ADMIN}>
-                        管理员
-                      </SelectItem>
-                      <SelectItem value={UserRole.OPERATOR}>
-                        操作员
-                      </SelectItem>
-                      <SelectItem value={UserRole.VIEWER}>
-                        查看者
-                      </SelectItem>
+                      <SelectItem value={UserRole.ADMIN}>管理员</SelectItem>
+                      <SelectItem value={UserRole.OPERATOR}>操作员</SelectItem>
+                      <SelectItem value={UserRole.VIEWER}>查看者</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="status">状态 *</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='status'>状态 *</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value) =>
-                      setFormData(prev => ({ ...prev, status: value as UserStatus }))
+                    onValueChange={value =>
+                      setFormData(prev => ({
+                        ...prev,
+                        status: value as UserStatus,
+                      }))
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="请选择状态" />
+                      <SelectValue placeholder='请选择状态' />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={UserStatus.ACTIVE}>激活</SelectItem>
-                      <SelectItem value={UserStatus.INACTIVE}>未激活</SelectItem>
+                      <SelectItem value={UserStatus.INACTIVE}>
+                        未激活
+                      </SelectItem>
                       <SelectItem value={UserStatus.SUSPENDED}>暂停</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="department">部门</Label>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='department'>部门</Label>
                   <Input
-                    id="department"
+                    id='department'
                     value={formData.department}
-                    onChange={(e) =>
-                      setFormData(prev => ({ ...prev, department: e.target.value }))
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        department: e.target.value,
+                      }))
                     }
-                    placeholder="请输入部门名称"
+                    placeholder='请输入部门名称'
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">手机号</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='phone'>手机号</Label>
                   <Input
-                    id="phone"
+                    id='phone'
                     value={formData.phone}
-                    onChange={(e) =>
+                    onChange={e =>
                       setFormData(prev => ({ ...prev, phone: e.target.value }))
                     }
-                    placeholder="请输入手机号"
+                    placeholder='请输入手机号'
                     className={errors.phone ? 'border-red-500' : ''}
                   />
                   {errors.phone && (
-                    <p className="text-sm text-red-500">{errors.phone}</p>
+                    <p className='text-sm text-red-500'>{errors.phone}</p>
                   )}
                 </div>
               </div>
@@ -396,50 +393,58 @@ export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
           {/* 密码设置 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">密码设置</CardTitle>
+              <CardTitle className='text-lg'>密码设置</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">
+            <CardContent className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='password'>
                     {user ? '新密码（留空则不修改）' : '密码 *'}
                   </Label>
                   <Input
-                    id="password"
-                    type="password"
+                    id='password'
+                    type='password'
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData(prev => ({ ...prev, password: e.target.value }))
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
                     }
                     placeholder={user ? '请输入新密码' : '请输入密码'}
                     className={errors.password ? 'border-red-500' : ''}
                   />
                   {errors.password && (
-                    <p className="text-sm text-red-500">{errors.password}</p>
+                    <p className='text-sm text-red-500'>{errors.password}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">
+                <div className='space-y-2'>
+                  <Label htmlFor='confirmPassword'>
                     确认密码 {!user && '*'}
                   </Label>
                   <Input
-                    id="confirmPassword"
-                    type="password"
+                    id='confirmPassword'
+                    type='password'
                     value={formData.confirmPassword}
-                    onChange={(e) =>
-                      setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        confirmPassword: e.target.value,
+                      }))
                     }
-                    placeholder="请再次输入密码"
+                    placeholder='请再次输入密码'
                     className={errors.confirmPassword ? 'border-red-500' : ''}
                   />
                   {errors.confirmPassword && (
-                    <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+                    <p className='text-sm text-red-500'>
+                      {errors.confirmPassword}
+                    </p>
                   )}
                 </div>
               </div>
               {formData.password && (
-                <p className="text-sm text-gray-600">
+                <p className='text-sm text-gray-600'>
                   密码长度需在 6-255 个字符之间
                 </p>
               )}
@@ -449,51 +454,57 @@ export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
           {/* 权限设置 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">权限设置</CardTitle>
-              <p className="text-sm text-gray-600">
+              <CardTitle className='text-lg'>权限设置</CardTitle>
+              <p className='text-sm text-gray-600'>
                 为用户分配具体的操作权限（超级管理员拥有所有权限）
               </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                {availablePermissions.map((permission) => (
+            <CardContent className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                {availablePermissions.map(permission => (
                   <div
                     key={permission}
-                    className="flex items-start space-x-3 p-3 border rounded-lg"
+                    className='flex items-start space-x-3 p-3 border rounded-lg'
                   >
                     <Checkbox
                       id={permission}
                       checked={formData.permissions.includes(permission)}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         handlePermissionChange(permission, checked as boolean)
                       }
                       disabled={formData.role === UserRole.SUPER_ADMIN}
                     />
-                    <div className="flex-1">
+                    <div className='flex-1'>
                       <Label
                         htmlFor={permission}
-                        className="text-sm font-medium cursor-pointer"
+                        className='text-sm font-medium cursor-pointer'
                       >
-                        {permissionDescriptions[permission as keyof typeof permissionDescriptions]}
+                        {
+                          permissionDescriptions[
+                            permission as keyof typeof permissionDescriptions
+                          ]
+                        }
                       </Label>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {permission}
-                      </p>
+                      <p className='text-xs text-gray-500 mt-1'>{permission}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* 当前权限预览 */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">当前权限</Label>
-                <div className="flex flex-wrap gap-2">
+              <div className='space-y-2'>
+                <Label className='text-sm font-medium'>当前权限</Label>
+                <div className='flex flex-wrap gap-2'>
                   {formData.permissions.length === 0 ? (
-                    <Badge variant="outline">无权限</Badge>
+                    <Badge variant='outline'>无权限</Badge>
                   ) : (
-                    formData.permissions.map((permission) => (
-                      <Badge key={permission} variant="secondary">
-                        {permissionDescriptions[permission as keyof typeof permissionDescriptions]}
+                    formData.permissions.map(permission => (
+                      <Badge key={permission} variant='secondary'>
+                        {
+                          permissionDescriptions[
+                            permission as keyof typeof permissionDescriptions
+                          ]
+                        }
                       </Badge>
                     ))
                   )}
@@ -504,12 +515,12 @@ export function UserForm({ user, open, onClose, onSuccess }: UserFormProps) {
 
           {/* 操作按钮 */}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              <X className="h-4 w-4 mr-2" />
+            <Button type='button' variant='outline' onClick={onClose}>
+              <X className='h-4 w-4 mr-2' />
               取消
             </Button>
-            <Button type="submit" disabled={loading}>
-              <Save className="h-4 w-4 mr-2" />
+            <Button type='submit' disabled={loading}>
+              <Save className='h-4 w-4 mr-2' />
               {loading ? '保存中...' : user ? '更新用户' : '创建用户'}
             </Button>
           </DialogFooter>

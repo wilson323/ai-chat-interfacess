@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../sequelize';
-import { encrypt, decrypt } from '@/lib/security';
 
 export interface AgentConfigAttributes {
   id: number;
@@ -28,6 +27,7 @@ export interface AgentConfigAttributes {
   supportsStream: boolean;
   supportsDetail: boolean;
   globalVariables?: string; // JSON字符串存储全局变量
+  createdAt?: Date;
   welcomeText?: string; // 欢迎语
 }
 
@@ -39,8 +39,11 @@ export interface AgentConfigCreationAttributes
 
 export class AgentConfig
   extends Model<AgentConfigAttributes, AgentConfigCreationAttributes>
-  implements AgentConfigAttributes
+  implements AgentConfigAttributes, Record<string, unknown>
 {
+  // 添加索引签名以支持 Record<string, unknown>
+  [key: string]: unknown;
+
   public id!: number;
   public name!: string;
   public type!: string;
@@ -116,6 +119,10 @@ AgentConfig.init(
       defaultValue: true,
     },
     updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    createdAt: {
       type: DataTypes.DATE,
       allowNull: true,
     },

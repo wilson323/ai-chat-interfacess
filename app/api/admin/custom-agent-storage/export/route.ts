@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exportAllCustomAgentData } from '@/lib/storage/features/management/custom-agent-management';
 import { ErrorHandler } from '@/lib/utils/error-handler';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const data = await exportAllCustomAgentData();
 
@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     const standardError = ErrorHandler.handle(error, {
+      context: 'exportAllCustomAgentData',
       operation: 'exportAllCustomAgentData',
     });
     const response = ErrorHandler.toApiResponse(standardError, true);

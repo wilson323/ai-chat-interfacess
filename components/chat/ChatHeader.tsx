@@ -16,8 +16,8 @@ import {
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Settings, Bot, Globe } from 'lucide-react';
-import { Agent } from '@/types/agent';
-import { GlobalVariable } from '@/types/global-variable';
+import { Agent } from '../../types/agent';
+import type { GlobalVariable } from '../../types';
 import { cn } from '@/lib/utils';
 import { StopCircle, Activity } from 'lucide-react';
 
@@ -30,12 +30,15 @@ interface ActiveAgentInfo {
 interface ChatHeaderProps {
   selectedAgent: Agent | null;
   agents: Agent[];
-  globalVariables: GlobalVariable[];
-  onAgentChange: (agent: Agent) => void;
-  onGlobalVariablesChange: (variables: GlobalVariable[]) => void;
+  globalVariables?: GlobalVariable[];
+  onAgentChange?: (agent: Agent) => void;
+  onAgentSelect?: (agent: Agent) => void;
+  onGlobalVariablesChange?: (variables: GlobalVariable[]) => void;
   onSettingsClick: () => void;
+  onCloseSidebars?: () => void;
   activeAgentInfo?: ActiveAgentInfo | null;
   onRequestAbort?: () => void;
+  onAbortRequest?: () => void;
   isRequestActive?: boolean;
   className?: string;
 }
@@ -43,9 +46,9 @@ interface ChatHeaderProps {
 export function ChatHeader({
   selectedAgent,
   agents,
-  globalVariables,
+  globalVariables = [],
   onAgentChange,
-  onGlobalVariablesChange,
+  onGlobalVariablesChange: _onGlobalVariablesChange,
   onSettingsClick,
   activeAgentInfo,
   onRequestAbort,
@@ -62,7 +65,7 @@ export function ChatHeader({
               value={selectedAgent?.id || ''}
               onValueChange={value => {
                 const agent = agents.find(a => a.id === value);
-                if (agent) onAgentChange(agent);
+                if (agent && onAgentChange) onAgentChange(agent);
               }}
             >
               <SelectTrigger className='w-[200px]'>
@@ -98,7 +101,10 @@ export function ChatHeader({
           <div className='flex items-center space-x-2'>
             {/* 活跃智能体指示器 */}
             {activeAgentInfo && (
-              <Badge variant='secondary' className='flex items-center space-x-1'>
+              <Badge
+                variant='secondary'
+                className='flex items-center space-x-1'
+              >
                 <Activity className='h-3 w-3' />
                 <span>{activeAgentInfo.agentName}</span>
               </Badge>
@@ -137,7 +143,7 @@ export function ChatHeader({
                         <div>
                           <span className='font-medium'>{variable.key}</span>
                           <p className='text-sm text-muted-foreground'>
-                            {variable.value}
+                            {String(variable.value || variable.defaultValue || '')}
                           </p>
                         </div>
                         <Badge

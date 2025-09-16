@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 导入主题变量 */
+@import '../styles/theme-variables.css';
+
+/* 导入主题动画 */
+@import '../styles/theme-animations.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;

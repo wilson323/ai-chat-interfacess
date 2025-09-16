@@ -11,6 +11,15 @@ import { createErrorResponse, ApiErrorCode } from './response';
  * 通用查询参数验证器
  */
 export const queryParamsSchema = z.object({
+  page: z.string().optional(),
+  limit: z.string().optional(),
+  sort: z.string().optional(),
+  order: z.enum(['asc', 'desc']).optional(),
+  search: z.string().optional(),
+  filter: z.string().optional(),
+});
+
+export const queryParamsSchemaWithTransform = z.object({
   page: z.string().transform(Number).optional(),
   limit: z.string().transform(Number).optional(),
   sort: z.string().optional(),
@@ -113,7 +122,7 @@ export const chatRequestSchema = z.object({
  * 文件上传验证器
  */
 export const fileUploadSchema = z.object({
-  file: z.instanceof(File, '必须是文件类型'),
+  file: z.instanceof(File, { message: '必须是文件类型' }),
   type: z.enum(['image', 'audio', 'document', 'cad']),
   maxSize: z.number().optional(),
 });
@@ -122,7 +131,7 @@ export const fileUploadSchema = z.object({
  * 语音相关验证器
  */
 export const voiceTranscribeSchema = z.object({
-  audio: z.instanceof(File, '必须是音频文件'),
+  audio: z.instanceof(File, { message: '必须是音频文件' }),
   language: z.string().default('zh-CN'),
   model: z.string().default('whisper-1'),
 });
@@ -138,7 +147,7 @@ export const voiceConfigSchema = z.object({
  * CAD分析验证器
  */
 export const cadAnalyzeSchema = z.object({
-  file: z.instanceof(File, '必须是CAD文件'),
+  file: z.instanceof(File, { message: '必须是CAD文件' }),
   analysisType: z.enum(['basic', 'detailed', 'advanced']).default('basic'),
   includeMetadata: z.boolean().default(true),
 });
@@ -147,7 +156,7 @@ export const cadAnalyzeSchema = z.object({
  * 图像处理验证器
  */
 export const imageProcessSchema = z.object({
-  file: z.instanceof(File, '必须是图像文件'),
+  file: z.instanceof(File, { message: '必须是图像文件' }),
   operations: z.array(
     z.enum(['resize', 'crop', 'rotate', 'filter', 'enhance'])
   ),
@@ -175,7 +184,7 @@ export const loginSchema = z.object({
  * @returns 验证后的数据
  * @throws 验证错误
  */
-export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): T {
+export function validateRequest<T>(schema: z.ZodType<T>, data: unknown): T {
   try {
     return schema.parse(data);
   } catch (error) {
@@ -183,11 +192,13 @@ export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): T {
       throw createErrorResponse(
         ApiErrorCode.VALIDATION_ERROR,
         '请求参数验证失败',
-        error.errors.map(err => ({
-          field: err.path.join('.'),
-          message: err.message,
-          code: err.code,
-        }))
+        {
+          errors: error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message,
+            code: err.code,
+          }))
+        }
       );
     }
     throw error;
@@ -243,7 +254,7 @@ export async function validateFormData<T>(
     const formData = await request.formData();
     const data = Object.fromEntries(formData.entries());
     return validateRequest(schema, data);
-  } catch (error) {
+  } catch {
     throw createErrorResponse(
       ApiErrorCode.VALIDATION_ERROR,
       '表单数据验证失败'
@@ -265,7 +276,7 @@ export async function validateFileUpload<T>(
     const formData = await request.formData();
     const data = Object.fromEntries(formData.entries());
     return validateRequest(schema, data);
-  } catch (error) {
+  } catch {
     throw createErrorResponse(
       ApiErrorCode.VALIDATION_ERROR,
       '文件上传验证失败'
@@ -407,7 +418,9 @@ export class ValidatorUtils {
           throw createErrorResponse(
             ApiErrorCode.VALIDATION_ERROR,
             errorMessage,
-            error.errors
+            {
+              errors: error.errors
+            }
           );
         }
         throw error;
@@ -443,7 +456,7 @@ export class ValidatorUtils {
     for (const schema of schemas) {
       try {
         return schema.parse(data);
-      } catch (error) {
+      } catch {
         // 继续尝试下一个模式
       }
     }
@@ -457,7 +470,7 @@ export class ValidatorUtils {
 /**
  * 默认导出
  */
-export default {
+const validatorUtils = {
   validateRequest,
   validateQueryParams,
   validateRequestBody,
@@ -490,3 +503,5 @@ export default {
   userSchema,
   loginSchema,
 };
+
+export default validatorUtils;

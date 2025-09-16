@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAgent } from '@/context/agent-context';
 import {
   Card,
   CardContent,
@@ -11,20 +10,45 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AgentForm } from '@/components/admin/agent-form';
-import { AgentList } from '@/components/admin/agent-list';
-import { useLanguage } from '@/context/language-context';
-import { Bot, Settings, Users } from 'lucide-react';
+import { AgentList } from './agent-list';
+import { useLanguage } from '../../context/language-context';
+import { Settings } from 'lucide-react';
 // 导入调试面板组件
 import { DebugPanel } from './debug-panel';
-import { DbAdminPanel } from '@/components/admin/db-admin-panel';
-import { AgentType } from '@/types/agent';
+import { DbAdminPanel } from './db-admin-panel';
 
-export function AdminContainer() {
-  const { selectedAgent } = useAgent();
+interface AdminContainerProps {
+  children?: React.ReactNode;
+  title?: string;
+}
+
+export function AdminContainer({ children, title }: AdminContainerProps = {}) {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('fastgpt');
 
+  // 如果传入了 children，则使用简单布局
+  if (children) {
+    return (
+      <div className='flex flex-col h-full relative'>
+        <ScrollArea className='flex-1 px-4 py-6'>
+          <div className='max-w-5xl mx-auto space-y-6 pb-20'>
+            <Card>
+              <CardHeader className='pb-3'>
+                <CardTitle className='text-2xl font-bold flex items-center gap-2'>
+                  <Settings className='h-6 w-6 text-pantone369-500' />
+                  {title || t('adminDashboard')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>{children}</CardContent>
+            </Card>
+          </div>
+        </ScrollArea>
+        {process.env.NODE_ENV !== 'production' && <DebugPanel />}
+      </div>
+    );
+  }
+
+  // 默认的管理员界面
   return (
     <div className='flex flex-col h-full relative'>
       <ScrollArea className='flex-1 px-4 py-6'>

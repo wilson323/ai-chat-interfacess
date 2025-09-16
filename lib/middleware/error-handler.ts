@@ -5,12 +5,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  globalErrorHandler,
   handleError,
 } from '@/lib/errors/global-error-handler';
 
 // API路由错误处理中间件
-export function withErrorHandler<T extends any[]>(
+export function withErrorHandler<T extends unknown[]>(
   handler: (...args: T) => Promise<NextResponse> | NextResponse
 ) {
   return async (...args: T): Promise<NextResponse> => {
@@ -79,8 +78,8 @@ export function withDatabaseErrorHandler<T extends any[]>(
 
       // 特殊处理数据库错误
       if (error && typeof error === 'object' && 'name' in error) {
-        const dbError = error as any;
-        if (dbError.name?.includes('Sequelize')) {
+        const dbError = error as unknown;
+        if ((dbError as any).name?.includes('Sequelize')) {
           return handleError(error, {
             request,
             requestId,
@@ -194,7 +193,7 @@ export function handleApiError<T extends any[]>(
   options?: {
     logLevel?: 'debug' | 'info' | 'warn' | 'error';
     includeStack?: boolean;
-    customErrorHandler?: (error: unknown, context: any) => NextResponse;
+    customErrorHandler?: (error: unknown, context: unknown) => NextResponse;
   }
 ) {
   return async (...args: T): Promise<NextResponse> => {

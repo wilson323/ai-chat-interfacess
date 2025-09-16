@@ -1,9 +1,9 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button } from './ui/button';
 import { Sparkles, Loader2 } from 'lucide-react';
-import { useLanguage } from '@/context/language-context';
-import { cn } from '@/lib/utils';
+import { useLanguage } from '../context/language-context';
+import { cn } from '../lib/utils';
 
 interface QuestionSuggestionsProps {
   suggestions: string[];

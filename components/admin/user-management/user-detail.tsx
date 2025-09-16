@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,24 +32,25 @@ import {
   Activity,
   Clock,
   X,
-  Edit,
 } from 'lucide-react';
 import { User, UserRole, UserStatus } from '@/types/admin';
-// import { OperationLog, OperationStatus } from '@/lib/db/models'; // 暂时注释，避免前端导入数据库模块
+// import { OperationLog, OperationStatus } from '../../../lib/db/models'; // 暂时注释，避免前端导入数据库模块
 
 // 临时类型定义
 interface OperationLog {
   id: string;
-  operation: string;
+  action: string;
   status: OperationStatus;
-  timestamp: Date;
+  createdAt: Date;
+  resourceType?: string;
+  ipAddress?: string;
   details?: string;
 }
 
 enum OperationStatus {
   SUCCESS = 'SUCCESS',
   FAILED = 'FAILED',
-  PENDING = 'PENDING'
+  PENDING = 'PENDING',
 }
 
 interface UserDetailProps {
@@ -84,30 +85,24 @@ const roleDescriptions = {
 
 // 操作类型描述映射
 const actionDescriptions = {
-  'CREATE_USER': '创建用户',
-  'UPDATE_USER': '更新用户',
-  'DELETE_USER': '删除用户',
-  'ACTIVATE_USER': '激活用户',
-  'DEACTIVATE_USER': '停用用户',
-  'SUSPEND_USER': '暂停用户',
-  'BULK_OPERATION': '批量操作',
-  'LOGIN': '登录',
-  'LOGOUT': '登出',
-  'CHANGE_PASSWORD': '修改密码',
+  CREATE_USER: '创建用户',
+  UPDATE_USER: '更新用户',
+  DELETE_USER: '删除用户',
+  ACTIVATE_USER: '激活用户',
+  DEACTIVATE_USER: '停用用户',
+  SUSPEND_USER: '暂停用户',
+  BULK_OPERATION: '批量操作',
+  LOGIN: '登录',
+  LOGOUT: '登出',
+  CHANGE_PASSWORD: '修改密码',
 };
 
 export function UserDetail({ user, open, onClose }: UserDetailProps) {
   const [operationLogs, setOperationLogs] = useState<OperationLog[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user && open) {
-      fetchOperationLogs();
-    }
-  }, [user, open]);
-
   // 获取操作日志
-  const fetchOperationLogs = async () => {
+  const fetchOperationLogs = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -124,7 +119,13 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user && open) {
+      fetchOperationLogs();
+    }
+  }, [user, open, fetchOperationLogs]);
 
   // 格式化日期时间
   const formatDateTime = (date: Date | string) => {
@@ -135,12 +136,12 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className='max-w-4xl max-h-[90vh] overflow-hidden flex flex-col'>
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle className='flex items-center justify-between'>
             <span>用户详情</span>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
+            <Button variant='ghost' size='sm' onClick={onClose}>
+              <X className='h-4 w-4' />
             </Button>
           </DialogTitle>
           <DialogDescription>
@@ -148,55 +149,55 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-1">
-          <div className="space-y-6">
+        <ScrollArea className='flex-1 px-1'>
+          <div className='space-y-6'>
             {/* 基本信息 */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <UserIcon className="h-5 w-5" />
+                <CardTitle className='text-lg flex items-center gap-2'>
+                  <UserIcon className='h-5 w-5' />
                   基本信息
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-start gap-6">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback className="text-2xl">
+                <div className='flex items-start gap-6'>
+                  <Avatar className='h-20 w-20'>
+                    <AvatarImage src={user.avatar || undefined} />
+                    <AvatarFallback className='text-2xl'>
                       {user.username.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className='flex-1 space-y-4'>
+                    <div className='grid grid-cols-2 gap-4'>
                       <div>
-                        <p className="text-sm text-gray-500">用户名</p>
-                        <p className="font-medium">{user.username}</p>
+                        <p className='text-sm text-gray-500'>用户名</p>
+                        <p className='font-medium'>{user.username}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">邮箱</p>
-                        <p className="font-medium flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
+                        <p className='text-sm text-gray-500'>邮箱</p>
+                        <p className='font-medium flex items-center gap-2'>
+                          <Mail className='h-4 w-4' />
                           {user.email}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">角色</p>
-                        <div className="flex items-center gap-2">
+                        <p className='text-sm text-gray-500'>角色</p>
+                        <div className='flex items-center gap-2'>
                           <div
                             className={`w-3 h-3 rounded-full ${roleDescriptions[user.role].color}`}
                           />
-                          <Badge variant="outline">
+                          <Badge variant='outline'>
                             {roleDescriptions[user.role].text}
                           </Badge>
                         </div>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">状态</p>
-                        <div className="flex items-center gap-2">
+                        <p className='text-sm text-gray-500'>状态</p>
+                        <div className='flex items-center gap-2'>
                           <div
                             className={`w-3 h-3 rounded-full ${statusDescriptions[user.status].color}`}
                           />
-                          <Badge variant="outline">
+                          <Badge variant='outline'>
                             {statusDescriptions[user.status].text}
                           </Badge>
                         </div>
@@ -206,23 +207,23 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
                     {(user.department || user.phone) && (
                       <>
                         <Separator />
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className='grid grid-cols-2 gap-4'>
                           {user.department && (
                             <div>
-                              <p className="text-sm text-gray-500 flex items-center gap-2">
-                                <Building className="h-4 w-4" />
+                              <p className='text-sm text-gray-500 flex items-center gap-2'>
+                                <Building className='h-4 w-4' />
                                 部门
                               </p>
-                              <p className="font-medium">{user.department}</p>
+                              <p className='font-medium'>{user.department}</p>
                             </div>
                           )}
                           {user.phone && (
                             <div>
-                              <p className="text-sm text-gray-500 flex items-center gap-2">
-                                <Phone className="h-4 w-4" />
+                              <p className='text-sm text-gray-500 flex items-center gap-2'>
+                                <Phone className='h-4 w-4' />
                                 手机号
                               </p>
-                              <p className="font-medium">{user.phone}</p>
+                              <p className='font-medium'>{user.phone}</p>
                             </div>
                           )}
                         </div>
@@ -236,24 +237,26 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
             {/* 权限配置 */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
+                <CardTitle className='text-lg flex items-center gap-2'>
+                  <Shield className='h-5 w-5' />
                   权限配置
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className='space-y-4'>
                   <div>
-                    <p className="text-sm text-gray-500 mb-3">用户权限</p>
-                    <div className="flex flex-wrap gap-2">
+                    <p className='text-sm text-gray-500 mb-3'>用户权限</p>
+                    <div className='flex flex-wrap gap-2'>
                       {user.permissions && user.permissions.length > 0 ? (
-                        user.permissions.map((permission) => (
-                          <Badge key={permission} variant="secondary">
-                            {permissionDescriptions[permission as keyof typeof permissionDescriptions] || permission}
+                        user.permissions.map((permission: string) => (
+                          <Badge key={permission} variant='secondary'>
+                            {permissionDescriptions[
+                              permission as keyof typeof permissionDescriptions
+                            ] || permission}
                           </Badge>
                         ))
                       ) : (
-                        <Badge variant="outline">无特殊权限</Badge>
+                        <Badge variant='outline'>无特殊权限</Badge>
                       )}
                     </div>
                   </div>
@@ -261,8 +264,8 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
                   <Separator />
 
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">角色权限说明</p>
-                    <div className="text-sm text-gray-600 space-y-1">
+                    <p className='text-sm text-gray-500 mb-2'>角色权限说明</p>
+                    <div className='text-sm text-gray-600 space-y-1'>
                       <p>• 超级管理员：拥有所有系统权限</p>
                       <p>• 管理员：可管理用户、智能体和数据导出</p>
                       <p>• 操作员：可管理智能体和查看系统监控</p>
@@ -276,40 +279,46 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
             {/* 账户信息 */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
+                <CardTitle className='text-lg flex items-center gap-2'>
+                  <Activity className='h-5 w-5' />
                   账户信息
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <p className="text-sm text-gray-500 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
+                    <p className='text-sm text-gray-500 flex items-center gap-2'>
+                      <Calendar className='h-4 w-4' />
                       创建时间
                     </p>
-                    <p className="font-medium">{formatDateTime(user.createdAt)}</p>
+                    <p className='font-medium'>
+                      {formatDateTime(user.createdAt)}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
+                    <p className='text-sm text-gray-500 flex items-center gap-2'>
+                      <Calendar className='h-4 w-4' />
                       更新时间
                     </p>
-                    <p className="font-medium">{formatDateTime(user.updatedAt)}</p>
+                    <p className='font-medium'>
+                      {formatDateTime(user.updatedAt)}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
+                    <p className='text-sm text-gray-500 flex items-center gap-2'>
+                      <Clock className='h-4 w-4' />
                       最后登录
                     </p>
-                    <p className="font-medium">
-                      {user.lastLogin ? formatDateTime(user.lastLogin) : '从未登录'}
+                    <p className='font-medium'>
+                      {user.lastLogin
+                        ? formatDateTime(user.lastLogin)
+                        : '从未登录'}
                     </p>
                   </div>
                   {user.createdBy && (
                     <div>
-                      <p className="text-sm text-gray-500">创建者</p>
-                      <p className="font-medium">ID: {user.createdBy}</p>
+                      <p className='text-sm text-gray-500'>创建者</p>
+                      <p className='font-medium'>ID: {user.createdBy}</p>
                     </div>
                   )}
                 </div>
@@ -319,19 +328,19 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
             {/* 操作日志 */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
+                <CardTitle className='text-lg flex items-center gap-2'>
+                  <Clock className='h-5 w-5' />
                   操作日志
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
-                    <span className="ml-2">加载中...</span>
+                  <div className='flex items-center justify-center py-8'>
+                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900'></div>
+                    <span className='ml-2'>加载中...</span>
                   </div>
                 ) : operationLogs.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className='text-center py-8 text-gray-500'>
                     暂无操作记录
                   </div>
                 ) : (
@@ -346,42 +355,44 @@ export function UserDetail({ user, open, onClose }: UserDetailProps) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {operationLogs.map((log) => (
+                      {operationLogs.map(log => (
                         <TableRow key={log.id}>
-                          <TableCell className="font-mono text-sm">
+                          <TableCell className='font-mono text-sm'>
                             {formatDateTime(log.createdAt)}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">
-                              {actionDescriptions[log.action as keyof typeof actionDescriptions] || log.action}
+                            <Badge variant='outline'>
+                              {actionDescriptions[
+                                log.action as keyof typeof actionDescriptions
+                              ] || log.action}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">
+                            <Badge variant='secondary'>
                               {log.resourceType || '-'}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className='flex items-center gap-2'>
                               <div
                                 className={`w-2 h-2 rounded-full ${
                                   log.status === OperationStatus.SUCCESS
                                     ? 'bg-green-500'
                                     : log.status === OperationStatus.FAILED
-                                    ? 'bg-red-500'
-                                    : 'bg-yellow-500'
+                                      ? 'bg-red-500'
+                                      : 'bg-yellow-500'
                                 }`}
                               />
-                              <span className="text-sm">
+                              <span className='text-sm'>
                                 {log.status === OperationStatus.SUCCESS
                                   ? '成功'
                                   : log.status === OperationStatus.FAILED
-                                  ? '失败'
-                                  : '进行中'}
+                                    ? '失败'
+                                    : '进行中'}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-sm">
+                          <TableCell className='font-mono text-sm'>
                             {log.ipAddress || '-'}
                           </TableCell>
                         </TableRow>

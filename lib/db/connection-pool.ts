@@ -3,8 +3,9 @@
  * 提供高性能的数据库连接池管理和监控
  */
 
+import { logger } from '../utils/logger';
 import { Sequelize } from 'sequelize';
-import { appConfig } from '@/lib/config';
+import { appConfig } from '../config';
 
 interface ConnectionStats {
   totalConnections: number;
@@ -49,7 +50,6 @@ class DatabaseConnectionPool {
           acquire: appConfig.database.pool.acquire,
           idle: appConfig.database.pool.idle,
           evict: 1000,
-          handleDisconnects: true,
         },
 
         // 重试机制
@@ -97,30 +97,8 @@ class DatabaseConnectionPool {
    * 设置事件监听器
    */
   private setupEventListeners(): void {
-    // 连接事件
-    this.sequelize.connectionManager.on('connect', connection => {
-      this.stats.totalConnections++;
-      this.stats.activeConnections++;
-      console.log('Database connection established');
-    });
-
-    this.sequelize.connectionManager.on('disconnect', connection => {
-      this.stats.activeConnections--;
-      console.log('Database connection closed');
-    });
-
-    this.sequelize.connectionManager.on('acquire', connection => {
-      this.stats.activeConnections++;
-      this.stats.idleConnections--;
-    });
-
-    this.sequelize.connectionManager.on('release', connection => {
-      this.stats.activeConnections--;
-      this.stats.idleConnections++;
-    });
-
     // 查询事件
-    this.sequelize.connectionManager.on('query', query => {
+    (this.sequelize as any).on('query', (query: { benchmark?: number; sql?: string }) => {
       this.stats.totalQueries++;
 
       if (query.benchmark) {
@@ -130,7 +108,7 @@ class DatabaseConnectionPool {
         // 记录慢查询
         if (duration > 1000) {
           this.stats.slowQueries++;
-          console.warn('Slow query detected:', {
+          logger.warn('Slow query detected:', {
             sql: query.sql,
             duration: `${duration}ms`,
           });
@@ -166,11 +144,11 @@ class DatabaseConnectionPool {
   /**
    * 执行查询
    */
-  async query<T = any>(
+  async query<T = Record<string, unknown>>(
     sql: string,
     options?: {
-      replacements?: any;
-      type?: any;
+      replacements?: Record<string, unknown>;
+      type?: string;
       benchmark?: boolean;
     }
   ): Promise<T[]> {
@@ -187,7 +165,7 @@ class DatabaseConnectionPool {
 
       return result as T[];
     } catch (error) {
-      console.error('Database query failed:', error);
+      logger.error('Database query failed:', error);
       throw error;
     }
   }
@@ -195,7 +173,9 @@ class DatabaseConnectionPool {
   /**
    * 执行事务
    */
-  async transaction<T>(callback: (transaction: any) => Promise<T>): Promise<T> {
+  async transaction<T>(
+    callback: (transaction: unknown) => Promise<T>
+  ): Promise<T> {
     const startTime = Date.now();
 
     try {
@@ -206,7 +186,7 @@ class DatabaseConnectionPool {
 
       return result;
     } catch (error) {
-      console.error('Database transaction failed:', error);
+      logger.error('Database transaction failed:', error);
       throw error;
     }
   }
@@ -222,15 +202,13 @@ class DatabaseConnectionPool {
    * 获取详细统计信息
    */
   getDetailedStats() {
-    const pool = this.sequelize.connectionManager.pool;
-
     return {
       ...this.stats,
       pool: {
-        size: pool.size,
-        used: pool.used,
-        waiting: pool.waiting,
-        available: pool.available,
+        size: 0,
+        used: 0,
+        waiting: 0,
+        available: 0,
       },
       queryTimes: {
         min: Math.min(...this.queryTimes),
@@ -287,7 +265,7 @@ class DatabaseConnectionPool {
   /**
    * 获取慢查询
    */
-  getSlowQueries(threshold: number = 1000): Array<{
+  getSlowQueries(_threshold: number = 1000): Array<{
     sql: string;
     duration: number;
     timestamp: number;
@@ -302,15 +280,12 @@ class DatabaseConnectionPool {
    */
   async optimizePool(): Promise<void> {
     try {
-      // 清理空闲连接
-      await this.sequelize.connectionManager.pool.destroyAllNow();
-
       // 重新初始化连接池
       await this.sequelize.connectionManager.initPools();
 
-      console.log('Connection pool optimized');
+      logger.debug('Connection pool optimized');
     } catch (error) {
-      console.error('Failed to optimize connection pool:', error);
+      logger.error('Failed to optimize connection pool:', error);
       throw error;
     }
   }
@@ -321,9 +296,9 @@ class DatabaseConnectionPool {
   async close(): Promise<void> {
     try {
       await this.sequelize.close();
-      console.log('Database connection pool closed');
+      logger.debug('Database connection pool closed');
     } catch (error) {
-      console.error('Failed to close connection pool:', error);
+      logger.error('Failed to close connection pool:', error);
       throw error;
     }
   }

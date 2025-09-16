@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+// Removed invalid typescript import
 import { AgentUsage, ChatSession, UserGeo, AgentConfig } from '@/lib/db/models';
 import { Op } from 'sequelize';
 import { z } from 'zod';
+
+// 扩展ChatSession接口以包含关联数据
+interface ChatSessionWithAgentUsage extends ChatSession {
+  agentUsages?: AgentUsage[];
+}
 
 // 请求参数验证
 const exportSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   format: z.enum(['csv', 'excel', 'json']).default('csv'),
-  dataType: z.enum(['usage', 'sessions', 'agents', 'locations']).default('usage'),
+  dataType: z
+    .enum(['usage', 'sessions', 'agents', 'locations'])
+    .default('usage'),
   includeHeaders: z.boolean().default(true),
   agentId: z.string().optional(),
   location: z.string().optional(),
@@ -31,14 +39,14 @@ export async function GET(request: NextRequest) {
     const validatedParams = exportSchema.parse(params);
 
     // 构建查询条件
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (validatedParams.startDate) {
       where.startTime = { [Op.gte]: new Date(validatedParams.startDate) };
     }
     if (validatedParams.endDate) {
       where.startTime = {
-        ...where.startTime,
-        [Op.lte]: new Date(validatedParams.endDate)
+        ...(where.startTime as Record<string, unknown> || {}),
+        [Op.lte]: new Date(validatedParams.endDate),
       };
     }
     if (validatedParams.agentId) {
@@ -46,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 根据数据类型获取数据
-    let data: any[] = [];
+    let data: unknown[] = [];
     let headers: string[] = [];
 
     switch (validatedParams.dataType) {
@@ -76,7 +84,8 @@ export async function GET(request: NextRequest) {
         filename = `${validatedParams.dataType}_export_${new Date().toISOString().split('T')[0]}.csv`;
         break;
       case 'excel':
-        contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        contentType =
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         content = await generateExcel(data, headers, validatedParams.dataType);
         filename = `${validatedParams.dataType}_export_${new Date().toISOString().split('T')[0]}.xlsx`;
         break;
@@ -142,17 +151,52 @@ async function getUsageData(where: Record<string, unknown>) {
   });
 
   const headers = [
-    'ID', '会话ID', '用户ID', '智能体名称', '智能体类型', '消息类型',
-    '消息数量', 'Token使用量', '响应时间(ms)', '开始时间', '结束时间',
-    '持续时间(s)', '是否完成', '用户满意度', '国家', '地区', '城市'
+    'ID',
+    '会话ID',
+    '用户ID',
+    '智能体名称',
+    '智能体类型',
+    '消息类型',
+    '消息数量',
+    'Token使用量',
+    '响应时间(ms)',
+    '开始时间',
+    '结束时间',
+    '持续时间(s)',
+    '是否完成',
+    '用户满意度',
+    '国家',
+    '地区',
+    '城市',
   ];
 
-  const formattedData = data.map(item => ({
+  // AgentUsage数据项接口
+  interface AgentUsageItem {
+    id: number;
+    sessionId: string;
+    userId: string | null;
+    'agent.name': string;
+    'agent.type': string;
+    messageType: string;
+    messageCount: number;
+    tokenUsage: number | null;
+    responseTime: number | null;
+    startTime: Date;
+    endTime: Date | null;
+    duration: number | null;
+    isCompleted: boolean;
+    userSatisfaction: string | null;
+    'geoLocation.location.country': string;
+    'geoLocation.location.region': string;
+    'geoLocation.location.city': string;
+  }
+
+  const formattedData = (data as unknown as AgentUsageItem[]).map((item) => ({
     id: item.id,
     sessionId: item.sessionId,
     userId: item.userId || '匿名',
-    agentName: item.agent?.name || '未知',
-    agentType: item.agent?.type || '未知',
+    agentName: item['agent.name'] || '未知',
+    agentType: item['agent.type'] || '未知',
     messageType: item.messageType,
     messageCount: item.messageCount,
     tokenUsage: item.tokenUsage || 0,
@@ -162,9 +206,9 @@ async function getUsageData(where: Record<string, unknown>) {
     duration: item.duration || 0,
     isCompleted: item.isCompleted ? '是' : '否',
     userSatisfaction: item.userSatisfaction || '未知',
-    country: item.geoLocation?.location?.country || '未知',
-    region: item.geoLocation?.location?.region || '未知',
-    city: item.geoLocation?.location?.city || '未知',
+    country: item['geoLocation.location.country'] || '未知',
+    region: item['geoLocation.location.region'] || '未知',
+    city: item['geoLocation.location.city'] || '未知',
   }));
 
   return { data: formattedData, headers };
@@ -173,6 +217,7 @@ async function getUsageData(where: Record<string, unknown>) {
 // 获取会话数据
 async function getSessionData(where: Record<string, unknown>) {
   const data = await ChatSession.findAll({
+    where,
     include: [
       {
         model: AgentUsage,
@@ -199,16 +244,29 @@ async function getSessionData(where: Record<string, unknown>) {
   });
 
   const headers = [
-    '会话ID', '用户ID', '标题', '创建时间', '更新时间', '是否归档',
-    '智能体使用次数', '消息总数', '平均响应时间'
+    '会话ID',
+    '用户ID',
+    '标题',
+    '创建时间',
+    '更新时间',
+    '是否归档',
+    '智能体使用次数',
+    '消息总数',
+    '平均响应时间',
   ];
 
   const formattedData = data.map(session => {
-    const usages = session.agentUsages || [];
-    const totalMessages = usages.reduce((sum, usage) => sum + (usage.messageCount || 0), 0);
-    const avgResponseTime = usages.length > 0
-      ? usages.reduce((sum, usage) => sum + (usage.responseTime || 0), 0) / usages.length
-      : 0;
+    const sessionWithUsages = session as ChatSessionWithAgentUsage;
+    const usages = sessionWithUsages.agentUsages || [];
+    const totalMessages = usages.reduce(
+      (sum: number, usage: AgentUsage) => sum + (usage.messageCount || 0),
+      0
+    );
+    const avgResponseTime =
+      usages.length > 0
+        ? usages.reduce((sum: number, usage: AgentUsage) => sum + (usage.responseTime || 0), 0) /
+          usages.length
+        : 0;
 
     return {
       id: session.id,
@@ -227,13 +285,13 @@ async function getSessionData(where: Record<string, unknown>) {
 }
 
 // 获取智能体数据
-async function getAgentData(where: any) {
+async function getAgentData(where: unknown) {
   const data = await AgentConfig.findAll({
     include: [
       {
         model: AgentUsage,
         as: 'usages',
-        where,
+        where: where as Record<string, unknown>,
         required: false,
         attributes: [
           'id',
@@ -261,38 +319,64 @@ async function getAgentData(where: any) {
   });
 
   const headers = [
-    'ID', '名称', '类型', '描述', '是否发布', '排序', '支持流式',
-    '支持详情', '使用次数', '总消息数', '总Token使用量',
-    '平均响应时间', '平均会话时长', '满意度'
+    'ID',
+    '名称',
+    '类型',
+    '描述',
+    '是否发布',
+    '排序',
+    '支持流式',
+    '支持详情',
+    '使用次数',
+    '总消息数',
+    '总Token使用量',
+    '平均响应时间',
+    '平均会话时长',
+    '满意度',
   ];
 
   const formattedData = data.map(agent => {
-    const usages = agent.usages || [];
+    const usages = Array.isArray(agent.usages) ? agent.usages : [];
     const totalSessions = usages.length;
-    const totalMessages = usages.reduce((sum, usage) => sum + (usage.messageCount || 0), 0);
-    const totalTokens = usages.reduce((sum, usage) => sum + (usage.tokenUsage || 0), 0);
-    const avgResponseTime = totalSessions > 0
-      ? usages.reduce((sum, usage) => sum + (usage.responseTime || 0), 0) / totalSessions
-      : 0;
-    const avgDuration = totalSessions > 0
-      ? usages.reduce((sum, usage) => sum + (usage.duration || 0), 0) / totalSessions
-      : 0;
+    const totalMessages = usages.reduce(
+      (sum: number, usage: AgentUsage) => sum + (usage.messageCount || 0),
+      0
+    );
+    const totalTokens = usages.reduce(
+      (sum: number, usage: AgentUsage) => sum + (usage.tokenUsage || 0),
+      0
+    );
+    const avgResponseTime =
+      totalSessions > 0
+        ? usages.reduce((sum: number, usage: AgentUsage) => sum + (usage.responseTime || 0), 0) /
+          totalSessions
+        : 0;
+    const avgDuration =
+      totalSessions > 0
+        ? usages.reduce((sum: number, usage: AgentUsage) => sum + (usage.duration || 0), 0) /
+          totalSessions
+        : 0;
 
     // 计算满意度
-    const satisfactionCounts = usages.reduce((acc, usage) => {
-      if (usage.userSatisfaction) {
-        acc[usage.userSatisfaction] = (acc[usage.userSatisfaction] || 0) + 1;
-      }
-      return acc;
-    }, {} as Record<string, number>);
+    const satisfactionCounts = usages.reduce(
+      (acc: Record<string, number>, usage: AgentUsage) => {
+        if (usage.userSatisfaction) {
+          acc[usage.userSatisfaction] = (acc[usage.userSatisfaction] || 0) + 1;
+        }
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    const satisfaction = satisfactionCounts.positive > satisfactionCounts.negative
-      ? '正面'
-      : satisfactionCounts.positive < satisfactionCounts.negative
-        ? '负面'
-        : satisfactionCounts.positive === satisfactionCounts.negative && satisfactionCounts.positive > 0
-          ? '中性'
-          : '未知';
+    const satisfaction =
+      satisfactionCounts.positive > satisfactionCounts.negative
+        ? '正面'
+        : satisfactionCounts.positive < satisfactionCounts.negative
+          ? '负面'
+          : satisfactionCounts.positive === satisfactionCounts.negative &&
+              satisfactionCounts.positive > 0
+            ? '中性'
+            : '未知';
 
     return {
       id: agent.id,
@@ -303,7 +387,7 @@ async function getAgentData(where: any) {
       order: agent.order,
       supportsStream: agent.supportsStream ? '是' : '否',
       supportsDetail: agent.supportsDetail ? '是' : '否',
-      createdAt: agent.createdAt.toISOString(),
+      createdAt: (agent.createdAt as Date).toISOString(),
       totalSessions,
       totalMessages,
       totalTokens,
@@ -317,20 +401,15 @@ async function getAgentData(where: any) {
 }
 
 // 获取地理位置数据
-async function getLocationData(where: any) {
+async function getLocationData(where: unknown) {
   const data = await UserGeo.findAll({
     include: [
       {
         model: AgentUsage,
         as: 'usages',
-        where,
+        where: where as Record<string, unknown>,
         required: true,
-        attributes: [
-          'id',
-          'messageCount',
-          'duration',
-          'userSatisfaction',
-        ],
+        attributes: ['id', 'messageCount', 'duration', 'userSatisfaction'],
       },
     ],
     attributes: [
@@ -346,17 +425,34 @@ async function getLocationData(where: any) {
   });
 
   const headers = [
-    'ID', '用户ID', 'IP地址', '国家', '地区', '城市', '纬度', '经度',
-    '最后活跃', '创建时间', '使用次数', '总消息数', '平均会话时长'
+    'ID',
+    '用户ID',
+    'IP地址',
+    '国家',
+    '地区',
+    '城市',
+    '纬度',
+    '经度',
+    '最后活跃',
+    '创建时间',
+    '使用次数',
+    '总消息数',
+    '平均会话时长',
   ];
 
   const formattedData = data.map(geo => {
-    const usages = geo.usages || [];
+    const geoWithUsages = geo as unknown as UserGeo & { usages?: AgentUsage[] };
+    const usages = geoWithUsages.usages || [];
     const totalSessions = usages.length;
-    const totalMessages = usages.reduce((sum, usage) => sum + (usage.messageCount || 0), 0);
-    const avgDuration = totalSessions > 0
-      ? usages.reduce((sum, usage) => sum + (usage.duration || 0), 0) / totalSessions
-      : 0;
+    const totalMessages = usages.reduce(
+      (sum: number, usage: AgentUsage) => sum + (usage.messageCount || 0),
+      0
+    );
+    const avgDuration =
+      totalSessions > 0
+        ? usages.reduce((sum: number, usage: AgentUsage) => sum + (usage.duration || 0), 0) /
+          totalSessions
+        : 0;
 
     return {
       id: geo.id,
@@ -379,18 +475,27 @@ async function getLocationData(where: any) {
 }
 
 // 生成CSV格式
-function generateCSV(data: any[], headers: string[], includeHeaders: boolean): string {
+function generateCSV(
+  data: unknown[],
+  headers: string[],
+  includeHeaders: boolean
+): string {
   if (!data.length) return includeHeaders ? headers.join(',') : '';
 
-  const rows = data.map(row => {
-    return headers.map(header => {
-      const value = row[header] || '';
-      // 处理包含逗号或引号的值
-      if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-        return `"${value.replace(/"/g, '""')}"`;
-      }
-      return value;
-    }).join(',');
+  const rows = (data as Record<string, unknown>[]).map((row: Record<string, unknown>) => {
+    return headers
+      .map(header => {
+        const value = row[header] || '';
+        // 处理包含逗号或引号的值
+        if (
+          typeof value === 'string' &&
+          (value.includes(',') || value.includes('"'))
+        ) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      })
+      .join(',');
   });
 
   if (includeHeaders) {
@@ -400,7 +505,11 @@ function generateCSV(data: any[], headers: string[], includeHeaders: boolean): s
 }
 
 // 生成Excel格式（简化版本，实际可以使用更复杂的库）
-async function generateExcel(data: any[], headers: string[], dataType: string): Promise<string> {
+async function generateExcel(
+  data: unknown[],
+  headers: string[],
+  _dataType: string
+): Promise<string> {
   // 这里简化处理，实际可以使用 xlsx 或类似的库
   // 现在先返回CSV格式
   return generateCSV(data, headers, true);

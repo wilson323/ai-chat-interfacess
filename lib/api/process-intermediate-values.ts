@@ -23,13 +23,13 @@ export interface ThinkingValue {
 export interface ModuleResultValue {
   type: 'moduleResult';
   name: string;
-  result: any;
+  result: Record<string, unknown>;
   timestamp: Date;
 }
 
 export interface ResponseDataValue {
   type: 'responseData';
-  data: any;
+  data: Record<string, unknown>;
   timestamp: Date;
 }
 
@@ -38,13 +38,13 @@ export type IntermediateValue =
   | ThinkingValue
   | ModuleResultValue
   | ResponseDataValue
-  | { type: string; [key: string]: any };
+  | { type: string; [key: string]: unknown };
 
 /**
  * 将原始 FastGPT 事件数据处理为结构化的中间值
  */
 export function processIntermediateValue(
-  data: any,
+  data: Record<string, unknown>,
   eventType: string
 ): IntermediateValue {
   const timestamp = new Date();

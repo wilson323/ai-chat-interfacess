@@ -1,9 +1,7 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -13,34 +11,32 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
+import { abTestingManager } from '@/lib/performance/ab-testing';
+import { ReportGenerator } from '@/lib/performance/report-generator';
+import { logger } from '@/lib/utils/logger';
 import {
   Activity,
-  Clock,
   AlertTriangle,
-  Download,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  Zap,
-  Globe,
-  Database,
-  Monitor,
-  BarChart3,
   Bell,
-  Smartphone,
-  Target,
+  Clock,
+  Database,
+  Download,
   FileText,
   GitCompare,
+  Globe,
+  Monitor,
+  RefreshCw,
   Settings,
+  TrendingUp,
+  Zap
 } from 'lucide-react';
-import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
-import { RealtimeCharts } from './RealtimeCharts';
-import { PerformanceAlerts } from './PerformanceAlerts';
-import { OptimizationEngine } from './OptimizationEngine';
-import { MobilePerformance } from './MobilePerformance';
+import { useEffect, useState } from 'react';
 import { BenchmarkTool } from './BenchmarkTool';
-import { ReportGenerator } from '@/lib/performance/report-generator';
-import { abTestingManager } from '@/lib/performance/ab-testing';
+import { MobilePerformance } from './MobilePerformance';
+import { OptimizationEngine } from './OptimizationEngine';
+import { PerformanceAlerts } from './PerformanceAlerts';
+import { RealtimeCharts } from './RealtimeCharts';
 
 export function PerformanceDashboard() {
   const {
@@ -54,7 +50,7 @@ export function PerformanceDashboard() {
   } = usePerformanceMonitor();
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh] = useState(true);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   // 自动刷新
@@ -97,6 +93,12 @@ export function PerformanceDashboard() {
 
   // 导出性能报告
   const exportReport = () => {
+    // 服务端渲染保护
+    if (typeof window === 'undefined') {
+      logger.warn('Export functionality not available in server environment');
+      return;
+    }
+
     const report = getReport();
     const dataStr = JSON.stringify(report, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -110,18 +112,20 @@ export function PerformanceDashboard() {
 
   // 生成综合报告
   const generateComprehensiveReport = async () => {
+    // 服务端渲染保护
+    if (typeof window === 'undefined') {
+      logger.warn('ReportGenerator not available in server environment');
+      return;
+    }
+
     setIsGeneratingReport(true);
     try {
       const generator = new ReportGenerator();
-      const report = await generator.generateComprehensiveReport({
-        includeCharts: true,
-        includeAlerts: true,
-        includeOptimizations: true,
-        includeABTests: true,
-      });
+      const report = await generator.generateReport('综合性能报告');
+      const htmlReport = await generator.exportToHTML(report);
 
       // 下载 HTML 报告
-      const blob = new Blob([report.html], { type: 'text/html' });
+      const blob = new Blob([htmlReport], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -129,7 +133,7 @@ export function PerformanceDashboard() {
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('生成报告失败:', error);
+      logger.error('生成报告失败:', error);
     } finally {
       setIsGeneratingReport(false);
     }
@@ -141,7 +145,9 @@ export function PerformanceDashboard() {
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-3xl font-bold text-gray-900'>性能监控面板</h1>
-          <p className='text-gray-600 mt-2'>全面监控系统性能，包含实时图表、智能告警、优化建议等高级功能</p>
+          <p className='text-gray-600 mt-2'>
+            全面监控系统性能，包含实时图表、智能告警、优化建议等高级功能
+          </p>
         </div>
         <div className='flex items-center gap-2'>
           <Button
@@ -385,7 +391,7 @@ export function PerformanceDashboard() {
                     <span>点击次数</span>
                     <span className='font-medium'>
                       {
-                        metrics.userInteractions.filter(i => i.type === 'click')
+                        metrics.userInteractions.filter((i: any) => i.type === 'click')
                           .length
                       }
                     </span>
@@ -395,7 +401,7 @@ export function PerformanceDashboard() {
                     <span className='font-medium'>
                       {
                         metrics.userInteractions.filter(
-                          i => i.type === 'keydown'
+                          (i: any) => i.type === 'keydown'
                         ).length
                       }
                     </span>
@@ -405,7 +411,7 @@ export function PerformanceDashboard() {
                     <span className='font-medium'>
                       {
                         metrics.userInteractions.filter(
-                          i => i.type === 'scroll'
+                          (i: any) => i.type === 'scroll'
                         ).length
                       }
                     </span>
@@ -544,7 +550,11 @@ export function PerformanceDashboard() {
                   <CardContent className='p-4'>
                     <div className='text-center'>
                       <div className='text-2xl font-bold text-green-600'>
-                        {abTestingManager.getAllTests().filter(t => t.status === 'completed').length}
+                        {
+                          abTestingManager
+                            .getAllTests()
+                            .filter((t: any) => t.status === 'completed').length
+                        }
                       </div>
                       <div className='text-sm text-gray-600'>已完成测试</div>
                     </div>
@@ -564,40 +574,59 @@ export function PerformanceDashboard() {
 
               <div className='space-y-4'>
                 <h3 className='text-lg font-semibold'>最近的测试结果</h3>
-                {abTestingManager.getAllTests().slice(-3).map((test) => {
-                  const result = abTestingManager.getTestResult(test.id);
-                  return (
-                    <div key={test.id} className='border rounded-lg p-4'>
-                      <div className='flex justify-between items-start mb-2'>
-                        <div>
-                          <h4 className='font-medium'>{test.name}</h4>
-                          <p className='text-sm text-gray-600'>{test.description}</p>
+                {abTestingManager
+                  .getAllTests()
+                  .slice(-3)
+                  .map((test: any) => {
+                    const result = abTestingManager.getTestResult(test.id);
+                    return (
+                      <div key={test.id} className='border rounded-lg p-4'>
+                        <div className='flex justify-between items-start mb-2'>
+                          <div>
+                            <h4 className='font-medium'>{test.name}</h4>
+                            <p className='text-sm text-gray-600'>
+                              {test.description}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              test.status === 'active' ? 'default' : 'secondary'
+                            }
+                          >
+                            {test.status === 'active'
+                              ? '进行中'
+                              : test.status === 'completed'
+                                ? '已完成'
+                                : '已暂停'}
+                          </Badge>
                         </div>
-                        <Badge variant={test.status === 'active' ? 'default' : 'secondary'}>
-                          {test.status === 'active' ? '进行中' : test.status === 'completed' ? '已完成' : '已暂停'}
-                        </Badge>
-                      </div>
-                      {result && (
-                        <div className='mt-2 text-sm'>
-                          <div className='flex justify-between'>
-                            <span>胜出版本:</span>
-                            <span className='font-medium'>{result.winner || '无'}</span>
-                          </div>
-                          <div className='flex justify-between'>
-                            <span>置信度:</span>
-                            <span className='font-medium'>{Math.round(result.confidence * 100)}%</span>
-                          </div>
-                          {result.improvement > 0 && (
+                        {result && (
+                          <div className='mt-2 text-sm'>
                             <div className='flex justify-between'>
-                              <span>改进幅度:</span>
-                              <span className='font-medium text-green-600'>+{result.improvement.toFixed(1)}%</span>
+                              <span>胜出版本:</span>
+                              <span className='font-medium'>
+                                {result.winner || '无'}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                            <div className='flex justify-between'>
+                              <span>置信度:</span>
+                              <span className='font-medium'>
+                                {Math.round(result.confidence * 100)}%
+                              </span>
+                            </div>
+                            {result.improvement > 0 && (
+                              <div className='flex justify-between'>
+                                <span>改进幅度:</span>
+                                <span className='font-medium text-green-600'>
+                                  +{result.improvement.toFixed(1)}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>
@@ -624,7 +653,7 @@ export function PerformanceDashboard() {
                   {metrics.apiCalls
                     .slice(-20)
                     .reverse()
-                    .map((call, index) => (
+                    .map((call: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell className='font-mono text-sm'>
                           {call.url.length > 50
@@ -699,7 +728,7 @@ export function PerformanceDashboard() {
                   {metrics.resourceTimings
                     .slice(-20)
                     .reverse()
-                    .map((resource, index) => (
+                    .map((resource: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell className='font-mono text-sm'>
                           {resource.name.split('/').pop()}
@@ -747,7 +776,7 @@ export function PerformanceDashboard() {
                   {metrics.errors
                     .slice(-10)
                     .reverse()
-                    .map((error, index) => (
+                    .map((error: any, index: number) => (
                       <div
                         key={index}
                         className='border rounded-lg p-4 bg-red-50'

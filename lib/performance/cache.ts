@@ -3,6 +3,8 @@
  * 提供内存缓存、本地存储缓存和Service Worker缓存策略
  */
 
+import { useState, useEffect, useCallback } from 'react';
+
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
@@ -491,7 +493,7 @@ export function useCache<T>(
       .finally(() => {
         setIsLoading(false);
       });
-  }, [key, enabled, ttl, useLocalStorage]);
+  }, [key, enabled, ttl, useLocalStorage, fetcher]);
 
   const refetch = useCallback(() => {
     setIsLoading(true);
@@ -508,7 +510,7 @@ export function useCache<T>(
       .finally(() => {
         setIsLoading(false);
       });
-  }, [key, ttl, useLocalStorage]);
+  }, [key, ttl, useLocalStorage, fetcher]);
 
   return {
     data,

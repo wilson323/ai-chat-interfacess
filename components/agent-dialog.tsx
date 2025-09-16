@@ -3,9 +3,10 @@
 import type React from 'react';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { logger } from '../lib/utils/logger';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +14,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { useAgent } from '@/context/agent-context';
+} from './ui/dialog';
+import { useAgent } from '../context/agent-context';
+import { useCreateAgent } from '../lib/hooks/useAgents';
 import { Bot, Plus } from 'lucide-react';
 import {
   Select,
@@ -22,8 +24,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { useLanguage } from '@/context/language-context';
+} from './ui/select';
+import { useLanguage } from '../context/language-context';
+import { toast } from './ui/toast/use-toast';
 
 interface AgentDialogProps {
   open: boolean;
@@ -31,45 +34,82 @@ interface AgentDialogProps {
 }
 
 export function AgentDialog({ open, onOpenChange }: AgentDialogProps) {
-  const { addAgent } = useAgent();
+  const { } = useAgent();
   const { t } = useLanguage();
+  const createAgentMutation = useCreateAgent();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState('chat');
+  const [type, setType] = useState('fastgpt');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
       // Reset form when dialog opens
       setName('');
       setDescription('');
-      setType('chat');
+      setType('fastgpt');
+      setIsSubmitting(false);
     }
   }, [open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Generate a unique ID
-    const id = `agent-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    if (isSubmitting) return;
 
-    // Create the new agent
-    const newAgent = {
-      id,
-      name: name || 'New Agent',
-      description: description || '',
-      type,
-      apiEndpoint: 'https://zktecoaihub.com/api/v1/chat/completions', // 确保使用正确的API端点
-      apiKey: '',
-      appId: '',
-      isPublished: false,
-    };
+    try {
+      setIsSubmitting(true);
 
-    // Add the agent
-    addAgent(newAgent);
+      // 验证必填字段
+      if (!name.trim()) {
+        toast({
+          title: '错误',
+          description: '请输入智能体名称',
+          variant: 'destructive',
+        });
+        return;
+      }
 
-    // Close the dialog
-    onOpenChange(false);
+      // 创建智能体数据
+      const agentData = {
+        name: name.trim(),
+        description: description.trim(),
+        type: type as 'fastgpt',
+        apiKey: '',
+        appId: '',
+        apiUrl: '',
+        systemPrompt: '',
+        temperature: 0.7,
+        maxTokens: 2000,
+        multimodalModel: '',
+        isPublished: false,
+        order: 0,
+        supportsStream: true,
+        supportsDetail: true,
+      };
+
+      // 调用创建智能体API
+      await createAgentMutation.mutateAsync(agentData);
+
+      // 显示成功消息
+      toast({
+        title: '成功',
+        description: '智能体创建成功',
+      });
+
+      // 关闭对话框
+      onOpenChange(false);
+    } catch (error) {
+      logger.error('创建智能体失败:', error);
+      toast({
+        title: '错误',
+        description: error instanceof Error ? error.message : '创建智能体失败',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -138,10 +178,13 @@ export function AgentDialog({ open, onOpenChange }: AgentDialogProps) {
               type='button'
               variant='outline'
               onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
             >
               {t('cancel')}
             </Button>
-            <Button type='submit'>{t('create')}</Button>
+            <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting ? '创建中...' : t('create')}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

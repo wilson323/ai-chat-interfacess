@@ -4,7 +4,6 @@
  */
 
 import { Sequelize, QueryTypes } from 'sequelize';
-import { Op } from 'sequelize';
 
 interface QueryAnalysis {
   query: string;
@@ -45,7 +44,7 @@ class DatabaseQueryOptimizer {
    */
   async analyzeQuery(
     query: string,
-    params: any[] = []
+    params: unknown[] = []
   ): Promise<QueryAnalysis> {
     const cacheKey = `${query}:${JSON.stringify(params)}`;
 
@@ -66,7 +65,7 @@ class DatabaseQueryOptimizer {
       );
 
       const executionTime = Date.now() - startTime;
-      const plan = explainResult[0] as any;
+      const plan = explainResult[0] as Record<string, unknown>;
 
       // 分析执行计划
       const analysis = this.analyzeExecutionPlan(query, plan, executionTime);
@@ -74,7 +73,9 @@ class DatabaseQueryOptimizer {
       // 缓存结果
       if (this.queryCache.size >= this.maxCacheSize) {
         const firstKey = this.queryCache.keys().next().value;
-        this.queryCache.delete(firstKey);
+        if (firstKey) {
+          this.queryCache.delete(firstKey);
+        }
       }
       this.queryCache.set(cacheKey, analysis);
 
@@ -98,7 +99,7 @@ class DatabaseQueryOptimizer {
    */
   private analyzeExecutionPlan(
     query: string,
-    plan: any,
+    plan: Record<string, unknown>,
     executionTime: number
   ): QueryAnalysis {
     const suggestions: string[] = [];
@@ -108,7 +109,7 @@ class DatabaseQueryOptimizer {
     const indexUsed: string[] = [];
 
     // 递归分析执行计划节点
-    const analyzeNode = (node: any) => {
+    const analyzeNode = (node: Record<string, unknown>) => {
       if (node['Node Type']) {
         const nodeType = node['Node Type'];
 
@@ -121,7 +122,7 @@ class DatabaseQueryOptimizer {
           nodeType === 'Index Only Scan'
         ) {
           if (node['Index Name']) {
-            indexUsed.push(node['Index Name']);
+            indexUsed.push(String(node['Index Name']));
           }
         }
 
@@ -148,23 +149,23 @@ class DatabaseQueryOptimizer {
 
         // 统计行数
         if (node['Actual Rows']) {
-          rowsReturned += node['Actual Rows'];
+          rowsReturned += Number(node['Actual Rows']) || 0;
         }
         if (node['Actual Rows']) {
-          rowsExamined += node['Actual Rows'];
+          rowsExamined += Number(node['Actual Rows']) || 0;
         }
       }
 
       // 递归分析子节点
-      if (node['Plans']) {
+      if (node['Plans'] && Array.isArray(node['Plans'])) {
         for (const childNode of node['Plans']) {
-          analyzeNode(childNode);
+          analyzeNode(childNode as Record<string, unknown>);
         }
       }
     };
 
-    if (plan[0] && plan[0]['Plan']) {
-      analyzeNode(plan[0]['Plan']);
+    if (Array.isArray(plan) && plan[0] && plan[0]['Plan']) {
+      analyzeNode(plan[0]['Plan'] as Record<string, unknown>);
     }
 
     // 分析执行时间
@@ -206,15 +207,15 @@ class DatabaseQueryOptimizer {
       // 获取所有表
       const tables = await this.sequelize.query(
         `
-        SELECT table_name 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_type = 'BASE TABLE'
       `,
         { type: QueryTypes.SELECT }
       );
 
-      for (const table of tables as any[]) {
+      for (const table of tables as Array<{ table_name: string }>) {
         const tableName = table.table_name;
 
         // 分析表结构
@@ -241,8 +242,12 @@ class DatabaseQueryOptimizer {
         // 生成索引建议
         const tableSuggestions = this.analyzeTableForIndexes(
           tableName,
-          columns,
-          indexes
+          columns as Array<{
+            column_name: string;
+            data_type: string;
+            is_nullable: string;
+          }>,
+          indexes as Array<{ indexname: string; column_name: string }>
         );
         suggestions.push(...tableSuggestions);
       }
@@ -258,14 +263,18 @@ class DatabaseQueryOptimizer {
    */
   private analyzeTableForIndexes(
     tableName: string,
-    columns: any[],
-    indexes: any[]
+    columns: Array<{
+      column_name: string;
+      data_type: string;
+      is_nullable: string;
+    }>,
+    indexes: Array<{ indexname: string; column_name: string }>
   ): IndexSuggestion[] {
     const suggestions: IndexSuggestion[] = [];
-    const existingIndexes = new Set(indexes.map((idx: any) => idx.indexname));
+    const existingIndexes = new Set(indexes.map(idx => idx.indexname));
 
     // 分析主键
-    const primaryKey = columns.find((col: any) => col.column_name === 'id');
+    const primaryKey = columns.find(col => col.column_name === 'id');
     if (primaryKey && !existingIndexes.has(`${tableName}_pkey`)) {
       suggestions.push({
         table: tableName,
@@ -278,8 +287,7 @@ class DatabaseQueryOptimizer {
 
     // 分析外键
     const foreignKeys = columns.filter(
-      (col: any) =>
-        col.column_name.endsWith('_id') || col.column_name.endsWith('Id')
+      col => col.column_name.endsWith('_id') || col.column_name.endsWith('Id')
     );
 
     for (const fk of foreignKeys) {
@@ -297,7 +305,7 @@ class DatabaseQueryOptimizer {
 
     // 分析时间字段
     const timeFields = columns.filter(
-      (col: any) =>
+      col =>
         col.column_name.includes('time') ||
         col.column_name.includes('date') ||
         col.column_name.includes('created') ||
@@ -319,7 +327,7 @@ class DatabaseQueryOptimizer {
 
     // 分析状态字段
     const statusFields = columns.filter(
-      (col: any) =>
+      col =>
         col.column_name.includes('status') ||
         col.column_name.includes('state') ||
         col.column_name.includes('type') ||
@@ -347,7 +355,7 @@ class DatabaseQueryOptimizer {
    */
   async optimizeQuery(
     query: string,
-    params: any[] = []
+    params: unknown[] = []
   ): Promise<QueryOptimization> {
     const analysis = await this.analyzeQuery(query, params);
     const improvements: string[] = [];
@@ -401,7 +409,7 @@ class DatabaseQueryOptimizer {
   async getSlowQueries(threshold: number = 1000): Promise<QueryAnalysis[]> {
     const slowQueries: QueryAnalysis[] = [];
 
-    for (const [query, analysis] of this.queryCache) {
+    for (const analysis of this.queryCache.values()) {
       if (analysis.executionTime > threshold) {
         slowQueries.push(analysis);
       }
@@ -453,9 +461,9 @@ class DatabaseQueryOptimizer {
   /**
    * 生成优化报告
    */
-  generateOptimizationReport(): string {
+  async generateOptimizationReport(): Promise<string> {
     const stats = this.getQueryStats();
-    const suggestions = this.generateIndexSuggestions();
+    const suggestions = await this.generateIndexSuggestions();
 
     return `
 # 数据库查询优化报告
@@ -469,7 +477,7 @@ class DatabaseQueryOptimizer {
 ## 索引建议
 ${suggestions
   .map(
-    s => `
+    (s: IndexSuggestion) => `
 ### ${s.table} 表
 - 列: ${s.columns.join(', ')}
 - 类型: ${s.type}
@@ -509,7 +517,7 @@ export function getQueryOptimizer(
  */
 export async function analyzeQuery(
   query: string,
-  params: any[] = [],
+  params: unknown[] = [],
   sequelize: Sequelize
 ): Promise<QueryAnalysis> {
   const optimizer = getQueryOptimizer(sequelize);
@@ -531,7 +539,7 @@ export async function generateIndexSuggestions(
  */
 export async function optimizeQuery(
   query: string,
-  params: any[] = [],
+  params: unknown[] = [],
   sequelize: Sequelize
 ): Promise<QueryOptimization> {
   const optimizer = getQueryOptimizer(sequelize);

@@ -1,9 +1,17 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { logger } from '@/lib/utils/logger';
+import { useEffect, useState } from 'react';
+// Removed invalid typescript import
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -12,27 +20,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Database,
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
-  Trash2,
-  Zap,
-  Settings,
-  BarChart3,
-  Clock,
   Activity,
   AlertTriangle,
+  BarChart3,
   CheckCircle,
+  Clock,
+  Database,
+  RefreshCw,
+  Settings,
+  Trash2,
+  TrendingUp,
+  Zap
 } from 'lucide-react';
 
 interface CacheStats {
@@ -53,7 +53,7 @@ interface CacheStrategy {
 
 interface OptimizationResult {
   recommendations: string[];
-  newPolicy: Record<string, any>;
+  newPolicy: Record<string, unknown>;
 }
 
 export function CacheDashboard() {
@@ -81,7 +81,7 @@ export function CacheDashboard() {
         setCurrentStrategy(data.data.currentStrategy.name);
       }
     } catch (error) {
-      console.error('获取缓存统计失败:', error);
+      logger.error('获取缓存统计失败:', error);
     }
   };
 
@@ -95,7 +95,7 @@ export function CacheDashboard() {
         setHotKeys(data.data);
       }
     } catch (error) {
-      console.error('获取热点键失败:', error);
+      logger.error('获取热点键失败:', error);
     }
   };
 
@@ -109,7 +109,7 @@ export function CacheDashboard() {
         setOptimization(data.data);
       }
     } catch (error) {
-      console.error('获取优化建议失败:', error);
+      logger.error('获取优化建议失败:', error);
     }
   };
 
@@ -134,7 +134,7 @@ export function CacheDashboard() {
         await fetchStats();
       }
     } catch (error) {
-      console.error('切换缓存策略失败:', error);
+      logger.error('切换缓存策略失败:', error);
     } finally {
       setLoading(false);
     }
@@ -163,7 +163,7 @@ export function CacheDashboard() {
         await fetchStats();
       }
     } catch (error) {
-      console.error('清空缓存失败:', error);
+      logger.error('清空缓存失败:', error);
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ export function CacheDashboard() {
         await fetchStats();
       }
     } catch (error) {
-      console.error('执行优化失败:', error);
+      logger.error('执行优化失败:', error);
     } finally {
       setLoading(false);
     }

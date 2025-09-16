@@ -1,0 +1,371 @@
+---
+alwaysApply: true
+description: Pre-commit钩子和代码质量门控
+---
+
+# Pre-commit钩子和代码质量门控
+
+## 核心原则
+- 每个阶段落实好且也测试验证后请自动提交git
+- 禁止代码组件功能等的冗余
+- 新增前先全局梳理确保不冗余再去新增
+- 建立完整的代码质量门控机制
+
+## Husky配置
+
+### 安装和配置
+```bash
+# 安装Husky
+npm install --save-dev husky
+
+# 初始化Husky
+npx husky init
+
+# 设置pre-commit钩子
+echo "npm run pre-commit" > .husky/pre-commit
+chmod +x .husky/pre-commit
+```
+
+### Pre-commit钩子脚本
+```bash
+#!/bin/bash
+echo "🔍 开始Pre-commit检查..."
+
+# 1. 类型检查
+echo "📋 运行TypeScript类型检查..."
+npm run check-types
+if [ $? -ne 0 ]; then
+  echo "❌ 类型检查失败，请修复后重试"
+  exit 1
+fi
+
+# 2. 代码规范检查
+echo "📋 运行ESLint检查..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ 代码规范检查失败，请修复后重试"
+  exit 1
+fi
+
+# 3. 格式化检查
+echo "📋 运行Prettier检查..."
+npm run format:check
+if [ $? -ne 0 ]; then
+  echo "❌ 代码格式化检查失败，请运行 npm run format 修复"
+  exit 1
+fi
+
+# 4. 测试运行
+echo "📋 运行测试..."
+npm run test
+if [ $? -ne 0 ]; then
+  echo "❌ 测试失败，请修复后重试"
+  exit 1
+fi
+
+# 5. 构建检查
+echo "📋 运行构建检查..."
+npm run build
+if [ $? -ne 0 ]; then
+  echo "❌ 构建失败，请修复后重试"
+  exit 1
+fi
+
+echo "✅ 所有检查通过，可以提交"
+```
+
+## Lint-staged配置
+
+### 配置文件
+```json
+{
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write",
+      "git add"
+    ]
+  }
+}
+```
+
+### 自定义检查规则
+```javascript
+// lint-staged.config.js
+module.exports = {
+  '*.{ts,tsx}': [
+    // 1. 类型检查
+    'tsc --noEmit',
+
+    // 2. ESLint检查
+    'eslint --fix',
+
+    // 3. Prettier格式化
+    'prettier --write',
+
+    // 4. 自定义检查
+    'node scripts/check-jsx-special-chars.js',
+
+    // 5. 添加到暂存区
+    'git add'
+  ],
+  '*.{js,jsx}': [
+    'eslint --fix',
+    'prettier --write',
+    'git add'
+  ],
+  '*.{json,md,css}': [
+    'prettier --write',
+    'git add'
+  ]
+};
+```
+
+## 自定义检查脚本
+
+### JSX特殊字符检查
+```javascript
+// scripts/check-jsx-special-chars.js
+const fs = require('fs');
+const path = require('path');
+
+function checkJsxSpecialChars(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const htmlEntities = /&[a-zA-Z0-9#]+;/g;
+  const matches = content.match(htmlEntities);
+
+  if (matches) {
+    console.error(`❌ 发现HTML实体编码: ${filePath}`);
+    console.error(`   实体编码: ${matches.join(', ')}`);
+    console.error(`   请使用JavaScript表达式: {'<'} 代替 &lt;`);
+    return false;
+  }
+
+  return true;
+}
+
+function checkFiles() {
+  const files = process.argv.slice(2);
+  let hasErrors = false;
+
+  files.forEach(file => {
+    if (file.endsWith('.tsx') || file.endsWith('.jsx')) {
+      if (!checkJsxSpecialChars(file)) {
+        hasErrors = true;
+      }
+    }
+  });
+
+  if (hasErrors) {
+    process.exit(1);
+  }
+
+  console.log('✅ JSX特殊字符检查通过');
+}
+
+checkFiles();
+```
+
+### 代码重复检查
+```javascript
+// scripts/check-code-duplication.js
+const fs = require('fs');
+const path = require('path');
+
+function checkCodeDuplication() {
+  console.log('🔍 检查代码重复...');
+
+  // 使用jscpd检查代码重复
+  const { exec } = require('child_process');
+
+  exec('npx jscpd --min-lines 5 --min-tokens 50 src/', (error, stdout, stderr) => {
+    if (error) {
+      console.error('❌ 发现代码重复');
+      console.error(stderr);
+      process.exit(1);
+    }
+
+    console.log('✅ 代码重复检查通过');
+  });
+}
+
+checkCodeDuplication();
+```
+
+## 质量门控配置
+
+### 质量门控规则
+```javascript
+// scripts/quality-gate.js
+const qualityGate = {
+  // 类型检查
+  typeCheck: {
+    required: true,
+    command: 'npm run check-types',
+    threshold: 0 // 0个错误
+  },
+
+  // 代码规范
+  lint: {
+    required: true,
+    command: 'npm run lint',
+    threshold: 0 // 0个错误
+  },
+
+  // 测试覆盖率
+  testCoverage: {
+    required: true,
+    command: 'npm run test:coverage',
+    threshold: 80 // 80%覆盖率
+  },
+
+  // 构建检查
+  build: {
+    required: true,
+    command: 'npm run build',
+    threshold: 0 // 0个错误
+  }
+};
+
+module.exports = qualityGate;
+```
+
+### 质量门控执行
+```javascript
+// scripts/run-quality-gate.js
+const qualityGate = require('./quality-gate');
+const { exec } = require('child_process');
+
+async function runQualityGate() {
+  console.log('🚪 开始质量门控检查...');
+
+  for (const [name, config] of Object.entries(qualityGate)) {
+    if (!config.required) continue;
+
+    console.log(`📋 运行 ${name} 检查...`);
+
+    try {
+      await runCommand(config.command);
+      console.log(`✅ ${name} 检查通过`);
+    } catch (error) {
+      console.error(`❌ ${name} 检查失败`);
+      console.error(error.message);
+      process.exit(1);
+    }
+  }
+
+  console.log('🎉 所有质量门控检查通过');
+}
+
+function runCommand(command) {
+  return new Promise((resolve, reject) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        reject(new Error(stderr));
+      } else {
+        resolve(stdout);
+      }
+    });
+  });
+}
+
+runQualityGate();
+```
+
+## 提交信息规范
+
+### 提交信息模板
+```bash
+# .gitmessage
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+
+# 类型说明
+# feat:     新功能
+# fix:      修复问题
+# docs:     文档更新
+# style:    代码格式
+# refactor: 重构代码
+# test:     测试相关
+# chore:    构建过程或辅助工具的变动
+
+# 范围说明
+# admin:    管理界面
+# api:      API相关
+# ui:       用户界面
+# lib:      工具库
+# types:    类型定义
+# tests:    测试相关
+
+# 主题说明
+# 50字符以内，描述主要变更
+
+# 正文说明
+# 72字符换行，描述详细变更
+
+# 页脚说明
+# 关联issue，破坏性变更等
+```
+
+### 提交信息检查
+```javascript
+// scripts/check-commit-message.js
+const fs = require('fs');
+
+function checkCommitMessage() {
+  const commitMessage = fs.readFileSync(process.argv[2], 'utf8');
+
+  // 检查提交信息格式
+  const commitRegex = /^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .{1,50}$/;
+
+  if (!commitRegex.test(commitMessage.split('\n')[0])) {
+    console.error('❌ 提交信息格式不正确');
+    console.error('   格式: <type>(<scope>): <subject>');
+    console.error('   类型: feat, fix, docs, style, refactor, test, chore');
+    console.error('   范围: admin, api, ui, lib, types, tests');
+    console.error('   主题: 50字符以内');
+    process.exit(1);
+  }
+
+  console.log('✅ 提交信息格式正确');
+}
+
+checkCommitMessage();
+```
+
+## 检查清单
+
+### 开发阶段
+- [ ] Husky配置正确
+- [ ] Lint-staged配置完整
+- [ ] 自定义检查脚本有效
+- [ ] 质量门控规则设置
+- [ ] 提交信息规范配置
+
+### 构建阶段
+- [ ] Pre-commit钩子生效
+- [ ] 自动修复功能正常
+- [ ] 质量门控通过
+- [ ] 提交信息检查通过
+- [ ] 构建流程完整
+
+### 持续集成
+- [ ] CI/CD集成配置
+- [ ] 质量门控集成
+- [ ] 自动修复集成
+- [ ] 监控告警配置
+- [ ] 回滚机制设置
+
+参考配置文件：[package.json](mdc:package.json), [.husky](mdc:.husky)

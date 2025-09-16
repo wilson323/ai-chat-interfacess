@@ -3,15 +3,14 @@
 import * as React from 'react';
 
 import { useState, useEffect, useCallback } from 'react';
-import { cn } from '@/lib/utils';
-import { useTheme } from 'next-themes';
+import Image from 'next/image';
+import { cn } from '../lib/utils';
+// import { useTheme } from 'next-themes'; // 未使用的导入，保留用于未来扩展
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { Button } from '@/components/ui/button';
-import { Copy, Check, ExternalLink, Loader2, X } from 'lucide-react';
-import { useMobile } from '@/hooks/use-mobile';
-import { ErrorBoundary } from '@/components/error-boundary';
+// import { useMobile } from '../hooks/use-mobile'; // 未使用的导入，保留用于未来扩展
+import { ErrorBoundary } from './error-boundary';
 import rehypeHighlight from 'rehype-highlight';
 
 interface MarkdownMessageProps {
@@ -23,24 +22,9 @@ interface MarkdownMessageProps {
 export function MarkdownMessage({
   content,
   className,
-  enableImageExpand = true,
 }: MarkdownMessageProps) {
-  // 防御性处理，防止 content 为空或 undefined
-  if (!content || typeof content !== 'string' || content.trim() === '') {
-    return (
-      <div
-        className={cn(
-          'whitespace-pre-wrap text-sm sm:text-base leading-relaxed',
-          className
-        )}
-      />
-    );
-  }
-
-  const safeContent = typeof content === 'string' ? content : '';
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  const isMobile = useMobile();
+  // 所有 Hooks 必须在条件语句之前调用
+  // const { theme } = useTheme(); // 未使用的变量，保留用于未来扩展
   const rehypePlugins = [rehypeHighlight];
 
   // 使用useState钩子
@@ -58,124 +42,12 @@ export function MarkdownMessage({
     setState(prev => ({ ...prev, mounted: true }));
   }, []);
 
-  const handleCopyCode = useCallback((code: string) => {
-    navigator.clipboard.writeText(code);
-    setState(prev => ({ ...prev, copiedCode: code }));
-    setTimeout(() => setState(prev => ({ ...prev, copiedCode: null })), 2000);
-  }, []);
-
-  const handleImageClick = useCallback((src: string) => {
-    console.log('图片点击事件触发，src:', src);
-
-    // 强制创建一个新的模态框元素
-    const existingModal = document.getElementById('image-modal');
-    if (existingModal) {
-      existingModal.remove();
-    }
-
-    // 直接使用DOM API创建模态框
-    const createImageModal = () => {
-      try {
-        const modal = document.createElement('div');
-        modal.id = 'image-modal';
-        modal.style.position = 'fixed';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.right = '0';
-        modal.style.bottom = '0';
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
-        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        modal.style.backdropFilter = 'blur(4px)';
-        modal.style.zIndex = '99999'; // 提高z-index，确保在聊天历史页面中也能显示
-
-        const imgContainer = document.createElement('div');
-        imgContainer.style.position = 'relative';
-        imgContainer.style.maxWidth = '90vw';
-        imgContainer.style.maxHeight = '90vh';
-        imgContainer.style.padding = '8px';
-        imgContainer.style.borderRadius = '8px';
-        imgContainer.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
-
-        const img = document.createElement('img');
-        img.src = src || '/placeholder.svg';
-        img.alt = '图片预览';
-        img.style.maxWidth = '100%';
-        img.style.maxHeight = '85vh';
-        img.style.objectFit = 'contain';
-        img.style.borderRadius = '8px';
-        img.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)';
-
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = '✕';
-        closeBtn.style.position = 'absolute';
-        closeBtn.style.top = '8px';
-        closeBtn.style.right = '8px';
-        closeBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-        closeBtn.style.color = 'white';
-        closeBtn.style.border = 'none';
-        closeBtn.style.borderRadius = '9999px';
-        closeBtn.style.width = '32px';
-        closeBtn.style.height = '32px';
-        closeBtn.style.cursor = 'pointer';
-
-        const hint = document.createElement('div');
-        hint.textContent = '点击任意位置关闭';
-        hint.style.position = 'absolute';
-        hint.style.bottom = '16px';
-        hint.style.left = '50%';
-        hint.style.transform = 'translateX(-50%)';
-        hint.style.fontSize = '12px';
-        hint.style.color = 'rgba(255, 255, 255, 0.7)';
-        hint.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
-        hint.style.padding = '4px 12px';
-        hint.style.borderRadius = '9999px';
-
-        imgContainer.appendChild(img);
-        imgContainer.appendChild(closeBtn);
-        imgContainer.appendChild(hint);
-        modal.appendChild(imgContainer);
-
-        const closeModal = () => {
-          try {
-            document.body.removeChild(modal);
-          } catch (e) {
-            console.error('移除模态框失败:', e);
-          }
-          setState(prev => ({ ...prev, expandedImage: null }));
-        };
-
-        modal.addEventListener('click', closeModal);
-        closeBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          closeModal();
-        });
-        imgContainer.addEventListener('click', e => {
-          e.stopPropagation();
-        });
-
-        document.body.appendChild(modal);
-      } catch (error) {
-        console.error('创建图片模态框失败:', error);
-      }
-    };
-
-    // 更新状态并创建模态框
-    setState(prev => {
-      console.log(
-        '更新expandedImage状态，当前值:',
-        prev.expandedImage,
-        '新值:',
-        src
-      );
-
-      // 使用setTimeout确保状态更新后再创建模态框
-      setTimeout(createImageModal, 0);
-
-      return { ...prev, expandedImage: src };
-    });
-  }, []);
+  // Commented out handleCopyCode function - unused
+  // const handleCopyCode = useCallback((code: string) => {
+  //   navigator.clipboard.writeText(code);
+  //   setState(prev => ({ ...prev, copiedCode: code }));
+  //   setTimeout(() => setState(prev => ({ ...prev, copiedCode: null })), 2000);
+  // }, []);
 
   // Function to process image URLs through the proxy if needed
   const processImageUrl = useCallback((url: string) => {
@@ -202,20 +74,153 @@ export function MarkdownMessage({
   useEffect(() => {
     if (!state.mounted) return;
 
-    const imageRegex = /!\[(.*?)\]$$(.*?)$$/g;
+    const safeContent = typeof content === 'string' ? content : '';
+    const imageRegex = /!\[(.*?)\]\((.*?)\)/g;
     const matches = [...safeContent.matchAll(imageRegex)];
     const initialLoadingStates = matches.reduce(
       (acc, match) => {
         const url = match[2];
-        const processedSrc = processImageUrl(url);
-        acc[processedSrc] = { isLoading: true, error: false };
+        if (url) {
+          const processedSrc = processImageUrl(url);
+          acc[processedSrc] = { isLoading: true, error: false };
+        }
         return acc;
       },
       {} as { [key: string]: { isLoading: boolean; error: boolean } }
     );
 
     setState(prev => ({ ...prev, imageLoadingStates: initialLoadingStates }));
-  }, [safeContent, processImageUrl, state.mounted]);
+  }, [content, processImageUrl, state.mounted]);
+
+  // Image click handler function - 未使用的函数，保留用于未来扩展
+  // const handleImageClick = useCallback((src: string) => {
+    // console.log('图片点击事件触发，src:', src);
+    //
+    // // 强制创建一个新的模态框元素
+    // const existingModal = document.getElementById('image-modal');
+    // if (existingModal) {
+    //   existingModal.remove();
+    // }
+    //
+    // // 直接使用DOM API创建模态框
+    // const createImageModal = () => {
+    //   try {
+    //     const modal = document.createElement('div');
+    //     modal.id = 'image-modal';
+    //     modal.style.position = 'fixed';
+    //     modal.style.top = '0';
+    //     modal.style.left = '0';
+    //     modal.style.right = '0';
+    //     modal.style.bottom = '0';
+    //     modal.style.display = 'flex';
+    //     modal.style.alignItems = 'center';
+    //     modal.style.justifyContent = 'center';
+    //     modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    //     modal.style.backdropFilter = 'blur(4px)';
+    //     modal.style.zIndex = '99999'; // 提高z-index，确保在聊天历史页面中也能显示
+    //
+    //     const imgContainer = document.createElement('div');
+    //     imgContainer.style.position = 'relative';
+    //     imgContainer.style.maxWidth = '90vw';
+    //     imgContainer.style.maxHeight = '90vh';
+    //     imgContainer.style.padding = '8px';
+    //     imgContainer.style.borderRadius = '8px';
+    //     imgContainer.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5)';
+    //
+    //     const img = document.createElement('img');
+    //     img.src = src || '/placeholder.svg';
+    //     img.alt = '图片预览';
+    //     img.style.maxWidth = '100%';
+    //     img.style.maxHeight = '85vh';
+    //     img.style.objectFit = 'contain';
+    //     img.style.borderRadius = '8px';
+    //     img.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.3)';
+    //
+    //     const closeBtn = document.createElement('button');
+    //     closeBtn.textContent = '✕';
+    //     closeBtn.style.position = 'absolute';
+    //     closeBtn.style.top = '8px';
+    //     closeBtn.style.right = '8px';
+    //     closeBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+    //     closeBtn.style.color = 'white';
+    //     closeBtn.style.border = 'none';
+    //     closeBtn.style.borderRadius = '9999px';
+    //     closeBtn.style.width = '32px';
+    //     closeBtn.style.height = '32px';
+    //     closeBtn.style.cursor = 'pointer';
+    //
+    //     const hint = document.createElement('div');
+    //     hint.textContent = '点击任意位置关闭';
+    //     hint.style.position = 'absolute';
+    //     hint.style.bottom = '16px';
+    //     hint.style.left = '50%';
+    //     hint.style.transform = 'translateX(-50%)';
+    //     hint.style.fontSize = '12px';
+    //     hint.style.color = 'rgba(255, 255, 255, 0.7)';
+    //     hint.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+    //     hint.style.padding = '4px 12px';
+    //     hint.style.borderRadius = '9999px';
+    //
+    //     imgContainer.appendChild(img);
+    //     imgContainer.appendChild(closeBtn);
+    //     imgContainer.appendChild(hint);
+    //     modal.appendChild(imgContainer);
+    //
+    //     const closeModal = () => {
+    //       try {
+    //         document.body.removeChild(modal);
+    //       } catch (e) {
+    //         console.error('移除模态框失败:', e);
+    //       }
+    //       setState(prev => ({ ...prev, expandedImage: null }));
+    //     };
+    //
+    //     modal.addEventListener('click', closeModal);
+    //     closeBtn.addEventListener('click', e => {
+    //       e.stopPropagation();
+    //       closeModal();
+    //     });
+    //     imgContainer.addEventListener('click', e => {
+    //       e.stopPropagation();
+    //     });
+    //
+    //     document.body.appendChild(modal);
+    //   } catch (error) {
+    //     console.error('创建图片模态框失败:', error);
+    //   }
+    // };
+    //
+    // // 更新状态并创建模态框
+    // setState(prev => {
+    //   console.log(
+    //     '更新expandedImage状态，当前值:',
+    //     prev.expandedImage,
+    //     '新值:',
+    //     src
+    //   );
+    //
+    //   // 使用setTimeout确保状态更新后再创建模态框
+    //   setTimeout(createImageModal, 0);
+    //
+    //   return { ...prev, expandedImage: src };
+    // });
+  // }, []);
+
+  // Close the handleImageClick function properly
+
+  // 防御性处理，防止 content 为空或 undefined
+  if (!content || typeof content !== 'string' || content.trim() === '') {
+    return (
+      <div
+        className={cn(
+          'whitespace-pre-wrap text-sm sm:text-base leading-relaxed',
+          className
+        )}
+      />
+    );
+  }
+
+  const safeContent = typeof content === 'string' ? content : '';
 
   // 在客户端渲染之前返回一个简单的占位符
   if (!state.mounted) {
@@ -308,10 +313,13 @@ export function MarkdownMessage({
                   Object.entries(rest).filter(([_, v]) => typeof v === 'string')
                 );
                 return (
-                  <img
+                  <Image
                     src={src}
                     alt={safeAlt}
                     title={safeTitle}
+                    width={400}
+                    height={300}
+                    className="max-w-full h-auto"
                     {...safeRest}
                   />
                 );

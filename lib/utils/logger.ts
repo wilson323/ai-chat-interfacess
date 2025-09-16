@@ -1,140 +1,140 @@
 /**
- * 统一日志管理工具
- * 根据环境变量控制日志输出级别
+ * 统一日志管理系统
+ * 提供一致的日志格式和级别管理
  */
 
-export enum LogLevel {
-  DEBUG = 0,
-  INFO = 1,
-  WARN = 2,
-  ERROR = 3,
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+interface LogEntry {
+  level: LogLevel;
+  message: string;
+  timestamp: string;
+  context?: string;
+  data?: unknown;
 }
 
 class Logger {
-  private level: LogLevel;
+  private static instance: Logger;
   private isDevelopment: boolean;
 
-  constructor() {
+  private constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development';
-    this.level = this.isDevelopment ? LogLevel.DEBUG : LogLevel.INFO;
+  }
+
+  public static getInstance(): Logger {
+    if (!Logger.instance) {
+      Logger.instance = new Logger();
+    }
+    return Logger.instance;
+  }
+
+  private formatMessage(level: LogLevel, message: string, context?: string, data?: any): LogEntry {
+    return {
+      level,
+      message,
+      timestamp: new Date().toISOString(),
+      context,
+      data,
+    };
   }
 
   private shouldLog(level: LogLevel): boolean {
-    return level >= this.level;
+    if (this.isDevelopment) return true;
+
+    // 生产环境只记录warn和error
+    return level === 'warn' || level === 'error';
   }
 
-  private formatMessage(
-    level: string,
-    message: string,
-    ...args: any[]
-  ): string {
-    const timestamp = new Date().toISOString();
-    const prefix = `[${timestamp}] [${level}]`;
+  private log(level: LogLevel, message: string, context?: string, data?: unknown): void {
+    if (!this.shouldLog(level)) return;
 
-    if (args.length > 0) {
-      return `${prefix} ${message} ${args
-        .map(arg =>
-          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-        )
-        .join(' ')}`;
-    }
+    const logEntry = this.formatMessage(level, message, context, data);
 
-    return `${prefix} ${message}`;
-  }
+    const logMessage = `[${logEntry.timestamp}] [${level.toUpperCase()}]${context ? ` [${context}]` : ''} ${message}`;
 
-  debug(message: string, ...args: any[]): void {
-    if (this.shouldLog(LogLevel.DEBUG)) {
-      console.log(this.formatMessage('DEBUG', message, ...args));
-    }
-  }
-
-  info(message: string, ...args: any[]): void {
-    if (this.shouldLog(LogLevel.INFO)) {
-      console.info(this.formatMessage('INFO', message, ...args));
+    switch (level) {
+      case 'debug':
+        console.debug(logMessage, data || '');
+        break;
+      case 'info':
+        console.info(logMessage, data || '');
+        break;
+      case 'warn':
+        console.warn(logMessage, data || '');
+        break;
+      case 'error':
+        console.error(logMessage, data || '');
+        break;
     }
   }
 
-  warn(message: string, ...args: any[]): void {
-    if (this.shouldLog(LogLevel.WARN)) {
-      console.warn(this.formatMessage('WARN', message, ...args));
+  public debug(message: string, context?: string, data?: unknown): void {
+    this.log('debug', message, context, data);
+  }
+
+  public info(message: string, context?: string, data?: unknown): void {
+    this.log('info', message, context, data);
+  }
+
+  public warn(message: string, context?: string, data?: unknown): void;
+  public warn(message: string, error: unknown): void;
+  public warn(message: string, contextOrError?: string | unknown, data?: unknown): void {
+    if (typeof contextOrError === 'string') {
+      this.log('warn', message, contextOrError, data);
+    } else {
+      this.log('warn', message, undefined, contextOrError);
     }
   }
 
-  error(message: string, ...args: any[]): void {
-    if (this.shouldLog(LogLevel.ERROR)) {
-      console.error(this.formatMessage('ERROR', message, ...args));
+  public error(message: string, context?: string, data?: unknown): void;
+  public error(message: string, error: unknown): void;
+  public error(message: string, contextOrError?: string | unknown, data?: unknown): void {
+    if (typeof contextOrError === 'string') {
+      this.log('error', message, contextOrError, data);
+    } else {
+      this.log('error', message, undefined, contextOrError);
     }
   }
 
-  // 生产环境始终记录的错误日志
-  errorAlways(message: string, ...args: any[]): void {
-    console.error(this.formatMessage('ERROR', message, ...args));
+  // 聊天相关日志
+  public chatWarn(message: string, data?: unknown): void {
+    this.warn(message, 'CHAT', data);
   }
 
-  // 开发环境调试日志
-  devDebug(message: string, ...args: any[]): void {
-    if (this.isDevelopment) {
-      console.log(`[DEV] ${message}`, ...args);
-    }
+  // 聊天相关日志
+  public chatInfo(message: string, data?: unknown): void {
+    this.info(message, 'CHAT', data);
   }
 
-  // 性能监控日志
-  performance(operation: string, duration: number, details?: any): void {
-    if (this.shouldLog(LogLevel.INFO)) {
-      const message = `Performance: ${operation} took ${duration}ms`;
-      if (details) {
-        console.info(this.formatMessage('PERF', message, details));
-      } else {
-        console.info(this.formatMessage('PERF', message));
-      }
-    }
+  public chatError(message: string, data?: unknown): void {
+    this.error(message, 'CHAT', data);
   }
 
-  // API请求日志
-  apiRequest(
-    method: string,
-    url: string,
-    status: number,
-    duration?: number
-  ): void {
-    if (this.shouldLog(LogLevel.INFO)) {
-      const message = `API ${method} ${url} - ${status}`;
-      if (duration) {
-        console.info(this.formatMessage('API', `${message} (${duration}ms)`));
-      } else {
-        console.info(this.formatMessage('API', message));
-      }
-    }
+  public chatDebug(message: string, data?: unknown): void {
+    this.debug(message, 'CHAT', data);
   }
 
-  // 数据库操作日志
-  database(operation: string, table: string, duration?: number): void {
-    if (this.shouldLog(LogLevel.DEBUG)) {
-      const message = `DB ${operation} on ${table}`;
-      if (duration) {
-        console.debug(this.formatMessage('DB', `${message} (${duration}ms)`));
-      } else {
-        console.debug(this.formatMessage('DB', message));
-      }
-    }
+  // 智能体相关日志
+  public agentInfo(message: string, data?: unknown): void {
+    this.info(message, 'AGENT', data);
+  }
+
+  public agentError(message: string, data?: unknown): void {
+    this.error(message, 'AGENT', data);
+  }
+
+  // API相关日志
+  public apiInfo(message: string, data?: unknown): void {
+    this.info(message, 'API', data);
+  }
+
+  public apiError(message: string, data?: unknown): void {
+    this.error(message, 'API', data);
   }
 }
 
 // 导出单例实例
-export const logger = new Logger();
+export const logger = Logger.getInstance();
 
-// 导出默认实例
-export default logger;
-
-// 导出便捷方法
-export const {
-  debug,
-  info,
-  warn,
-  error,
-  errorAlways,
-  devDebug,
-  performance,
-  apiRequest,
-  database,
-} = logger;
+// 向后兼容的导出
+export const log = logger;

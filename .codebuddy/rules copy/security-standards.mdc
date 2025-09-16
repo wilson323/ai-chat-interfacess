@@ -1,0 +1,322 @@
+---
+alwaysApply: true
+description: 安全标准和最佳实践
+---
+
+# 安全标准和最佳实践
+
+## 核心安全原则
+- API密钥等敏感信息使用`.env`文件管理
+- 实施输入验证和输出编码
+- 避免硬编码敏感信息
+- 使用HTTPS和安全头
+- 实施身份验证和授权
+
+## 环境变量管理
+
+### 环境变量配置
+基于 [env.template](mdc:env.template) 配置：
+
+```bash
+# ✅ 正确：环境变量配置
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=your-secret-key-here
+API_KEY=your-api-key-here
+NEXTAUTH_SECRET=your-nextauth-secret
+```
+
+### 环境变量使用
+```typescript
+// ✅ 正确：使用环境变量
+const config = {
+  databaseUrl: process.env.DATABASE_URL!,
+  redisUrl: process.env.REDIS_URL!,
+  jwtSecret: process.env.JWT_SECRET!,
+  apiKey: process.env.API_KEY!
+};
+
+// ❌ 错误：硬编码敏感信息
+const config = {
+  databaseUrl: 'postgresql://user:password@localhost:5432/dbname',
+  jwtSecret: 'hardcoded-secret'
+};
+```
+
+## 输入验证和输出编码
+
+### 输入验证
+```typescript
+// ✅ 正确：输入验证
+import { z } from 'zod';
+
+const userSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  age: z.number().min(0).max(120)
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const validatedData = userSchema.parse(body);
+
+    // 处理验证后的数据
+    return NextResponse.json({ success: true, data: validatedData });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: '输入数据无效' },
+      { status: 400 }
+    );
+  }
+}
+```
+
+### 输出编码
+```typescript
+// ✅ 正确：输出编码
+import DOMPurify from 'isomorphic-dompurify';
+
+export function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html);
+}
+
+// 在组件中使用
+export function UserProfile({ user }: { user: User }) {
+  return (
+    <div>
+      <h1>{user.name}</h1>
+      <div dangerouslySetInnerHTML={{
+        __html: sanitizeHtml(user.bio)
+      }} />
+    </div>
+  );
+}
+```
+
+## 身份验证和授权
+
+### JWT令牌处理
+```typescript
+// ✅ 正确：JWT令牌处理
+import jwt from 'jsonwebtoken';
+
+export function generateToken(userId: string): string {
+  return jwt.sign(
+    { userId },
+    process.env.JWT_SECRET!,
+    { expiresIn: '24h' }
+  );
+}
+
+export function verifyToken(token: string): { userId: string } | null {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+  } catch (error) {
+    return null;
+  }
+}
+```
+
+### 权限检查
+```typescript
+// ✅ 正确：权限检查
+export function requireAuth(handler: NextApiHandler): NextApiHandler {
+  return async (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({ error: '未授权' });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ error: '令牌无效' });
+    }
+
+    req.user = decoded;
+    return handler(req, res);
+  };
+}
+```
+
+## 数据库安全
+
+### SQL注入防护
+```typescript
+// ✅ 正确：使用参数化查询
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export async function getUserById(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true
+      // 不选择敏感字段
+    }
+  });
+}
+
+// ❌ 错误：字符串拼接查询
+export async function getUserById(id: string) {
+  const query = `SELECT * FROM users WHERE id = '${id}'`;
+  return prisma.$queryRaw(query);
+}
+```
+
+### 数据脱敏
+```typescript
+// ✅ 正确：数据脱敏
+export function sanitizeUser(user: User): PublicUser {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    // 不返回敏感信息
+  };
+}
+```
+
+## API安全
+
+### 请求限制
+```typescript
+// ✅ 正确：请求限制
+import rateLimit from 'express-rate-limit';
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15分钟
+  max: 100, // 限制每个IP 100次请求
+  message: '请求过于频繁，请稍后再试'
+});
+
+export { limiter };
+```
+
+### CORS配置
+```typescript
+// ✅ 正确：CORS配置
+export const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+```
+
+## 前端安全
+
+### XSS防护
+```typescript
+// ✅ 正确：XSS防护
+export function SafeText({ text }: { text: string }) {
+  const sanitizedText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+
+  return <span>{sanitizedText}</span>;
+}
+```
+
+### CSRF防护
+```typescript
+// ✅ 正确：CSRF防护
+import { getCsrfToken } from 'next-auth/react';
+
+export async function submitForm(data: FormData) {
+  const csrfToken = await getCsrfToken();
+
+  const response = await fetch('/api/submit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
+    },
+    body: JSON.stringify(data)
+  });
+
+  return response.json();
+}
+```
+
+## 安全头配置
+
+### Next.js安全头
+```typescript
+// ✅ 正确：安全头配置
+// next.config.mjs
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin'
+          }
+        ]
+      }
+    ];
+  }
+};
+```
+
+## 安全检查清单
+
+### 开发阶段
+- [ ] 所有敏感信息使用环境变量
+- [ ] 输入验证完整
+- [ ] 输出编码正确
+- [ ] 身份验证实现
+- [ ] 权限检查到位
+- [ ] 数据库查询安全
+- [ ] API请求限制
+- [ ] CORS配置正确
+
+### 部署阶段
+- [ ] 环境变量正确配置
+- [ ] HTTPS启用
+- [ ] 安全头配置
+- [ ] 数据库连接加密
+- [ ] 日志记录敏感信息
+- [ ] 错误信息不泄露敏感信息
+
+## 安全工具配置
+
+### ESLint安全规则
+```json
+{
+  "extends": ["plugin:security/recommended"],
+  "rules": {
+    "security/detect-object-injection": "error",
+    "security/detect-non-literal-regexp": "error",
+    "security/detect-unsafe-regex": "error"
+  }
+}
+```
+
+### 依赖安全检查
+```bash
+# 检查依赖漏洞
+npm audit
+
+# 修复漏洞
+npm audit fix
+```
+
+参考配置文件：[env.template](mdc:env.template), [next.config.mjs](mdc:next.config.mjs)

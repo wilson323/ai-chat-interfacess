@@ -18,6 +18,7 @@ import {
   TooltipContent,
   TooltipProvider,
 } from '@/components/ui/tooltip';
+import type { DbSchemaDiff } from '@/lib/db/models/db-schema';
 
 interface TableColumn {
   name: string;
@@ -41,14 +42,6 @@ interface DatabaseField {
   type: string;
   allowNull: boolean;
   defaultValue: unknown;
-}
-
-interface SchemaDiff {
-  tableName: string;
-  fieldName: string;
-  fieldType: string;
-  diffType: 'new' | 'missing' | 'diff';
-  details: string;
 }
 
 function getFieldDiff(
@@ -104,7 +97,7 @@ export default function DbSchemaPage() {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [diffs, setDiffs] = useState<SchemaDiff[]>([]);
+  const [diffs, setDiffs] = useState<DbSchemaDiff[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
@@ -510,7 +503,7 @@ export default function DbSchemaPage() {
                                     modelTable.name + '-' + fieldName + '-null'
                                   )}
                                   {renderFieldCell(
-                                    modelField?.defaultValue ?? '',
+                                    String(modelField?.defaultValue ?? ''),
                                     diffType,
                                     tooltip,
                                     modelTable.name +
@@ -604,7 +597,7 @@ export default function DbSchemaPage() {
                                     dbTable.name + '-' + fieldName + '-null'
                                   )}
                                   {renderFieldCell(
-                                    dbField?.defaultValue ?? '',
+                                    String(dbField?.defaultValue ?? ''),
                                     diffType,
                                     tooltip,
                                     dbTable.name + '-' + fieldName + '-default'

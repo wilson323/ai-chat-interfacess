@@ -1,5 +1,4 @@
 import sequelize from '../sequelize';
-import { Sequelize } from 'sequelize';
 
 export interface DbSchemaDiff {
   table: string;
@@ -25,14 +24,21 @@ export async function checkDbSchema(): Promise<{
     const [columns] = await sequelize.query(
       `SHOW COLUMNS FROM \`${model.tableName}\``
     );
-    const dbFields = (columns as any[]).map(col => col.Field);
+    const dbFields = (columns as Array<{ Field: string }>).map(
+      col => col.Field
+    );
     const modelFields = Object.keys(model.rawAttributes);
     const missingFields = modelFields.filter(f => !dbFields.includes(f));
     const extraFields = dbFields.filter(f => !modelFields.includes(f));
     const typeMismatch: string[] = [];
     const nullMismatch: string[] = [];
     const defaultMismatch: string[] = [];
-    for (const col of columns as any[]) {
+    for (const col of columns as Array<{
+      Field: string;
+      Type: string;
+      Null: string;
+      Default: unknown;
+    }>) {
       const attr = model.rawAttributes[col.Field];
       if (!attr) continue;
       // 兼容string和DataType类型
@@ -55,22 +61,40 @@ export async function checkDbSchema(): Promise<{
       `SHOW INDEX FROM \`${model.tableName}\``
     );
     const modelIndexes = Object.values(model.options.indexes || {}).map(
-      (idx: any) => idx.fields.map((f: any) => f.name || f)
+      (idx: any) => {
+        if (idx.fields && Array.isArray(idx.fields)) {
+          return idx.fields.map((f: any) =>
+            typeof f === 'string' ? f : f.name || ''
+          );
+        }
+        return [];
+      }
     );
-    const dbIndexes = (indexes as any[])
-      .filter((i: any) => !i.Non_unique)
-      .map((i: any) => i.Column_name);
+    const dbIndexes = (
+      indexes as Array<{ Non_unique: number; Column_name: string }>
+    )
+      .filter(i => !i.Non_unique)
+      .map(i => i.Column_name);
     const missingIndexes = modelIndexes
       .flat()
       .filter(f => !dbIndexes.includes(f));
     // 唯一约束
     const modelUniques = Object.values(model.options.indexes || {})
       .filter((idx: any) => idx.unique)
-      .map((idx: any) => idx.fields.map((f: any) => f.name || f))
+      .map((idx: any) => {
+        if (idx.fields && Array.isArray(idx.fields)) {
+          return idx.fields.map((f: any) =>
+            typeof f === 'string' ? f : f.name || ''
+          );
+        }
+        return [];
+      })
       .flat();
-    const dbUniques = (indexes as any[])
-      .filter((i: any) => i.Non_unique === 0)
-      .map((i: any) => i.Column_name);
+    const dbUniques = (
+      indexes as Array<{ Non_unique: number; Column_name: string }>
+    )
+      .filter(i => i.Non_unique === 0)
+      .map(i => i.Column_name);
     const missingUniques = modelUniques.filter(f => !dbUniques.includes(f));
     // 外键
     const [fks] = await sequelize.query(
@@ -78,8 +102,10 @@ export async function checkDbSchema(): Promise<{
     );
     const modelFks = Object.values(model.rawAttributes)
       .filter((attr: any) => attr.references)
-      .map((attr: any) => attr.fieldName);
-    const dbFks = (fks as any[]).map((fk: any) => fk.COLUMN_NAME);
+      .map((attr: any) => (attr as any).fieldName);
+    const dbFks = (fks as Array<{ COLUMN_NAME: string }>).map(
+      fk => fk.COLUMN_NAME
+    );
     const missingForeignKeys = modelFks.filter(f => !dbFks.includes(f));
     if (
       missingFields.length ||
@@ -115,17 +141,25 @@ export async function getAllDbTables(): Promise<
       name: string;
       type: string;
       allowNull: boolean;
-      defaultValue: any;
+      defaultValue: unknown;
     }[];
   }[]
 > {
-  const tables: any[] = [];
+  const tables: Array<{
+    name: string;
+    columns: Array<{
+      name: string;
+      type: string;
+      allowNull: boolean;
+      defaultValue: unknown;
+    }>;
+  }> = [];
   // 兼容PostgreSQL，不能用SHOW TABLES
   const [results] = await sequelize.query(
     `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`
   );
   console.log('getAllDbTables results:', results);
-  for (const row of results as any[]) {
+  for (const row of results as Array<{ table_name: string }>) {
     const tableName = row.table_name;
     if (!tableName) continue;
     const [columns] = await sequelize.query(
@@ -133,7 +167,14 @@ export async function getAllDbTables(): Promise<
     );
     tables.push({
       name: tableName,
-      columns: (columns as any[]).map(col => ({
+      columns: (
+        columns as Array<{
+          Field: string;
+          Type: string;
+          Null: string;
+          Default: unknown;
+        }>
+      ).map(col => ({
         name: col.Field,
         type: col.Type,
         allowNull: col.Null === 'YES',

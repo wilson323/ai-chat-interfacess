@@ -9,6 +9,7 @@
 ### 1. 数据模型
 
 #### 用户地理位置表 (`user_geo`)
+
 ```sql
 CREATE TABLE user_geo (
     id SERIAL PRIMARY KEY,
@@ -23,6 +24,7 @@ CREATE TABLE user_geo (
 ```
 
 #### 智能体使用统计表 (`agent_usage`)
+
 ```sql
 CREATE TABLE agent_usage (
     id SERIAL PRIMARY KEY,
@@ -48,6 +50,7 @@ CREATE TABLE agent_usage (
 ### 2. 服务层
 
 #### 地理位置解析服务
+
 ```typescript
 import { geoLocationService } from '@/lib/services/geo-location-service';
 
@@ -55,40 +58,45 @@ import { geoLocationService } from '@/lib/services/geo-location-service';
 const location = await geoLocationService.getLocationByIp(userIp);
 
 // 批量获取地理位置
-const locations = await geoLocationService.getLocationByBatch(['192.168.1.1', '10.0.0.1']);
+const locations = await geoLocationService.getLocationByBatch([
+  '192.168.1.1',
+  '10.0.0.1',
+]);
 ```
 
 #### 热点地图数据聚合服务
+
 ```typescript
 import { heatmapService } from '@/lib/services/heatmap-service';
 
 // 获取统计数据
 const stats = await heatmapService.getUsageStatistics({
-    timeRange: '7d',
-    agentType: 'fastgpt'
+  timeRange: '7d',
+  agentType: 'fastgpt',
 });
 
 // 获取热点地图数据
 const heatmapData = await heatmapService.getHeatmapData({
-    startDate: new Date('2024-01-01'),
-    endDate: new Date(),
-    granularity: 'day'
+  startDate: new Date('2024-01-01'),
+  endDate: new Date(),
+  granularity: 'day',
 });
 ```
 
 ### 3. 中间件
 
 #### 使用追踪中间件
+
 ```typescript
 import { usageTracking } from '@/lib/middleware/usage-tracking';
 
 // 在聊天会话开始时追踪
 await usageTracking.trackSessionStart(
-    sessionId,
-    userId,
-    agentId,
-    'text',
-    request
+  sessionId,
+  userId,
+  agentId,
+  'text',
+  request
 );
 
 // 追踪消息发送
@@ -106,6 +114,7 @@ await usageTracking.trackSessionEnd(sessionId, 1000, 'positive');
 ### 1. 数据库迁移
 
 运行迁移脚本创建新表：
+
 ```bash
 npm run db:migrate
 ```
@@ -118,33 +127,33 @@ npm run db:migrate
 import { usageTracking } from '@/lib/middleware/usage-tracking';
 
 export async function POST(request: NextRequest) {
-    try {
-        const { sessionId, userId, agentId, messages } = await request.json();
+  try {
+    const { sessionId, userId, agentId, messages } = await request.json();
 
-        // 开始追踪会话
-        await usageTracking.trackSessionStart(
-            sessionId,
-            userId,
-            agentId,
-            'mixed', // 根据消息类型判断
-            request
-        );
+    // 开始追踪会话
+    await usageTracking.trackSessionStart(
+      sessionId,
+      userId,
+      agentId,
+      'mixed', // 根据消息类型判断
+      request
+    );
 
-        // 处理聊天请求...
-        const startTime = Date.now();
-        const response = await processChat(messages);
-        const responseTime = Date.now() - startTime;
+    // 处理聊天请求...
+    const startTime = Date.now();
+    const response = await processChat(messages);
+    const responseTime = Date.now() - startTime;
 
-        // 追踪响应时间
-        await usageTracking.trackResponseTime(sessionId, responseTime);
+    // 追踪响应时间
+    await usageTracking.trackResponseTime(sessionId, responseTime);
 
-        // 追踪消息数量
-        await usageTracking.trackMessage(sessionId, messages.length);
+    // 追踪消息数量
+    await usageTracking.trackMessage(sessionId, messages.length);
 
-        return NextResponse.json(response);
-    } catch (error) {
-        // 错误处理...
-    }
+    return NextResponse.json(response);
+  } catch (error) {
+    // 错误处理...
+  }
 }
 ```
 
@@ -154,11 +163,14 @@ export async function POST(request: NextRequest) {
 
 ```typescript
 // 用户点击点赞/点踩时
-const handleFeedback = async (sessionId: string, feedback: 'positive' | 'negative') => {
-    await usageTracking.trackSessionEnd(sessionId, undefined, feedback);
+const handleFeedback = async (
+  sessionId: string,
+  feedback: 'positive' | 'negative'
+) => {
+  await usageTracking.trackSessionEnd(sessionId, undefined, feedback);
 
-    // 更新UI状态
-    setFeedback(feedback);
+  // 更新UI状态
+  setFeedback(feedback);
 };
 ```
 
@@ -180,6 +192,7 @@ GET /api/admin/heatmap
 ```
 
 查询参数：
+
 - `timeRange`: 1h, 24h, 7d, 30d, 90d, 1y
 - `agentType`: fastgpt, cad-analyzer, image-editor
 - `messageType`: text, image, file, voice, mixed
@@ -194,23 +207,24 @@ GET /api/admin/heatmap/data
 ```
 
 返回格式：
+
 ```json
 {
-    "success": true,
-    "data": [
-        {
-            "id": "point_1",
-            "latitude": 39.9042,
-            "longitude": 116.4074,
-            "count": 150,
-            "country": "China",
-            "city": "Beijing",
-            "timeRange": {
-                "start": "2024-01-01T00:00:00.000Z",
-                "end": "2024-01-08T00:00:00.000Z"
-            }
-        }
-    ]
+  "success": true,
+  "data": [
+    {
+      "id": "point_1",
+      "latitude": 39.9042,
+      "longitude": 116.4074,
+      "count": 150,
+      "country": "China",
+      "city": "Beijing",
+      "timeRange": {
+        "start": "2024-01-01T00:00:00.000Z",
+        "end": "2024-01-08T00:00:00.000Z"
+      }
+    }
+  ]
 }
 ```
 
@@ -238,27 +252,27 @@ GET /api/admin/heatmap/export?format=json
 ```typescript
 // 在 geo-location-service.ts 中添加真实的解析器
 class IpApiResolver implements IpGeoResolver {
-    public readonly name = 'IpApiResolver';
+  public readonly name = 'IpApiResolver';
 
-    public async resolve(ipAddress: string): Promise<GeoLocation> {
-        const response = await fetch(`http://ip-api.com/json/${ipAddress}`);
-        const data = await response.json();
+  public async resolve(ipAddress: string): Promise<GeoLocation> {
+    const response = await fetch(`http://ip-api.com/json/${ipAddress}`);
+    const data = await response.json();
 
-        return {
-            country: data.country,
-            countryCode: data.countryCode,
-            region: data.regionName,
-            city: data.city,
-            latitude: data.lat,
-            longitude: data.lon,
-            timezone: data.timezone,
-        };
-    }
+    return {
+      country: data.country,
+      countryCode: data.countryCode,
+      region: data.regionName,
+      city: data.city,
+      latitude: data.lat,
+      longitude: data.lon,
+      timezone: data.timezone,
+    };
+  }
 
-    public async isAvailable(): Promise<boolean> {
-        // 检查服务可用性
-        return true;
-    }
+  public async isAvailable(): Promise<boolean> {
+    // 检查服务可用性
+    return true;
+  }
 }
 ```
 
@@ -280,9 +294,12 @@ geoLocationService.setCacheTTL(12 * 60 * 60 * 1000); // 12小时
 await usageTracking.cleanupOldData();
 
 // 或者使用定时任务
-setInterval(() => {
+setInterval(
+  () => {
     usageTracking.cleanupOldData();
-}, 24 * 60 * 60 * 1000); // 每天清理一次
+  },
+  24 * 60 * 60 * 1000
+); // 每天清理一次
 ```
 
 ## 性能优化
@@ -290,6 +307,7 @@ setInterval(() => {
 ### 1. 数据库索引
 
 已创建以下索引优化查询性能：
+
 - 用户IP地址唯一索引
 - 会话ID索引
 - 时间戳索引
@@ -321,11 +339,11 @@ setInterval(() => {
 
 ```typescript
 try {
-    const location = await geoLocationService.getLocationByIp(ip);
+  const location = await geoLocationService.getLocationByIp(ip);
 } catch (error) {
-    logger.error('IP解析失败:', error);
-    // 使用默认位置或重试
-    const fallbackLocation = { country: 'Unknown', latitude: 0, longitude: 0 };
+  logger.error('IP解析失败:', error);
+  // 使用默认位置或重试
+  const fallbackLocation = { country: 'Unknown', latitude: 0, longitude: 0 };
 }
 ```
 
@@ -348,6 +366,7 @@ try {
 ### 1. 地图组件
 
 推荐使用以下地图库：
+
 - react-leaflet (开源)
 - mapbox-gl (商业)
 - google-maps-react (商业)
@@ -355,6 +374,7 @@ try {
 ### 2. 图表组件
 
 推荐使用以下图表库：
+
 - recharts
 - chart.js
 - echarts
@@ -365,9 +385,9 @@ try {
 
 ```typescript
 const ws = new WebSocket('/api/admin/heatmap/realtime');
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    updateHeatmap(data);
+ws.onmessage = event => {
+  const data = JSON.parse(event.data);
+  updateHeatmap(data);
 };
 ```
 
@@ -376,16 +396,19 @@ ws.onmessage = (event) => {
 ### 1. 常见问题
 
 **IP解析失败**
+
 - 检查网络连接
 - 验证API密钥
 - 查看服务限制
 
 **数据库查询慢**
+
 - 检查索引是否生效
 - 优化查询条件
 - 考虑分表分区
 
 **内存占用高**
+
 - 调整缓存策略
 - 优化数据结构
 - 定期清理数据

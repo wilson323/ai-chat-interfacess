@@ -3,10 +3,11 @@
 import type React from 'react';
 
 import { useState, useRef, useEffect } from 'react';
+import NextImage from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAgent } from '@/context/agent-context';
+// import { useAgent } from '../../context/agent-context'; // 未使用的导入，保留用于未来扩展
 import {
   Upload,
   ImageIcon,
@@ -56,7 +57,6 @@ const COLORS = [
 ];
 
 export function ImageEditorContainer() {
-  const { selectedAgent } = useAgent();
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -459,11 +459,16 @@ export function ImageEditorContainer() {
                 {/* Result overlay */}
                 {showResult && editedImage && (
                   <div className='absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm'>
-                    <img
-                      src={editedImage || '/placeholder.svg'}
-                      alt='Edited'
-                      className='max-w-full max-h-[70vh] object-contain animate-fadeIn'
-                    />
+                    <div className='relative max-w-full max-h-[70vh]'>
+                      <NextImage
+                        src={editedImage || '/placeholder.svg'}
+                        alt='Edited'
+                        width={800}
+                        height={600}
+                        className='max-w-full max-h-[70vh] object-contain animate-fadeIn'
+                        style={{ width: 'auto', height: 'auto' }}
+                      />
+                    </div>
 
                     <div className='mt-4 p-3 bg-background/80 backdrop-blur-md rounded-lg border shadow-md animate-fadeIn'>
                       <p className='text-center font-medium mb-3'>
@@ -598,10 +603,13 @@ export function ImageEditorContainer() {
                   <h4 className='text-sm font-medium mb-2'>
                     {t('referenceImage')}
                   </h4>
-                  <img
+                  <NextImage
                     src={referenceImage || '/placeholder.svg'}
                     alt='Reference'
+                    width={300}
+                    height={160}
                     className='max-h-40 object-contain'
+                    style={{ width: 'auto', height: 'auto' }}
                   />
                 </div>
               )}
@@ -655,9 +663,11 @@ export function ImageEditorContainer() {
                   </div>
 
                   <div className='relative'>
-                    <img
+                    <NextImage
                       src={op.thumbnail || '/placeholder.svg'}
                       alt='Operation thumbnail'
+                      width={100}
+                      height={80}
                       className='w-full h-20 object-cover rounded-sm'
                     />
 

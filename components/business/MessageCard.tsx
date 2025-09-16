@@ -3,6 +3,7 @@
  * 基于shadcn/ui Card组件构建，避免自定义代码
  */
 
+'use client';
 import React from 'react';
 import {
   Card,
@@ -13,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Message } from '@/types/message';
+import { Message } from '../../types/message';
 import { formatDistanceToNow } from 'date-fns';
 import { Edit, Trash2, Copy, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -60,7 +61,7 @@ export function MessageCard({
           <div className='flex items-center space-x-2'>
             <Avatar className='h-6 w-6'>
               <AvatarImage
-                src={isUser ? '/user-avatar.png' : '/bot-avatar.png'}
+                src={isUser ? '/user-avatar.svg' : '/bot-avatar.svg'}
                 alt={message.role}
               />
               <AvatarFallback>
@@ -81,7 +82,7 @@ export function MessageCard({
             </span>
           </div>
 
-          {message.metadata?.processingTime && (
+          {typeof message.metadata?.processingTime === 'number' && (
             <Badge variant='outline' className='text-xs'>
               {message.metadata.processingTime}ms
             </Badge>
@@ -92,7 +93,7 @@ export function MessageCard({
       <CardContent className='pt-0'>
         <div className='prose prose-sm max-w-none'>{message.content}</div>
 
-        {message.metadata?.tokens && (
+        {typeof message.metadata?.tokens === 'number' && (
           <div className='mt-2 text-xs text-muted-foreground'>
             Tokens: {message.metadata.tokens}
           </div>

@@ -9,6 +9,7 @@
 ### 1. 核心Redis管理器 (`lib/cache/redis-manager.ts`)
 
 #### 主要功能
+
 - **真实Redis客户端**: 使用Redis v4.7.0官方客户端
 - **连接池管理**: 支持连接复用和自动重连
 - **错误重试机制**: 可配置的重试策略和延迟
@@ -17,6 +18,7 @@
 - **缓存策略**: LRU清理、TTL过期、批量操作
 
 #### 核心特性
+
 ```typescript
 // 自动连接管理
 await redisManager.connect();
@@ -40,22 +42,26 @@ await redisManager.cleanupExpired(); // 清理过期缓存
 ### 2. 高级缓存策略
 
 #### LRU (最近最少使用) 策略
+
 - 自动监控键的访问时间
 - 当键数量超过限制时删除最久未使用的键
 - 使用SCAN命令避免阻塞Redis服务器
 
 #### TTL (生存时间) 管理
+
 - 自动过期检测
 - 过期缓存自动清理
 - 支持动态TTL调整
 
 #### 缓存预热
+
 - 支持批量预加载热点数据
 - 可配置预加载策略
 
 ### 3. 监控和统计
 
 #### 实时统计指标
+
 - 命中率统计
 - 命令执行时间 (P95, P99)
 - 每秒命令数 (QPS)
@@ -63,6 +69,7 @@ await redisManager.cleanupExpired(); // 清理过期缓存
 - 连接状态监控
 
 #### 性能监控
+
 - 慢命令检测 (>100ms)
 - 响应时间分布
 - 错误率统计
@@ -71,11 +78,13 @@ await redisManager.cleanupExpired(); // 清理过期缓存
 ### 4. 错误处理和恢复
 
 #### 自动重连机制
+
 - 指数退避重连策略
 - 最大重连次数限制
 - 连接状态实时监控
 
 #### 优雅降级
+
 - Redis不可用时不影响主流程
 - 缓存操作失败自动降级
 - 详细的错误日志记录
@@ -83,6 +92,7 @@ await redisManager.cleanupExpired(); // 清理过期缓存
 ### 5. 配置管理
 
 #### 环境变量配置
+
 ```bash
 # Redis服务器配置
 REDIS_HOST=localhost
@@ -99,18 +109,21 @@ REDIS_RETRY_DELAY=1000
 ```
 
 #### 配置文件集成
+
 - 与现有 `appConfig.redis` 配置无缝集成
 - 支持环境变量覆盖默认配置
 
 ## API端点
 
 ### 1. 健康检查API
+
 ```
 GET /api/admin/redis/health
 POST /api/admin/redis/health
 ```
 
 **响应示例:**
+
 ```json
 {
   "status": "healthy",
@@ -127,12 +140,14 @@ POST /api/admin/redis/health
 ```
 
 ### 2. 统计信息API
+
 ```
 GET /api/admin/redis/stats?detailed=true
 POST /api/admin/redis/stats
 ```
 
 **维护操作:**
+
 ```json
 {
   "operation": "cleanup|lru|flush|warmup|hotkeys",
@@ -151,11 +166,15 @@ POST /api/admin/redis/stats
 import { redisManager } from '@/lib/cache/redis-manager';
 
 // 设置缓存
-await redisManager.set('user:123', {
-  id: 123,
-  name: '张三',
-  preferences: { theme: 'dark' }
-}, 3600);
+await redisManager.set(
+  'user:123',
+  {
+    id: 123,
+    name: '张三',
+    preferences: { theme: 'dark' },
+  },
+  3600
+);
 
 // 获取缓存
 const user = await redisManager.get('user:123');
@@ -173,7 +192,7 @@ await redisManager.delete('user:123');
 // 批量设置
 await redisManager.mset([
   { key: 'product:1', value: product1, ttl: 1800 },
-  { key: 'product:2', value: product2, ttl: 1800 }
+  { key: 'product:2', value: product2, ttl: 1800 },
 ]);
 
 // 批量获取
@@ -212,7 +231,7 @@ console.log(`清理了 ${expiredCount} 个过期缓存`);
 // 缓存预热
 await redisManager.warmup([
   { key: 'config:app', value: appConfig, ttl: 7200 },
-  { key: 'config:features', value: featureConfig, ttl: 7200 }
+  { key: 'config:features', value: featureConfig, ttl: 7200 },
 ]);
 
 // 获取热点键
@@ -235,17 +254,20 @@ const result = await safeCacheOperation(
 ## 性能优化
 
 ### 1. 连接池配置
+
 - 默认连接池大小: 10
 - 命令队列长度: 100
 - 连接超时: 10秒
 - 命令超时: 5秒
 
 ### 2. 批量操作
+
 - 使用Pipeline减少网络往返
 - 支持原子性批量操作
 - 自动错误回滚
 
 ### 3. 内存优化
+
 - LRU策略防止内存溢出
 - 自动过期清理
 - 热点数据分析
@@ -253,6 +275,7 @@ const result = await safeCacheOperation(
 ## 测试覆盖
 
 ### 单元测试
+
 - ✅ 基本缓存操作测试
 - ✅ 批量操作测试
 - ✅ 错误处理测试
@@ -261,6 +284,7 @@ const result = await safeCacheOperation(
 - ✅ 并发测试
 
 ### 集成测试
+
 - ✅ 健康检查API测试
 - ✅ 统计信息API测试
 - ✅ 维护操作API测试
@@ -268,6 +292,7 @@ const result = await safeCacheOperation(
 ## 部署指南
 
 ### 1. 环境配置
+
 ```bash
 # 生产环境推荐配置
 REDIS_HOST=your-redis-host
@@ -280,12 +305,14 @@ REDIS_CONNECTION_TIMEOUT=15000
 ```
 
 ### 2. Redis服务器要求
+
 - Redis版本: 6.0+
 - 内存: 建议2GB+
 - 网络延迟: <50ms
 - 持久化: 根据业务需求配置
 
 ### 3. 监控配置
+
 - 定期检查健康状态API
 - 监控命中率和响应时间
 - 设置内存使用告警
@@ -293,11 +320,13 @@ REDIS_CONNECTION_TIMEOUT=15000
 ## 兼容性
 
 ### 向后兼容
+
 - ✅ 保持现有API接口不变
 - ✅ 现有代码无需修改
 - ✅ 渐进式升级
 
 ### 依赖升级
+
 - Redis客户端: 4.7.0
 - Node.js: 18+
 - Next.js: 15+
@@ -322,6 +351,7 @@ REDIS_CONNECTION_TIMEOUT=15000
    - 监控内存使用
 
 ### 日志分析
+
 ```bash
 # 查看Redis相关日志
 grep "Redis" logs/app.log

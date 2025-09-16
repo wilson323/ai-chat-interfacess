@@ -1,4 +1,5 @@
-import type { Message } from '@/types/message';
+import type { Message } from '../../../types/message';
+// Record is a built-in TypeScript utility type, no need to import
 import type { StorageMeta, StorageProvider } from './types';
 import { STORAGE_META_KEY, MAX_MESSAGES_PER_CHAT } from './constants';
 
@@ -105,7 +106,7 @@ export function compressMessages(messages: Message[]): Message[] {
     };
 
     if (message.metadata) {
-      const essentialMetadata: Record<string, any> = {};
+      const essentialMetadata: Record<string, unknown> = {};
 
       // 保留必要的元数据
       const keysToKeep = [
@@ -155,7 +156,7 @@ export function safeJSONParse<T>(json: string | null, defaultValue: T): T {
  * 安全的JSON字符串化
  */
 export function safeJSONStringify(
-  data: any,
+  data: unknown,
   defaultValue: string = ''
 ): string {
   try {

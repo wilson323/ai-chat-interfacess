@@ -30,13 +30,17 @@ class SystemConfigService {
   }
 
   private initializeDefaultConfigs() {
-    const defaultConfigs: Omit<SystemConfig, 'id' | 'createdAt' | 'updatedAt'>[] = [
+    const defaultConfigs: Omit<
+      SystemConfig,
+      'id' | 'createdAt' | 'updatedAt'
+    >[] = [
       {
         configKey: 'system.name',
         configValue: 'NeuroGlass AI Chat Interface',
         configType: ConfigType.STRING,
         description: '系统名称',
         isSensitive: false,
+        version: 1,
       },
       {
         configKey: 'system.description',
@@ -44,6 +48,7 @@ class SystemConfigService {
         configType: ConfigType.STRING,
         description: '系统描述',
         isSensitive: false,
+        version: 1,
       },
       {
         configKey: 'system.enable_registration',
@@ -51,6 +56,7 @@ class SystemConfigService {
         configType: ConfigType.BOOLEAN,
         description: '是否允许用户注册',
         isSensitive: false,
+        version: 1,
       },
       {
         configKey: 'system.session_timeout',
@@ -58,6 +64,7 @@ class SystemConfigService {
         configType: ConfigType.NUMBER,
         description: '会话超时时间（秒）',
         isSensitive: false,
+        version: 1,
       },
       {
         configKey: 'system.max_upload_size',
@@ -65,6 +72,7 @@ class SystemConfigService {
         configType: ConfigType.NUMBER,
         description: '最大上传文件大小（字节）',
         isSensitive: false,
+        version: 1,
       },
       {
         configKey: 'email.smtp_host',
@@ -72,6 +80,7 @@ class SystemConfigService {
         configType: ConfigType.STRING,
         description: 'SMTP服务器地址',
         isSensitive: false,
+        version: 1,
       },
       {
         configKey: 'email.smtp_port',
@@ -79,6 +88,7 @@ class SystemConfigService {
         configType: ConfigType.NUMBER,
         description: 'SMTP服务器端口',
         isSensitive: false,
+        version: 1,
       },
     ];
 
@@ -102,7 +112,9 @@ class SystemConfigService {
     return this.configs.get(key) || null;
   }
 
-  async createConfig(configData: z.infer<typeof createConfigSchema>): Promise<SystemConfig> {
+  async createConfig(
+    configData: z.infer<typeof createConfigSchema>
+  ): Promise<SystemConfig> {
     // 检查配置键是否已存在
     if (this.configs.has(configData.configKey)) {
       throw new Error('配置键已存在');
@@ -120,7 +132,10 @@ class SystemConfigService {
     return newConfig;
   }
 
-  async updateConfig(key: string, updateData: z.infer<typeof updateConfigSchema>): Promise<SystemConfig | null> {
+  async updateConfig(
+    key: string,
+    updateData: z.infer<typeof updateConfigSchema>
+  ): Promise<SystemConfig | null> {
     const existingConfig = this.configs.get(key);
     if (!existingConfig) return null;
 
@@ -140,11 +155,15 @@ class SystemConfigService {
   }
 
   async getConfigsByType(type: ConfigType): Promise<SystemConfig[]> {
-    return Array.from(this.configs.values()).filter(config => config.configType === type);
+    return Array.from(this.configs.values()).filter(
+      config => config.configType === type
+    );
   }
 
   async getSensitiveConfigs(): Promise<SystemConfig[]> {
-    return Array.from(this.configs.values()).filter(config => config.isSensitive);
+    return Array.from(this.configs.values()).filter(
+      config => config.isSensitive
+    );
   }
 }
 
@@ -154,15 +173,18 @@ const systemConfigService = new SystemConfigService();
 export async function GET(request: NextRequest) {
   try {
     // 验证管理员权限
-    const authResult = await isAdmin(request);
-    if (!authResult.success) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+    const isAdminUser = await isAdmin(request);
+    if (!isAdminUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     // 解析查询参数
@@ -196,21 +218,23 @@ export async function GET(request: NextRequest) {
         requestId: crypto.randomUUID(),
       },
     } as ApiResponse<SystemConfig[]>);
-
   } catch (error) {
     console.error('获取系统配置失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '获取系统配置失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '获取系统配置失败',
+          details: error instanceof Error ? error.message : error,
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }
 
@@ -218,15 +242,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // 验证管理员权限
-    const authResult = await isAdmin(request);
-    if (!authResult.success) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+    const isAdminUser = await isAdmin(request);
+    if (!isAdminUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     // 解析和验证请求数据
@@ -236,60 +263,74 @@ export async function POST(request: NextRequest) {
     // 创建配置
     const newConfig = await systemConfigService.createConfig(validatedData);
 
-    return NextResponse.json({
-      success: true,
-      data: newConfig,
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse<SystemConfig>, { status: 201 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        data: newConfig,
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      } as ApiResponse<SystemConfig>,
+      { status: 201 }
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '请求数据验证失败',
+            details: error.errors,
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        } as ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    console.error('创建系统配置失败:', error);
+    return NextResponse.json(
+      {
         success: false,
         error: {
-          code: 'VALIDATION_ERROR',
-          message: '请求数据验证失败',
-          details: error.errors,
+          code: 'INTERNAL_ERROR',
+          message: '创建系统配置失败',
+          details: error instanceof Error ? error.message : error,
         },
         meta: {
           timestamp: new Date().toISOString(),
           requestId: crypto.randomUUID(),
         },
-      } as ApiResponse, { status: 400 });
-    }
-
-    console.error('创建系统配置失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '创建系统配置失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }
 
 // PUT /api/admin/system/config/:key - 更新系统配置
-export async function PUT(request: NextRequest, { params }: { params: { key: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { key: string } }
+) {
   try {
     // 验证管理员权限
-    const authResult = await isAdmin(request);
-    if (!authResult.success) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+    const isAdminUser = await isAdmin(request);
+    if (!isAdminUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     // 解析和验证请求数据
@@ -297,15 +338,21 @@ export async function PUT(request: NextRequest, { params }: { params: { key: str
     const validatedData = updateConfigSchema.parse(body);
 
     // 更新配置
-    const updatedConfig = await systemConfigService.updateConfig(params.key, validatedData);
+    const updatedConfig = await systemConfigService.updateConfig(
+      params.key,
+      validatedData
+    );
     if (!updatedConfig) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'NOT_FOUND',
-          message: '配置不存在',
-        },
-      } as ApiResponse, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: '配置不存在',
+          },
+        } as ApiResponse,
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
@@ -316,64 +363,78 @@ export async function PUT(request: NextRequest, { params }: { params: { key: str
         requestId: crypto.randomUUID(),
       },
     } as ApiResponse<SystemConfig>);
-
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '请求数据验证失败',
+            details: error.errors,
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        } as ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    console.error('更新系统配置失败:', error);
+    return NextResponse.json(
+      {
         success: false,
         error: {
-          code: 'VALIDATION_ERROR',
-          message: '请求数据验证失败',
-          details: error.errors,
+          code: 'INTERNAL_ERROR',
+          message: '更新系统配置失败',
+          details: error instanceof Error ? error.message : error,
         },
         meta: {
           timestamp: new Date().toISOString(),
           requestId: crypto.randomUUID(),
         },
-      } as ApiResponse, { status: 400 });
-    }
-
-    console.error('更新系统配置失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '更新系统配置失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }
 
 // DELETE /api/admin/system/config/:key - 删除系统配置
-export async function DELETE(request: NextRequest, { params }: { params: { key: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { key: string } }
+) {
   try {
     // 验证管理员权限
-    const authResult = await isAdmin(request);
-    if (!authResult.success) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+    const isAdminUser = await isAdmin(request);
+    if (!isAdminUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     // 删除配置
     const deleted = await systemConfigService.deleteConfig(params.key);
     if (!deleted) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'NOT_FOUND',
-          message: '配置不存在',
-        },
-      } as ApiResponse, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: '配置不存在',
+          },
+        } as ApiResponse,
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
@@ -383,20 +444,22 @@ export async function DELETE(request: NextRequest, { params }: { params: { key: 
         requestId: crypto.randomUUID(),
       },
     } as ApiResponse);
-
   } catch (error) {
     console.error('删除系统配置失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '删除系统配置失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '删除系统配置失败',
+          details: error instanceof Error ? error.message : error,
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }

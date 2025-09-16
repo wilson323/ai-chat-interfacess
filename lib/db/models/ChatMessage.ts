@@ -8,13 +8,15 @@ export interface ChatMessageAttributes {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp?: Date;
-  metadata?: object;
+  metadata?: Record<string, unknown>;
   parentId?: string | null;
-  meta?: object;
+  meta?: Record<string, unknown>;
 }
 
-export interface ChatMessageCreationAttributes
-  extends Optional<ChatMessageAttributes, 'id'> {}
+export type ChatMessageCreationAttributes = Optional<
+  ChatMessageAttributes,
+  'id'
+>;
 
 export class ChatMessage
   extends Model<ChatMessageAttributes, ChatMessageCreationAttributes>
@@ -26,9 +28,9 @@ export class ChatMessage
   public role!: 'user' | 'assistant' | 'system';
   public content!: string;
   public timestamp!: Date;
-  public metadata?: object;
+  public metadata?: Record<string, unknown>;
   public parentId?: string | null;
-  public meta?: object;
+  public meta?: Record<string, unknown>;
 }
 
 ChatMessage.init(
@@ -61,6 +63,7 @@ ChatMessage.init(
     metadata: {
       type: DataTypes.JSONB,
       allowNull: true,
+      defaultValue: null,
     },
     parentId: {
       type: DataTypes.UUID,
@@ -69,6 +72,7 @@ ChatMessage.init(
     meta: {
       type: DataTypes.JSONB,
       allowNull: true,
+      defaultValue: null,
     },
   },
   {

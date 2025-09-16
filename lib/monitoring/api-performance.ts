@@ -5,6 +5,7 @@
 
 // import { NextRequest, NextResponse } from 'next/server';
 
+// // Record is a built-in TypeScript utility type // 移除错误的Record导入，使用内置Record类型
 interface APIMetrics {
   endpoint: string;
   method: string;
@@ -47,7 +48,7 @@ class APIPerformanceMonitor {
     method: string,
     duration: number,
     statusCode: number,
-    request: any, // NextRequest
+    request: { headers: Headers; ip?: string }, // NextRequest
     requestSize?: number,
     responseSize?: number
   ): void {
@@ -124,9 +125,9 @@ class APIPerformanceMonitor {
 
     const slowestEndpoints = Object.values(endpointStats)
       .map(stat => ({
-        endpoint: stat.endpoint,
-        duration: stat.duration / stat.count,
-        count: stat.count,
+        endpoint: (stat as any).endpoint,
+        duration: (stat as any).duration / (stat as any).count,
+        count: (stat as any).count,
       }))
       .sort((a, b) => b.duration - a.duration)
       .slice(0, 10);
@@ -342,13 +343,20 @@ class APIPerformanceMonitor {
       });
     }
 
-    return alerts;
+    return alerts as Array<{
+      type: 'slow_response' | 'high_error_rate' | 'high_volume';
+      message: string;
+      severity: 'warning' | 'critical';
+      value: number;
+      threshold: number;
+    }>;
   }
 
   /**
    * 获取客户端IP
    */
-  private getClientIP(request: any): string { // NextRequest
+  private getClientIP(request: { headers: Headers }): string {
+    // NextRequest
     const forwarded = request.headers.get('x-forwarded-for');
     const realIP = request.headers.get('x-real-ip');
 
@@ -403,8 +411,10 @@ export const apiPerformanceMonitor = new APIPerformanceMonitor();
 /**
  * API性能监控中间件
  */
-export function withAPIPerformanceMonitoring(handler: Function) {
-  return async (request: any) => { // NextRequest
+export function withAPIPerformanceMonitoring(
+  handler: (request: Request) => Promise<Response>
+) {
+  return async (request: Request) => {
     const startTime = Date.now();
     const url = new URL(request.url);
     const endpoint = url.pathname;

@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔁 运行预提交校验 (package.json: pre-commit) ..."
+npm run pre-commit
+status=$?
+
+if [ $status -ne 0 ]; then
+  echo "❌ 预提交校验失败 (npm run pre-commit)"
+  exit $status
+fi
+
+echo "✅ 预提交校验通过"

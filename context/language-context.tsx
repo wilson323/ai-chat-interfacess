@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   type ReactNode,
 } from 'react';
 import {
@@ -12,7 +11,7 @@ import {
   translations,
   type TranslationKey,
   languages,
-} from '@/lib/i18n/translations';
+} from '../lib/i18n/translations';
 
 interface LanguageContextType {
   language: Language;

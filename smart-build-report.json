@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-09-16T13:27:22.031Z",
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "release": "10.0.26100",
+    "isWSL": false,
+    "isDocker": false,
+    "isCI": false,
+    "environment": "development",
+    "environmentType": "windows",
+    "nodeVersion": "v24.0.2",
+    "memory": 34197049344,
+    "cpus": 8
+  },
+  "strategy": {
+    "strategy": "standard",
+    "reason": "Windows原生环境，支持标准构建",
+    "commands": [
+      "npm run build"
+    ],
+    "fallback": [
+      "npm run build:alternative"
+    ]
+  },
+  "config": {
+    "NODE_ENV": "production",
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NEXT_PRIVATE_SKIP_MEMORY_WARNING": "1",
+    "NEXT_PRIVATE_SKIP_CACHE": "0",
+    "NEXT_PRIVATE_SKIP_BUILD_CACHE": "0"
+  },
+  "status": "completed"
+}

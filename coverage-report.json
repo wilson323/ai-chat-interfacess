@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-09-16T13:36:00.589Z",
+  "environment": "linux",
+  "coverage": {
+    "testFiles": 11,
+    "sourceFiles": 477,
+    "theoreticalCoverage": 2.3060796645702304,
+    "targetCoverage": 80,
+    "status": "未达标"
+  },
+  "quality": {
+    "issues": 1,
+    "status": "需要改进"
+  },
+  "recommendations": [
+    "增加测试文件数量",
+    "为关键模块添加测试",
+    "改进测试文件质量",
+    "添加更多断言和mock"
+  ]
+}

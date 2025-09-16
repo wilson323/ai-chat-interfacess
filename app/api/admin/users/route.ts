@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+// Removed invalid typescript import
 import { isAdmin } from '@/lib/api/auth';
-import { ApiResponse, PaginatedResponse, PaginationRequest } from '@/types';
+import { ApiResponse, PaginatedResponse } from '@/types';
 import { User, UserRole, UserStatus } from '@/types/admin';
-import { User as UserModel, OperationLog, OperationStatus } from '@/lib/db/models';
+import {
+  User as UserModel,
+  OperationLog,
+  OperationStatus,
+} from '@/lib/db/models';
 import sequelize from '@/lib/db/sequelize';
 import { Op } from 'sequelize';
 import { z } from 'zod';
@@ -19,16 +24,7 @@ const createUserSchema = z.object({
   phone: z.string().optional(),
 });
 
-const updateUserSchema = z.object({
-  username: z.string().min(3).max(50).optional(),
-  email: z.string().email().optional(),
-  password: z.string().min(6).max(255).optional(),
-  role: z.nativeEnum(UserRole).optional(),
-  status: z.nativeEnum(UserStatus).optional(),
-  permissions: z.array(z.string()).optional(),
-  department: z.string().optional(),
-  phone: z.string().optional(),
-});
+// updateUserSchema 在 [id]/route.ts 中定义，这里不需要重复定义
 
 const paginationSchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -41,16 +37,21 @@ const paginationSchema = z.object({
   department: z.string().optional(),
 });
 
+// 操作日志详情类型
+interface OperationLogDetails {
+  [key: string]: string | number | boolean | null | undefined | OperationLogDetails | Record<string, unknown>;
+}
+
 // 记录操作日志
 async function logOperation(
   userId: number,
   action: string,
   resourceType: string,
   resourceId: string,
-  details: Record<string, any>,
+  details: OperationLogDetails,
   status: OperationStatus,
-  errorMessage?: string,
-  request: NextRequest
+  request: NextRequest,
+  errorMessage?: string
 ) {
   try {
     await OperationLog.create({
@@ -59,7 +60,10 @@ async function logOperation(
       resourceType,
       resourceId,
       details,
-      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      ipAddress:
+        request.headers.get('x-forwarded-for') ||
+        request.headers.get('x-real-ip') ||
+        'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown',
       status,
       errorMessage,
@@ -75,13 +79,16 @@ export async function GET(request: NextRequest) {
     // 验证管理员权限
     const isAdminUser = await isAdmin(request);
     if (!isAdminUser) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     // 解析查询参数
@@ -97,18 +104,21 @@ export async function GET(request: NextRequest) {
       department: searchParams.get('department'),
     });
 
-    const { page, limit, sortBy, sortOrder, search, role, status, department } = paginationParams;
-    const offset = (page - 1) * limit;
+    const { page, limit, sortBy, sortOrder, search, role, status, department } =
+      paginationParams;
+    const offset = (Number(page) - 1) * Number(limit);
 
     // 构建查询条件
-    const whereClause: any = {};
+    const whereClause: Record<string, unknown> = {};
 
     if (search) {
-      whereClause[Op.or] = [
-        { username: { [Op.iLike]: `%${search}%` } },
-        { email: { [Op.iLike]: `%${search}%` } },
-        { department: { [Op.iLike]: `%${search}%` } },
-      ];
+      Object.assign(whereClause, {
+        [Op.or]: [
+          { username: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } },
+          { department: { [Op.iLike]: `%${search}%` } },
+        ],
+      });
     }
 
     if (role) whereClause.role = role;
@@ -144,12 +154,12 @@ export async function GET(request: NextRequest) {
     });
 
     const result: PaginatedResponse<User> = {
-      data: users.map(user => user.toJSON() as User),
+      data: users.map(user => user.toJSON() as unknown as User),
       pagination: {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(Number(total) / Number(limit)),
       },
     };
 
@@ -161,21 +171,23 @@ export async function GET(request: NextRequest) {
         requestId: crypto.randomUUID(),
       },
     } as ApiResponse<PaginatedResponse<User>>);
-
   } catch (error) {
     console.error('获取用户列表失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '获取用户列表失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '获取用户列表失败',
+          details: error instanceof Error ? error.message : error,
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }
 
@@ -186,15 +198,18 @@ export async function POST(request: NextRequest) {
   try {
     // 验证管理员权限
     const authResult = await isAdmin(request);
-    if (!authResult.success) {
+    if (!authResult) {
       await transaction.rollback();
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     // 解析和验证请求数据
@@ -214,13 +229,16 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       await transaction.rollback();
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'USER_EXISTS',
-          message: '用户名或邮箱已存在',
-        },
-      } as ApiResponse, { status: 409 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'USER_EXISTS',
+            message: '用户名或邮箱已存在',
+          },
+        } as ApiResponse,
+        { status: 409 }
+      );
     }
 
     // 获取当前操作用户
@@ -253,55 +271,62 @@ export async function POST(request: NextRequest) {
         status: validatedData.status,
       },
       OperationStatus.SUCCESS,
-      undefined,
       request
     );
 
     await transaction.commit();
 
     // 返回用户信息（不包含密码）
-    const userResponse = user.toJSON();
+    const userResponse = user.toJSON() as Record<string, unknown>;
     delete userResponse.password;
 
-    return NextResponse.json({
-      success: true,
-      data: userResponse as User,
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse<User>, { status: 201 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        data: userResponse as unknown as User,
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      } as ApiResponse<User>,
+      { status: 201 }
+    );
   } catch (error) {
     await transaction.rollback();
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json({
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '请求数据验证失败',
+            details: error.errors,
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        } as ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    console.error('创建用户失败:', error);
+    return NextResponse.json(
+      {
         success: false,
         error: {
-          code: 'VALIDATION_ERROR',
-          message: '请求数据验证失败',
-          details: error.errors,
+          code: 'INTERNAL_ERROR',
+          message: '创建用户失败',
+          details: error instanceof Error ? error.message : error,
         },
         meta: {
           timestamp: new Date().toISOString(),
           requestId: crypto.randomUUID(),
         },
-      } as ApiResponse, { status: 400 });
-    }
-
-    console.error('创建用户失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '创建用户失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }

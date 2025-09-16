@@ -1,0 +1,76 @@
+---
+alwaysApply: true
+description: 项目一致性和架构规范
+---
+
+# 项目一致性规范
+
+## 架构一致性
+- 严格遵守开发规范和钩子要求
+- 确保代理功能不偏离核心目标
+- 保持与现有系统架构一致
+- 复用现有组件和模式
+
+## 技术栈一致性
+- 编程语言：TypeScript 5 + React 18 + Next.js 15
+- 构建工具：Next.js + ESLint + Prettier
+- UI框架：TailwindCSS + Radix UI
+- 状态管理：Zustand
+- 测试框架：Jest + React Testing Library
+
+## 代码风格一致性
+- 使用camelCase命名变量和函数
+- 文件使用kebab-case命名
+- 仅使用命名导出
+- 使用Array<T>而非T[]语法
+- 严格类型检查
+
+## 目录结构一致性
+```
+app/                    # Next.js App Router页面
+components/             # React组件库
+  admin/               # 管理界面组件
+  ui/                  # 基础UI组件
+  shared/              # 共享组件
+lib/                   # 工具函数库
+types/                 # TypeScript类型定义
+hooks/                 # 自定义React钩子
+context/               # React上下文
+```
+
+## 导入路径一致性
+```typescript
+// ✅ 正确：使用@别名
+import { Button } from '@/components/ui';
+import { userService } from '@/lib/services';
+import { UserData } from '@/types/user';
+
+// ❌ 错误：相对路径
+import { Button } from '../../../components/ui';
+```
+
+## 组件复用要求
+- 优先复用现有组件
+- 避免重复创建相似功能
+- 建立组件库和设计系统
+- 保持组件接口一致性
+
+## 配置一致性
+- 统一使用项目配置文件
+- 保持环境变量命名规范
+- 使用统一的代码格式化配置
+- 保持构建配置一致性
+
+## 测试一致性
+- 使用统一的测试配置
+- 保持测试文件命名规范
+- 使用相同的测试工具和库
+- 保持测试覆盖率要求
+
+## 文档一致性
+- 保持文档格式统一
+- 使用相同的文档模板
+- 保持API文档一致性
+- 及时更新相关文档
+
+参考文件：[tsconfig.json](mdc:tsconfig.json), [package.json](mdc:package.json), [next.config.mjs](mdc:next.config.mjs)

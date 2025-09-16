@@ -1,10 +1,10 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 import type React from 'react';
 import { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
 import {
   X,
   Upload,
@@ -13,9 +13,9 @@ import {
   FileIcon,
   Loader2,
 } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { useMobile } from '@/hooks/use-mobile';
-import { useToast } from '@/components/ui/toast/use-toast';
+import { Progress } from './ui/progress';
+// import { useMobile } from '../hooks/use-mobile'; // 未使用的导入，保留用于未来扩展
+import { useToast } from './ui/toast/use-toast';
 
 interface FileUploaderProps {
   onClose: () => void;
@@ -36,7 +36,7 @@ export interface UploadedFile {
 export function FileUploader({ onClose, onFileUpload }: FileUploaderProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const isMobile = useMobile();
+  // const isMobile = useMobile(); // Removed unused variable
   const { toast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
@@ -119,7 +119,7 @@ export function FileUploader({ onClose, onFileUpload }: FileUploaderProps) {
                       setUploadedFiles(prev =>
                         prev.map(f =>
                           f.id === newFile.id
-                            ? { ...f, content, status: 'complete' }
+                            ? { ...f, content, status: 'complete' as const }
                             : f
                         )
                       );
@@ -128,7 +128,7 @@ export function FileUploader({ onClose, onFileUpload }: FileUploaderProps) {
                       if (onFileUpload) {
                         const updatedFiles = prev.map(f =>
                           f.id === newFile.id
-                            ? { ...f, content, status: 'complete' }
+                            ? { ...f, content, status: 'complete' as const }
                             : f
                         );
                         onFileUpload(updatedFiles);
@@ -143,7 +143,7 @@ export function FileUploader({ onClose, onFileUpload }: FileUploaderProps) {
                       setUploadedFiles(prev =>
                         prev.map(f =>
                           f.id === newFile.id
-                            ? { ...f, url, status: 'complete' }
+                            ? { ...f, url, status: 'complete' as const }
                             : f
                         )
                       );
@@ -152,7 +152,7 @@ export function FileUploader({ onClose, onFileUpload }: FileUploaderProps) {
                       if (onFileUpload) {
                         const updatedFiles = prev.map(f =>
                           f.id === newFile.id
-                            ? { ...f, url, status: 'complete' }
+                            ? { ...f, url, status: 'complete' as const }
                             : f
                         );
                         onFileUpload(updatedFiles);
@@ -163,20 +163,20 @@ export function FileUploader({ onClose, onFileUpload }: FileUploaderProps) {
                     // 其他类型文件
                     setUploadedFiles(prev =>
                       prev.map(f =>
-                        f.id === newFile.id ? { ...f, status: 'complete' } : f
+                        f.id === newFile.id ? { ...f, status: 'complete' as const } : f
                       )
                     );
 
                     // 通知父组件文件上传完成
                     if (onFileUpload) {
                       const updatedFiles = prev.map(f =>
-                        f.id === newFile.id ? { ...f, status: 'complete' } : f
+                        f.id === newFile.id ? { ...f, status: 'complete' as const } : f
                       );
                       onFileUpload(updatedFiles);
                     }
                   }
 
-                  return { ...f, progress: 100, status: 'complete' };
+                  return { ...f, progress: 100, status: 'complete' as const };
                 }
                 return { ...f, progress: newProgress };
               }

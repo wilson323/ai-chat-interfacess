@@ -3,10 +3,10 @@
 import type React from 'react';
 
 import { useRef, useEffect } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import { useResponsive } from '@/hooks/use-responsive';
-import type { Message } from '@/types/message';
+import { ScrollArea } from './ui/scroll-area';
+import { cn } from '../lib/utils';
+import { useResponsive } from '../hooks/use-responsive';
+import type { Message } from '../types/message';
 
 interface MessageListProps {
   messages: Message[];

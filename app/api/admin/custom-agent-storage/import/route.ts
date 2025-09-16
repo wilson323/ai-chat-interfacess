@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     const standardError = ErrorHandler.handle(error, {
+      context: 'importCustomAgentData',
       operation: 'importCustomAgentData',
     });
     const response = ErrorHandler.toApiResponse(standardError, true);

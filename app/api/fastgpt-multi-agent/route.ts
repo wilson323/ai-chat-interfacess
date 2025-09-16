@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  FastGPTIntelligentClient,
   getGlobalIntelligentClient,
   type ChatRequestOptions,
 } from '@/lib/api/fastgpt/intelligent-client';
@@ -97,7 +96,7 @@ export async function POST(request: NextRequest) {
                 )
               );
             },
-            onIntermediateValue: (value: any, eventType: string) => {
+            onIntermediateValue: (value: unknown, eventType: string) => {
               // 发送中间值（如思考过程、工具调用等）
               writer.write(
                 encoder.encode(
@@ -111,7 +110,7 @@ export async function POST(request: NextRequest) {
                 )
               );
             },
-            onProcessingStep: (step: any) => {
+            onProcessingStep: (step: unknown) => {
               // 发送处理步骤
               writer.write(
                 encoder.encode(
@@ -154,7 +153,7 @@ export async function POST(request: NextRequest) {
           }
         );
 
-        response.catch(async (error) => {
+        response.catch(async error => {
           // 处理未捕获的错误
           console.error('流式聊天请求失败:', error);
           try {
@@ -205,7 +204,7 @@ export async function POST(request: NextRequest) {
           messages,
           {
             ...chatOptions,
-            onChunk: (chunk: string) => {
+            onChunk: (_chunk: string) => {
               // 收集所有块作为完整响应
               // 这里我们只需要让流完成，然后返回结果
             },

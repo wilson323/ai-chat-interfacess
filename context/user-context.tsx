@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface UserContextProps {
-  user: any;
-  setUser: (user: any) => void;
+  user: unknown;
+  setUser: (user: unknown) => void;
 }
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);

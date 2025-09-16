@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+// Removed invalid typescript import
 import sequelize from '@/lib/db/sequelize';
-import AgentConfig from '@/lib/db/models/agent-config';
-import ChatHistory from '@/lib/db/models/chat-history';
-import ChatSession from '@/lib/db/models/ChatSession';
-import ChatMessage from '@/lib/db/models/ChatMessage';
 
 function checkAdminAuth(req: NextRequest) {
   const token = req.cookies.get('adminToken')?.value;

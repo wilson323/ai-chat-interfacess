@@ -7,10 +7,10 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { glob } from 'glob';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await request.json();
-    const { scanType = 'full', filePaths = [] } = body;
+    const body = await _request.json();
+    const { scanType: _scanType = 'full', filePaths = [] } = body;
 
     const scanner = new SecurityScanner();
     const results: SecurityScanResult[] = [];
@@ -127,7 +127,9 @@ export async function POST(request: NextRequest) {
 /**
  * 生成总体修复建议
  */
-function generateOverallRecommendations(issues: any[]): string[] {
+function generateOverallRecommendations(
+  issues: Array<{ severity: string; type: string; title?: string }>
+): string[] {
   const recommendations: string[] = [];
 
   // 按严重程度排序的建议
@@ -189,7 +191,7 @@ function generateOverallRecommendations(issues: any[]): string[] {
 /**
  * 获取安全扫描历史
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // 这里可以从数据库获取历史扫描记录
     // 目前返回模拟数据

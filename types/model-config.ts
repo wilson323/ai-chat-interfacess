@@ -107,7 +107,7 @@ export interface ModelTestResult {
   result: 'pass' | 'fail' | 'warning';
   score: number;
   details: string;
-  testData: any;
+  testData: unknown;
   createdAt: Date;
 }
 
@@ -189,7 +189,7 @@ export interface ModelConfigOperationResult {
 export interface ModelConfigValidationError {
   field: string;
   message: string;
-  value?: any;
+  value?: unknown;
 }
 
 // 模型配置导入/导出

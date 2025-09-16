@@ -1,5 +1,6 @@
-import type { Message } from '@/types/message';
-import { MessageType } from '@/types/message';
+import type { Message } from '../../../../types/message';
+// Record is a built-in TypeScript utility type, no need to import
+import { MessageType } from '../../../../types/message';
 import { generateUniqueId } from '../../shared/storage-utils';
 
 /**

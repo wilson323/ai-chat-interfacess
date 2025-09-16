@@ -7,11 +7,12 @@ function checkAdminAuth(req: NextRequest) {
   return true;
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!checkAdminAuth(req)) {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
-  return new Promise(resolve => {
+
+  return new Promise<NextResponse>(resolve => {
     exec(
       'npx sequelize-cli db:migrate',
       { cwd: process.cwd() },

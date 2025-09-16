@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const agentId = searchParams.get('agentId');
   const userId = searchParams.get('userId');
-  const where: any = {};
+  const where: Record<string, unknown> = {};
   if (agentId) where.agentId = agentId;
   if (userId) where.userId = userId;
   // 只返回非敏感字段，按创建时间倒序

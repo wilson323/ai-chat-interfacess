@@ -33,7 +33,7 @@ function checkTypeScriptStrictMode() {
     'exactOptionalPropertyTypes',
     'noImplicitOverride',
     'noPropertyAccessFromIndexSignature',
-    'noUncheckedIndexedAccess'
+    'noUncheckedIndexedAccess',
   ];
 
   let allStrict = true;
@@ -55,7 +55,7 @@ function checkTypeScriptStrictMode() {
 function checkAnyTypeUsage() {
   console.log('\n🚫 检查any类型使用...');
 
-  const checkFile = (filePath) => {
+  const checkFile = filePath => {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
     let anyCount = 0;
@@ -63,11 +63,16 @@ function checkAnyTypeUsage() {
 
     lines.forEach((line, index) => {
       // 检查any类型使用（排除注释和字符串）
-      if (line.includes(': any') && !line.trim().startsWith('//') && !line.includes('"any"') && !line.includes("'any'")) {
+      if (
+        line.includes(': any') &&
+        !line.trim().startsWith('//') &&
+        !line.includes('"any"') &&
+        !line.includes("'any'")
+      ) {
         anyCount++;
         anyLines.push({
           line: index + 1,
-          content: line.trim()
+          content: line.trim(),
         });
       }
     });
@@ -75,25 +80,32 @@ function checkAnyTypeUsage() {
     return { anyCount, anyLines };
   };
 
-  const checkDirectory = (dir) => {
+  const checkDirectory = dir => {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     let totalAnyCount = 0;
     let filesWithAny = [];
 
     files.forEach(file => {
       const filePath = path.join(dir, file.name);
-      if (file.isDirectory() && !file.name.startsWith('.') && file.name !== 'node_modules') {
+      if (
+        file.isDirectory() &&
+        !file.name.startsWith('.') &&
+        file.name !== 'node_modules'
+      ) {
         const result = checkDirectory(filePath);
         totalAnyCount += result.totalAnyCount;
         filesWithAny.push(...result.filesWithAny);
-      } else if (file.isFile() && (file.name.endsWith('.ts') || file.name.endsWith('.tsx'))) {
+      } else if (
+        file.isFile() &&
+        (file.name.endsWith('.ts') || file.name.endsWith('.tsx'))
+      ) {
         const result = checkFile(filePath);
         if (result.anyCount > 0) {
           totalAnyCount += result.anyCount;
           filesWithAny.push({
             file: filePath,
             anyCount: result.anyCount,
-            anyLines: result.anyLines
+            anyLines: result.anyLines,
           });
         }
       }
@@ -106,8 +118,13 @@ function checkAnyTypeUsage() {
   const result2 = checkDirectory('./components');
   const result3 = checkDirectory('./lib');
 
-  const totalAnyCount = result.totalAnyCount + result2.totalAnyCount + result3.totalAnyCount;
-  const allFilesWithAny = [...result.filesWithAny, ...result2.filesWithAny, ...result3.filesWithAny];
+  const totalAnyCount =
+    result.totalAnyCount + result2.totalAnyCount + result3.totalAnyCount;
+  const allFilesWithAny = [
+    ...result.filesWithAny,
+    ...result2.filesWithAny,
+    ...result3.filesWithAny,
+  ];
 
   if (totalAnyCount === 0) {
     console.log('✅ 未发现any类型使用');
@@ -131,23 +148,31 @@ function checkAnyTypeUsage() {
 function checkUnusedImports() {
   console.log('\n📦 检查未使用的导入...');
 
-  const checkFile = (filePath) => {
+  const checkFile = filePath => {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
     let unusedImports = [];
 
     lines.forEach((line, index) => {
-      if (line.trim().startsWith('import') && line.includes('{') && line.includes('}')) {
+      if (
+        line.trim().startsWith('import') &&
+        line.includes('{') &&
+        line.includes('}')
+      ) {
         const importMatch = line.match(/import\s*{\s*([^}]+)\s*}\s*from/);
         if (importMatch) {
           const imports = importMatch[1].split(',').map(imp => imp.trim());
           imports.forEach(imp => {
             const variable = imp.split(' as ')[0].trim();
-            if (variable && !content.includes(variable) && !content.includes(`<${variable}`)) {
+            if (
+              variable &&
+              !content.includes(variable) &&
+              !content.includes(`<${variable}`)
+            ) {
               unusedImports.push({
                 line: index + 1,
                 variable,
-                content: line.trim()
+                content: line.trim(),
               });
             }
           });
@@ -158,20 +183,27 @@ function checkUnusedImports() {
     return unusedImports;
   };
 
-  const checkDirectory = (dir) => {
+  const checkDirectory = dir => {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     let allUnusedImports = [];
 
     files.forEach(file => {
       const filePath = path.join(dir, file.name);
-      if (file.isDirectory() && !file.name.startsWith('.') && file.name !== 'node_modules') {
+      if (
+        file.isDirectory() &&
+        !file.name.startsWith('.') &&
+        file.name !== 'node_modules'
+      ) {
         allUnusedImports.push(...checkDirectory(filePath));
-      } else if (file.isFile() && (file.name.endsWith('.ts') || file.name.endsWith('.tsx'))) {
+      } else if (
+        file.isFile() &&
+        (file.name.endsWith('.ts') || file.name.endsWith('.tsx'))
+      ) {
         const unusedImports = checkFile(filePath);
         if (unusedImports.length > 0) {
           allUnusedImports.push({
             file: filePath,
-            unusedImports
+            unusedImports,
           });
         }
       }
@@ -208,7 +240,7 @@ function checkUnusedImports() {
 function checkCodeDuplication() {
   console.log('\n🔄 检查代码重复...');
 
-  const checkFile = (filePath) => {
+  const checkFile = filePath => {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n').filter(line => line.trim().length > 0);
 
@@ -216,7 +248,8 @@ function checkCodeDuplication() {
     const lineCounts = {};
     lines.forEach(line => {
       const trimmed = line.trim();
-      if (trimmed.length > 20) { // 只检查较长的行
+      if (trimmed.length > 20) {
+        // 只检查较长的行
         lineCounts[trimmed] = (lineCounts[trimmed] || 0) + 1;
       }
     });
@@ -228,20 +261,27 @@ function checkCodeDuplication() {
     return duplicates;
   };
 
-  const checkDirectory = (dir) => {
+  const checkDirectory = dir => {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     let allDuplicates = [];
 
     files.forEach(file => {
       const filePath = path.join(dir, file.name);
-      if (file.isDirectory() && !file.name.startsWith('.') && file.name !== 'node_modules') {
+      if (
+        file.isDirectory() &&
+        !file.name.startsWith('.') &&
+        file.name !== 'node_modules'
+      ) {
         allDuplicates.push(...checkDirectory(filePath));
-      } else if (file.isFile() && (file.name.endsWith('.ts') || file.name.endsWith('.tsx'))) {
+      } else if (
+        file.isFile() &&
+        (file.name.endsWith('.ts') || file.name.endsWith('.tsx'))
+      ) {
         const duplicates = checkFile(filePath);
         if (duplicates.length > 0) {
           allDuplicates.push({
             file: filePath,
-            duplicates
+            duplicates,
           });
         }
       }
@@ -264,7 +304,9 @@ function checkCodeDuplication() {
     allDuplicates.slice(0, 3).forEach(file => {
       console.log(`  - ${file.file}:`);
       file.duplicates.slice(0, 2).forEach(dup => {
-        console.log(`    "${dup.line.substring(0, 50)}..." 重复 ${dup.count} 次`);
+        console.log(
+          `    "${dup.line.substring(0, 50)}..." 重复 ${dup.count} 次`
+        );
       });
     });
     return false;
@@ -275,7 +317,7 @@ function checkCodeDuplication() {
 function checkPerformanceIssues() {
   console.log('\n⚡ 检查性能问题...');
 
-  const checkFile = (filePath) => {
+  const checkFile = filePath => {
     const content = fs.readFileSync(filePath, 'utf8');
     const issues = [];
 
@@ -295,7 +337,7 @@ function checkPerformanceIssues() {
       if (matches) {
         issues.push({
           issue,
-          count: matches.length
+          count: matches.length,
         });
       }
     });
@@ -303,20 +345,27 @@ function checkPerformanceIssues() {
     return issues;
   };
 
-  const checkDirectory = (dir) => {
+  const checkDirectory = dir => {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     let allIssues = [];
 
     files.forEach(file => {
       const filePath = path.join(dir, file.name);
-      if (file.isDirectory() && !file.name.startsWith('.') && file.name !== 'node_modules') {
+      if (
+        file.isDirectory() &&
+        !file.name.startsWith('.') &&
+        file.name !== 'node_modules'
+      ) {
         allIssues.push(...checkDirectory(filePath));
-      } else if (file.isFile() && (file.name.endsWith('.ts') || file.name.endsWith('.tsx'))) {
+      } else if (
+        file.isFile() &&
+        (file.name.endsWith('.ts') || file.name.endsWith('.tsx'))
+      ) {
         const issues = checkFile(filePath);
         if (issues.length > 0) {
           allIssues.push({
             file: filePath,
-            issues
+            issues,
           });
         }
       }
@@ -380,5 +429,5 @@ module.exports = {
   checkAnyTypeUsage,
   checkUnusedImports,
   checkCodeDuplication,
-  checkPerformanceIssues
+  checkPerformanceIssues,
 };

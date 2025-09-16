@@ -3,28 +3,25 @@
 import type React from 'react';
 
 import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Send, Mic, Paperclip } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
+import { Textarea } from './ui/textarea';
+import { Send, Paperclip } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 // 添加文件上传相关导入
-import { useAgent } from '@/context/agent-context';
-import { FileUploader } from '@/components/file-uploader';
+import { useAgent } from '../context/agent-context';
+import { FileUploader } from './file-uploader';
 // 添加 useLanguage 导入
-import { useLanguage } from '@/context/language-context';
+import { useLanguage } from '../context/language-context';
 import axios from 'axios';
-// 添加语音录制组件导入
-import { CompactVoiceInput } from '@/components/voice/VoiceInput';
 
-export default function InputArea() {
+function InputArea() {
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
   const textAreaRef = useRef<any>(null);
   const { selectedAgent } = useAgent();
 
-  const { toggleHistorySidebar } = useAgent();
 
   // 在组件内部添加
   const { t } = useLanguage();
@@ -62,16 +59,16 @@ export default function InputArea() {
   };
 
   // 处理语音识别结果
-  const handleVoiceTranscript = (text: string) => {
-    setMessage(prev => prev + text);
-    // 自动调整文本区域大小
-    if (textAreaRef.current) {
-      setTimeout(() => {
-        textAreaRef.current.style.height = 'auto';
-        textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`;
-      }, 0);
-    }
-  };
+  // const handleVoiceTranscript = (text: string) => { // 未使用的函数，保留用于未来扩展
+  //   setMessage(prev => prev + text);
+  //   // 自动调整文本区域大小
+  //   if (textAreaRef.current) {
+  //     setTimeout(() => {
+  //       textAreaRef.current.style.height = 'auto';
+  //       textAreaRef.current.style.height = `${textAreaRef.current.scrollHeight}px`;
+  //     }, 0);
+  //   }
+  // };
 
   const toggleFileUpload = () => {
     setIsUploading(!isUploading);
@@ -111,25 +108,9 @@ export default function InputArea() {
     });
   }
 
-  // 处理文件上传
-  async function handleFileUpload(file: File) {
-    const url = await uploadFileToServer(file);
-    const message = {
-      role: 'user',
-      content: [
-        { type: 'text', text: '请分析这个文件' },
-        { type: 'file_url', name: file.name, url },
-      ],
-    };
-    await sendToFastGPT({
-      chatId: selectedAgent?.chatId,
-      stream: false,
-      messages: [message],
-    });
-  }
 
   // 发送消息到 FastGPT
-  async function sendToFastGPT(payload: any) {
+  async function sendToFastGPT(payload: unknown) {
     await axios.post('/api/chat-proxy', payload, {
       headers: { Authorization: `Bearer ${selectedAgent?.apiKey}` },
     });
@@ -170,11 +151,6 @@ export default function InputArea() {
           </Button>
         )}
 
-        {/* 语音输入组件 */}
-        <CompactVoiceInput
-          onTranscript={handleVoiceTranscript}
-          className='mr-1'
-        />
 
         <Textarea
           ref={textAreaRef}
@@ -203,10 +179,11 @@ export default function InputArea() {
 
       {canShowImageUpload && (
         <input
+          id='image-upload-input'
+          name='imageUploadInput'
           type='file'
           accept='image/*'
           style={{ display: 'none' }}
-          id='image-upload-input'
           onChange={e => {
             const file = e.target.files?.[0];
             if (file) handleImageUpload(file);
@@ -216,3 +193,5 @@ export default function InputArea() {
     </div>
   );
 }
+
+export default InputArea;

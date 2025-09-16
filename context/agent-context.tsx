@@ -8,9 +8,10 @@ import {
   useCallback,
   useRef,
 } from 'react';
-import type { Agent, GlobalVariable } from '../types/agent';
-import { fetchAgents } from '@/lib/services/agent-service'; // 用户端专用，如有管理端 context 需切换为 admin-agent-service
-import { saveSelectedAgent, loadSelectedAgentId } from '@/lib/storage/index';
+import type { Agent } from '../types/agent';
+import type { GlobalVariable } from '../types/global-variable';
+import { fetchAgents } from '../lib/services/agent-service'; // 用户端专用，如有管理端 context 需切换为 admin-agent-service
+import { saveSelectedAgent, loadSelectedAgentId } from '../lib/storage/index';
 
 // AgentContextType 接口
 interface AgentContextType {
@@ -166,9 +167,9 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       console.log('中断当前请求');
       try {
         abortControllerRef.current.abort();
-      } catch (error: any) {
+      } catch (error: unknown) {
         // 忽略 AbortError，这是预期的行为
-        if (error.name !== 'AbortError') {
+        if (error instanceof Error && error.name !== 'AbortError') {
           console.warn('中断请求时发生意外错误:', error);
         }
       }

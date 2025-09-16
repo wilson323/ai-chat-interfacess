@@ -1,9 +1,8 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -12,25 +11,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type {
+  SecurityScanResult
+} from '@/lib/security/security-scanner';
+import { logger } from '@/lib/utils/logger';
 import {
-  Shield,
   AlertTriangle,
   CheckCircle,
-  XCircle,
-  RefreshCw,
   Download,
   Eye,
   FileText,
-  Clock,
-  TrendingUp,
-  TrendingDown,
+  RefreshCw,
+  Shield,
+  XCircle
 } from 'lucide-react';
-import type {
-  SecurityScanResult,
-  SecurityIssue,
-} from '@/lib/security/security-scanner';
+import { useEffect, useState } from 'react';
 
 export function SecurityDashboard() {
   const [scanResult, setScanResult] = useState<SecurityScanResult | null>(null);
@@ -56,10 +52,10 @@ export function SecurityDashboard() {
       if (data.success) {
         setScanResult(data.data);
       } else {
-        console.error('安全扫描失败:', data.error);
+        logger.error('安全扫描失败:', data.error);
       }
     } catch (error) {
-      console.error('安全扫描请求失败:', error);
+      logger.error('安全扫描请求失败:', error);
     } finally {
       setLoading(false);
     }
@@ -74,7 +70,7 @@ export function SecurityDashboard() {
         setScanHistory(data.data);
       }
     } catch (error) {
-      console.error('获取扫描历史失败:', error);
+      logger.error('获取扫描历史失败:', error);
     }
   };
 
@@ -242,7 +238,7 @@ export function SecurityDashboard() {
             <ul className='mt-2 space-y-1'>
               {scanResult.summary.recommendations
                 .slice(0, 3)
-                .map((rec, index) => (
+                .map((rec: string, index: number) => (
                   <li key={index} className='text-sm'>
                     • {rec}
                   </li>
@@ -354,7 +350,7 @@ export function SecurityDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {scanResult.issues.map((issue, index) => (
+                    {scanResult.issues.map((issue: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell>
                           <Badge className={getSeverityColor(issue.severity)}>
@@ -439,7 +435,7 @@ export function SecurityDashboard() {
               <CardContent>
                 <div className='space-y-4'>
                   {scanResult.summary.recommendations.map(
-                    (recommendation, index) => (
+                    (recommendation: string, index: number) => (
                       <div
                         key={index}
                         className='flex items-start gap-3 p-4 border rounded-lg'

@@ -104,12 +104,15 @@ class QualityDashboard {
     }
   }
 
-  private loadHistoricalData(): void {
+  private async loadHistoricalData(): Promise<void> {
     try {
-      const files = require('fs').readdirSync(this.dataPath);
+      const fs = await import('fs');
+      const files = fs.readdirSync(this.dataPath);
       files.forEach((file: string) => {
         if (file.startsWith('metrics-') && file.endsWith('.json')) {
-          const data = JSON.parse(readFileSync(join(this.dataPath, file), 'utf8'));
+          const data = JSON.parse(
+            readFileSync(join(this.dataPath, file), 'utf8')
+          );
           this.metrics.push(data);
         }
       });
@@ -136,7 +139,12 @@ class QualityDashboard {
     const security = await this.collectSecurityMetrics();
 
     // 计算总体评分
-    const overall = this.calculateOverallScore({ codeQuality, testCoverage, performance, security });
+    const overall = this.calculateOverallScore({
+      codeQuality,
+      testCoverage,
+      performance,
+      security,
+    });
 
     const metrics: QualityMetrics = {
       timestamp,
@@ -144,7 +152,7 @@ class QualityDashboard {
       testCoverage,
       performance,
       security,
-      overall
+      overall,
     };
 
     this.saveMetrics(metrics);
@@ -159,33 +167,41 @@ class QualityDashboard {
       let typescriptErrors = 0;
       try {
         execSync('npm run check-types', { stdio: 'pipe' });
-      } catch (error: any) {
-        typescriptErrors = this.parseErrorCount(error.message);
+      } catch (error: unknown) {
+        typescriptErrors = this.parseErrorCount(
+          error instanceof Error ? error.message : String(error)
+        );
       }
 
       // ESLint 错误检查
       let eslintErrors = 0;
       try {
         execSync('npm run lint', { stdio: 'pipe' });
-      } catch (error: any) {
-        eslintErrors = this.parseErrorCount(error.message);
+      } catch (error: unknown) {
+        eslintErrors = this.parseErrorCount(
+          error instanceof Error ? error.message : String(error)
+        );
       }
 
       // Prettier 问题检查
       let prettierIssues = 0;
       try {
         execSync('npm run format:check', { stdio: 'pipe' });
-      } catch (error: any) {
-        prettierIssues = this.parseErrorCount(error.message);
+      } catch (error: unknown) {
+        prettierIssues = this.parseErrorCount(
+          error instanceof Error ? error.message : String(error)
+        );
       }
 
       // 自定义代码占比
       let customCodeRatio = 0;
       try {
-        const result = execSync('npm run check:custom-ratio', { encoding: 'utf8' });
+        const result = execSync('npm run check:custom-ratio', {
+          encoding: 'utf8',
+        });
         const match = result.match(/(\d+(?:\.\d+)?)%/);
         if (match) {
-          customCodeRatio = parseFloat(match[1]);
+          customCodeRatio = parseFloat(match[1] || '0');
         }
       } catch (error) {
         customCodeRatio = 25; // 默认较高值
@@ -198,11 +214,10 @@ class QualityDashboard {
         customCodeRatio,
         complexity: {
           average: 8.5,
-          max: 15
+          max: 15,
         },
-        duplication: 3.2
+        duplication: 3.2,
       };
-
     } catch (error) {
       console.error('收集代码质量指标失败:', error);
       return {
@@ -211,7 +226,7 @@ class QualityDashboard {
         prettierIssues: 10,
         customCodeRatio: 30,
         complexity: { average: 12, max: 20 },
-        duplication: 8
+        duplication: 8,
       };
     }
   }
@@ -224,7 +239,11 @@ class QualityDashboard {
       execSync('npm run test:coverage', { stdio: 'pipe' });
 
       // 读取覆盖率报告
-      const coveragePath = join(process.cwd(), 'coverage', 'coverage-summary.json');
+      const coveragePath = join(
+        process.cwd(),
+        'coverage',
+        'coverage-summary.json'
+      );
       const coverageData = JSON.parse(readFileSync(coveragePath, 'utf8'));
       const total = coverageData.total;
 
@@ -232,7 +251,7 @@ class QualityDashboard {
         lines: total.lines.pct,
         functions: total.functions.pct,
         branches: total.branches.pct,
-        statements: total.statements.pct
+        statements: total.statements.pct,
       };
 
       // 集成测试覆盖率 (估算)
@@ -240,23 +259,22 @@ class QualityDashboard {
         lines: Math.max(0, unit.lines - 10),
         functions: Math.max(0, unit.functions - 5),
         branches: Math.max(0, unit.branches - 8),
-        statements: Math.max(0, unit.statements - 7)
+        statements: Math.max(0, unit.statements - 7),
       };
 
       // E2E 测试通过率
       const e2e = {
         passRate: 95,
-        totalTests: 42
+        totalTests: 42,
       };
 
       return { unit, integration, e2e };
-
     } catch (error) {
       console.error('收集测试覆盖率指标失败:', error);
       return {
         unit: { lines: 60, functions: 65, branches: 55, statements: 62 },
         integration: { lines: 50, functions: 55, branches: 45, statements: 52 },
-        e2e: { passRate: 80, totalTests: 42 }
+        e2e: { passRate: 80, totalTests: 42 },
       };
     }
   }
@@ -268,7 +286,7 @@ class QualityDashboard {
       // 包大小检查
       const bundleSize = {
         main: 450, // KB
-        total: 1200 // KB
+        total: 1200, // KB
       };
 
       // 构建时间
@@ -279,29 +297,33 @@ class QualityDashboard {
         performance: 92,
         accessibility: 88,
         bestPractices: 85,
-        seo: 95
+        seo: 95,
       };
 
       // API 性能 (模拟)
       const api = {
         avgResponseTime: 320, // ms
-        errorRate: 0.02 // 2%
+        errorRate: 0.02, // 2%
       };
 
       return {
         bundleSize,
         buildTime,
         lighthouse,
-        api
+        api,
       };
-
     } catch (error) {
       console.error('收集性能指标失败:', error);
       return {
         bundleSize: { main: 800, total: 2500 },
         buildTime: 180,
-        lighthouse: { performance: 70, accessibility: 65, bestPractices: 60, seo: 80 },
-        api: { avgResponseTime: 800, errorRate: 0.1 }
+        lighthouse: {
+          performance: 70,
+          accessibility: 65,
+          bestPractices: 60,
+          seo: 80,
+        },
+        api: { avgResponseTime: 800, errorRate: 0.1 },
       };
     }
   }
@@ -315,22 +337,26 @@ class QualityDashboard {
         critical: 0,
         high: 1,
         medium: 3,
-        low: 5
+        low: 5,
       };
 
       // 依赖检查
       const dependencies = {
         outdated: 8,
-        total: 95
+        total: 95,
       };
 
       // 环境变量安全
       const envSecurity = {
         missingVars: [] as string[],
-        weakVars: [] as string[]
+        weakVars: [] as string[],
       };
 
-      const requiredVars = ['JWT_SECRET', 'POSTGRES_PASSWORD', 'ENCRYPTION_KEY'];
+      const requiredVars = [
+        'JWT_SECRET',
+        'POSTGRES_PASSWORD',
+        'ENCRYPTION_KEY',
+      ];
       requiredVars.forEach(varName => {
         const value = process.env[varName];
         if (!value) {
@@ -341,13 +367,12 @@ class QualityDashboard {
       });
 
       return { vulnerabilities, dependencies, envSecurity };
-
     } catch (error) {
       console.error('收集安全指标失败:', error);
       return {
         vulnerabilities: { critical: 2, high: 5, medium: 8, low: 12 },
         dependencies: { outdated: 15, total: 95 },
-        envSecurity: { missingVars: ['JWT_SECRET'], weakVars: ['API_KEY'] }
+        envSecurity: { missingVars: ['JWT_SECRET'], weakVars: ['API_KEY'] },
       };
     }
   }
@@ -368,7 +393,7 @@ class QualityDashboard {
 
     // 测试覆盖率评分 (30%)
     const testScore = this.calculateTestCoverageScore(metrics.testCoverage);
-    totalScore += testScore * 0.30;
+    totalScore += testScore * 0.3;
     maxScore += 30;
 
     // 性能评分 (25%)
@@ -378,7 +403,7 @@ class QualityDashboard {
 
     // 安全评分 (20%)
     const securityScore = this.calculateSecurityScore(metrics.security);
-    totalScore += securityScore * 0.20;
+    totalScore += securityScore * 0.2;
     maxScore += 20;
 
     const finalScore = Math.round((totalScore / maxScore) * 100);
@@ -403,7 +428,7 @@ class QualityDashboard {
     return {
       score: finalScore,
       grade,
-      status
+      status,
     };
   }
 
@@ -434,10 +459,22 @@ class QualityDashboard {
   }
 
   private calculateTestCoverageScore(metrics: TestCoverageMetrics): number {
-    const unit = (metrics.unit.lines + metrics.unit.functions + metrics.unit.branches + metrics.unit.statements) / 4;
-    const integration = (metrics.integration.lines + metrics.integration.functions + metrics.integration.branches + metrics.integration.statements) / 4;
+    const unit =
+      (metrics.unit.lines +
+        metrics.unit.functions +
+        metrics.unit.branches +
+        metrics.unit.statements) /
+      4;
+    const integration =
+      (metrics.integration.lines +
+        metrics.integration.functions +
+        metrics.integration.branches +
+        metrics.integration.statements) /
+      4;
 
-    return Math.round((unit * 0.6 + integration * 0.3 + metrics.e2e.passRate * 0.1));
+    return Math.round(
+      unit * 0.6 + integration * 0.3 + metrics.e2e.passRate * 0.1
+    );
   }
 
   private calculatePerformanceScore(metrics: PerformanceMetrics): number {
@@ -454,8 +491,12 @@ class QualityDashboard {
     }
 
     // Lighthouse 平均分
-    const lighthouseAvg = (metrics.lighthouse.performance + metrics.lighthouse.accessibility +
-                          metrics.lighthouse.bestPractices + metrics.lighthouse.seo) / 4;
+    const lighthouseAvg =
+      (metrics.lighthouse.performance +
+        metrics.lighthouse.accessibility +
+        metrics.lighthouse.bestPractices +
+        metrics.lighthouse.seo) /
+      4;
     score = Math.min(score, lighthouseAvg);
 
     // API 性能扣分
@@ -476,7 +517,8 @@ class QualityDashboard {
     score -= metrics.vulnerabilities.low * 2;
 
     // 依赖扣分
-    const outdatedRatio = metrics.dependencies.outdated / metrics.dependencies.total;
+    const outdatedRatio =
+      metrics.dependencies.outdated / metrics.dependencies.total;
     score -= outdatedRatio * 30;
 
     // 环境变量安全扣分
@@ -536,23 +578,57 @@ class QualityDashboard {
 
   private calculateTrends() {
     if (this.metrics.length < 2) {
-      return { overall: 0, codeQuality: 0, testCoverage: 0, performance: 0, security: 0 };
+      return {
+        overall: 0,
+        codeQuality: 0,
+        testCoverage: 0,
+        performance: 0,
+        security: 0,
+      };
     }
 
     const current = this.metrics[this.metrics.length - 1];
     const previous = this.metrics[this.metrics.length - 2];
 
+    if (!current || !previous) {
+      return {
+        overall: 0,
+        codeQuality: 0,
+        testCoverage: 0,
+        performance: 0,
+        security: 0,
+      };
+    }
+
     return {
       overall: current.overall.score - previous.overall.score,
-      codeQuality: this.calculateCodeQualityScore(current.codeQuality) - this.calculateCodeQualityScore(previous.codeQuality),
-      testCoverage: this.calculateTestCoverageScore(current.testCoverage) - this.calculateTestCoverageScore(previous.testCoverage),
-      performance: this.calculatePerformanceScore(current.performance) - this.calculatePerformanceScore(previous.performance),
-      security: this.calculateSecurityScore(current.security) - this.calculateSecurityScore(previous.security)
+      codeQuality:
+        this.calculateCodeQualityScore(current.codeQuality) -
+        this.calculateCodeQualityScore(previous.codeQuality),
+      testCoverage:
+        this.calculateTestCoverageScore(current.testCoverage) -
+        this.calculateTestCoverageScore(previous.testCoverage),
+      performance:
+        this.calculatePerformanceScore(current.performance) -
+        this.calculatePerformanceScore(previous.performance),
+      security:
+        this.calculateSecurityScore(current.security) -
+        this.calculateSecurityScore(previous.security),
     };
   }
 
-  private generateHTMLDashboard(metrics: QualityMetrics, trends: any): string {
-    const { codeQuality, testCoverage, performance, security, overall } = metrics;
+  private generateHTMLDashboard(
+    metrics: QualityMetrics,
+    trends: {
+      overall: number;
+      codeQuality: number;
+      testCoverage: number;
+      performance: number;
+      security: number;
+    }
+  ): string {
+    const { codeQuality, testCoverage, performance, security, overall } =
+      metrics;
 
     return `
 <!DOCTYPE html>
@@ -767,20 +843,20 @@ class QualityDashboard {
             <div class="metric-card">
                 <div class="metric-item">
                     <span class="metric-label">总体评分趋势</span>
-                    <span class="metric-value ${trends.overall >= 0 ? 'trend-up' : 'trend-down'}">
-                        ${trends.overall >= 0 ? '+' : ''}${trends.overall}
+                    <span class="metric-value ${(trends as any).overall >= 0 ? 'trend-up' : 'trend-down'}">
+                        ${(trends as any).overall >= 0 ? '+' : ''}${(trends as any).overall}
                     </span>
                 </div>
                 <div class="metric-item">
                     <span class="metric-label">代码质量趋势</span>
-                    <span class="metric-value ${trends.codeQuality >= 0 ? 'trend-up' : 'trend-down'}">
-                        ${trends.codeQuality >= 0 ? '+' : ''}${trends.codeQuality}
+                    <span class="metric-value ${(trends as any).codeQuality >= 0 ? 'trend-up' : 'trend-down'}">
+                        ${(trends as any).codeQuality >= 0 ? '+' : ''}${(trends as any).codeQuality}
                     </span>
                 </div>
                 <div class="metric-item">
                     <span class="metric-label">测试覆盖趋势</span>
-                    <span class="metric-value ${trends.testCoverage >= 0 ? 'trend-up' : 'trend-down'}">
-                        ${trends.testCoverage >= 0 ? '+' : ''}${trends.testCoverage}
+                    <span class="metric-value ${(trends as any).testCoverage >= 0 ? 'trend-up' : 'trend-down'}">
+                        ${(trends as any).testCoverage >= 0 ? '+' : ''}${(trends as any).testCoverage}
                     </span>
                 </div>
             </div>
@@ -795,7 +871,7 @@ class QualityDashboard {
   }
 
   async generateAndSaveDashboard(): Promise<void> {
-    const metrics = await this.collectMetrics();
+    await this.collectMetrics();
     const html = this.generateDashboard();
 
     const dashboardPath = join(process.cwd(), 'quality-dashboard.html');

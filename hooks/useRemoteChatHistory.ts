@@ -17,9 +17,9 @@ export function useRemoteChatHistory({
 }: UseRemoteChatHistoryParams) {
   const [data, setData] = useState<{
     total: number;
-    list: any[];
+    list: unknown[];
     loading: boolean;
-    error: any;
+    error: unknown;
   }>({ total: 0, list: [], loading: true, error: null });
 
   useEffect(() => {

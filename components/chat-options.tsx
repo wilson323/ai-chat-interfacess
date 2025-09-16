@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Slider } from '../components/ui/slider';
+import { Switch } from '../components/ui/switch';
+import { Label } from '../components/ui/label';
 import { X, Zap, Sparkles, Gauge, Thermometer, Brain } from 'lucide-react';
 
 interface ChatOptionsProps {

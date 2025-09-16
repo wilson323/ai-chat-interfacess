@@ -60,7 +60,7 @@ export function ResponsiveImage({
   lazy = true,
   threshold = 0.1,
 }: ResponsiveImageProps) {
-  const { isMobile, isTablet, isDesktop, screenWidth } = useCrossPlatform();
+  const { isMobile, isTablet, isDesktop } = useCrossPlatform();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(!lazy);
@@ -255,7 +255,7 @@ export function ResponsiveVideo({
   lazy = true,
   threshold = 0.1,
 }: ResponsiveVideoProps) {
-  const { isMobile, isTablet } = useCrossPlatform();
+  // const { isMobile, isTablet } = useCrossPlatform(); // 未使用的变量，保留用于未来扩展
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(!lazy);
@@ -332,7 +332,6 @@ export function ResponsiveVideo({
 
   return (
     <div
-      ref={videoRef}
       className={cn(
         'relative overflow-hidden',
         aspectRatioClasses[aspectRatio],

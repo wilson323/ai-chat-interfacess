@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -13,7 +14,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
   Line,
   ComposedChart,
   Area,
@@ -36,7 +36,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, RefreshCw, BarChart3, PieChart as PieIcon, TrendingUp } from 'lucide-react';
+import {
+  Download,
+  RefreshCw,
+  BarChart3,
+  PieChart as PieIcon,
+  TrendingUp,
+} from 'lucide-react';
 
 interface ComparisonData {
   [key: string]: string | number | boolean | null | undefined;
@@ -104,7 +110,8 @@ export default function ComparisonChart({
 }: ComparisonChartProps) {
   const [data, setData] = useState<{ [key: string]: ComparisonData[] }>({});
   const [loading, setLoading] = useState(true);
-  const [selectedDimensions, setSelectedDimensions] = useState(defaultDimensions);
+  const [selectedDimensions, setSelectedDimensions] =
+    useState(defaultDimensions);
   const [metric, setMetric] = useState(defaultMetric);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -123,7 +130,7 @@ export default function ComparisonChart({
   }, []);
 
   // 获取数据
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -151,13 +158,28 @@ export default function ComparisonChart({
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    selectedDimensions,
+    metric,
+    timeGranularity,
+    locationLevel,
+    startDate,
+    endDate,
+  ]);
 
   useEffect(() => {
     if (startDate && endDate && selectedDimensions.length > 0) {
       fetchData();
     }
-  }, [selectedDimensions, metric, startDate, endDate, timeGranularity, locationLevel]);
+  }, [
+    selectedDimensions,
+    metric,
+    startDate,
+    endDate,
+    timeGranularity,
+    locationLevel,
+    fetchData,
+  ]);
 
   // 导出数据
   const exportData = async () => {
@@ -190,22 +212,21 @@ export default function ComparisonChart({
     if (!chartData || chartData.length === 0) return null;
 
     return (
-      <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="period"
-            tick={{ fontSize: 12 }}
-            tickLine={false}
-          />
+      <ResponsiveContainer width='100%' height={height}>
+        <AreaChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
+          <XAxis dataKey='period' tick={{ fontSize: 12 }} tickLine={false} />
           <YAxis tick={{ fontSize: 12 }} tickLine={false} />
           <Tooltip />
           <Legend />
           <Area
-            type="monotone"
-            dataKey="value"
-            stroke="#3b82f6"
-            fill="#3b82f6"
+            type='monotone'
+            dataKey='value'
+            stroke='#3b82f6'
+            fill='#3b82f6'
             fillOpacity={0.6}
             strokeWidth={2}
           />
@@ -222,13 +243,22 @@ export default function ComparisonChart({
     const topData = chartData.slice(0, 10);
 
     return (
-      <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={topData} layout="horizontal" margin={{ top: 20, right: 30, left: 60, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis type="number" tick={{ fontSize: 12 }} tickLine={false} />
-          <YAxis type="category" dataKey="location" tick={{ fontSize: 12 }} tickLine={false} />
+      <ResponsiveContainer width='100%' height={height}>
+        <BarChart
+          data={topData}
+          layout='horizontal'
+          margin={{ top: 20, right: 30, left: 60, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
+          <XAxis type='number' tick={{ fontSize: 12 }} tickLine={false} />
+          <YAxis
+            type='category'
+            dataKey='location'
+            tick={{ fontSize: 12 }}
+            tickLine={false}
+          />
           <Tooltip />
-          <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
+          <Bar dataKey='value' fill='#10b981' radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -239,24 +269,22 @@ export default function ComparisonChart({
     if (!chartData || chartData.length === 0) return null;
 
     return (
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width='100%' height={height}>
         <PieChart>
           <Pie
             data={chartData}
-            cx="50%"
-            cy="50%"
+            cx='50%'
+            cy='50%'
             labelLine={false}
-            label={({ type, value }) => {
-              const total = chartData.reduce((sum, item) => sum + (item.value || 0), 0);
-              const percentage = total > 0 ? ((value || 0) / total * 100).toFixed(1) : '0';
-              return `${type} ${percentage}%`;
-            }}
             outerRadius={120}
-            fill="#8884d8"
-            dataKey="value"
+            fill='#8884d8'
+            dataKey='value'
           >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={colorPalette[index % colorPalette.length]} />
+            {chartData.map((_entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={colorPalette[index % colorPalette.length]}
+              />
             ))}
           </Pie>
           <Tooltip />
@@ -271,22 +299,25 @@ export default function ComparisonChart({
     if (!chartData || chartData.length === 0) return null;
 
     return (
-      <ResponsiveContainer width="100%" height={height}>
-        <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+      <ResponsiveContainer width='100%' height={height}>
+        <ComposedChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
           <XAxis
-            dataKey="deviceType"
+            dataKey='deviceType'
             tick={{ fontSize: 12 }}
             tickLine={false}
           />
           <YAxis tick={{ fontSize: 12 }} tickLine={false} />
           <Tooltip />
           <Legend />
-          <Bar dataKey="value" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+          <Bar dataKey='value' fill='#f59e0b' radius={[4, 4, 0, 0]} />
           <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#ef4444"
+            type='monotone'
+            dataKey='value'
+            stroke='#ef4444'
             strokeWidth={2}
             dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
           />
@@ -300,18 +331,17 @@ export default function ComparisonChart({
     if (!chartData || chartData.length === 0) return null;
 
     return (
-      <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="agentType"
-            tick={{ fontSize: 12 }}
-            tickLine={false}
-          />
+      <ResponsiveContainer width='100%' height={height}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
+          <XAxis dataKey='agentType' tick={{ fontSize: 12 }} tickLine={false} />
           <YAxis tick={{ fontSize: 12 }} tickLine={false} />
           <Tooltip />
           <Legend />
-          <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+          <Bar dataKey='value' fill='#8b5cf6' radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -325,8 +355,8 @@ export default function ComparisonChart({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center" style={{ height }}>
-            <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+          <div className='flex items-center justify-center' style={{ height }}>
+            <RefreshCw className='h-8 w-8 animate-spin text-gray-400' />
           </div>
         </CardContent>
       </Card>
@@ -341,10 +371,10 @@ export default function ComparisonChart({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center" style={{ height }}>
-            <div className="text-center">
-              <p className="text-red-500 mb-2">{error}</p>
-              <Button onClick={fetchData} variant="outline" size="sm">
+          <div className='flex items-center justify-center' style={{ height }}>
+            <div className='text-center'>
+              <p className='text-red-500 mb-2'>{error}</p>
+              <Button onClick={fetchData} variant='outline' size='sm'>
                 重试
               </Button>
             </div>
@@ -357,53 +387,59 @@ export default function ComparisonChart({
   return (
     <Card className={className}>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className='flex items-center justify-between'>
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className='flex items-center gap-2'>
               {title}
-              <Badge variant="outline">{metricOptions.find(m => m.value === metric)?.label}</Badge>
+              <Badge variant='outline'>
+                {metricOptions.find(m => m.value === metric)?.label}
+              </Badge>
             </CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Button
               onClick={exportData}
-              variant="outline"
-              size="sm"
-              className="h-8"
+              variant='outline'
+              size='sm'
+              className='h-8'
             >
-              <Download className="h-4 w-4 mr-1" />
+              <Download className='h-4 w-4 mr-1' />
               导出
             </Button>
             <Button
               onClick={fetchData}
-              variant="outline"
-              size="sm"
-              className="h-8"
+              variant='outline'
+              size='sm'
+              className='h-8'
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className='h-4 w-4' />
             </Button>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 pt-4">
-          <div className="flex items-center gap-2">
+        <div className='flex flex-wrap gap-4 pt-4'>
+          <div className='flex items-center gap-2'>
             <input
-              type="date"
+              id='comparisonStartDate'
+              name='comparisonStartDate'
+              type='date'
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-sm"
+              onChange={e => setStartDate(e.target.value)}
+              className='px-2 py-1 border border-gray-300 rounded text-sm'
             />
-            <span className="text-gray-500">至</span>
+            <span className='text-gray-500'>至</span>
             <input
-              type="date"
+              id='comparisonEndDate'
+              name='comparisonEndDate'
+              type='date'
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="px-2 py-1 border border-gray-300 rounded text-sm"
+              onChange={e => setEndDate(e.target.value)}
+              className='px-2 py-1 border border-gray-300 rounded text-sm'
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             {dimensionOptions.map(option => {
               const Icon = option.icon;
               const isSelected = selectedDimensions.includes(option.value);
@@ -412,9 +448,14 @@ export default function ComparisonChart({
                   key={option.value}
                   onClick={() => {
                     if (isSelected) {
-                      setSelectedDimensions(selectedDimensions.filter(d => d !== option.value));
+                      setSelectedDimensions(
+                        selectedDimensions.filter(d => d !== option.value)
+                      );
                     } else {
-                      setSelectedDimensions([...selectedDimensions, option.value]);
+                      setSelectedDimensions([
+                        ...selectedDimensions,
+                        option.value,
+                      ]);
                     }
                   }}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -423,15 +464,18 @@ export default function ComparisonChart({
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className='h-4 w-4' />
                   {option.label}
                 </button>
               );
             })}
           </div>
 
-          <Select value={metric} onValueChange={(value) => setMetric(value as any)}>
-            <SelectTrigger className="w-32">
+          <Select
+            value={metric}
+            onValueChange={value => setMetric(value as 'duration' | 'responseTime' | 'sessions' | 'users' | 'tokens')}
+          >
+            <SelectTrigger className='w-32'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -444,8 +488,11 @@ export default function ComparisonChart({
           </Select>
 
           {selectedDimensions.includes('time') && (
-            <Select value={timeGranularity} onValueChange={(value) => setTimeGranularity(value)}>
-              <SelectTrigger className="w-32">
+            <Select
+              value={timeGranularity}
+              onValueChange={value => setTimeGranularity(value)}
+            >
+              <SelectTrigger className='w-32'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -459,8 +506,11 @@ export default function ComparisonChart({
           )}
 
           {selectedDimensions.includes('location') && (
-            <Select value={locationLevel} onValueChange={(value) => setLocationLevel(value)}>
-              <SelectTrigger className="w-32">
+            <Select
+              value={locationLevel}
+              onValueChange={value => setLocationLevel(value)}
+            >
+              <SelectTrigger className='w-32'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -477,12 +527,12 @@ export default function ComparisonChart({
 
       <CardContent>
         {selectedDimensions.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className='text-center py-8 text-gray-500'>
             请选择要对比的维度
           </div>
         ) : (
-          <Tabs defaultValue={selectedDimensions[0]} className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+          <Tabs defaultValue={selectedDimensions[0]} className='w-full'>
+            <TabsList className='grid w-full grid-cols-5'>
               {selectedDimensions.map(dimension => (
                 <TabsTrigger key={dimension} value={dimension}>
                   {dimensionOptions.find(opt => opt.value === dimension)?.label}
@@ -491,31 +541,31 @@ export default function ComparisonChart({
             </TabsList>
 
             {selectedDimensions.includes('time') && (
-              <TabsContent value="time" className="mt-4">
+              <TabsContent value='time' className='mt-4'>
                 {renderTimeChart(data.time)}
               </TabsContent>
             )}
 
             {selectedDimensions.includes('location') && (
-              <TabsContent value="location" className="mt-4">
+              <TabsContent value='location' className='mt-4'>
                 {renderLocationChart(data.location)}
               </TabsContent>
             )}
 
             {selectedDimensions.includes('userType') && (
-              <TabsContent value="userType" className="mt-4">
+              <TabsContent value='userType' className='mt-4'>
                 {renderUserTypeChart(data.userType)}
               </TabsContent>
             )}
 
             {selectedDimensions.includes('deviceType') && (
-              <TabsContent value="deviceType" className="mt-4">
+              <TabsContent value='deviceType' className='mt-4'>
                 {renderDeviceTypeChart(data.deviceType)}
               </TabsContent>
             )}
 
             {selectedDimensions.includes('agentType') && (
-              <TabsContent value="agentType" className="mt-4">
+              <TabsContent value='agentType' className='mt-4'>
                 {renderAgentTypeChart(data.agentType)}
               </TabsContent>
             )}

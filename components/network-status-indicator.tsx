@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { checkNetworkConnection } from '@/lib/offline-mode';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '../lib/utils';
+import { checkNetworkConnection } from '../lib/offline-mode';
+import { Badge } from './ui/badge';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from './ui/tooltip';
 
 interface NetworkStatusIndicatorProps {
   className?: string;
@@ -24,13 +24,9 @@ export function NetworkStatusIndicator({
   onStatusChange,
 }: NetworkStatusIndicatorProps) {
   const [isOnline, setIsOnline] = useState(true);
-  const [checking, setChecking] = useState(false);
 
   // 检查网络状态
   const checkStatus = async () => {
-    if (checking) return;
-
-    setChecking(true);
     const online = await checkNetworkConnection();
 
     if (online !== isOnline) {
@@ -39,8 +35,6 @@ export function NetworkStatusIndicator({
         onStatusChange(online);
       }
     }
-
-    setChecking(false);
   };
 
   // 初始检查和定期检查
@@ -70,7 +64,7 @@ export function NetworkStatusIndicator({
       window.removeEventListener('offline', handleOffline);
       clearInterval(intervalId);
     };
-  }, [onStatusChange]);
+  }, [onStatusChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const indicator = (
     <Badge

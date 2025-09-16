@@ -2,7 +2,6 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { getCache, setCache } from '@/lib/db/redis-cache';
 import AgentConfig from '@/lib/db/models/agent-config';
-import sequelize from '@/lib/db/sequelize';
 
 const AGENT_LIST_KEY = 'agent_list';
 const AGENT_VERSION_KEY = 'agent_list_version';
@@ -47,12 +46,13 @@ export async function GET(req: NextRequest) {
     let agentList = await getCache(AGENT_LIST_KEY);
     if (!agentList) {
       // 缓存失效，重新查库
-      agentList = await getAllCustomAgents();
-      await setCache(AGENT_LIST_KEY, agentList, 3600);
+      const agents = await getAllCustomAgents();
+      await setCache(AGENT_LIST_KEY, agents as unknown as Record<string, unknown>, 3600);
+      agentList = agents as unknown as Record<string, unknown>;
     }
     // 保证为纯 JSON
     const agents = Array.isArray(agentList)
-      ? agentList.map(a => (typeof a.toJSON === 'function' ? a.toJSON() : a))
+      ? agentList.map((a: AgentConfig) => (typeof (a as unknown as {toJSON: () => Record<string, unknown>}).toJSON === 'function' ? (a as unknown as {toJSON: () => Record<string, unknown>}).toJSON() : a))
       : [];
     return NextResponse.json({ code: 0, version, agents });
   }
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      deviceId,
+      deviceId: _deviceId, // 设备ID，保留用于未来扩展
       currentAgentIds,
       lastSyncTime,
       forceSync,

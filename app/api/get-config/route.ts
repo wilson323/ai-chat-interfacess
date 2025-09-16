@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import sequelize from '@/lib/db/sequelize';
 
 export async function GET() {
   // This route can be used to fetch non-sensitive configuration

@@ -6,7 +6,7 @@ import { redisManager } from '@/lib/cache/redis-manager';
  * @param value 缓存值（自动 JSON 序列化）
  * @param ttl 过期时间（秒），可选
  */
-export async function setCache<T>(
+export async function setCache<T extends Record<string, unknown>>(
   key: string,
   value: T,
   ttl?: number
@@ -24,9 +24,9 @@ export async function setCache<T>(
  * @param key 缓存键
  * @returns 反序列化后的值，未命中返回 null
  */
-export async function getCache<T>(key: string): Promise<T | null> {
+export async function getCache<T extends Record<string, unknown>>(key: string): Promise<T | null> {
   try {
-    return await redisManager.get(key);
+    return await redisManager.get<T>(key);
   } catch (error) {
     console.error('Redis getCache error:', error);
     return null;
@@ -92,9 +92,9 @@ export async function msetCache<T>(
  * 批量获取缓存
  * @param keys 缓存键数组
  */
-export async function mgetCache<T>(keys: string[]): Promise<(T | null)[]> {
+export async function mgetCache<T extends Record<string, unknown>>(keys: string[]): Promise<(T | null)[]> {
   try {
-    return await redisManager.mget(keys);
+    return await redisManager.mget<T>(keys);
   } catch (error) {
     console.error('Redis mgetCache error:', error);
     return keys.map(() => null);

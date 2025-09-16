@@ -1,5 +1,5 @@
-import { API_CONSTANTS } from '@/lib/storage/shared/constants';
-import { Agent } from '@/types/agent';
+import { API_CONSTANTS } from '../../storage/shared/constants';
+import type { Agent } from '@/types/agent';
 
 function getDefaultSuggestions(): string[] {
   return [

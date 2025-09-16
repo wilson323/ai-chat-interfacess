@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import type { Message } from '@/types/message';
-import { ChatMessage } from '@/components/chat-message';
+import type { Message } from '../types/message';
+import { ChatMessage } from './chat-message';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface VirtualizedMessageListProps {
@@ -21,7 +21,6 @@ export function VirtualizedMessageList({
   className,
 }: VirtualizedMessageListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
-  const [parentHeight, setParentHeight] = useState(0);
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
 
   // 估计每条消息的高度 - 实际上这会根据内容而变化
@@ -64,21 +63,11 @@ export function VirtualizedMessageList({
     }
   }, [messages.length, isScrolledToBottom, virtualizer]);
 
-  // 获取父元素高度
+  // 获取父元素高度 - 已移除未使用的parentHeight状态
   useEffect(() => {
-    if (parentRef.current) {
-      setParentHeight(parentRef.current.offsetHeight);
-
-      // 监听窗口大小变化，更新父元素高度
-      const handleResize = () => {
-        if (parentRef.current) {
-          setParentHeight(parentRef.current.offsetHeight);
-        }
-      };
-
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }
+    // parentHeight状态已被移除，此useEffect不再需要
+    // 保留空函数以避免其他依赖问题
+    return undefined;
   }, []);
 
   return (

@@ -124,8 +124,8 @@ describe('FastGPT参数获取功能测试', () => {
 
       expect(Array.isArray(deserialized)).toBe(true);
       expect(deserialized).toHaveLength(2);
-      expect(deserialized[0].key).toBe('问题历史');
-      expect(deserialized[1].key).toBe('product');
+      expect(deserialized[0]?.key).toBe('问题历史');
+      expect(deserialized[1]?.key).toBe('product');
     });
   });
 
@@ -149,16 +149,22 @@ describe('FastGPT参数获取功能测试', () => {
 
       // 测试第一个变量
       const firstVar = variables[0];
-      expect(firstVar.key).toBe('问题历史');
-      expect(firstVar.type).toBe('custom');
-      expect(firstVar.required).toBe(false);
+      expect(firstVar).toBeDefined();
+      if (firstVar) {
+        expect(firstVar.key).toBe('问题历史');
+        expect(firstVar.type).toBe('custom');
+        expect(firstVar.required).toBe(false);
+      }
 
       // 测试第二个变量
       const secondVar = variables[1];
-      expect(secondVar.key).toBe('product');
-      expect(secondVar.type).toBe('select');
-      expect(secondVar.required).toBe(true);
-      expect(secondVar.list).toHaveLength(2);
+      expect(secondVar).toBeDefined();
+      if (secondVar) {
+        expect(secondVar.key).toBe('product');
+        expect(secondVar.type).toBe('select');
+        expect(secondVar.required).toBe(true);
+        expect(secondVar.list).toHaveLength(2);
+      }
     });
 
     it('应该能够从FastGPT响应中提取模型信息', () => {
@@ -177,9 +183,9 @@ describe('FastGPT参数获取功能测试', () => {
       const optionalVars = variables.filter(v => !v.required);
 
       expect(requiredVars).toHaveLength(1);
-      expect(requiredVars[0].key).toBe('product');
+      expect(requiredVars[0]?.key).toBe('product');
       expect(optionalVars).toHaveLength(1);
-      expect(optionalVars[0].key).toBe('问题历史');
+      expect(optionalVars[0]?.key).toBe('问题历史');
     });
 
     it('应该验证选择类型变量的选项列表', () => {

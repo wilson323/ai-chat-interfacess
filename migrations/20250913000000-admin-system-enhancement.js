@@ -129,7 +129,13 @@ module.exports = {
         allowNull: false,
       },
       config_type: {
-        type: Sequelize.ENUM('string', 'number', 'boolean', 'json', 'encrypted'),
+        type: Sequelize.ENUM(
+          'string',
+          'number',
+          'boolean',
+          'json',
+          'encrypted'
+        ),
         allowNull: false,
         defaultValue: 'string',
       },
@@ -442,15 +448,25 @@ module.exports = {
     await queryInterface.addIndex('users', ['username'], { unique: true });
     await queryInterface.addIndex('users', ['role', 'status']);
     await queryInterface.addIndex('operation_logs', ['user_id', 'created_at']);
-    await queryInterface.addIndex('operation_logs', ['action', 'resource_type']);
-    await queryInterface.addIndex('model_metrics', ['model_id', 'metric_type', 'timestamp']);
+    await queryInterface.addIndex('operation_logs', [
+      'action',
+      'resource_type',
+    ]);
+    await queryInterface.addIndex('model_metrics', [
+      'model_id',
+      'metric_type',
+      'timestamp',
+    ]);
     await queryInterface.addIndex('model_usage_stats', ['model_id', 'date']);
     await queryInterface.addIndex('agent_usage_stats', ['agent_id', 'date']);
     await queryInterface.addIndex('agent_usage_stats', ['user_id', 'date']);
 
     // 创建复合索引
     await queryInterface.addIndex('operation_logs', ['created_at', 'status']);
-    await queryInterface.addIndex('model_metrics', ['timestamp', 'metric_type']);
+    await queryInterface.addIndex('model_metrics', [
+      'timestamp',
+      'metric_type',
+    ]);
     await queryInterface.addIndex('system_configs', ['config_key', 'version']);
 
     // 创建默认角色
@@ -469,48 +485,43 @@ module.exports = {
       {
         name: 'admin',
         description: '管理员',
-        permissions: [
-          'agent:manage',
-          'system:monitor',
-          'data:export',
-        ],
+        permissions: ['agent:manage', 'system:monitor', 'data:export'],
       },
       {
         name: 'operator',
         description: '操作员',
-        permissions: [
-          'agent:manage',
-          'system:monitor',
-        ],
+        permissions: ['agent:manage', 'system:monitor'],
       },
       {
         name: 'viewer',
         description: '查看者',
-        permissions: [
-          'system:monitor',
-        ],
+        permissions: ['system:monitor'],
       },
     ];
 
     for (const role of roles) {
-      await queryInterface.bulkInsert('roles', [{
-        name: role.name,
-        description: role.description,
-        permissions: JSON.stringify(role.permissions),
-        created_at: new Date(),
-      }]);
+      await queryInterface.bulkInsert('roles', [
+        {
+          name: role.name,
+          description: role.description,
+          permissions: JSON.stringify(role.permissions),
+          created_at: new Date(),
+        },
+      ]);
     }
 
     // 创建默认超级管理员用户
-    await queryInterface.bulkInsert('users', [{
-      username: 'admin',
-      email: 'admin@example.com',
-      password_hash: '$2b$10$YourHashedPasswordHere', // 需要替换为实际的哈希值
-      role: 'super_admin',
-      status: 'active',
-      created_at: new Date(),
-      updated_at: new Date(),
-    }]);
+    await queryInterface.bulkInsert('users', [
+      {
+        username: 'admin',
+        email: 'admin@example.com',
+        password_hash: '$2b$10$YourHashedPasswordHere', // 需要替换为实际的哈希值
+        role: 'super_admin',
+        status: 'active',
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+    ]);
 
     // 为超级管理员分配角色
     const [adminUser] = await queryInterface.sequelize.query(
@@ -530,12 +541,14 @@ module.exports = {
     );
 
     if (adminUser && superAdminRole) {
-      await queryInterface.bulkInsert('user_roles', [{
-        user_id: adminUser.id,
-        role_id: superAdminRole.id,
-        assigned_by: adminUser.id,
-        assigned_at: new Date(),
-      }]);
+      await queryInterface.bulkInsert('user_roles', [
+        {
+          user_id: adminUser.id,
+          role_id: superAdminRole.id,
+          assigned_by: adminUser.id,
+          assigned_at: new Date(),
+        },
+      ]);
     }
 
     // 创建默认系统配置
@@ -579,15 +592,17 @@ module.exports = {
     ];
 
     for (const config of defaultConfigs) {
-      await queryInterface.bulkInsert('system_configs', [{
-        config_key: config.config_key,
-        config_value: config.config_value,
-        config_type: config.config_type,
-        description: config.description,
-        version: 1,
-        created_at: new Date(),
-        updated_at: new Date(),
-      }]);
+      await queryInterface.bulkInsert('system_configs', [
+        {
+          config_key: config.config_key,
+          config_value: config.config_value,
+          config_type: config.config_type,
+          description: config.description,
+          version: 1,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ]);
     }
   },
 

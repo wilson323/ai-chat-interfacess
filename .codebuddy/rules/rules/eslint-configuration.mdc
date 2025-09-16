@@ -1,0 +1,342 @@
+---
+globs: *.ts,*.tsx,*.js,*.jsx
+description: ESLint配置和代码规范检查
+---
+
+# ESLint配置和代码规范检查
+
+## 核心ESLint配置
+基于项目需求，配置严格的ESLint规则：
+
+```json
+{
+  "extends": [
+    "next/core-web-vitals",
+    "@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "rules": {
+    // TypeScript规则
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-non-null-assertion": "warn",
+    "@typescript-eslint/prefer-const": "error",
+    "@typescript-eslint/no-var-requires": "error",
+
+    // 基础规则
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-alert": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+
+    // React规则
+    "react/jsx-uses-react": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+
+    // JSX特殊字符规则
+    "no-html-entities": "error",
+    "react/no-unescaped-entities": "error"
+  }
+}
+```
+
+## JSX特殊字符检查规则
+
+### 自定义规则检测HTML实体编码
+```javascript
+// eslint-plugin-jsx-special-chars.js
+module.exports = {
+  rules: {
+    'no-html-entities': {
+      create(context) {
+        return {
+          Literal(node) {
+            if (typeof node.value === 'string') {
+              const htmlEntities = /&[a-zA-Z0-9#]+;/g;
+              if (htmlEntities.test(node.value)) {
+                context.report({
+                  node,
+                  message: '禁止使用HTML实体编码，请使用JavaScript表达式',
+                  suggest: [{
+                    desc: '使用JavaScript表达式',
+                    fix: (fixer) => {
+                      const fixed = node.value
+                        .replace(/&lt;/g, "{'<'}")
+                        .replace(/&gt;/g, "{'>'}")
+                        .replace(/&amp;/g, "{'&'}")
+                        .replace(/&quot;/g, '{"'}"')
+                        .replace(/&#x27;/g, "{'\\''}");
+                      return fixer.replaceText(node, `{${JSON.stringify(fixed)}}`);
+                    }
+                  }]
+                });
+              }
+            }
+          }
+        };
+      }
+    }
+  }
+};
+```
+
+## 代码质量检查规则
+
+### 命名规范检查
+```json
+{
+  "rules": {
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {
+        "selector": "variable",
+        "format": ["camelCase"],
+        "leadingUnderscore": "forbid",
+        "trailingUnderscore": "forbid"
+      },
+      {
+        "selector": "function",
+        "format": ["camelCase"]
+      },
+      {
+        "selector": "class",
+        "format": ["PascalCase"]
+      },
+      {
+        "selector": "interface",
+        "format": ["PascalCase"],
+        "prefix": ["I"]
+      },
+      {
+        "selector": "typeAlias",
+        "format": ["PascalCase"]
+      },
+      {
+        "selector": "enum",
+        "format": ["PascalCase"]
+      }
+    ]
+  }
+}
+```
+
+### 导入导出规范检查
+```json
+{
+  "rules": {
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
+    "import/no-default-export": "error",
+    "import/prefer-default-export": "off"
+  }
+}
+```
+
+## 错误处理检查规则
+
+### 强制错误处理
+```json
+{
+  "rules": {
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "no-throw-literal": "error",
+    "prefer-promise-reject-errors": "error"
+  }
+}
+```
+
+### 异步函数检查
+```json
+{
+  "rules": {
+    "require-await": "error",
+    "no-return-await": "error",
+    "@typescript-eslint/require-await": "error",
+    "@typescript-eslint/no-return-await": "error"
+  }
+}
+```
+
+## 性能优化检查规则
+
+### React性能规则
+```json
+{
+  "rules": {
+    "react/jsx-no-bind": [
+      "error",
+      {
+        "ignoreDOMComponents": true,
+        "ignoreRefs": true,
+        "allowArrowFunctions": false,
+        "allowFunctions": false,
+        "allowBind": false
+      }
+    ],
+    "react/jsx-no-constructed-context-values": "error",
+    "react/no-array-index-key": "warn"
+  }
+}
+```
+
+### 内存泄漏检查
+```json
+{
+  "rules": {
+    "react-hooks/exhaustive-deps": "error",
+    "no-unused-vars": "error",
+    "@typescript-eslint/no-unused-vars": "error"
+  }
+}
+```
+
+## 安全检查规则
+
+### 安全相关规则
+```json
+{
+  "rules": {
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-script-url": "error",
+    "no-alert": "error",
+    "no-console": "warn"
+  }
+}
+```
+
+### 输入验证规则
+```json
+{
+  "rules": {
+    "no-unsafe-optional-chaining": "error",
+    "no-unsafe-negation": "error",
+    "@typescript-eslint/no-unsafe-assignment": "error",
+    "@typescript-eslint/no-unsafe-call": "error",
+    "@typescript-eslint/no-unsafe-member-access": "error",
+    "@typescript-eslint/no-unsafe-return": "error"
+  }
+}
+```
+
+## 代码风格检查规则
+
+### 格式化规则
+```json
+{
+  "rules": {
+    "prettier/prettier": [
+      "error",
+      {
+        "semi": true,
+        "trailingComma": "es5",
+        "singleQuote": true,
+        "printWidth": 80,
+        "tabWidth": 2,
+        "useTabs": false
+      }
+    ]
+  }
+}
+```
+
+### 代码组织规则
+```json
+{
+  "rules": {
+    "max-lines": ["error", 300],
+    "max-lines-per-function": ["error", 50],
+    "complexity": ["error", 10],
+    "max-depth": ["error", 4],
+    "max-params": ["error", 4]
+  }
+}
+```
+
+## 自动修复配置
+
+### 可自动修复的规则
+```json
+{
+  "rules": {
+    "prettier/prettier": "error",
+    "import/order": "error",
+    "no-unused-vars": "error",
+    "@typescript-eslint/no-unused-vars": "error",
+    "prefer-const": "error",
+    "no-var": "error"
+  }
+}
+```
+
+### 自动修复脚本
+```bash
+#!/bin/bash
+echo "🔧 开始自动修复代码..."
+
+# 1. ESLint自动修复
+echo "📋 运行ESLint自动修复..."
+npm run lint:fix
+
+# 2. Prettier格式化
+echo "📋 运行Prettier格式化..."
+npm run format
+
+# 3. 类型检查
+echo "📋 运行TypeScript类型检查..."
+npm run check-types
+
+echo "✅ 自动修复完成"
+```
+
+## 检查清单
+
+### 开发阶段检查
+- [ ] ESLint配置正确
+- [ ] 自定义规则生效
+- [ ] 自动修复功能正常
+- [ ] 代码风格统一
+- [ ] 错误处理完整
+- [ ] 性能优化到位
+- [ ] 安全检查通过
+
+### 构建阶段检查
+- [ ] ESLint检查通过
+- [ ] 代码格式化正确
+- [ ] 类型检查通过
+- [ ] 测试运行通过
+- [ ] 构建成功
+
+### 持续集成检查
+- [ ] Pre-commit钩子配置
+- [ ] CI/CD集成
+- [ ] 自动修复流程
+- [ ] 质量门控设置
+- [ ] 监控告警配置
+
+参考配置文件：[package.json](mdc:package.json), [tsconfig.json](mdc:tsconfig.json)

@@ -2,11 +2,12 @@
  * 数据库迁移管理工具
  * 提供数据库结构迁移、数据迁移、版本管理等功能
  */
-
+import { logger } from '../utils/logger';
+import { ErrorFactory } from '../utils/error-utils';
 import { Sequelize, QueryTypes } from 'sequelize';
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
 
 interface MigrationInfo {
   id: string;
@@ -94,7 +95,7 @@ class DatabaseMigrationManager {
       // 提取版本号
       const versionMatch = fileName.match(/^(\d+)_/);
       if (!versionMatch) {
-        console.warn(`无效的迁移文件名: ${fileName}`);
+        logger.warn(`无效的迁移文件名: ${fileName}`);
         return null;
       }
 
@@ -120,7 +121,7 @@ class DatabaseMigrationManager {
         status: 'pending',
       };
     } catch (error) {
-      console.error(`解析迁移文件失败: ${fileName}`, error);
+      logger.error(`解析迁移文件失败: ${fileName}`, error);
       return null;
     }
   }
@@ -173,7 +174,14 @@ class DatabaseMigrationManager {
         { type: QueryTypes.SELECT }
       );
 
-      for (const row of results as any[]) {
+      for (const row of results as Array<{
+        id: string;
+        name: string;
+        version: string;
+        description: string;
+        checksum: string;
+        appliedAt: Date;
+      }>) {
         appliedMigrations.set(row.id, {
           id: row.id,
           name: row.name,
@@ -182,14 +190,14 @@ class DatabaseMigrationManager {
           up: '',
           down: '',
           checksum: row.checksum,
-          appliedAt: row.applied_at,
-          rollbackAt: row.rollback_at,
-          status: row.status,
-          error: row.error,
+          appliedAt: row.appliedAt,
+          rollbackAt: (row as any).rollback_at,
+          status: (row as any).status,
+          error: (row as any).error,
         });
       }
     } catch (error) {
-      console.error('获取已应用迁移失败:', error);
+      logger.error('获取已应用迁移失败:', error);
     }
 
     return appliedMigrations;
@@ -203,7 +211,7 @@ class DatabaseMigrationManager {
     const pendingMigrations: MigrationInfo[] = [];
 
     // 找出待执行的迁移
-    for (const [id, migration] of this.migrations) {
+    for (const [id, migration] of Array.from(this.migrations.entries())) {
       if (!appliedMigrations.has(id)) {
         pendingMigrations.push(migration);
       }
@@ -216,13 +224,13 @@ class DatabaseMigrationManager {
 
     for (const migration of pendingMigrations) {
       try {
-        console.log(`执行迁移: ${migration.name} (${migration.version})`);
+        logger.debug(`执行迁移: ${migration.name} (${migration.version})`);
 
         // 验证校验和
         if (this.config.validateChecksum) {
           const currentChecksum = this.calculateMigrationChecksum(migration);
           if (currentChecksum !== migration.checksum) {
-            throw new Error(`迁移校验和不匹配: ${migration.name}`);
+            throw ErrorFactory.database(`迁移校验和不匹配: ${migration.name}`);
           }
         }
 
@@ -236,16 +244,16 @@ class DatabaseMigrationManager {
         migration.appliedAt = new Date();
         executedMigrations.push(migration);
 
-        console.log(`迁移完成: ${migration.name}`);
+        logger.debug(`迁移完成: ${migration.name}`);
       } catch (error) {
-        console.error(`迁移失败: ${migration.name}`, error);
+        logger.error(`迁移失败: ${migration.name}`, error);
 
         migration.status = 'failed';
         migration.error =
           error instanceof Error ? error.message : String(error);
 
         // 记录失败
-        await this.recordMigration(migration, 'failed', error);
+        await this.recordMigration(migration, 'failed', error instanceof Error ? error.message : String(error));
 
         if (this.config.rollbackOnError) {
           // 回滚已执行的迁移
@@ -269,7 +277,7 @@ class DatabaseMigrationManager {
     const sql = direction === 'up' ? migration.up : migration.down;
 
     if (!sql.trim()) {
-      console.warn(`迁移 ${migration.name} 没有 ${direction} SQL`);
+      logger.warn(`迁移 ${migration.name} 没有 ${direction} SQL`);
       return;
     }
 
@@ -289,10 +297,10 @@ class DatabaseMigrationManager {
   private async recordMigration(
     migration: MigrationInfo,
     status: string,
-    error?: any
+    error?: Error | string
   ): Promise<void> {
     const sql = `
-      INSERT INTO ${this.config.tableName} 
+      INSERT INTO ${this.config.tableName}
       (id, name, version, description, checksum, status, error)
       VALUES (?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT (id) DO UPDATE SET
@@ -319,11 +327,11 @@ class DatabaseMigrationManager {
    * 回滚迁移
    */
   async rollbackMigrations(migrations: MigrationInfo[]): Promise<void> {
-    console.log(`开始回滚 ${migrations.length} 个迁移`);
+    logger.debug(`开始回滚 ${migrations.length} 个迁移`);
 
     for (const migration of migrations) {
       try {
-        console.log(`回滚迁移: ${migration.name}`);
+        logger.debug(`回滚迁移: ${migration.name}`);
 
         // 执行回滚SQL
         await this.executeMigration(migration, 'down');
@@ -337,9 +345,9 @@ class DatabaseMigrationManager {
         migration.status = 'rolled_back';
         migration.rollbackAt = new Date();
 
-        console.log(`回滚完成: ${migration.name}`);
+        logger.debug(`回滚完成: ${migration.name}`);
       } catch (error) {
-        console.error(`回滚失败: ${migration.name}`, error);
+        logger.error(`回滚失败: ${migration.name}`, error);
         throw error;
       }
     }
@@ -353,7 +361,7 @@ class DatabaseMigrationManager {
     const migrationsToRollback: MigrationInfo[] = [];
 
     // 找出需要回滚的迁移
-    for (const [id, migration] of this.migrations) {
+    for (const [id, migration] of Array.from(this.migrations.entries())) {
       if (appliedMigrations.has(id) && migration.version > version) {
         migrationsToRollback.push(migration);
       }
@@ -393,7 +401,7 @@ class DatabaseMigrationManager {
 
     fs.writeFileSync(filePath, content);
 
-    console.log(`创建迁移文件: ${fileName}`);
+    logger.debug(`创建迁移文件: ${fileName}`);
     return filePath;
   }
 
@@ -465,7 +473,7 @@ class DatabaseMigrationManager {
   }> {
     const errors: string[] = [];
 
-    for (const [id, migration] of this.migrations) {
+    for (const [, migration] of Array.from(this.migrations.entries())) {
       // 验证校验和
       const currentChecksum = this.calculateMigrationChecksum(migration);
       if (currentChecksum !== migration.checksum) {

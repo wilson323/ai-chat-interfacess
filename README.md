@@ -9,14 +9,16 @@
 
 ## ✨ 主要特性
 
-- 🤖 **多智能体支持** - 集成FastGPT多智能体系统
-- 💬 **实时聊天** - 流畅的对话体验
-- 📊 **数据分析** - 实时性能监控和分析
+- 🤖 **多智能体支持** - 集成FastGPT多智能体系统，支持智能体注册、负载均衡、自动选择
+- 💬 **实时聊天** - 流畅的对话体验，支持流式响应和实时交互
+- 📊 **数据分析** - 实时性能监控和分析，智能体指标收集
 - 🔐 **身份验证** - 基于NextAuth.js的安全认证
 - 📱 **响应式设计** - 支持移动端和桌面端
 - 🎨 **现代UI** - 基于Tailwind CSS和shadcn/ui
 - ⚡ **高性能** - 优化的构建和运行时性能
 - 🧪 **测试覆盖** - 完整的单元测试和集成测试
+- 🔄 **统一管理** - 统一的智能体管理器和API接口
+- 📈 **负载均衡** - 智能的智能体选择和负载分配
 
 ## 🚀 快速开始
 
@@ -60,6 +62,84 @@ npm run dev
 ```
 
 访问 http://localhost:3000 查看应用。
+
+## 🤖 多智能体功能详解
+
+### 统一智能体管理器
+
+本项目集成了强大的多智能体管理系统，支持：
+
+- **智能体注册**：动态注册和管理多个FastGPT智能体
+- **负载均衡**：智能选择最佳智能体处理请求
+- **指标收集**：实时监控智能体性能和状态
+- **错误处理**：自动重试和故障转移机制
+
+### 核心组件
+
+#### 1. UnifiedAgentManager
+```typescript
+// 注册智能体
+const agent = {
+  config: {
+    id: 'agent-1',
+    name: '客服助手',
+    apiKey: 'your-api-key',
+    appId: 'your-app-id',
+    apiUrl: 'https://your-fastgpt.run',
+    systemPrompt: '你是一个专业的客服助手',
+    settings: {
+      loadBalanceWeight: 1.0,
+      retryCount: 3,
+      timeout: 30000
+    }
+  }
+};
+
+await manager.registerAgent(agent);
+
+// 智能体聊天
+const response = await manager.chat(agent, messages);
+```
+
+#### 2. MultiAgentChatContainer
+```typescript
+// 多智能体聊天界面
+<MultiAgentChatContainer
+  agents={agents}
+  onAgentSelect={handleAgentSelect}
+  onMessageSend={handleMessageSend}
+/>
+```
+
+### 智能体配置
+
+每个智能体支持以下配置：
+
+- **基础配置**：ID、名称、描述、API密钥
+- **模型配置**：系统提示词、温度、最大令牌数
+- **负载均衡**：权重、重试次数、超时设置
+- **功能支持**：文件上传、图片处理、流式响应
+
+### 使用示例
+
+```typescript
+// 1. 初始化管理器
+const manager = new UnifiedAgentManager();
+
+// 2. 注册多个智能体
+await manager.registerAgent(customerServiceAgent);
+await manager.registerAgent(technicalSupportAgent);
+await manager.registerAgent(salesAgent);
+
+// 3. 自动选择最佳智能体
+const bestAgent = manager.selectBestAgent();
+
+// 4. 进行对话
+const response = await manager.chat(bestAgent, messages);
+
+// 5. 查看性能指标
+const metrics = manager.getAgentMetrics(agentId);
+```
 
 ## 🐳 Docker 一键部署指南
 
@@ -540,3 +620,100 @@ MIT License © 2023 ZKTeco AI Hub
 - 目录结构、开发规范已同步更新
 
 如需开发或测试用户端功能，请在 app/user 及相关目录下进行。
+
+## 🧩 组件使用指南
+
+### 核心组件
+
+#### AgentCard组件
+
+```typescript
+import { AgentCard } from '@/components/business/AgentCard';
+// 或者通过统一导出
+import { AgentCard } from '@/components';
+
+// 使用示例
+<AgentCard
+  agent={agent}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  onToggle={handleToggle}
+  selected={selectedAgent?.id === agent.id}
+  showActions={true}
+/>
+```
+
+#### ChatInput组件
+
+```typescript
+import { ChatInput } from '@/components/chat/ChatInput';
+// 或者通过统一导出
+import { ChatInput } from '@/components';
+
+// 使用示例
+<ChatInput
+  value={message}
+  onChange={setMessage}
+  onSend={handleSend}
+  onFileUpload={handleFileUpload}
+  uploadedFiles={files}
+  isSending={isLoading}
+  placeholder="输入消息..."
+/>
+```
+
+#### Sidebar组件
+
+```typescript
+// Ant Design版本
+import { AntdSidebar } from '@/components';
+
+// shadcn/ui版本
+import { Sidebar } from '@/components/ui/sidebar';
+```
+
+### 类型定义
+
+#### Agent相关类型
+
+```typescript
+import {
+  Agent,
+  AgentConfig,
+  AgentUsageStats,
+  ExtendedAgentConfig,
+} from '@/types/agent-unified';
+```
+
+#### User相关类型
+
+```typescript
+import {
+  User,
+  UserRole,
+  UserBehaviorData,
+  UserData,
+} from '@/types/user-unified';
+```
+
+#### Message相关类型
+
+```typescript
+import {
+  Message,
+  MessageMetadata,
+  ExtendedMessage,
+  MessageStats,
+} from '@/types/message-unified';
+```
+
+### 代码去冗余说明
+
+本项目已完成代码去冗余优化，主要变更：
+
+- **组件整合**: 统一了AgentCard、ChatInput等重复组件
+- **API合并**: 合并了重复的性能监控API
+- **类型统一**: 创建了统一的类型定义文件
+- **文档更新**: 更新了组件使用指南和API文档
+
+详细变更记录请参考：[全局代码去冗余报告](docs/refactoring/global-code-deduplication-report.md)

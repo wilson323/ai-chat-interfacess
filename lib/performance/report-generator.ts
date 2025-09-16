@@ -3,7 +3,13 @@
  * 自动生成详细的性能分析报告
  */
 
-import { enhancedMonitor, type PerformanceSummary, type PerformanceAlert, type PerformanceOptimization } from './enhanced-monitor';
+import {
+  enhancedMonitor,
+  type PerformanceSummary,
+  type PerformanceAlert,
+  type PerformanceOptimization,
+} from './enhanced-monitor';
+// Record is a built-in TypeScript utility type
 import { performanceBenchmark, type BenchmarkResult } from './benchmark';
 
 export interface PerformanceReport {
@@ -39,14 +45,20 @@ export interface ReportSummary {
 export interface ReportSection {
   id: string;
   title: string;
-  type: 'overview' | 'metrics' | 'alerts' | 'optimizations' | 'benchmark' | 'mobile';
+  type:
+    | 'overview'
+    | 'metrics'
+    | 'alerts'
+    | 'optimizations'
+    | 'benchmark'
+    | 'mobile';
   content: SectionContent;
   priority: number;
 }
 
 export interface SectionContent {
   text: string;
-  data?: any;
+  data?: unknown;
   charts?: ChartData[];
   tables?: TableData[];
   insights?: string[];
@@ -55,14 +67,14 @@ export interface SectionContent {
 export interface ChartData {
   type: 'line' | 'bar' | 'pie' | 'area';
   title: string;
-  data: any[];
+  data: unknown[];
   description: string;
 }
 
 export interface TableData {
   title: string;
   headers: string[];
-  rows: any[][];
+  rows: unknown[][];
   description: string;
 }
 
@@ -123,8 +135,18 @@ export class ReportGenerator {
     const filteredHistory = this.filterHistoryByTimeRange(history, timeRange);
 
     // 生成报告内容
-    const reportSummary = this.generateSummary(summary, filteredHistory, alerts);
-    const sections = await this.generateSections(summary, filteredHistory, alerts, optimizations, benchmarkResults);
+    const reportSummary = this.generateSummary(
+      summary,
+      filteredHistory,
+      alerts
+    );
+    const sections = await this.generateSections(
+      summary,
+      filteredHistory,
+      alerts,
+      optimizations,
+      benchmarkResults
+    );
 
     const report: PerformanceReport = {
       id: `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -161,15 +183,19 @@ export class ReportGenerator {
     };
   }
 
-  private filterHistoryByTimeRange(history: any[], timeRange: { start: number; end: number }) {
-    return history.filter(record =>
-      record.timestamp >= timeRange.start && record.timestamp <= timeRange.end
+  private filterHistoryByTimeRange(
+    history: Array<{ timestamp: number }>,
+    timeRange: { start: number; end: number }
+  ) {
+    return history.filter(
+      record =>
+        record.timestamp >= timeRange.start && record.timestamp <= timeRange.end
     );
   }
 
   private generateSummary(
     summary: PerformanceSummary,
-    history: any[],
+    history: Array<{ timestamp: number; [key: string]: unknown }>,
     alerts: PerformanceAlert[]
   ): ReportSummary {
     const overallScore = this.calculateOverallScore(summary);
@@ -189,8 +215,18 @@ export class ReportGenerator {
       },
       trends: {
         performance: summary.trend,
-        errors: errorRate > 0.1 ? 'increasing' : errorRate > 0.05 ? 'stable' : 'decreasing',
-        userSatisfaction: overallScore > 80 ? 'improving' : overallScore > 60 ? 'stable' : 'degrading',
+        errors:
+          errorRate > 0.1
+            ? 'increasing'
+            : errorRate > 0.05
+              ? 'stable'
+              : 'decreasing',
+        userSatisfaction:
+          overallScore > 80
+            ? 'improving'
+            : overallScore > 60
+              ? 'stable'
+              : 'degrading',
       },
       recommendations: this.generateKeyRecommendations(summary, alerts),
     };
@@ -199,10 +235,30 @@ export class ReportGenerator {
   private calculateOverallScore(summary: PerformanceSummary): number {
     const metrics = [
       { value: summary.pageLoadTime, max: 5000, weight: 0.3, inverse: true },
-      { value: summary.averageApiResponseTime, max: 2000, weight: 0.25, inverse: true },
-      { value: summary.firstContentfulPaint, max: 3000, weight: 0.2, inverse: true },
-      { value: summary.largestContentfulPaint, max: 4000, weight: 0.15, inverse: true },
-      { value: summary.cumulativeLayoutShift, max: 0.25, weight: 0.1, inverse: true },
+      {
+        value: summary.averageApiResponseTime,
+        max: 2000,
+        weight: 0.25,
+        inverse: true,
+      },
+      {
+        value: summary.firstContentfulPaint,
+        max: 3000,
+        weight: 0.2,
+        inverse: true,
+      },
+      {
+        value: summary.largestContentfulPaint,
+        max: 4000,
+        weight: 0.15,
+        inverse: true,
+      },
+      {
+        value: summary.cumulativeLayoutShift,
+        max: 0.25,
+        weight: 0.1,
+        inverse: true,
+      },
     ];
 
     let totalScore = 0;
@@ -227,7 +283,10 @@ export class ReportGenerator {
     return 'F';
   }
 
-  private generateKeyRecommendations(summary: PerformanceSummary, alerts: PerformanceAlert[]): string[] {
+  private generateKeyRecommendations(
+    summary: PerformanceSummary,
+    alerts: PerformanceAlert[]
+  ): string[] {
     const recommendations: string[] = [];
 
     if (summary.pageLoadTime > 3000) {
@@ -246,9 +305,13 @@ export class ReportGenerator {
       recommendations.push('布局偏移较大，建议优化图片尺寸和动态内容加载');
     }
 
-    const criticalAlerts = alerts.filter(alert => alert.type === 'critical' && !alert.resolved);
+    const criticalAlerts = alerts.filter(
+      alert => alert.type === 'critical' && !alert.resolved
+    );
     if (criticalAlerts.length > 0) {
-      recommendations.push(`发现 ${criticalAlerts.length} 个严重告警，需要立即处理`);
+      recommendations.push(
+        `发现 ${criticalAlerts.length} 个严重告警，需要立即处理`
+      );
     }
 
     if (recommendations.length === 0) {
@@ -260,7 +323,7 @@ export class ReportGenerator {
 
   private async generateSections(
     summary: PerformanceSummary,
-    history: any[],
+    history: Array<{ timestamp: number; [key: string]: unknown }>,
     alerts: PerformanceAlert[],
     optimizations: PerformanceOptimization[],
     benchmarkResults: BenchmarkResult[]
@@ -332,7 +395,10 @@ export class ReportGenerator {
     return sections.sort((a, b) => a.priority - b.priority);
   }
 
-  private async generateOverviewContent(summary: PerformanceSummary, history: any[]): Promise<SectionContent> {
+  private async generateOverviewContent(
+    summary: PerformanceSummary,
+    history: Array<{ timestamp: number; [key: string]: unknown }>
+  ): Promise<SectionContent> {
     const content: SectionContent = {
       text: this.generateOverviewText(summary, history),
     };
@@ -361,7 +427,10 @@ export class ReportGenerator {
     return content;
   }
 
-  private async generateMetricsContent(summary: PerformanceSummary, history: any[]): Promise<SectionContent> {
+  private async generateMetricsContent(
+    summary: PerformanceSummary,
+    history: Array<{ timestamp: number; [key: string]: unknown }>
+  ): Promise<SectionContent> {
     const content: SectionContent = {
       text: this.generateMetricsText(summary),
     };
@@ -397,7 +466,9 @@ export class ReportGenerator {
     return content;
   }
 
-  private async generateAlertsContent(alerts: PerformanceAlert[]): Promise<SectionContent> {
+  private async generateAlertsContent(
+    alerts: PerformanceAlert[]
+  ): Promise<SectionContent> {
     const content: SectionContent = {
       text: this.generateAlertsText(alerts),
     };
@@ -427,7 +498,9 @@ export class ReportGenerator {
     return content;
   }
 
-  private async generateOptimizationsContent(optimizations: PerformanceOptimization[]): Promise<SectionContent> {
+  private async generateOptimizationsContent(
+    optimizations: PerformanceOptimization[]
+  ): Promise<SectionContent> {
     const content: SectionContent = {
       text: this.generateOptimizationsText(optimizations),
     };
@@ -436,7 +509,14 @@ export class ReportGenerator {
       content.tables = [
         {
           title: '优化建议列表',
-          headers: ['优先级', '影响程度', '实现难度', '预计改进', '分类', '建议'],
+          headers: [
+            '优先级',
+            '影响程度',
+            '实现难度',
+            '预计改进',
+            '分类',
+            '建议',
+          ],
           rows: this.prepareOptimizationsTableData(optimizations),
           description: '按优先级排序的性能优化建议',
         },
@@ -446,7 +526,9 @@ export class ReportGenerator {
     return content;
   }
 
-  private async generateBenchmarkContent(benchmarkResults: BenchmarkResult[]): Promise<SectionContent> {
+  private async generateBenchmarkContent(
+    benchmarkResults: BenchmarkResult[]
+  ): Promise<SectionContent> {
     const content: SectionContent = {
       text: this.generateBenchmarkText(benchmarkResults),
     };
@@ -476,7 +558,9 @@ export class ReportGenerator {
     return content;
   }
 
-  private async generateMobileContent(summary: PerformanceSummary): Promise<SectionContent> {
+  private async generateMobileContent(
+    summary: PerformanceSummary
+  ): Promise<SectionContent> {
     const content: SectionContent = {
       text: this.generateMobileText(summary),
     };
@@ -484,7 +568,7 @@ export class ReportGenerator {
     if (this.config.includeCharts) {
       content.charts = [
         {
-          type: 'radar',
+          type: 'area' as const,
           title: '移动端性能雷达图',
           data: this.prepareMobileRadarData(summary),
           description: '移动端专项性能指标分析',
@@ -496,7 +580,10 @@ export class ReportGenerator {
   }
 
   // 文本生成方法
-  private generateOverviewText(summary: PerformanceSummary, history: any[]): string {
+  private generateOverviewText(
+    summary: PerformanceSummary,
+    history: Array<{ timestamp: number; [key: string]: unknown }>
+  ): string {
     const overallScore = this.calculateOverallScore(summary);
     const grade = this.calculateGrade(overallScore);
     const timeRange = this.getTimeRangeText();
@@ -565,7 +652,9 @@ export class ReportGenerator {
 
   private generateAlertsText(alerts: PerformanceAlert[]): string {
     const activeAlerts = alerts.filter(alert => !alert.resolved);
-    const criticalAlerts = activeAlerts.filter(alert => alert.type === 'critical');
+    const criticalAlerts = activeAlerts.filter(
+      alert => alert.type === 'critical'
+    );
 
     let text = '## 告警分析\n\n';
 
@@ -588,9 +677,13 @@ export class ReportGenerator {
     return text;
   }
 
-  private generateOptimizationsText(optimizations: PerformanceOptimization[]): string {
+  private generateOptimizationsText(
+    optimizations: PerformanceOptimization[]
+  ): string {
     const highImpact = optimizations.filter(opt => opt.impact === 'high');
-    const easyToImplement = optimizations.filter(opt => opt.difficulty === 'easy');
+    const easyToImplement = optimizations.filter(
+      opt => opt.difficulty === 'easy'
+    );
 
     let text = '## 优化建议\n\n';
 
@@ -615,9 +708,11 @@ export class ReportGenerator {
 
   private generateBenchmarkText(benchmarkResults: BenchmarkResult[]): string {
     const successful = benchmarkResults.filter(r => r.success);
-    const averageScore = successful.length > 0
-      ? successful.reduce((sum, r) => sum + r.metrics.score, 0) / successful.length
-      : 0;
+    const averageScore =
+      successful.length > 0
+        ? successful.reduce((sum, r) => sum + r.metrics.score, 0) /
+          successful.length
+        : 0;
 
     let text = '## 基准测试结果\n\n';
 
@@ -626,20 +721,24 @@ export class ReportGenerator {
     text += `- **成功测试**: ${successful.length}\n`;
     text += `- **平均评分**: ${Math.round(averageScore)}\n\n`;
 
-    const byCategory = successful.reduce((acc, result) => {
-      if (!acc[result.category]) {
-        acc[result.category] = [];
-      }
-      acc[result.category].push(result);
-      return acc;
-    }, {} as Record<string, BenchmarkResult[]>);
+    const byCategory = successful.reduce(
+      (acc, result) => {
+        if (!acc[result.category]) {
+          acc[result.category] = [];
+        }
+        acc[result.category].push(result);
+        return acc;
+      },
+      {} as Record<string, BenchmarkResult[]>
+    );
 
     Object.entries(byCategory).forEach(([category, results]) => {
-      const avgScore = results.reduce((sum, r) => sum + r.metrics.score, 0) / results.length;
+      const avgScore =
+        results.reduce((sum: number, r: BenchmarkResult) => sum + r.metrics.score, 0) / results.length;
       text += `### ${this.getCategoryName(category)}\n\n`;
       text += `- **测试数量**: ${results.length}\n`;
       text += `- **平均评分**: ${Math.round(avgScore)}\n`;
-      text += `- **平均耗时**: ${Math.round(results.reduce((sum, r) => sum + r.duration, 0) / results.length)}ms\n\n`;
+      text += `- **平均耗时**: ${Math.round(results.reduce((sum: number, r: BenchmarkResult) => sum + r.duration, 0) / results.length)}ms\n\n`;
     });
 
     return text;
@@ -676,7 +775,10 @@ export class ReportGenerator {
   }
 
   // 洞察生成方法
-  private generateOverviewInsights(summary: PerformanceSummary, history: any[]): string[] {
+  private generateOverviewInsights(
+    summary: PerformanceSummary,
+    _history: Array<{ timestamp: number; [key: string]: unknown }>
+  ): string[] {
     const insights: string[] = [];
 
     if (summary.pageLoadTime > 3000) {
@@ -705,109 +807,167 @@ export class ReportGenerator {
   }
 
   // 数据准备方法
-  private preparePerformanceTrendData(history: any[]): any[] {
+  private preparePerformanceTrendData(
+    history: Array<{ timestamp: number; [key: string]: unknown }>
+  ): Array<{ time: string; value: number }> {
     return history.slice(-20).map(record => ({
       time: new Date(record.timestamp).toLocaleTimeString(),
-      pageLoad: record.summary.pageLoadTime,
-      apiResponse: record.summary.averageApiResponseTime,
-      memory: record.summary.memoryUsage / 1024 / 1024,
+      value: (record.summary as { pageLoadTime: number }).pageLoadTime,
     }));
   }
 
-  private preparePerformanceDistributionData(summary: PerformanceSummary): any[] {
+  private preparePerformanceDistributionData(
+    summary: PerformanceSummary
+  ): Array<{ category: string; value: number }> {
     return [
-      { name: '页面加载', value: summary.pageLoadTime },
-      { name: 'API响应', value: summary.averageApiResponseTime },
-      { name: '内存使用', value: summary.memoryUsage / 1024 / 1024 },
+      { category: '页面加载', value: summary.pageLoadTime },
+      { category: 'API响应', value: summary.averageApiResponseTime },
+      { category: '内存使用', value: summary.memoryUsage / 1024 / 1024 },
     ];
   }
 
-  private prepareWebVitalsData(summary: PerformanceSummary): any[] {
+  private prepareWebVitalsData(
+    summary: PerformanceSummary
+  ): Array<{ metric: string; value: number; threshold: number }> {
     return [
-      { name: 'FCP', value: summary.firstContentfulPaint },
-      { name: 'LCP', value: summary.largestContentfulPaint },
-      { name: 'FID', value: summary.firstInputDelay },
-      { name: 'CLS', value: summary.cumulativeLayoutShift * 1000 },
+      { metric: 'FCP', value: summary.firstContentfulPaint, threshold: 1800 },
+      { metric: 'LCP', value: summary.largestContentfulPaint, threshold: 2500 },
+      { metric: 'FID', value: summary.firstInputDelay, threshold: 100 },
+      { metric: 'CLS', value: summary.cumulativeLayoutShift * 1000, threshold: 0.1 },
     ];
   }
 
-  private prepareResourceUsageData(history: any[]): any[] {
+  private prepareResourceUsageData(
+    history: Array<{ timestamp: number; [key: string]: unknown }>
+  ): Array<{ time: string; memory: number; cpu: number }> {
     return history.slice(-20).map(record => ({
       time: new Date(record.timestamp).toLocaleTimeString(),
-      memory: record.summary.memoryUsage / 1024 / 1024,
+      memory: (record.summary as { memoryUsage: number }).memoryUsage / 1024 / 1024,
+      cpu: 0, // 添加缺失的cpu属性
     }));
   }
 
-  private prepareMetricsTableData(summary: PerformanceSummary): any[][] {
+  private prepareMetricsTableData(
+    summary: PerformanceSummary
+  ): Array<Array<string | number>> {
     return [
-      ['页面加载时间', `${Math.round(summary.pageLoadTime)}ms`, '< 2000ms',
-       summary.pageLoadTime < 2000 ? '✅ 良好' : '❌ 需优化', '优化资源加载'],
-      ['API响应时间', `${Math.round(summary.averageApiResponseTime)}ms`, '< 500ms',
-       summary.averageApiResponseTime < 500 ? '✅ 良好' : '❌ 需优化', '优化后端性能'],
-      ['内存使用', `${(summary.memoryUsage / 1024 / 1024).toFixed(1)}MB`, '< 100MB',
-       summary.memoryUsage < 100 * 1024 * 1024 ? '✅ 良好' : '❌ 需优化', '检查内存泄漏'],
-      ['FCP', `${Math.round(summary.firstContentfulPaint)}ms`, '< 1800ms',
-       summary.firstContentfulPaint < 1800 ? '✅ 良好' : '❌ 需优化', '优化首屏渲染'],
-      ['LCP', `${Math.round(summary.largestContentfulPaint)}ms`, '< 2500ms',
-       summary.largestContentfulPaint < 2500 ? '✅ 良好' : '❌ 需优化', '优化关键资源加载'],
+      [
+        '页面加载时间',
+        `${Math.round(summary.pageLoadTime)}ms`,
+        '< 2000ms',
+        summary.pageLoadTime < 2000 ? '✅ 良好' : '❌ 需优化',
+        '优化资源加载',
+      ],
+      [
+        'API响应时间',
+        `${Math.round(summary.averageApiResponseTime)}ms`,
+        '< 500ms',
+        summary.averageApiResponseTime < 500 ? '✅ 良好' : '❌ 需优化',
+        '优化后端性能',
+      ],
+      [
+        '内存使用',
+        `${(summary.memoryUsage / 1024 / 1024).toFixed(1)}MB`,
+        '< 100MB',
+        summary.memoryUsage < 100 * 1024 * 1024 ? '✅ 良好' : '❌ 需优化',
+        '检查内存泄漏',
+      ],
+      [
+        'FCP',
+        `${Math.round(summary.firstContentfulPaint)}ms`,
+        '< 1800ms',
+        summary.firstContentfulPaint < 1800 ? '✅ 良好' : '❌ 需优化',
+        '优化首屏渲染',
+      ],
+      [
+        'LCP',
+        `${Math.round(summary.largestContentfulPaint)}ms`,
+        '< 2500ms',
+        summary.largestContentfulPaint < 2500 ? '✅ 良好' : '❌ 需优化',
+        '优化关键资源加载',
+      ],
     ];
   }
 
-  private prepareAlertsDistributionData(alerts: PerformanceAlert[]): any[] {
+  private prepareAlertsDistributionData(
+    alerts: PerformanceAlert[]
+  ): Array<{ type: string; count: number }> {
     const distribution = { warning: 0, error: 0, critical: 0 };
     alerts.forEach(alert => {
       distribution[alert.type]++;
     });
 
     return [
-      { name: '警告', value: distribution.warning },
-      { name: '错误', value: distribution.error },
-      { name: '严重', value: distribution.critical },
+      { type: '警告', count: distribution.warning },
+      { type: '错误', count: distribution.error },
+      { type: '严重', count: distribution.critical },
     ];
   }
 
-  private prepareAlertsTableData(alerts: PerformanceAlert[]): any[][] {
-    return alerts.slice(-10).map(alert => [
-      new Date(alert.timestamp).toLocaleString(),
-      alert.type,
-      alert.metric,
-      alert.value.toString(),
-      alert.threshold.toString(),
-      alert.resolved ? '已解决' : '活跃',
-      alert.message,
-    ]);
+  private prepareAlertsTableData(
+    alerts: PerformanceAlert[]
+  ): Array<Array<string | number>> {
+    return alerts
+      .slice(-10)
+      .map(alert => [
+        new Date(alert.timestamp).toLocaleString(),
+        alert.type,
+        alert.metric,
+        alert.value.toString(),
+        alert.threshold.toString(),
+        alert.resolved ? '已解决' : '活跃',
+        alert.message,
+      ]);
   }
 
-  private prepareOptimizationsTableData(optimizations: PerformanceOptimization[]): any[][] {
-    return optimizations.slice(-10).map(opt => [
-      opt.impact === 'high' && opt.difficulty === 'easy' ? '🔥 高' :
-      opt.impact === 'high' ? '📈 中' : '📊 低',
-      opt.impact === 'high' ? '高' : opt.impact === 'medium' ? '中' : '低',
-      opt.difficulty === 'easy' ? '简单' : opt.difficulty === 'medium' ? '中等' : '困难',
-      opt.estimatedImprovement,
-      opt.category,
-      opt.title,
-    ]);
+  private prepareOptimizationsTableData(
+    optimizations: PerformanceOptimization[]
+  ): Array<Array<string | number>> {
+    return optimizations
+      .slice(-10)
+      .map(opt => [
+        opt.impact === 'high' && opt.difficulty === 'easy'
+          ? '🔥 高'
+          : opt.impact === 'high'
+            ? '📈 中'
+            : '📊 低',
+        opt.impact === 'high' ? '高' : opt.impact === 'medium' ? '中' : '低',
+        opt.difficulty === 'easy'
+          ? '简单'
+          : opt.difficulty === 'medium'
+            ? '中等'
+            : '困难',
+        opt.estimatedImprovement,
+        opt.category,
+        opt.title,
+      ]);
   }
 
-  private prepareBenchmarkChartData(benchmarkResults: BenchmarkResult[]): any[] {
-    const byCategory = benchmarkResults.reduce((acc, result) => {
-      if (!result.success) return acc;
-      if (!acc[result.category]) {
-        acc[result.category] = { total: 0, count: 0 };
-      }
-      acc[result.category].total += result.metrics.score;
-      acc[result.category].count += 1;
-      return acc;
-    }, {} as Record<string, { total: number; count: number }>);
+  private prepareBenchmarkChartData(
+    benchmarkResults: BenchmarkResult[]
+  ): Array<{ name: string; value: number }> {
+    const byCategory = benchmarkResults.reduce(
+      (acc, result) => {
+        if (!result.success) return acc;
+        if (!acc[result.category]) {
+          acc[result.category] = { total: 0, count: 0 };
+        }
+        acc[result.category].total += result.metrics.score;
+        acc[result.category].count += 1;
+        return acc;
+      },
+      {} as Record<string, { total: number; count: number }>
+    );
 
     return Object.entries(byCategory).map(([category, data]) => ({
-      category: this.getCategoryName(category),
-      score: Math.round(data.total / data.count),
+      name: this.getCategoryName(category),
+      value: Math.round(data.total / data.count),
     }));
   }
 
-  private prepareBenchmarkTableData(benchmarkResults: BenchmarkResult[]): any[][] {
+  private prepareBenchmarkTableData(
+    benchmarkResults: BenchmarkResult[]
+  ): Array<Array<string | number>> {
     return benchmarkResults.map(result => [
       result.name,
       this.getCategoryName(result.category),
@@ -818,12 +978,31 @@ export class ReportGenerator {
     ]);
   }
 
-  private prepareMobileRadarData(summary: PerformanceSummary): any[] {
+  private prepareMobileRadarData(
+    summary: PerformanceSummary
+  ): Array<{ axis: string; value: number }> {
     return [
-      { subject: '响应性', A: Math.min(100, 100 - (summary.touchResponseTime / 100) * 100), fullMark: 100 },
-      { subject: '电池效率', A: summary.batteryLevel || 80, fullMark: 100 },
-      { subject: '网络性能', A: summary.networkType === '4g' ? 90 : summary.networkType === '3g' ? 60 : 30, fullMark: 100 },
-      { subject: '用户体验', A: Math.min(100, 100 - (summary.firstInputDelay / 300) * 100), fullMark: 100 },
+      {
+        axis: '响应性',
+        value: Math.min(100, 100 - (summary.touchResponseTime / 100) * 100),
+      },
+      {
+        axis: '电池效率',
+        value: summary.batteryLevel || 80
+      },
+      {
+        axis: '网络性能',
+        value:
+          summary.networkType === '4g'
+            ? 90
+            : summary.networkType === '3g'
+              ? 60
+              : 30,
+      },
+      {
+        axis: '用户体验',
+        value: Math.min(100, 100 - (summary.firstInputDelay / 300) * 100),
+      },
     ];
   }
 
@@ -850,10 +1029,10 @@ export class ReportGenerator {
   private getCategoryName(category: string): string {
     const names: Record<string, string> = {
       'page-load': '页面加载',
-      'api': 'API性能',
-      'render': '渲染性能',
-      'memory': '内存使用',
-      'network': '网络性能',
+      api: 'API性能',
+      render: '渲染性能',
+      memory: '内存使用',
+      network: '网络性能',
     };
     return names[category] || category;
   }
@@ -995,16 +1174,4 @@ export class ReportGenerator {
 }
 
 // 创建全局实例
-export const performanceReportGenerator = new PerformanceReportGenerator();
-
-// 导出类型和实例
-export type {
-  PerformanceReport,
-  ReportSummary,
-  ReportSection,
-  SectionContent,
-  ChartData,
-  TableData,
-  ReportMetadata,
-  ReportConfig,
-};
+export const performanceReportGenerator = new ReportGenerator();

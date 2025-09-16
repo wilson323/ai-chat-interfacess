@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { cn } from '../lib/utils';
 import { Check, Brain, Clock } from 'lucide-react';
 
 import type {
@@ -9,7 +9,7 @@ import type {
   ProcessingStep,
   ThinkingStatus,
   InteractionStatus,
-} from '@/types/message';
+} from '../types/message';
 
 interface EnhancedThinkingBubbleProps {
   thinkingSteps: ProcessingStep[];
@@ -56,6 +56,7 @@ export function EnhancedThinkingBubble({
       }, 300);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [thinkingStatus, interactiveData, interactionStatus]);
 
   const isUserSelect = interactiveData?.type === 'userSelect';

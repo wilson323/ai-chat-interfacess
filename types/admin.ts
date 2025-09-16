@@ -12,6 +12,12 @@ export interface User {
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
+  // 扩展属性
+  avatar?: string;
+  department?: string;
+  phone?: string;
+  permissions?: Permission[];
+  createdBy?: number;
 }
 
 export enum UserRole {
@@ -202,7 +208,7 @@ export interface AdminApiResponse<T = any> {
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
   meta?: {
     timestamp: string;
@@ -241,7 +247,7 @@ export interface PaginatedResponse<T> {
 export interface SearchFilter {
   key: string;
   operator: 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'like' | 'in';
-  value: any;
+  value: unknown;
 }
 
 // 批量操作类型
@@ -275,7 +281,7 @@ export interface SystemMetrics {
   timestamp: Date;
 }
 
-export interface PerformanceMetrics {
+export interface AdminPerformanceMetrics {
   responseTime: {
     avg: number;
     p95: number;
@@ -361,6 +367,9 @@ export enum BackupStatus {
 export * from './agent';
 export * from './api';
 export * from './message';
+// 仅导出 voice 聚合入口，避免与 errors 中语音错误重复
 export * from './voice';
-export * from './errors';
+// 注意：errors 中也定义了 VoiceError/VoiceErrorType，会与 voice 冲突
+// 这里不再整包导出 errors，改为按需在使用处直接从 'types/errors' 导入
+// export * from './errors';
 // export * from './global'; // 注释掉不存在的文件引用

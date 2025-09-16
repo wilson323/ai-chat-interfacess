@@ -17,12 +17,16 @@ export class CacheExamples {
       console.log('✅ Redis连接成功');
 
       // 2. 设置缓存
-      await redisManager.set('user:123', {
-        id: 123,
-        name: '张三',
-        email: 'zhangsan@example.com',
-        preferences: { theme: 'dark', language: 'zh-CN' }
-      }, 3600); // 1小时过期
+      await redisManager.set(
+        'user:123',
+        {
+          id: 123,
+          name: '张三',
+          email: 'zhangsan@example.com',
+          preferences: { theme: 'dark', language: 'zh-CN' },
+        },
+        3600
+      ); // 1小时过期
 
       // 3. 获取缓存
       const user = await redisManager.get('user:123');
@@ -35,7 +39,6 @@ export class CacheExamples {
       // 5. 删除缓存
       await redisManager.delete('user:123');
       console.log('用户缓存已删除');
-
     } catch (error) {
       console.error('缓存操作失败:', error);
     }
@@ -48,15 +51,30 @@ export class CacheExamples {
     try {
       // 批量设置
       await redisManager.mset([
-        { key: 'product:1', value: { id: 1, name: '商品1', price: 100 }, ttl: 1800 },
-        { key: 'product:2', value: { id: 2, name: '商品2', price: 200 }, ttl: 1800 },
-        { key: 'product:3', value: { id: 3, name: '商品3', price: 300 }, ttl: 1800 }
+        {
+          key: 'product:1',
+          value: { id: 1, name: '商品1', price: 100 },
+          ttl: 1800,
+        },
+        {
+          key: 'product:2',
+          value: { id: 2, name: '商品2', price: 200 },
+          ttl: 1800,
+        },
+        {
+          key: 'product:3',
+          value: { id: 3, name: '商品3', price: 300 },
+          ttl: 1800,
+        },
       ]);
 
       // 批量获取
-      const products = await redisManager.mget(['product:1', 'product:2', 'product:3']);
+      const products = await redisManager.mget([
+        'product:1',
+        'product:2',
+        'product:3',
+      ]);
       console.log('批量获取商品:', products);
-
     } catch (error) {
       console.error('批量操作失败:', error);
     }
@@ -75,7 +93,7 @@ export class CacheExamples {
         命中次数: stats.hits,
         未命中次数: stats.misses,
         内存使用: `${stats.memoryUsage.toFixed(2)}MB`,
-        连接状态: stats.connectionStatus
+        连接状态: stats.connectionStatus,
       });
 
       // 获取详细统计信息
@@ -85,7 +103,6 @@ export class CacheExamples {
       // 健康检查
       const health = await redisManager.healthCheck();
       console.log('健康状态:', health);
-
     } catch (error) {
       console.error('监控操作失败:', error);
     }
@@ -98,8 +115,16 @@ export class CacheExamples {
     try {
       // 缓存预热
       await redisManager.warmup([
-        { key: 'config:app', value: { version: '1.0.0', debug: false }, ttl: 7200 },
-        { key: 'config:features', value: { chat: true, voice: true, image: true }, ttl: 7200 }
+        {
+          key: 'config:app',
+          value: { version: '1.0.0', debug: false },
+          ttl: 7200,
+        },
+        {
+          key: 'config:features',
+          value: { chat: true, voice: true, image: true },
+          ttl: 7200,
+        },
       ]);
 
       // 获取热点键
@@ -112,7 +137,6 @@ export class CacheExamples {
       // 清理过期缓存
       const expiredCount = await redisManager.cleanupExpired();
       console.log(`清理了 ${expiredCount} 个过期缓存`);
-
     } catch (error) {
       console.error('缓存策略操作失败:', error);
     }
@@ -127,7 +151,6 @@ export class CacheExamples {
       // redis-manager会自动重试，我们只需要处理最终错误
       const result = await redisManager.set('test:key', 'test value');
       console.log('设置结果:', result);
-
     } catch (error) {
       console.error('最终错误:', error);
       // 这里可以进行降级处理，比如使用本地缓存或数据库
@@ -140,7 +163,7 @@ export class AgentCacheExample {
   /**
    * 缓存智能体配置
    */
-  static async cacheAgentConfig(agentId: string, config: any) {
+  static async cacheAgentConfig(agentId: string, config: Record<string, unknown>) {
     const cacheKey = `agent:config:${agentId}`;
     return await redisManager.set(cacheKey, config, 1800); // 30分钟缓存
   }
@@ -168,11 +191,11 @@ export class AgentCacheExample {
   /**
    * 批量缓存智能体列表
    */
-  static async cacheAgentList(agents: any[]) {
+  static async cacheAgentList(agents: Record<string, unknown>[]) {
     const cacheItems = agents.map(agent => ({
       key: `agent:config:${agent.id}`,
       value: agent,
-      ttl: 1800
+      ttl: 1800,
     }));
 
     await redisManager.mset(cacheItems);
@@ -185,7 +208,7 @@ export class ChatCacheExample {
   /**
    * 缓存聊天会话
    */
-  static async cacheChatSession(sessionId: string, sessionData: any) {
+  static async cacheChatSession(sessionId: string, sessionData: Record<string, unknown>) {
     const cacheKey = `chat:session:${sessionId}`;
     return await redisManager.set(cacheKey, sessionData, 3600); // 1小时缓存
   }
@@ -201,7 +224,7 @@ export class ChatCacheExample {
   /**
    * 缓存用户最近的消息
    */
-  static async cacheRecentMessages(userId: string, messages: any[]) {
+  static async cacheRecentMessages(userId: string, messages: Record<string, unknown>[]) {
     const cacheKey = `user:recent_messages:${userId}`;
     return await redisManager.set(cacheKey, messages, 1800); // 30分钟缓存
   }
@@ -226,7 +249,10 @@ export class PerformanceTestExample {
 
     // 测试写入性能
     for (let i = 0; i < iterations; i++) {
-      await redisManager.set(`test:key:${i}`, { value: i, timestamp: Date.now() });
+      await redisManager.set(`test:key:${i}`, {
+        value: i,
+        timestamp: Date.now(),
+      });
     }
 
     const writeTime = Date.now() - startTime;
@@ -250,7 +276,7 @@ export class PerformanceTestExample {
       writeTime,
       readTime,
       writeOps: iterations / (writeTime / 1000),
-      readOps: iterations / (readTime / 1000)
+      readOps: iterations / (readTime / 1000),
     };
   }
 
@@ -288,7 +314,7 @@ export class PerformanceTestExample {
       await redisManager.set(`concurrent:user:${userId}:op:${i}`, {
         userId,
         operation: i,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       // 读操作
@@ -302,5 +328,5 @@ export default {
   CacheExamples,
   AgentCacheExample,
   ChatCacheExample,
-  PerformanceTestExample
+  PerformanceTestExample,
 };

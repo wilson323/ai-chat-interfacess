@@ -1,11 +1,11 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button } from './ui/button';
 import { RotateCcw } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useAgent } from '@/context/agent-context';
-import { generateFallbackChatId } from '@/lib/api/fastgpt';
-import { useLanguage } from '@/context/language-context';
+import { cn } from '../lib/utils';
+import { useAgent } from '../context/agent-context';
+import { generateFallbackChatId } from '../lib/api/fastgpt';
+import { useLanguage } from '../context/language-context';
 
 export function NewConversationButton() {
   const { selectedAgent, selectAgent } = useAgent();
@@ -47,11 +47,11 @@ export function NewConversationButton() {
         // 自定义类名
         'new-conversation-button'
       )}
-      aria-label={t('newConversation')}
-      title={t('newConversation')}
+      aria-label={t('newChat')}
+      title={t('newChat')}
     >
       <RotateCcw className='h-4 w-4' aria-hidden='true' />
-      {t('newConversation')}
+      {t('newChat')}
     </Button>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
-
+import { logger } from '@/lib/utils/logger';
 import React, { useState, useEffect } from 'react';
+// Removed invalid typescript import
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,10 +39,8 @@ import {
   Download,
   Settings,
   TrendingUp,
-  TrendingDown,
   Award,
   Clock,
-  Zap,
   Database,
   Activity,
   Wifi,
@@ -49,7 +48,11 @@ import {
   CheckCircle,
   FileText,
 } from 'lucide-react';
-import { performanceBenchmark, type BenchmarkResult, type BenchmarkSuite } from '@/lib/performance/benchmark';
+import {
+  performanceBenchmark,
+  type BenchmarkResult,
+  type BenchmarkSuite,
+} from '@/lib/performance/benchmark';
 
 interface BenchmarkConfig {
   iterations: number;
@@ -96,7 +99,7 @@ export function BenchmarkTool() {
       setResults(newResults);
       setSummary(performanceBenchmark.getSummary());
     } catch (error) {
-      console.error('Benchmark failed:', error);
+      logger.error('Benchmark failed:', error);
     } finally {
       setIsRunning(false);
       setCurrentSuite('');
@@ -131,34 +134,52 @@ export function BenchmarkTool() {
 
   const getGradeColor = (grade: string) => {
     switch (grade) {
-      case 'A': return 'bg-green-100 text-green-800';
-      case 'B': return 'bg-blue-100 text-blue-800';
-      case 'C': return 'bg-yellow-100 text-yellow-800';
-      case 'D': return 'bg-orange-100 text-orange-800';
-      case 'F': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'A':
+        return 'bg-green-100 text-green-800';
+      case 'B':
+        return 'bg-blue-100 text-blue-800';
+      case 'C':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'D':
+        return 'bg-orange-100 text-orange-800';
+      case 'F':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getGradeIcon = (grade: string) => {
     switch (grade) {
-      case 'A': return <Award className='h-4 w-4' />;
-      case 'B': return <TrendingUp className='h-4 w-4' />;
-      case 'C': return <Activity className='h-4 w-4' />;
-      case 'D': return <AlertTriangle className='h-4 w-4' />;
-      case 'F': return <AlertTriangle className='h-4 w-4' />;
-      default: return <FileText className='h-4 w-4' />;
+      case 'A':
+        return <Award className='h-4 w-4' />;
+      case 'B':
+        return <TrendingUp className='h-4 w-4' />;
+      case 'C':
+        return <Activity className='h-4 w-4' />;
+      case 'D':
+        return <AlertTriangle className='h-4 w-4' />;
+      case 'F':
+        return <AlertTriangle className='h-4 w-4' />;
+      default:
+        return <FileText className='h-4 w-4' />;
     }
   };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'page-load': return <Clock className='h-5 w-5' />;
-      case 'api': return <Database className='h-5 w-5' />;
-      case 'render': return <Activity className='h-5 w-5' />;
-      case 'memory': return <Database className='h-5 w-5' />;
-      case 'network': return <Wifi className='h-5 w-5' />;
-      default: return <FileText className='h-5 w-5' />;
+      case 'page-load':
+        return <Clock className='h-5 w-5' />;
+      case 'api':
+        return <Database className='h-5 w-5' />;
+      case 'render':
+        return <Activity className='h-5 w-5' />;
+      case 'memory':
+        return <Database className='h-5 w-5' />;
+      case 'network':
+        return <Wifi className='h-5 w-5' />;
+      default:
+        return <FileText className='h-5 w-5' />;
     }
   };
 
@@ -179,16 +200,22 @@ export function BenchmarkTool() {
   const getCategoryName = (category: string) => {
     const names: Record<string, string> = {
       'page-load': '页面加载',
-      'api': 'API性能',
-      'render': '渲染性能',
-      'memory': '内存使用',
-      'network': '网络性能',
+      api: 'API性能',
+      render: '渲染性能',
+      memory: '内存使用',
+      network: '网络性能',
     };
     return names[category] || category;
   };
 
   const getGradeDistribution = () => {
-    const gradeCounts: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+    const gradeCounts: Record<string, number> = {
+      A: 0,
+      B: 0,
+      C: 0,
+      D: 0,
+      F: 0,
+    };
     results.forEach(result => {
       if (result.success) {
         gradeCounts[result.metrics.grade]++;
@@ -219,7 +246,11 @@ export function BenchmarkTool() {
             onClick={runAllBenchmarks}
             disabled={isRunning}
           >
-            {isRunning ? <Pause className='h-4 w-4 mr-2' /> : <Play className='h-4 w-4 mr-2' />}
+            {isRunning ? (
+              <Pause className='h-4 w-4 mr-2' />
+            ) : (
+              <Play className='h-4 w-4 mr-2' />
+            )}
             {isRunning ? '测试中...' : '运行全部测试'}
           </Button>
           <Button variant='outline' onClick={() => setShowConfig(!showConfig)}>
@@ -254,7 +285,9 @@ export function BenchmarkTool() {
                   id='iterations'
                   type='number'
                   value={config.iterations}
-                  onChange={(e) => updateConfig({ iterations: parseInt(e.target.value) || 10 })}
+                  onChange={e =>
+                    updateConfig({ iterations: parseInt(e.target.value) || 10 })
+                  }
                   min={1}
                   max={100}
                 />
@@ -265,7 +298,9 @@ export function BenchmarkTool() {
                   id='warmup'
                   type='number'
                   value={config.warmup}
-                  onChange={(e) => updateConfig({ warmup: parseInt(e.target.value) || 3 })}
+                  onChange={e =>
+                    updateConfig({ warmup: parseInt(e.target.value) || 3 })
+                  }
                   min={0}
                   max={20}
                 />
@@ -276,7 +311,9 @@ export function BenchmarkTool() {
                   id='timeout'
                   type='number'
                   value={config.timeout}
-                  onChange={(e) => updateConfig({ timeout: parseInt(e.target.value) || 30000 })}
+                  onChange={e =>
+                    updateConfig({ timeout: parseInt(e.target.value) || 30000 })
+                  }
                   min={1000}
                   max={300000}
                 />
@@ -288,7 +325,7 @@ export function BenchmarkTool() {
 
       {/* 测试套件 */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-        {suites.map((suite) => (
+        {suites.map(suite => (
           <Card key={suite.id}>
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
@@ -299,10 +336,15 @@ export function BenchmarkTool() {
             <CardContent>
               <p className='text-sm text-gray-600 mb-4'>{suite.description}</p>
               <div className='space-y-2 mb-4'>
-                {suite.tests.map((test) => (
-                  <div key={test.id} className='flex items-center justify-between text-sm'>
+                {suite.tests.map((test: any) => (
+                  <div
+                    key={test.id}
+                    className='flex items-center justify-between text-sm'
+                  >
                     <span>{test.name}</span>
-                    <Badge variant='outline'>{getCategoryName(test.category)}</Badge>
+                    <Badge variant='outline'>
+                      {getCategoryName(test.category)}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -313,7 +355,9 @@ export function BenchmarkTool() {
                 disabled={isRunning}
                 className='w-full'
               >
-                {isRunning && currentSuite === suite.id ? '测试中...' : '运行测试'}
+                {isRunning && currentSuite === suite.id
+                  ? '测试中...'
+                  : '运行测试'}
               </Button>
             </CardContent>
           </Card>
@@ -328,7 +372,9 @@ export function BenchmarkTool() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-sm font-medium text-gray-600'>总体评分</p>
-                  <p className='text-2xl font-bold'>{Math.round(summary.averageScore)}</p>
+                  <p className='text-2xl font-bold'>
+                    {Math.round(summary.averageScore)}
+                  </p>
                 </div>
                 {getGradeIcon(summary.grade)}
               </div>
@@ -345,7 +391,9 @@ export function BenchmarkTool() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-sm font-medium text-gray-600'>成功测试</p>
-                  <p className='text-2xl font-bold text-green-600'>{summary.successfulTests}</p>
+                  <p className='text-2xl font-bold text-green-600'>
+                    {summary.successfulTests}
+                  </p>
                 </div>
                 <CheckCircle className='h-8 w-8 text-green-600' />
               </div>
@@ -366,7 +414,10 @@ export function BenchmarkTool() {
                 </div>
                 <Clock className='h-8 w-8 text-blue-600' />
               </div>
-              <Progress value={summary.categoryScores['page-load'] || 0} className='w-full mt-2' />
+              <Progress
+                value={summary.categoryScores['page-load'] || 0}
+                className='w-full mt-2'
+              />
             </CardContent>
           </Card>
 
@@ -381,14 +432,21 @@ export function BenchmarkTool() {
                 </div>
                 <Database className='h-8 w-8 text-green-600' />
               </div>
-              <Progress value={summary.categoryScores['api'] || 0} className='w-full mt-2' />
+              <Progress
+                value={summary.categoryScores['api'] || 0}
+                className='w-full mt-2'
+              />
             </CardContent>
           </Card>
         </div>
       )}
 
       {/* 详细结果 */}
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className='w-full'>
+      <Tabs
+        value={selectedTab}
+        onValueChange={setSelectedTab}
+        className='w-full'
+      >
         <TabsList>
           <TabsTrigger value='overview'>概览</TabsTrigger>
           <TabsTrigger value='results'>详细结果</TabsTrigger>
@@ -429,18 +487,25 @@ export function BenchmarkTool() {
                         cx='50%'
                         cy='50%'
                         labelLine={false}
-                        label={({ grade, percentage }) => `${grade}: ${percentage.toFixed(1)}%`}
-                        outerRadius={80}
+                          outerRadius={80}
                         fill='#8884d8'
                         dataKey='count'
                       >
                         {gradeData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={
-                            entry.grade === 'A' ? '#10b981' :
-                            entry.grade === 'B' ? '#3b82f6' :
-                            entry.grade === 'C' ? '#f59e0b' :
-                            entry.grade === 'D' ? '#f97316' : '#ef4444'
-                          } />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              entry.grade === 'A'
+                                ? '#10b981'
+                                : entry.grade === 'B'
+                                  ? '#3b82f6'
+                                  : entry.grade === 'C'
+                                    ? '#f59e0b'
+                                    : entry.grade === 'D'
+                                      ? '#f97316'
+                                      : '#ef4444'
+                            }
+                          />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -459,43 +524,57 @@ export function BenchmarkTool() {
             </CardHeader>
             <CardContent>
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                {Object.entries(summary?.categoryScores || {}).map(([category, score]) => {
-                  const scoreNum = score as number;
-                  const categoryName = getCategoryName(category);
-                  let suggestion = '';
+                {Object.entries(summary?.categoryScores || {}).map(
+                  ([category, score]) => {
+                    const scoreNum = score as number;
+                    const categoryName = getCategoryName(category);
+                    let suggestion = '';
 
-                  if (scoreNum >= 90) {
-                    suggestion = `${categoryName}性能优秀，继续保持！`;
-                  } else if (scoreNum >= 80) {
-                    suggestion = `${categoryName}性能良好，可考虑进一步优化。`;
-                  } else if (scoreNum >= 70) {
-                    suggestion = `${categoryName}性能一般，建议进行优化。`;
-                  } else {
-                    suggestion = `${categoryName}性能较差，需要重点优化。`;
-                  }
+                    if (scoreNum >= 90) {
+                      suggestion = `${categoryName}性能优秀，继续保持！`;
+                    } else if (scoreNum >= 80) {
+                      suggestion = `${categoryName}性能良好，可考虑进一步优化。`;
+                    } else if (scoreNum >= 70) {
+                      suggestion = `${categoryName}性能一般，建议进行优化。`;
+                    } else {
+                      suggestion = `${categoryName}性能较差，需要重点优化。`;
+                    }
 
-                  return (
-                    <div key={category} className='border rounded-lg p-4'>
-                      <div className='flex items-center gap-2 mb-2'>
-                        {getCategoryIcon(category)}
-                        <h4 className='font-medium'>{categoryName}</h4>
-                        <Badge className={getGradeColor(
-                          scoreNum >= 90 ? 'A' :
-                          scoreNum >= 80 ? 'B' :
-                          scoreNum >= 70 ? 'C' :
-                          scoreNum >= 60 ? 'D' : 'F'
-                        )}>
-                          {scoreNum >= 90 ? 'A' :
-                           scoreNum >= 80 ? 'B' :
-                           scoreNum >= 70 ? 'C' :
-                           scoreNum >= 60 ? 'D' : 'F'}
-                        </Badge>
+                    return (
+                      <div key={category} className='border rounded-lg p-4'>
+                        <div className='flex items-center gap-2 mb-2'>
+                          {getCategoryIcon(category)}
+                          <h4 className='font-medium'>{categoryName}</h4>
+                          <Badge
+                            className={getGradeColor(
+                              scoreNum >= 90
+                                ? 'A'
+                                : scoreNum >= 80
+                                  ? 'B'
+                                  : scoreNum >= 70
+                                    ? 'C'
+                                    : scoreNum >= 60
+                                      ? 'D'
+                                      : 'F'
+                            )}
+                          >
+                            {scoreNum >= 90
+                              ? 'A'
+                              : scoreNum >= 80
+                                ? 'B'
+                                : scoreNum >= 70
+                                  ? 'C'
+                                  : scoreNum >= 60
+                                    ? 'D'
+                                    : 'F'}
+                          </Badge>
+                        </div>
+                        <p className='text-sm text-gray-600'>{suggestion}</p>
+                        <Progress value={scoreNum} className='w-full mt-2' />
                       </div>
-                      <p className='text-sm text-gray-600'>{suggestion}</p>
-                      <Progress value={scoreNum} className='w-full mt-2' />
-                    </div>
-                  );
-                })}
+                    );
+                  }
+                )}
               </div>
             </CardContent>
           </Card>
@@ -529,9 +608,11 @@ export function BenchmarkTool() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map((result) => (
+                    {results.map(result => (
                       <TableRow key={result.id}>
-                        <TableCell className='font-medium'>{result.name}</TableCell>
+                        <TableCell className='font-medium'>
+                          {result.name}
+                        </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-1'>
                             {getCategoryIcon(result.category)}
@@ -541,20 +622,31 @@ export function BenchmarkTool() {
                         <TableCell>{formatDuration(result.duration)}</TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>
-                            <span className='font-medium'>{Math.round(result.metrics.score)}</span>
-                            <Progress value={result.metrics.score} className='w-16' />
+                            <span className='font-medium'>
+                              {Math.round(result.metrics.score)}
+                            </span>
+                            <Progress
+                              value={result.metrics.score}
+                              className='w-16'
+                            />
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={getGradeColor(result.metrics.grade)}>
+                          <Badge
+                            className={getGradeColor(result.metrics.grade)}
+                          >
                             {result.metrics.grade} 级
                           </Badge>
                         </TableCell>
                         <TableCell>
                           {result.success ? (
-                            <Badge className='bg-green-100 text-green-800'>成功</Badge>
+                            <Badge className='bg-green-100 text-green-800'>
+                              成功
+                            </Badge>
                           ) : (
-                            <Badge className='bg-red-100 text-red-800'>失败</Badge>
+                            <Badge className='bg-red-100 text-red-800'>
+                              失败
+                            </Badge>
                           )}
                         </TableCell>
                         <TableCell className='text-sm text-gray-500'>
@@ -583,14 +675,20 @@ export function BenchmarkTool() {
                       <CartesianGrid strokeDasharray='3 3' />
                       <XAxis
                         dataKey='timestamp'
-                        tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+                        tickFormatter={value =>
+                          new Date(value).toLocaleTimeString()
+                        }
                       />
                       <YAxis />
                       <Tooltip
-                        labelFormatter={(value) => `时间: ${new Date(value).toLocaleString()}`}
+                        labelFormatter={value =>
+                          `时间: ${new Date(value).toLocaleString()}`
+                        }
                         formatter={(value: number, name: string) => [
-                          name === 'duration' ? formatDuration(value) : Math.round(value),
-                          name === 'duration' ? '耗时' : '评分'
+                          name === 'duration'
+                            ? formatDuration(value)
+                            : Math.round(value),
+                          name === 'duration' ? '耗时' : '评分',
                         ]}
                       />
                       <Legend />
@@ -603,7 +701,7 @@ export function BenchmarkTool() {
                       />
                       <Line
                         type='monotone'
-                        dataKey={(r) => r.metrics.score}
+                        dataKey={r => r.metrics.score}
                         stroke='#10b981'
                         name='评分'
                         yAxisId='right'
@@ -621,24 +719,37 @@ export function BenchmarkTool() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width='100%' height={300}>
-                      <BarChart data={Object.entries(
-                        results.reduce((acc, result) => {
-                          if (!result.success) return acc;
-                          if (!acc[result.category]) {
-                            acc[result.category] = { total: 0, count: 0 };
-                          }
-                          acc[result.category].total += result.duration;
-                          acc[result.category].count += 1;
-                          return acc;
-                        }, {} as Record<string, { total: number; count: number }>)
-                      ).map(([category, data]) => ({
-                        category: getCategoryName(category),
-                        average: data.total / data.count,
-                      }))}>
+                      <BarChart
+                        data={Object.entries(
+                          results.reduce(
+                            (acc, result) => {
+                              if (!result.success) return acc;
+                              if (!acc[result.category]) {
+                                acc[result.category] = { total: 0, count: 0 };
+                              }
+                              acc[result.category].total += result.duration;
+                              acc[result.category].count += 1;
+                              return acc;
+                            },
+                            {} as Record<
+                              string,
+                              { total: number; count: number }
+                            >
+                          )
+                        ).map(([category, data]: [string, { total: number; count: number }]) => ({
+                          category: getCategoryName(category),
+                          average: data.total / data.count,
+                        }))}
+                      >
                         <CartesianGrid strokeDasharray='3 3' />
                         <XAxis dataKey='category' />
                         <YAxis />
-                        <Tooltip formatter={(value: number) => [formatDuration(value), '平均耗时']} />
+                        <Tooltip
+                          formatter={(value: number) => [
+                            formatDuration(value),
+                            '平均耗时',
+                          ]}
+                        />
                         <Bar dataKey='average' fill='#8884d8' />
                       </BarChart>
                     </ResponsiveContainer>
@@ -654,8 +765,16 @@ export function BenchmarkTool() {
                       <PieChart>
                         <Pie
                           data={[
-                            { name: '成功', value: results.filter(r => r.success).length, color: '#10b981' },
-                            { name: '失败', value: results.filter(r => !r.success).length, color: '#ef4444' },
+                            {
+                              name: '成功',
+                              value: results.filter(r => r.success).length,
+                              color: '#10b981',
+                            },
+                            {
+                              name: '失败',
+                              value: results.filter(r => !r.success).length,
+                              color: '#ef4444',
+                            },
                           ]}
                           cx='50%'
                           cy='50%'
@@ -666,8 +785,16 @@ export function BenchmarkTool() {
                           dataKey='value'
                         >
                           {[
-                            { name: '成功', value: results.filter(r => r.success).length },
-                            { name: '失败', value: results.filter(r => !r.success).length },
+                            {
+                              name: '成功',
+                              value: results.filter(r => r.success).length,
+                              color: '#10b981',
+                            },
+                            {
+                              name: '失败',
+                              value: results.filter(r => !r.success).length,
+                              color: '#ef4444',
+                            },
                           ].map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
@@ -694,48 +821,64 @@ export function BenchmarkTool() {
                 <div>
                   <h4 className='font-medium mb-4'>与行业标准对比</h4>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    {Object.entries(summary?.categoryScores || {}).map(([category, score]) => {
-                      const scoreNum = score as number;
-                      const categoryName = getCategoryName(category);
-                      const benchmarks = {
-                        'page-load': { good: 90, average: 70, poor: 50 },
-                        'api': { good: 85, average: 70, poor: 55 },
-                        'render': { good: 80, average: 65, poor: 50 },
-                        'memory': { good: 75, average: 60, poor: 45 },
-                        'network': { good: 85, average: 70, poor: 55 },
-                      };
-                      const benchmark = benchmarks[category as keyof typeof benchmarks] || { good: 80, average: 65, poor: 50 };
+                    {Object.entries(summary?.categoryScores || {}).map(
+                      ([category, score]) => {
+                        const scoreNum = score as number;
+                        const categoryName = getCategoryName(category);
+                        const benchmarks = {
+                          'page-load': { good: 90, average: 70, poor: 50 },
+                          api: { good: 85, average: 70, poor: 55 },
+                          render: { good: 80, average: 65, poor: 50 },
+                          memory: { good: 75, average: 60, poor: 45 },
+                          network: { good: 85, average: 70, poor: 55 },
+                        };
+                        const benchmark = benchmarks[
+                          category as keyof typeof benchmarks
+                        ] || { good: 80, average: 65, poor: 50 };
 
-                      return (
-                        <div key={category} className='border rounded-lg p-4'>
-                          <h5 className='font-medium mb-3'>{categoryName}</h5>
-                          <div className='space-y-2'>
-                            <div className='flex justify-between items-center'>
-                              <span className='text-sm'>当前评分</span>
-                              <Badge className={getGradeColor(
-                                scoreNum >= benchmark.good ? 'A' :
-                                scoreNum >= benchmark.average ? 'B' :
-                                scoreNum >= benchmark.poor ? 'C' : 'D'
-                              )}>
-                                {Math.round(scoreNum)}
-                              </Badge>
-                            </div>
-                            <div className='flex justify-between items-center'>
-                              <span className='text-sm'>优秀基准</span>
-                              <span className='text-sm font-medium text-green-600'>{benchmark.good}</span>
-                            </div>
-                            <div className='flex justify-between items-center'>
-                              <span className='text-sm'>平均基准</span>
-                              <span className='text-sm font-medium text-yellow-600'>{benchmark.average}</span>
-                            </div>
-                            <div className='flex justify-between items-center'>
-                              <span className='text-sm'>较差基准</span>
-                              <span className='text-sm font-medium text-red-600'>{benchmark.poor}</span>
+                        return (
+                          <div key={category} className='border rounded-lg p-4'>
+                            <h5 className='font-medium mb-3'>{categoryName}</h5>
+                            <div className='space-y-2'>
+                              <div className='flex justify-between items-center'>
+                                <span className='text-sm'>当前评分</span>
+                                <Badge
+                                  className={getGradeColor(
+                                    scoreNum >= benchmark.good
+                                      ? 'A'
+                                      : scoreNum >= benchmark.average
+                                        ? 'B'
+                                        : scoreNum >= benchmark.poor
+                                          ? 'C'
+                                          : 'D'
+                                  )}
+                                >
+                                  {Math.round(scoreNum)}
+                                </Badge>
+                              </div>
+                              <div className='flex justify-between items-center'>
+                                <span className='text-sm'>优秀基准</span>
+                                <span className='text-sm font-medium text-green-600'>
+                                  {benchmark.good}
+                                </span>
+                              </div>
+                              <div className='flex justify-between items-center'>
+                                <span className='text-sm'>平均基准</span>
+                                <span className='text-sm font-medium text-yellow-600'>
+                                  {benchmark.average}
+                                </span>
+                              </div>
+                              <div className='flex justify-between items-center'>
+                                <span className='text-sm'>较差基准</span>
+                                <span className='text-sm font-medium text-red-600'>
+                                  {benchmark.poor}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      }
+                    )}
                   </div>
                 </div>
 

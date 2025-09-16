@@ -1,6 +1,6 @@
-import { GeoLocation, IpGeoResolver, CacheStrategy } from '@/types/heatmap';
-import { cacheManager } from '@/lib/cache/redis-manager';
-import logger from '@/lib/utils/logger';
+import { GeoLocationInfo, IpGeoResolver, CacheStrategy } from '../../types/heatmap';
+import { simpleCacheManager } from '../../lib/cache/simple-cache';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * IP地理位置解析服务
@@ -12,7 +12,7 @@ export class GeoLocationService {
   private cacheTTL: number = 24 * 60 * 60 * 1000; // 24小时缓存
 
   constructor(cache?: CacheStrategy) {
-    this.cache = cache || cacheManager;
+    this.cache = (cache || (simpleCacheManager as unknown as CacheStrategy));
     this.initializeResolvers();
   }
 
@@ -29,7 +29,7 @@ export class GeoLocationService {
   /**
    * 根据IP地址获取地理位置
    */
-  public async getLocationByIp(ipAddress: string): Promise<GeoLocation> {
+  public async getLocationByIp(ipAddress: string): Promise<GeoLocationInfo> {
     try {
       // 检查IP地址格式
       if (!this.isValidIpAddress(ipAddress)) {
@@ -42,7 +42,7 @@ export class GeoLocationService {
       // 尝试从缓存获取
       const cachedLocation = await this.cache.get(cacheKey);
       if (cachedLocation) {
-        return cachedLocation as GeoLocation;
+        return cachedLocation as GeoLocationInfo;
       }
 
       // 检查是否为私有IP地址
@@ -53,7 +53,7 @@ export class GeoLocationService {
       }
 
       // 尝试各个解析器
-      let location: GeoLocation | null = null;
+      let location: GeoLocationInfo | null = null;
       let lastError: Error | null = null;
 
       for (const resolver of this.resolvers) {
@@ -69,13 +69,18 @@ export class GeoLocationService {
           }
         } catch (error) {
           lastError = error as Error;
-          logger.warn(`Geo location resolver ${resolver.name} failed for IP ${ipAddress}:`, error);
+          logger.warn(
+            `Geo location resolver ${resolver.name} failed for IP ${ipAddress}:`,
+            error
+          );
           continue;
         }
       }
 
       if (!location) {
-        throw new Error(`All geo location resolvers failed. Last error: ${lastError?.message}`);
+        throw new Error(
+          `All geo location resolvers failed. Last error: ${lastError?.message}`
+        );
       }
 
       // 缓存结果
@@ -92,19 +97,21 @@ export class GeoLocationService {
   /**
    * 批量获取地理位置
    */
-  public async getLocationByBatch(ipAddresses: string[]): Promise<Array<{
-    ip: string;
-    location: GeoLocation | null;
-    error?: string;
-  }>> {
-    const results: Array<{
+  public async getLocationByBatch(ipAddresses: string[]): Promise<
+    Array<{
       ip: string;
-      location: GeoLocation | null;
+      location: GeoLocationInfo | null;
       error?: string;
-    }> = [];
+    }>
+  > {
+    // const results: Array<{
+    //   ip: string;
+    //   location: GeoLocation | null;
+    //   error?: string;
+    // }> = [];
 
     // 并行处理多个IP地址
-    const promises = ipAddresses.map(async (ip) => {
+    const promises = ipAddresses.map(async ip => {
       try {
         const location = await this.getLocationByIp(ip);
         return { ip, location, error: undefined };
@@ -112,7 +119,7 @@ export class GeoLocationService {
         return {
           ip,
           location: null,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         };
       }
     });
@@ -138,7 +145,8 @@ export class GeoLocationService {
    * 验证IP地址格式
    */
   private isValidIpAddress(ipAddress: string): boolean {
-    const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    const ipv4Regex =
+      /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     const ipv6Regex = /^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$/i;
 
     return ipv4Regex.test(ipAddress) || ipv6Regex.test(ipAddress);
@@ -156,7 +164,7 @@ export class GeoLocationService {
       /^169\.254\./,
       /^::1$/,
       /^fc00:/,
-      /^fe80:/
+      /^fe80:/,
     ];
 
     return privateRanges.some(regex => regex.test(ipAddress));
@@ -165,7 +173,7 @@ export class GeoLocationService {
   /**
    * 获取私有IP的默认位置
    */
-  private getPrivateIpLocation(ipAddress: string): GeoLocation {
+  private getPrivateIpLocation(_ipAddress: string): GeoLocationInfo {
     return {
       country: 'Unknown',
       countryCode: 'XX',
@@ -179,7 +187,7 @@ export class GeoLocationService {
   /**
    * 验证地理位置数据
    */
-  private isValidLocation(location: GeoLocation): boolean {
+  private isValidLocation(location: GeoLocationInfo): boolean {
     return !!(
       location.country &&
       location.countryCode &&
@@ -195,7 +203,7 @@ export class GeoLocationService {
   /**
    * 获取默认位置
    */
-  private getDefaultLocation(): GeoLocation {
+  private getDefaultLocation(): GeoLocationInfo {
     return {
       country: 'Unknown',
       countryCode: 'XX',
@@ -212,7 +220,7 @@ export class GeoLocationService {
 class BasicIpResolver implements IpGeoResolver {
   public readonly name = 'BasicIpResolver';
 
-  public async resolve(ipAddress: string): Promise<GeoLocation> {
+  public async resolve(ipAddress: string): Promise<GeoLocationInfo> {
     // 这里是一个简化的实现
     // 生产环境应该集成真实的IP地理位置服务，如：
     // - ip-api.com
@@ -251,7 +259,7 @@ class BasicIpResolver implements IpGeoResolver {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
@@ -259,31 +267,64 @@ class BasicIpResolver implements IpGeoResolver {
 
   private getCountryByHash(hash: number): string {
     const countries = [
-      'China', 'United States', 'Japan', 'Germany', 'United Kingdom',
-      'France', 'Canada', 'Australia', 'South Korea', 'Brazil'
+      'China',
+      'United States',
+      'Japan',
+      'Germany',
+      'United Kingdom',
+      'France',
+      'Canada',
+      'Australia',
+      'South Korea',
+      'Brazil',
     ];
     return countries[hash % countries.length];
   }
 
   private getCountryCodeByHash(hash: number): string {
     const countryCodes = [
-      'CN', 'US', 'JP', 'DE', 'GB', 'FR', 'CA', 'AU', 'KR', 'BR'
+      'CN',
+      'US',
+      'JP',
+      'DE',
+      'GB',
+      'FR',
+      'CA',
+      'AU',
+      'KR',
+      'BR',
     ];
     return countryCodes[hash % countryCodes.length];
   }
 
   private getRegionByHash(hash: number): string {
     const regions = [
-      'Beijing', 'California', 'Tokyo', 'Bavaria', 'England',
-      'Île-de-France', 'Ontario', 'New South Wales', 'Seoul', 'São Paulo'
+      'Beijing',
+      'California',
+      'Tokyo',
+      'Bavaria',
+      'England',
+      'Île-de-France',
+      'Ontario',
+      'New South Wales',
+      'Seoul',
+      'São Paulo',
     ];
     return regions[hash % regions.length];
   }
 
   private getCityByHash(hash: number): string {
     const cities = [
-      'Beijing', 'Los Angeles', 'Tokyo', 'Munich', 'London',
-      'Paris', 'Toronto', 'Sydney', 'Seoul', 'São Paulo'
+      'Beijing',
+      'Los Angeles',
+      'Tokyo',
+      'Munich',
+      'London',
+      'Paris',
+      'Toronto',
+      'Sydney',
+      'Seoul',
+      'São Paulo',
     ];
     return cities[hash % cities.length];
   }
@@ -300,17 +341,32 @@ class BasicIpResolver implements IpGeoResolver {
 
   private getTimezoneByHash(hash: number): string {
     const timezones = [
-      'Asia/Shanghai', 'America/Los_Angeles', 'Asia/Tokyo', 'Europe/Berlin',
-      'Europe/London', 'Europe/Paris', 'America/Toronto', 'Australia/Sydney',
-      'Asia/Seoul', 'America/São_Paulo'
+      'Asia/Shanghai',
+      'America/Los_Angeles',
+      'Asia/Tokyo',
+      'Europe/Berlin',
+      'Europe/London',
+      'Europe/Paris',
+      'America/Toronto',
+      'Australia/Sydney',
+      'Asia/Seoul',
+      'America/São_Paulo',
     ];
     return timezones[hash % timezones.length];
   }
 
   private getContinentByHash(hash: number): string {
     const continents = [
-      'Asia', 'North America', 'Asia', 'Europe', 'Europe',
-      'Europe', 'North America', 'Oceania', 'Asia', 'South America'
+      'Asia',
+      'North America',
+      'Asia',
+      'Europe',
+      'Europe',
+      'Europe',
+      'North America',
+      'Oceania',
+      'Asia',
+      'South America',
     ];
     return continents[hash % continents.length];
   }

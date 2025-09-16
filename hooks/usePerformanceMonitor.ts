@@ -17,6 +17,16 @@ export interface PerformanceSummary {
   cumulativeLayoutShift: number;
 }
 
+export interface PerformanceReport {
+  summary: {
+    pageLoadTime: number;
+    averageApiResponseTime: number;
+    errorCount: number;
+    resourceCount: number;
+  };
+  details: PerformanceMetrics;
+}
+
 export interface UsePerformanceMonitorReturn {
   metrics: PerformanceMetrics;
   summary: PerformanceSummary;
@@ -24,7 +34,7 @@ export interface UsePerformanceMonitorReturn {
   startMonitoring: () => void;
   stopMonitoring: () => void;
   resetMetrics: () => void;
-  getReport: () => any;
+  getReport: () => PerformanceReport;
 }
 
 /**

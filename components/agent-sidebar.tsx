@@ -1,12 +1,12 @@
 'use client';
 import { Layout, Typography, List, Avatar } from 'antd';
-import { cn } from '@/lib/utils';
-import { useMobile } from '@/hooks/use-mobile';
-import { useAgent } from '@/context/agent-context';
-import { useLanguage } from '@/context/language-context';
-import type { Agent } from '@/types/agent';
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { cn } from '../lib/utils';
+import { useMobile } from '../hooks/use-mobile';
+import { useAgent } from '../context/agent-context';
+import { useLanguage } from '../context/language-context';
+import type { Agent } from '../types/agent';
+import { X, Palette } from 'lucide-react';
+import { Button } from './ui/button';
 
 const { Title } = Typography;
 
@@ -132,6 +132,21 @@ export function AgentSidebar({
           无可用智能体
         </div>
       )}
+
+      {/* 主题设置按钮 */}
+      <div className='absolute bottom-4 left-4 right-4 z-10'>
+        <Button
+          variant="outline"
+          className='w-full justify-start gap-2 bg-white/10 dark:bg-zinc-900/20 backdrop-blur-sm border-pantone369-100/30 dark:border-pantone369-800/30 hover:bg-white/20 dark:hover:bg-zinc-900/30'
+          onClick={() => {
+            window.location.href = '/user/settings/theme';
+            if (isMobile) onClose();
+          }}
+        >
+          <Palette className='h-4 w-4' />
+          <span className='text-sm'>主题设置</span>
+        </Button>
+      </div>
     </Layout.Sider>
   );
 }

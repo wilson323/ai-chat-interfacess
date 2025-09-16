@@ -1,0 +1,264 @@
+---
+alwaysApply: true
+description: 综合开发标准和最佳实践
+---
+
+# 综合开发标准和最佳实践
+
+## 核心开发理念
+基于项目全局梳理分析，确保代码一致性、可靠性、规范性，避免代码冗余，确保高质量代码，确保可靠性，确保最终达到生产级别高端交付水平。
+
+## 开发环境要求
+- 必须在Windows环境下开发
+- 禁止使用WSL环境执行命令
+- 使用PowerShell而非Bash命令
+- 确保跨平台兼容性
+
+## 代码质量保障体系
+
+### 1. 编码规范
+- 使用camelCase命名变量和函数
+- 文件使用kebab-case命名
+- 仅使用命名导出
+- 使用Array<T>而非T[]语法
+- 严格类型检查
+
+### 2. 错误处理
+- 为所有函数添加错误处理
+- 严格按照错误处理架构规范
+- 复杂函数必须添加JSDoc注释
+- 全部方法与路由提供错误处理与超时
+- 返回统一错误格式
+
+### 3. 测试要求
+- 测试优先：先写测试，后写实现
+- 使用真实数据测试，禁止模拟数据
+- 确保100%通过（覆盖率 >80%）
+- 集成钩子执行测试
+- 在任务间验证架构符合度
+
+### 4. 项目一致性
+- 严格遵守开发规范和钩子要求
+- 确保代理功能不偏离核心目标
+- 每个阶段落实好且也测试验证后请自动提交git
+- 禁止代码组件功能等的冗余
+- 新增前先全局梳理确保不冗余再去新增
+
+## JSX特殊字符处理规范
+
+### 核心原则
+**严格禁止使用HTML实体编码，必须使用JavaScript表达式处理特殊字符**
+
+```typescript
+// ✅ 正确：使用JavaScript表达式
+<label>响应时间 {'<'} 50ms</label>
+<label>内存使用 {'<'} 100MB</label>
+<label>价格范围 {'$'}100 - {'$'}500</label>
+
+// ❌ 错误：直接使用特殊字符
+<label>响应时间 < 50ms</label>
+
+// ❌ 错误：HTML实体编码
+<label>响应时间 &lt; 50ms</label>
+<label>内存使用 &lt; 100MB</label>
+```
+
+## TypeScript严格类型检查
+
+### 核心配置
+```typescript
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  }
+}
+```
+
+### 类型安全要求
+- 禁止使用any类型（除非绝对必要）
+- 使用严格的null检查
+- 确保所有props都有明确的类型定义
+- 使用泛型提高代码复用性
+
+## 安全标准
+
+### 环境变量管理
+```typescript
+// ✅ 正确：使用环境变量
+const config = {
+  databaseUrl: process.env.DATABASE_URL!,
+  jwtSecret: process.env.JWT_SECRET!,
+  apiKey: process.env.API_KEY!
+};
+
+// ❌ 错误：硬编码敏感信息
+const config = {
+  databaseUrl: 'postgresql://user:password@localhost:5432/dbname',
+  jwtSecret: 'hardcoded-secret'
+};
+```
+
+### 输入验证和输出编码
+- 实施输入验证和输出编码
+- 避免硬编码敏感信息
+- 使用HTTPS和安全头
+- 实施身份验证和授权
+
+## 性能优化标准
+
+### React性能优化
+```typescript
+// ✅ 正确：使用React.memo
+export const ExpensiveComponent = React.memo(({ data }: Props) => {
+  return <div>{data}</div>;
+});
+
+// ✅ 正确：使用useMemo和useCallback
+export function OptimizedComponent({ items }: Props) {
+  const expensiveValue = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.value, 0);
+  }, [items]);
+
+  const handleClick = useCallback((id: string) => {
+    // 处理点击
+  }, []);
+
+  return <div onClick={handleClick}>{expensiveValue}</div>;
+}
+```
+
+## 项目结构规范
+
+### 目录结构
+```
+app/                    # Next.js App Router页面
+components/             # React组件库
+  admin/               # 管理界面组件
+  ui/                  # 基础UI组件
+  shared/              # 共享组件
+lib/                   # 工具函数库
+types/                 # TypeScript类型定义
+hooks/                 # 自定义React钩子
+context/               # React上下文
+__tests__/             # 测试文件
+docs/                  # 项目文档
+.cursor/rules/         # Cursor Rules配置
+```
+
+### 导入路径规范
+```typescript
+// ✅ 正确：使用@别名
+import { Button } from '@/components/ui';
+import { userService } from '@/lib/services';
+import { UserData } from '@/types/user';
+
+// ❌ 错误：相对路径
+import { Button } from '../../../components/ui';
+```
+
+## 自动化流程
+
+### Git自动化
+```bash
+# ✅ 正确：阶段性提交
+git add .
+git commit -m "feat: 实现用户管理功能
+
+- 添加用户表单组件
+- 实现用户CRUD操作
+- 添加用户权限验证
+- 完成单元测试覆盖
+
+测试通过: ✅
+类型检查: ✅
+代码规范: ✅"
+
+git push origin feature/user-management
+```
+
+### 质量检查自动化
+```bash
+# ✅ 正确：质量检查脚本
+#!/bin/bash
+echo "🔍 开始代码质量检查..."
+
+# 1. 类型检查
+npm run check-types
+# 2. 代码规范检查
+npm run lint
+# 3. 格式化检查
+npm run format:check
+# 4. 测试运行
+npm run test
+
+echo "✅ 所有检查通过"
+```
+
+## 禁止事项
+
+### 严格禁止
+- ❌ 使用HTML实体编码（&lt;, &gt;, &amp;等）
+- ❌ 使用any类型（除非绝对必要）
+- ❌ 忽略错误处理
+- ❌ 使用默认导出（除非特殊情况）
+- ❌ 硬编码敏感信息
+- ❌ 使用模拟数据、模拟服务
+
+### 避免使用
+- ⚠️ 使用var声明变量
+- ⚠️ 使用==比较（应使用===）
+- ⚠️ 使用eval()或Function构造函数
+- ⚠️ 直接修改props
+- ⚠️ 在render中创建新对象
+
+## 检查清单
+
+### 开发阶段
+- [ ] 代码符合命名规范
+- [ ] 类型定义完整
+- [ ] 错误处理完善
+- [ ] 无console.log残留
+- [ ] 无未使用的导入
+- [ ] JSX特殊字符正确处理
+- [ ] 使用真实数据测试
+- [ ] 测试覆盖率 >80%
+
+### 构建阶段
+- [ ] TypeScript类型检查通过
+- [ ] ESLint检查通过
+- [ ] 项目构建成功
+- [ ] 所有测试通过
+- [ ] 性能优化到位
+- [ ] 安全配置正确
+
+### 部署阶段
+- [ ] 环境变量正确配置
+- [ ] 构建产物验证
+- [ ] 健康检查通过
+- [ ] 监控配置到位
+- [ ] 文档更新完整
+
+## 持续改进
+
+### 质量监控
+- 定期代码质量审计
+- 性能指标监控
+- 安全漏洞扫描
+- 依赖更新检查
+- 用户反馈收集
+
+### 团队协作
+- 代码审查流程
+- 知识分享机制
+- 最佳实践文档
+- 培训计划制定
+- 经验总结分享
+
+参考配置文件：[tsconfig.json](mdc:tsconfig.json), [package.json](mdc:package.json), [next.config.mjs](mdc:next.config.mjs)

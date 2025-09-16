@@ -6,7 +6,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardFooter,
+} from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChatHeader } from './ChatHeader';
 import { ChatMessages } from './ChatMessages';
@@ -14,12 +19,12 @@ import { ChatInput } from './ChatInput';
 import { ChatHistory } from '../chat-history';
 import { HistoryManager } from '../history-manager';
 import { useAgent } from '@/context/agent-context';
-import { useChatHistory } from '@/hooks/useChatHistory';
-import { useLanguage } from '@/context/language-context';
 import { getGlobalChatService } from '@/lib/services/multi-agent-chat-service';
-import type { Agent, GlobalVariable } from '@/types/agent';
-import type { Message } from '@/types/message';
-import type { ProcessingStep } from '@/types/message';
+import { saveMessagesToStorage } from '@/lib/storage/index';
+import type { Agent } from '@/types/agent';
+import type { GlobalVariable } from '@/types';
+import type { Message, ProcessingStep } from '@/types/message';
+import { MessageType } from '@/types/message';
 
 interface UploadedFile {
   id: string;
@@ -33,30 +38,22 @@ interface MultiAgentChatContainerProps {
   className?: string;
 }
 
-export function MultiAgentChatContainer({ className }: MultiAgentChatContainerProps) {
+export function MultiAgentChatContainer({
+  className,
+}: MultiAgentChatContainerProps) {
   // 获取智能体上下文
   const {
     selectedAgent,
     agents,
     selectAgent,
-    sidebarOpen,
-    historySidebarOpen,
     closeSidebars,
-    toggleSidebar,
     globalVariables,
     setGlobalVariables,
-    showGlobalVariablesForm,
-    setShowGlobalVariablesForm,
     abortCurrentRequest,
     setAbortController,
-    isRequestActive
+    isRequestActive,
+    setShowGlobalVariablesForm,
   } = useAgent();
-
-  // 获取语言上下文
-  const { t } = useLanguage();
-
-  // 获取聊天历史功能
-  const { sessions, saveSessionMessages, getSessionMessages } = useChatHistory();
 
   // 聊天状态
   const [messages, setMessages] = useState<Message[]>([]);
@@ -72,6 +69,19 @@ export function MultiAgentChatContainer({ className }: MultiAgentChatContainerPr
   // 聊天服务实例
   const chatServiceRef = useRef(getGlobalChatService());
   const abortControllerRef = useRef<AbortController | null>(null);
+  // 防重复初始化：记录已初始化的智能体ID
+  const initializedAgentIdRef = useRef<string | null>(null);
+  // 使用 ref 保存易变依赖，保证 effect 依赖恒定
+  const selectedAgentRef = useRef(selectedAgent);
+  const messagesRef = useRef(messages);
+
+  useEffect(() => {
+    selectedAgentRef.current = selectedAgent;
+  }, [selectedAgent]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // 当前活跃的智能体信息
   const [activeAgentInfo, setActiveAgentInfo] = useState<{
@@ -80,69 +90,31 @@ export function MultiAgentChatContainer({ className }: MultiAgentChatContainerPr
     agentType: string;
   } | null>(null);
 
-  // 监听智能体切换事件
-  useEffect(() => {
-    const handleAgentSwitching = (event: CustomEvent) => {
-      const { toAgent, startNewConversation } = event.detail;
-      console.log('🔄 Agent switching detected:', toAgent?.name);
-
-      if (startNewConversation) {
-        // 开始新对话
-        handleNewChat();
-      }
-    };
-
-    window.addEventListener('agent-switching', handleAgentSwitching as EventListener);
-    return () => {
-      window.removeEventListener('agent-switching', handleAgentSwitching as EventListener);
-    };
-  }, []);
-
-  // 监听发送消息事件
-  useEffect(() => {
-    const handleSendMessageEvent = (event: CustomEvent) => {
-      const { message } = event.detail;
-      setInput(message);
-      // Note: The actual send will be triggered by the ChatInput component
-    };
-
-    window.addEventListener('send-message', handleSendMessageEvent as EventListener);
-    return () => {
-      window.removeEventListener('send-message', handleSendMessageEvent as EventListener);
-    };
-  }, [selectedAgent]);
-
-  // 初始化聊天会话
-  useEffect(() => {
-    if (selectedAgent) {
-      initializeChatSession();
-    }
-  }, [selectedAgent]);
-
-  // 初始化聊天会话
-  const initializeChatSession = useCallback(async () => {
-    if (!selectedAgent) return;
-
+  // 统一的初始化实现，避免依赖数组长度变化
+  const runInitialize = async (agent: Agent) => {
     try {
       setIsTyping(true);
       const chatService = chatServiceRef.current;
-      const initResponse = await chatService.initializeChat(selectedAgent);
+      const initResponse = await chatService.initializeChat(agent);
 
       console.log('🚀 Chat session initialized:', initResponse);
 
       // 设置当前会话ID
-      setCurrentSessionId(initResponse.data.chatId);
+      const newSessionId = initResponse.data?.chatId || initResponse.chatId;
+      setCurrentSessionId(newSessionId);
 
-      // 如果是新的对话，添加欢迎消息
-      if (messages.length === 0 && initResponse.data.app.chatConfig.welcomeText) {
+      // 首次会话建立时注入欢迎消息
+      if (
+        (!currentSessionId || currentSessionId.length === 0) &&
+        initResponse.data?.app?.chatConfig?.welcomeText
+      ) {
         const welcomeMessage: Message = {
           id: `welcome-${Date.now()}`,
+          type: MessageType.Text,
           role: 'assistant',
           content: initResponse.data.app.chatConfig.welcomeText,
           timestamp: new Date(),
-          agentId: selectedAgent.id,
-          agentName: selectedAgent.name,
-          agentType: selectedAgent.type,
+          agentId: agent.id,
         };
 
         setMessages([welcomeMessage]);
@@ -152,7 +124,86 @@ export function MultiAgentChatContainer({ className }: MultiAgentChatContainerPr
     } finally {
       setIsTyping(false);
     }
-  }, [selectedAgent, messages.length]);
+  };
+
+  // 开始新对话
+  const handleNewChat = useCallback(() => {
+    setMessages([]);
+    setCurrentSessionId('');
+    setProcessingSteps([]);
+    setShowProcessingFlow(false);
+    setActiveAgentInfo(null);
+
+    const agent = selectedAgentRef.current;
+    if (agent) {
+      runInitialize(agent);
+    }
+  }, [selectedAgent?.id, setMessages, setCurrentSessionId, setProcessingSteps, setShowProcessingFlow, setActiveAgentInfo]);
+
+  // 监听智能体切换事件（依赖已在上方定义）
+  useEffect(() => {
+    const handleAgentSwitching = (event: CustomEvent) => {
+      const { toAgent, startNewConversation } = event.detail;
+      console.log('🔄 Agent switching detected:', toAgent?.name);
+
+      if (startNewConversation) {
+        handleNewChat();
+      }
+    };
+
+    window.addEventListener(
+      'agent-switching',
+      handleAgentSwitching as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        'agent-switching',
+        handleAgentSwitching as EventListener
+      );
+    };
+  }, [handleNewChat]);
+
+  // 监听发送消息事件
+  useEffect(() => {
+    const handleSendMessageEvent = (event: CustomEvent) => {
+      const { message } = event.detail;
+      setInput(message);
+      // Note: The actual send will be triggered by the ChatInput component
+    };
+
+    window.addEventListener(
+      'send-message',
+      handleSendMessageEvent as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        'send-message',
+        handleSendMessageEvent as EventListener
+      );
+    };
+  }, [selectedAgent]);
+
+  // 初始化聊天会话（固定依赖，仅依赖 agent id）
+  useEffect(() => {
+    const agent = selectedAgentRef.current;
+    if (!agent) return;
+    // 同一智能体仅初始化一次
+    if (initializedAgentIdRef.current === agent.id) return;
+    initializedAgentIdRef.current = agent.id;
+    runInitialize(agent);
+  }, [selectedAgent?.id]);
+
+  // 保存聊天历史（前置使其可被依赖）
+  const saveChatHistory = useCallback(async () => {
+    if (!currentSessionId || messages.length === 0) return;
+
+    try {
+      saveMessagesToStorage(currentSessionId, messages);
+      console.log('💾 Chat history saved');
+    } catch (error) {
+      console.error('Failed to save chat history:', error);
+    }
+  }, [currentSessionId, messages]);
 
   // 发送消息
   const handleSendMessage = useCallback(async () => {
@@ -162,23 +213,21 @@ export function MultiAgentChatContainer({ className }: MultiAgentChatContainerPr
     // 创建用户消息
     const userMessage: Message = {
       id: `user-${Date.now()}`,
+      type: MessageType.Text,
       role: 'user',
       content: messageText,
       timestamp: new Date(),
       agentId: selectedAgent.id,
-      agentName: selectedAgent.name,
-      agentType: selectedAgent.type,
     };
 
     // 创建助手消息占位符
     const assistantMessage: Message = {
       id: `assistant-${Date.now()}`,
+      type: MessageType.Text,
       role: 'assistant',
       content: '',
       timestamp: new Date(),
       agentId: selectedAgent.id,
-      agentName: selectedAgent.name,
-      agentType: selectedAgent.type,
     };
 
     // 更新消息列表
@@ -199,106 +248,109 @@ export function MultiAgentChatContainer({ className }: MultiAgentChatContainerPr
       const messageHistory = [...messages, userMessage];
 
       // 发送消息到多智能体聊天服务
-      const { agentId: responseAgentId, response, agentName, agentType } = await chatService.sendMessage(
-        messageHistory,
-        selectedAgent,
-        {
-          stream: true,
-          variables: globalVariables,
-          onStart: () => {
-            console.log('🚀 Chat stream started');
-          },
-          onChunk: (chunk: string) => {
-            // 更新助手消息内容
-            setMessages(prev => prev.map(msg =>
+      const {
+        agentId: responseAgentId,
+        agentName,
+        agentType,
+      } = await chatService.sendMessage(messageHistory, selectedAgent, {
+        stream: true,
+        variables: globalVariables as unknown as Record<string, unknown>,
+        onStart: () => {
+          console.log('🚀 Chat stream started');
+        },
+        onChunk: (chunk: string) => {
+          // 更新助手消息内容
+          setMessages(prev =>
+            prev.map(msg =>
               msg.id === assistantMessage.id
                 ? { ...msg, content: msg.content + chunk }
                 : msg
-            ));
-          },
-          onProcessingStep: (step) => {
-            setProcessingSteps(prev => [...prev, step]);
-            setShowProcessingFlow(true);
-          },
-          onIntermediateValue: (value, eventType) => {
-            console.log('🔄 Intermediate value:', eventType, value);
-          },
-          onError: (error) => {
-            console.error('Chat error:', error);
-            setMessages(prev => prev.map(msg =>
+            )
+          );
+        },
+        onProcessingStep: (step: unknown) => {
+          setProcessingSteps(prev => [...prev, step as ProcessingStep]);
+          setShowProcessingFlow(true);
+        },
+        onIntermediateValue: (value, eventType) => {
+          console.log('🔄 Intermediate value:', eventType, value);
+        },
+        onError: error => {
+          console.error('Chat error:', error);
+          setMessages(prev =>
+            prev.map(msg =>
               msg.id === assistantMessage.id
-                ? { ...msg, content: msg.content + `\n\n❌ 错误: ${error.message}` }
+                ? {
+                    ...msg,
+                    content: msg.content + `\n\n❌ 错误: ${error.message}`,
+                  }
                 : msg
-            ));
-          },
-          onFinish: () => {
-            console.log('🎉 Chat stream finished');
-            setIsTyping(false);
-            setIsSending(false);
-            setAbortController(null);
-            abortControllerRef.current = null;
+            )
+          );
+        },
+        onFinish: () => {
+          console.log('🎉 Chat stream finished');
+          setIsTyping(false);
+          setIsSending(false);
+          setAbortController(null);
+          abortControllerRef.current = null;
 
-            // 更新活跃智能体信息
-            setActiveAgentInfo({
-              agentId: responseAgentId,
-              agentName,
-              agentType
-            });
+          // 更新活跃智能体信息
+          setActiveAgentInfo({
+            agentId: responseAgentId,
+            agentName,
+            agentType,
+          });
 
-            // 保存聊天记录
-            saveChatHistory();
-          },
-          signal: abortController.signal
-        }
-      );
+          // 保存聊天记录
+          saveChatHistory();
+        },
+        signal: abortController.signal,
+      });
 
       console.log('🎯 Response from agent:', agentName, `(${agentType})`);
-
     } catch (error) {
       console.error('Failed to send message:', error);
-      setMessages(prev => prev.map(msg =>
-        msg.id === assistantMessage.id
-          ? { ...msg, content: msg.content + '\n\n❌ 发送失败，请重试' }
-          : msg
-      ));
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === assistantMessage.id
+            ? { ...msg, content: msg.content + '\n\n❌ 发送失败，请重试' }
+            : msg
+        )
+      );
       setIsTyping(false);
       setIsSending(false);
       setAbortController(null);
       abortControllerRef.current = null;
     }
-  }, [selectedAgent, messages, globalVariables, isSending, setAbortController]);
-
-  // 保存聊天历史
-  const saveChatHistory = useCallback(async () => {
-    if (!currentSessionId || messages.length === 0) return;
-
-    try {
-      await saveSessionMessages(currentSessionId, messages);
-      console.log('💾 Chat history saved');
-    } catch (error) {
-      console.error('Failed to save chat history:', error);
-    }
-  }, [currentSessionId, messages, saveSessionMessages]);
-
-  // 开始新对话
-  const handleNewChat = useCallback(() => {
-    setMessages([]);
-    setCurrentSessionId('');
-    setProcessingSteps([]);
-    setShowProcessingFlow(false);
-    setActiveAgentInfo(null);
-
-    if (selectedAgent) {
-      initializeChatSession();
-    }
-  }, [selectedAgent, initializeChatSession]);
+  }, [
+    input,
+    selectedAgent,
+    messages,
+    globalVariables,
+    isSending,
+    setAbortController,
+    saveChatHistory,
+    setMessages,
+    setInput,
+    setIsSending,
+    setIsTyping,
+    setProcessingSteps,
+    setShowProcessingFlow,
+    setActiveAgentInfo,
+    abortControllerRef,
+    chatServiceRef,
+  ]);
 
   // 选择历史对话
-  const handleSelectHistory = useCallback(async (historyMessages: Message[], chatId: string) => {
-    setMessages(historyMessages);
-    setCurrentSessionId(chatId);
-    closeSidebars();
-  }, [closeSidebars]);
+  const handleSelectHistory = useCallback(
+    async (historyMessages: Message[], chatId: string) => {
+      setMessages(historyMessages);
+      setCurrentSessionId(chatId);
+      closeSidebars();
+    },
+    [closeSidebars]
+  );
 
   // 处理文件上传
   const handleFileUpload = useCallback(async (files: File[]) => {
@@ -322,24 +374,25 @@ export function MultiAgentChatContainer({ className }: MultiAgentChatContainerPr
   }, []);
 
   // 处理智能体变更
-  const handleAgentChange = useCallback((agent: Agent) => {
-    selectAgent(agent);
-  }, [selectAgent]);
+  const handleAgentChange = useCallback(
+    (agent: Agent) => {
+      selectAgent(agent);
+    },
+    [selectAgent]
+  );
 
   // 处理全局变量变更
-  const handleGlobalVariablesChange = useCallback((variables: GlobalVariable[]) => {
-    const variablesMap = variables.reduce((acc, variable) => {
-      acc[variable.key] = variable.value;
-      return acc;
-    }, {} as Record<string, any>);
-
-    setGlobalVariables(variablesMap);
-  }, [setGlobalVariables]);
+  const handleGlobalVariablesChange = useCallback(
+    (variables: GlobalVariable[]) => {
+      setGlobalVariables(variables);
+    },
+    [setGlobalVariables]
+  );
 
   // 处理设置点击
   const handleSettingsClick = useCallback(() => {
     setShowGlobalVariablesForm(true);
-  }, []);
+  }, [setShowGlobalVariablesForm]);
 
   // 中断当前请求
   const handleAbortRequest = useCallback(() => {
@@ -373,23 +426,23 @@ export function MultiAgentChatContainer({ className }: MultiAgentChatContainerPr
               isTyping={isTyping}
               processingSteps={processingSteps}
               showProcessingFlow={showProcessingFlow}
-              onEditMessage={(message) => {
+              onEditMessage={message => {
                 // 实现消息编辑
                 console.log('Edit message:', message);
               }}
-              onDeleteMessage={(message) => {
+              onDeleteMessage={message => {
                 // 实现消息删除
                 console.log('Delete message:', message);
               }}
-              onCopyMessage={(message) => {
+              onCopyMessage={message => {
                 // 实现消息复制
                 navigator.clipboard.writeText(message.content);
               }}
-              onLikeMessage={(message) => {
+              onLikeMessage={message => {
                 // 实现消息点赞
                 console.log('Like message:', message);
               }}
-              onDislikeMessage={(message) => {
+              onDislikeMessage={message => {
                 // 实现消息点踩
                 console.log('Dislike message:', message);
               }}

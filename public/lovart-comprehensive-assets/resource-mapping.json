@@ -1,0 +1,2611 @@
+{
+  "metadata": {
+    "generatedAt": "2025-09-15T11:40:14.704Z",
+    "totalThemes": 5,
+    "totalCategories": 8
+  },
+  "themes": {
+    "modern": {
+      "ui-interface": [
+        {
+          "name": "0d8ddb75-d08b-48c0-be15-127dfb7e9e98(1).png",
+          "path": "/lovart-comprehensive-assets/ui-interface/modern/0d8ddb75-d08b-48c0-be15-127dfb7e9e98(1).png",
+          "size": 1002811,
+          "originalPath": "0d8ddb75-d08b-48c0-be15-127dfb7e9e98(1).png"
+        },
+        {
+          "name": "c9457355-729f-43e4-b7ee-fa7f037c3228(1).png",
+          "path": "/lovart-comprehensive-assets/ui-interface/modern/c9457355-729f-43e4-b7ee-fa7f037c3228(1).png",
+          "size": 1059292,
+          "originalPath": "c9457355-729f-43e4-b7ee-fa7f037c3228(1).png"
+        }
+      ],
+      "components": [
+        {
+          "name": "006c8387-5285-4e59-84a7-adb96b3d96a7(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/006c8387-5285-4e59-84a7-adb96b3d96a7(1).png",
+          "size": 593666,
+          "originalPath": "006c8387-5285-4e59-84a7-adb96b3d96a7(1).png"
+        },
+        {
+          "name": "07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d(1).png",
+          "size": 792145,
+          "originalPath": "07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d(1).png"
+        },
+        {
+          "name": "114bf95c-312d-48f3-b51b-67f607d865aa(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/114bf95c-312d-48f3-b51b-67f607d865aa(1).png",
+          "size": 885508,
+          "originalPath": "114bf95c-312d-48f3-b51b-67f607d865aa(1).png"
+        },
+        {
+          "name": "1e2f3c9c-506c-4599-8735-06aea7aa21dd(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/1e2f3c9c-506c-4599-8735-06aea7aa21dd(1).png",
+          "size": 569525,
+          "originalPath": "1e2f3c9c-506c-4599-8735-06aea7aa21dd(1).png"
+        },
+        {
+          "name": "27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8(1).png",
+          "size": 781623,
+          "originalPath": "27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8(1).png"
+        },
+        {
+          "name": "2d96d13d-828a-4c1f-88d4-8f094240a5a4(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/2d96d13d-828a-4c1f-88d4-8f094240a5a4(1).png",
+          "size": 437811,
+          "originalPath": "2d96d13d-828a-4c1f-88d4-8f094240a5a4(1).png"
+        },
+        {
+          "name": "351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b(1).png",
+          "size": 633407,
+          "originalPath": "351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b(1).png"
+        },
+        {
+          "name": "3eb25b31-457e-47dc-a691-20e399ea580b(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/3eb25b31-457e-47dc-a691-20e399ea580b(1).png",
+          "size": 718710,
+          "originalPath": "3eb25b31-457e-47dc-a691-20e399ea580b(1).png"
+        },
+        {
+          "name": "4b985711-8703-4729-93a1-06d9186e42b6(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/4b985711-8703-4729-93a1-06d9186e42b6(1).png",
+          "size": 549670,
+          "originalPath": "4b985711-8703-4729-93a1-06d9186e42b6(1).png"
+        },
+        {
+          "name": "5122054d-82ae-4eca-948a-7c856a70e435(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/5122054d-82ae-4eca-948a-7c856a70e435(1).png",
+          "size": 707220,
+          "originalPath": "5122054d-82ae-4eca-948a-7c856a70e435(1).png"
+        },
+        {
+          "name": "5909ee5f-bd78-4b3e-b953-e83c28855d82(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/5909ee5f-bd78-4b3e-b953-e83c28855d82(1).png",
+          "size": 713497,
+          "originalPath": "5909ee5f-bd78-4b3e-b953-e83c28855d82(1).png"
+        },
+        {
+          "name": "62848ea0-b51d-45af-8415-5ce24e10f36a(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/62848ea0-b51d-45af-8415-5ce24e10f36a(1).png",
+          "size": 725524,
+          "originalPath": "62848ea0-b51d-45af-8415-5ce24e10f36a(1).png"
+        },
+        {
+          "name": "6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1(1).png",
+          "size": 705777,
+          "originalPath": "6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1(1).png"
+        },
+        {
+          "name": "742a7ecb-e413-4030-ac61-21d78c915ede(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/742a7ecb-e413-4030-ac61-21d78c915ede(1).png",
+          "size": 837956,
+          "originalPath": "742a7ecb-e413-4030-ac61-21d78c915ede(1).png"
+        },
+        {
+          "name": "7b1f3415-f17d-43fc-ba4e-7a5014da1cd1(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/7b1f3415-f17d-43fc-ba4e-7a5014da1cd1(1).png",
+          "size": 689865,
+          "originalPath": "7b1f3415-f17d-43fc-ba4e-7a5014da1cd1(1).png"
+        },
+        {
+          "name": "86e394a7-f886-4abd-9b19-72301c36a392(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/86e394a7-f886-4abd-9b19-72301c36a392(1).png",
+          "size": 411230,
+          "originalPath": "86e394a7-f886-4abd-9b19-72301c36a392(1).png"
+        },
+        {
+          "name": "8dd3a592-a5d0-44db-8002-6d110eac968c(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/8dd3a592-a5d0-44db-8002-6d110eac968c(1).png",
+          "size": 632879,
+          "originalPath": "8dd3a592-a5d0-44db-8002-6d110eac968c(1).png"
+        },
+        {
+          "name": "9894764b-b1ec-4448-98bd-00397ad0ddc3(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/9894764b-b1ec-4448-98bd-00397ad0ddc3(1).png",
+          "size": 521892,
+          "originalPath": "9894764b-b1ec-4448-98bd-00397ad0ddc3(1).png"
+        },
+        {
+          "name": "9e325608-d2df-4a4d-a880-b8011c69a720(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/9e325608-d2df-4a4d-a880-b8011c69a720(1).png",
+          "size": 758417,
+          "originalPath": "9e325608-d2df-4a4d-a880-b8011c69a720(1).png"
+        },
+        {
+          "name": "a8cf90e1-94e0-4280-ae4d-c5220a5a6a19(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/a8cf90e1-94e0-4280-ae4d-c5220a5a6a19(1).png",
+          "size": 511078,
+          "originalPath": "a8cf90e1-94e0-4280-ae4d-c5220a5a6a19(1).png"
+        },
+        {
+          "name": "b83537c4-4315-4f1e-9970-b0416829e686(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/b83537c4-4315-4f1e-9970-b0416829e686(1).png",
+          "size": 480137,
+          "originalPath": "b83537c4-4315-4f1e-9970-b0416829e686(1).png"
+        },
+        {
+          "name": "c1bcffd3-ce57-4b3a-9571-f1a674db54cc(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/c1bcffd3-ce57-4b3a-9571-f1a674db54cc(1).png",
+          "size": 704818,
+          "originalPath": "c1bcffd3-ce57-4b3a-9571-f1a674db54cc(1).png"
+        },
+        {
+          "name": "cfc863f5-f7d5-4cbe-bb43-2f1d855161f2(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/cfc863f5-f7d5-4cbe-bb43-2f1d855161f2(1).png",
+          "size": 677423,
+          "originalPath": "cfc863f5-f7d5-4cbe-bb43-2f1d855161f2(1).png"
+        },
+        {
+          "name": "dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad(1).png",
+          "size": 603738,
+          "originalPath": "dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad(1).png"
+        },
+        {
+          "name": "e29fa5b0-6264-409d-9244-a6687c052e8a(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/e29fa5b0-6264-409d-9244-a6687c052e8a(1).png",
+          "size": 571562,
+          "originalPath": "e29fa5b0-6264-409d-9244-a6687c052e8a(1).png"
+        },
+        {
+          "name": "e5089260-90ad-4392-b4aa-c8ec5c83fa4b(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/e5089260-90ad-4392-b4aa-c8ec5c83fa4b(1).png",
+          "size": 745350,
+          "originalPath": "e5089260-90ad-4392-b4aa-c8ec5c83fa4b(1).png"
+        },
+        {
+          "name": "ea95ca79-2933-4cef-b0ce-b69453d8836b(1).png",
+          "path": "/lovart-comprehensive-assets/components/modern/ea95ca79-2933-4cef-b0ce-b69453d8836b(1).png",
+          "size": 503783,
+          "originalPath": "ea95ca79-2933-4cef-b0ce-b69453d8836b(1).png"
+        }
+      ],
+      "icons": [
+        {
+          "name": "038bf7a8-4966-452d-8c6c-fe78a9bf0e86(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/038bf7a8-4966-452d-8c6c-fe78a9bf0e86(2).png",
+          "size": 11968,
+          "originalPath": "038bf7a8-4966-452d-8c6c-fe78a9bf0e86(2).png"
+        },
+        {
+          "name": "09d65e82-3492-45e0-975a-4378ecfc4048(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/09d65e82-3492-45e0-975a-4378ecfc4048(2).png",
+          "size": 12122,
+          "originalPath": "09d65e82-3492-45e0-975a-4378ecfc4048(2).png"
+        },
+        {
+          "name": "114bf95c-312d-48f3-b51b-67f607d865aa(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/114bf95c-312d-48f3-b51b-67f607d865aa(2).png",
+          "size": 16800,
+          "originalPath": "114bf95c-312d-48f3-b51b-67f607d865aa(2).png"
+        },
+        {
+          "name": "26360e34-6732-411a-b777-1fd9622e1bb6(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/26360e34-6732-411a-b777-1fd9622e1bb6(2).png",
+          "size": 10688,
+          "originalPath": "26360e34-6732-411a-b777-1fd9622e1bb6(2).png"
+        },
+        {
+          "name": "2dac7146-e195-4fb5-a8c1-8ce9dbd93066(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/2dac7146-e195-4fb5-a8c1-8ce9dbd93066(2).png",
+          "size": 12704,
+          "originalPath": "2dac7146-e195-4fb5-a8c1-8ce9dbd93066(2).png"
+        },
+        {
+          "name": "3c9038b9-a062-4fed-85f2-bbd67093c4f1(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/3c9038b9-a062-4fed-85f2-bbd67093c4f1(2).png",
+          "size": 17674,
+          "originalPath": "3c9038b9-a062-4fed-85f2-bbd67093c4f1(2).png"
+        },
+        {
+          "name": "4ec73d19-7e5a-4be5-a51d-ca9e097e8e93(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/4ec73d19-7e5a-4be5-a51d-ca9e097e8e93(2).png",
+          "size": 11106,
+          "originalPath": "4ec73d19-7e5a-4be5-a51d-ca9e097e8e93(2).png"
+        },
+        {
+          "name": "5909ee5f-bd78-4b3e-b953-e83c28855d82(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/5909ee5f-bd78-4b3e-b953-e83c28855d82(2).png",
+          "size": 12694,
+          "originalPath": "5909ee5f-bd78-4b3e-b953-e83c28855d82(2).png"
+        },
+        {
+          "name": "65b47960-76e7-42e9-a604-4e9d9ba53ef7(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/65b47960-76e7-42e9-a604-4e9d9ba53ef7(2).png",
+          "size": 12722,
+          "originalPath": "65b47960-76e7-42e9-a604-4e9d9ba53ef7(2).png"
+        },
+        {
+          "name": "72f3576e-caec-4176-b9d9-d4c13a994a39(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/72f3576e-caec-4176-b9d9-d4c13a994a39(2).png",
+          "size": 13370,
+          "originalPath": "72f3576e-caec-4176-b9d9-d4c13a994a39(2).png"
+        },
+        {
+          "name": "7eed67fe-3ba7-4ddc-bb70-aa1135ff8335(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/7eed67fe-3ba7-4ddc-bb70-aa1135ff8335(2).png",
+          "size": 12016,
+          "originalPath": "7eed67fe-3ba7-4ddc-bb70-aa1135ff8335(2).png"
+        },
+        {
+          "name": "8de9f284-862d-490e-9e8a-760f4c142b3d(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/8de9f284-862d-490e-9e8a-760f4c142b3d(2).png",
+          "size": 11942,
+          "originalPath": "8de9f284-862d-490e-9e8a-760f4c142b3d(2).png"
+        },
+        {
+          "name": "99265f7e-d6e7-427e-ab31-64a734f3d562(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/99265f7e-d6e7-427e-ab31-64a734f3d562(2).png",
+          "size": 19130,
+          "originalPath": "99265f7e-d6e7-427e-ab31-64a734f3d562(2).png"
+        },
+        {
+          "name": "b9b9254d-302a-4690-aa8a-1314e66021b8(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/b9b9254d-302a-4690-aa8a-1314e66021b8(2).png",
+          "size": 15050,
+          "originalPath": "b9b9254d-302a-4690-aa8a-1314e66021b8(2).png"
+        },
+        {
+          "name": "c50ca07d-bc9f-423a-8a2a-64a8b87c5a33(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/c50ca07d-bc9f-423a-8a2a-64a8b87c5a33(2).png",
+          "size": 11466,
+          "originalPath": "c50ca07d-bc9f-423a-8a2a-64a8b87c5a33(2).png"
+        },
+        {
+          "name": "d59721da-fd82-4d32-805b-14377478bf3d(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/d59721da-fd82-4d32-805b-14377478bf3d(2).png",
+          "size": 10674,
+          "originalPath": "d59721da-fd82-4d32-805b-14377478bf3d(2).png"
+        },
+        {
+          "name": "e472f1ab-e541-4fe2-add2-d6c1c6fb702a(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/e472f1ab-e541-4fe2-add2-d6c1c6fb702a(2).png",
+          "size": 15976,
+          "originalPath": "e472f1ab-e541-4fe2-add2-d6c1c6fb702a(2).png"
+        },
+        {
+          "name": "e9e10106-54be-46aa-9ef1-431bb9b89e7d(2).png",
+          "path": "/lovart-comprehensive-assets/icons/modern/e9e10106-54be-46aa-9ef1-431bb9b89e7d(2).png",
+          "size": 12650,
+          "originalPath": "e9e10106-54be-46aa-9ef1-431bb9b89e7d(2).png"
+        }
+      ],
+      "icon-sets": [],
+      "illustrations": [],
+      "backgrounds": [],
+      "logos": [],
+      "decorations": [
+        {
+          "name": "006c8387-5285-4e59-84a7-adb96b3d96a7(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/006c8387-5285-4e59-84a7-adb96b3d96a7(2).png",
+          "size": 6540,
+          "originalPath": "006c8387-5285-4e59-84a7-adb96b3d96a7(2).png"
+        },
+        {
+          "name": "054b05e8-fda6-4bc0-862d-eb2fddf5412c.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/054b05e8-fda6-4bc0-862d-eb2fddf5412c.png",
+          "size": 1178,
+          "originalPath": "054b05e8-fda6-4bc0-862d-eb2fddf5412c.png"
+        },
+        {
+          "name": "0d5ccf94-742a-42c2-848d-fce3d26a312f.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/0d5ccf94-742a-42c2-848d-fce3d26a312f.png",
+          "size": 1648,
+          "originalPath": "0d5ccf94-742a-42c2-848d-fce3d26a312f.png"
+        },
+        {
+          "name": "17aaf1b8-5215-4cc8-99aa-0645625f0d5b(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/17aaf1b8-5215-4cc8-99aa-0645625f0d5b(2).png",
+          "size": 7020,
+          "originalPath": "17aaf1b8-5215-4cc8-99aa-0645625f0d5b(2).png"
+        },
+        {
+          "name": "1e2f3c9c-506c-4599-8735-06aea7aa21dd.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/1e2f3c9c-506c-4599-8735-06aea7aa21dd.png",
+          "size": 714,
+          "originalPath": "1e2f3c9c-506c-4599-8735-06aea7aa21dd.png"
+        },
+        {
+          "name": "26360e34-6732-411a-b777-1fd9622e1bb6.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/26360e34-6732-411a-b777-1fd9622e1bb6.png",
+          "size": 1350,
+          "originalPath": "26360e34-6732-411a-b777-1fd9622e1bb6.png"
+        },
+        {
+          "name": "29a72b0a-15ed-4793-be6b-5a4a0949a72d.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/29a72b0a-15ed-4793-be6b-5a4a0949a72d.png",
+          "size": 1068,
+          "originalPath": "29a72b0a-15ed-4793-be6b-5a4a0949a72d.png"
+        },
+        {
+          "name": "2dbc9555-3d61-4f66-ad72-9cfee9372d6a.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/2dbc9555-3d61-4f66-ad72-9cfee9372d6a.png",
+          "size": 1152,
+          "originalPath": "2dbc9555-3d61-4f66-ad72-9cfee9372d6a.png"
+        },
+        {
+          "name": "351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b(2).png",
+          "size": 9128,
+          "originalPath": "351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b(2).png"
+        },
+        {
+          "name": "3b85c55c-c6ab-4c39-97c7-7b154ea64f5a(1).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/3b85c55c-c6ab-4c39-97c7-7b154ea64f5a(1).png",
+          "size": 7966,
+          "originalPath": "3b85c55c-c6ab-4c39-97c7-7b154ea64f5a(1).png"
+        },
+        {
+          "name": "3eb78c3e-0ef0-4f37-84ff-88794d785712.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/3eb78c3e-0ef0-4f37-84ff-88794d785712.png",
+          "size": 1106,
+          "originalPath": "3eb78c3e-0ef0-4f37-84ff-88794d785712.png"
+        },
+        {
+          "name": "4b985711-8703-4729-93a1-06d9186e42b6(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/4b985711-8703-4729-93a1-06d9186e42b6(2).png",
+          "size": 9016,
+          "originalPath": "4b985711-8703-4729-93a1-06d9186e42b6(2).png"
+        },
+        {
+          "name": "4f0053c1-d63a-43e9-ba05-dfd2546682a7(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/4f0053c1-d63a-43e9-ba05-dfd2546682a7(2).png",
+          "size": 6646,
+          "originalPath": "4f0053c1-d63a-43e9-ba05-dfd2546682a7(2).png"
+        },
+        {
+          "name": "514652c1-f90c-415f-84d9-7180dab6b2d6.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/514652c1-f90c-415f-84d9-7180dab6b2d6.png",
+          "size": 1580,
+          "originalPath": "514652c1-f90c-415f-84d9-7180dab6b2d6.png"
+        },
+        {
+          "name": "5909ee5f-bd78-4b3e-b953-e83c28855d82.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/5909ee5f-bd78-4b3e-b953-e83c28855d82.png",
+          "size": 1394,
+          "originalPath": "5909ee5f-bd78-4b3e-b953-e83c28855d82.png"
+        },
+        {
+          "name": "5d115a96-e349-4ce9-859a-35b4151c94a4.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/5d115a96-e349-4ce9-859a-35b4151c94a4.png",
+          "size": 1286,
+          "originalPath": "5d115a96-e349-4ce9-859a-35b4151c94a4.png"
+        },
+        {
+          "name": "6d204f55-eb20-4dc8-aa7b-0adab5c388c9.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/6d204f55-eb20-4dc8-aa7b-0adab5c388c9.png",
+          "size": 1282,
+          "originalPath": "6d204f55-eb20-4dc8-aa7b-0adab5c388c9.png"
+        },
+        {
+          "name": "7288ca44-2d97-448e-af22-a5a07734562f.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/7288ca44-2d97-448e-af22-a5a07734562f.png",
+          "size": 946,
+          "originalPath": "7288ca44-2d97-448e-af22-a5a07734562f.png"
+        },
+        {
+          "name": "742a7ecb-e413-4030-ac61-21d78c915ede.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/742a7ecb-e413-4030-ac61-21d78c915ede.png",
+          "size": 980,
+          "originalPath": "742a7ecb-e413-4030-ac61-21d78c915ede.png"
+        },
+        {
+          "name": "7a9fa38b-1e7b-4838-84a4-c02034e0cb3a.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/7a9fa38b-1e7b-4838-84a4-c02034e0cb3a.png",
+          "size": 1206,
+          "originalPath": "7a9fa38b-1e7b-4838-84a4-c02034e0cb3a.png"
+        },
+        {
+          "name": "839a4f2c-7f90-41e6-9def-f7f132d2a124(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/839a4f2c-7f90-41e6-9def-f7f132d2a124(2).png",
+          "size": 5268,
+          "originalPath": "839a4f2c-7f90-41e6-9def-f7f132d2a124(2).png"
+        },
+        {
+          "name": "89fb202c-a67d-4871-912a-64c22b0073b4.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/89fb202c-a67d-4871-912a-64c22b0073b4.png",
+          "size": 1098,
+          "originalPath": "89fb202c-a67d-4871-912a-64c22b0073b4.png"
+        },
+        {
+          "name": "8d9807e9-b61b-49df-a2d8-cb0b3762958e.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/8d9807e9-b61b-49df-a2d8-cb0b3762958e.png",
+          "size": 806,
+          "originalPath": "8d9807e9-b61b-49df-a2d8-cb0b3762958e.png"
+        },
+        {
+          "name": "987eee03-a5bf-4fa9-b266-c0447f62c561.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/987eee03-a5bf-4fa9-b266-c0447f62c561.png",
+          "size": 1388,
+          "originalPath": "987eee03-a5bf-4fa9-b266-c0447f62c561.png"
+        },
+        {
+          "name": "9b437738-8336-4c90-ae33-87d43225bae7.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/9b437738-8336-4c90-ae33-87d43225bae7.png",
+          "size": 1006,
+          "originalPath": "9b437738-8336-4c90-ae33-87d43225bae7.png"
+        },
+        {
+          "name": "9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217(2).png",
+          "size": 3342,
+          "originalPath": "9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217(2).png"
+        },
+        {
+          "name": "a7821c9e-2b8b-45bc-9211-539da8f0a89e(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/a7821c9e-2b8b-45bc-9211-539da8f0a89e(2).png",
+          "size": 7044,
+          "originalPath": "a7821c9e-2b8b-45bc-9211-539da8f0a89e(2).png"
+        },
+        {
+          "name": "b1e7183e-d7a8-4f92-bfe6-730a29674558.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/b1e7183e-d7a8-4f92-bfe6-730a29674558.png",
+          "size": 690,
+          "originalPath": "b1e7183e-d7a8-4f92-bfe6-730a29674558.png"
+        },
+        {
+          "name": "b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12.png",
+          "size": 744,
+          "originalPath": "b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12.png"
+        },
+        {
+          "name": "baf973ed-e5d5-4231-9f2b-a388f755a5b2.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/baf973ed-e5d5-4231-9f2b-a388f755a5b2.png",
+          "size": 1372,
+          "originalPath": "baf973ed-e5d5-4231-9f2b-a388f755a5b2.png"
+        },
+        {
+          "name": "c1f779ee-1f6b-48cb-9754-67d02b7f3697(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/c1f779ee-1f6b-48cb-9754-67d02b7f3697(2).png",
+          "size": 8620,
+          "originalPath": "c1f779ee-1f6b-48cb-9754-67d02b7f3697(2).png"
+        },
+        {
+          "name": "cbe41657-dd95-4bb0-905f-bf324e52e982.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/cbe41657-dd95-4bb0-905f-bf324e52e982.png",
+          "size": 1158,
+          "originalPath": "cbe41657-dd95-4bb0-905f-bf324e52e982.png"
+        },
+        {
+          "name": "d3387b00-4b46-4e89-9534-d0b71f0b1534.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/d3387b00-4b46-4e89-9534-d0b71f0b1534.png",
+          "size": 1442,
+          "originalPath": "d3387b00-4b46-4e89-9534-d0b71f0b1534.png"
+        },
+        {
+          "name": "e0aaf0f4-fd36-4ca6-91bf-6963e817d827(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/e0aaf0f4-fd36-4ca6-91bf-6963e817d827(2).png",
+          "size": 5972,
+          "originalPath": "e0aaf0f4-fd36-4ca6-91bf-6963e817d827(2).png"
+        },
+        {
+          "name": "e1c70a1e-cf2b-4ce8-a133-9b8961b12a19.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/e1c70a1e-cf2b-4ce8-a133-9b8961b12a19.png",
+          "size": 1142,
+          "originalPath": "e1c70a1e-cf2b-4ce8-a133-9b8961b12a19.png"
+        },
+        {
+          "name": "e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141.png",
+          "size": 1052,
+          "originalPath": "e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141.png"
+        },
+        {
+          "name": "e5748ccd-4db6-4c9a-b1b6-9e8021ce899f.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/e5748ccd-4db6-4c9a-b1b6-9e8021ce899f.png",
+          "size": 398,
+          "originalPath": "e5748ccd-4db6-4c9a-b1b6-9e8021ce899f.png"
+        },
+        {
+          "name": "ea95ca79-2933-4cef-b0ce-b69453d8836b.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/ea95ca79-2933-4cef-b0ce-b69453d8836b.png",
+          "size": 534,
+          "originalPath": "ea95ca79-2933-4cef-b0ce-b69453d8836b.png"
+        },
+        {
+          "name": "fe097527-d9d5-4442-a018-7b79bb23a23a.png",
+          "path": "/lovart-comprehensive-assets/decorations/modern/fe097527-d9d5-4442-a018-7b79bb23a23a.png",
+          "size": 782,
+          "originalPath": "fe097527-d9d5-4442-a018-7b79bb23a23a.png"
+        }
+      ]
+    },
+    "business": {
+      "ui-interface": [
+        {
+          "name": "2dbc9555-3d61-4f66-ad72-9cfee9372d6a(1).png",
+          "path": "/lovart-comprehensive-assets/ui-interface/business/2dbc9555-3d61-4f66-ad72-9cfee9372d6a(1).png",
+          "size": 1057423,
+          "originalPath": "2dbc9555-3d61-4f66-ad72-9cfee9372d6a(1).png"
+        }
+      ],
+      "components": [
+        {
+          "name": "038bf7a8-4966-452d-8c6c-fe78a9bf0e86(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/038bf7a8-4966-452d-8c6c-fe78a9bf0e86(1).png",
+          "size": 668029,
+          "originalPath": "038bf7a8-4966-452d-8c6c-fe78a9bf0e86(1).png"
+        },
+        {
+          "name": "09d65e82-3492-45e0-975a-4378ecfc4048(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/09d65e82-3492-45e0-975a-4378ecfc4048(1).png",
+          "size": 669842,
+          "originalPath": "09d65e82-3492-45e0-975a-4378ecfc4048(1).png"
+        },
+        {
+          "name": "1283c5cb-4606-41aa-8c11-759c95d755ed(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/1283c5cb-4606-41aa-8c11-759c95d755ed(1).png",
+          "size": 696744,
+          "originalPath": "1283c5cb-4606-41aa-8c11-759c95d755ed(1).png"
+        },
+        {
+          "name": "239d3751-e13c-4c3f-91db-ece731449203(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/239d3751-e13c-4c3f-91db-ece731449203(1).png",
+          "size": 519334,
+          "originalPath": "239d3751-e13c-4c3f-91db-ece731449203(1).png"
+        },
+        {
+          "name": "2824771b-f2dd-47cf-889b-f029bbaa76e8(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/2824771b-f2dd-47cf-889b-f029bbaa76e8(1).png",
+          "size": 696991,
+          "originalPath": "2824771b-f2dd-47cf-889b-f029bbaa76e8(1).png"
+        },
+        {
+          "name": "2dac7146-e195-4fb5-a8c1-8ce9dbd93066(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/2dac7146-e195-4fb5-a8c1-8ce9dbd93066(1).png",
+          "size": 587994,
+          "originalPath": "2dac7146-e195-4fb5-a8c1-8ce9dbd93066(1).png"
+        },
+        {
+          "name": "35dcbd85-76bb-4aff-afc6-51b6abe90115(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/35dcbd85-76bb-4aff-afc6-51b6abe90115(1).png",
+          "size": 667942,
+          "originalPath": "35dcbd85-76bb-4aff-afc6-51b6abe90115(1).png"
+        },
+        {
+          "name": "3eb78c3e-0ef0-4f37-84ff-88794d785712(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/3eb78c3e-0ef0-4f37-84ff-88794d785712(1).png",
+          "size": 622894,
+          "originalPath": "3eb78c3e-0ef0-4f37-84ff-88794d785712(1).png"
+        },
+        {
+          "name": "4bad2fde-5258-41c8-bc08-b535bac8c4e3(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/4bad2fde-5258-41c8-bc08-b535bac8c4e3(1).png",
+          "size": 596024,
+          "originalPath": "4bad2fde-5258-41c8-bc08-b535bac8c4e3(1).png"
+        },
+        {
+          "name": "514652c1-f90c-415f-84d9-7180dab6b2d6(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/514652c1-f90c-415f-84d9-7180dab6b2d6(1).png",
+          "size": 787946,
+          "originalPath": "514652c1-f90c-415f-84d9-7180dab6b2d6(1).png"
+        },
+        {
+          "name": "59e7631d-f6d7-4172-a524-4738237f03ac(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/59e7631d-f6d7-4172-a524-4738237f03ac(1).png",
+          "size": 898330,
+          "originalPath": "59e7631d-f6d7-4172-a524-4738237f03ac(1).png"
+        },
+        {
+          "name": "65b47960-76e7-42e9-a604-4e9d9ba53ef7(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/65b47960-76e7-42e9-a604-4e9d9ba53ef7(1).png",
+          "size": 696249,
+          "originalPath": "65b47960-76e7-42e9-a604-4e9d9ba53ef7(1).png"
+        },
+        {
+          "name": "70fe2cda-1280-4e56-81d9-beb31419d6a6(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/70fe2cda-1280-4e56-81d9-beb31419d6a6(1).png",
+          "size": 631956,
+          "originalPath": "70fe2cda-1280-4e56-81d9-beb31419d6a6(1).png"
+        },
+        {
+          "name": "76dec646-f990-4051-8f4e-96874f59ca9d(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/76dec646-f990-4051-8f4e-96874f59ca9d(1).png",
+          "size": 632078,
+          "originalPath": "76dec646-f990-4051-8f4e-96874f59ca9d(1).png"
+        },
+        {
+          "name": "7eed67fe-3ba7-4ddc-bb70-aa1135ff8335(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/7eed67fe-3ba7-4ddc-bb70-aa1135ff8335(1).png",
+          "size": 674480,
+          "originalPath": "7eed67fe-3ba7-4ddc-bb70-aa1135ff8335(1).png"
+        },
+        {
+          "name": "89fb202c-a67d-4871-912a-64c22b0073b4(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/89fb202c-a67d-4871-912a-64c22b0073b4(1).png",
+          "size": 709145,
+          "originalPath": "89fb202c-a67d-4871-912a-64c22b0073b4(1).png"
+        },
+        {
+          "name": "8de9f284-862d-490e-9e8a-760f4c142b3d(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/8de9f284-862d-490e-9e8a-760f4c142b3d(1).png",
+          "size": 658717,
+          "originalPath": "8de9f284-862d-490e-9e8a-760f4c142b3d(1).png"
+        },
+        {
+          "name": "9b437738-8336-4c90-ae33-87d43225bae7(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/9b437738-8336-4c90-ae33-87d43225bae7(1).png",
+          "size": 639189,
+          "originalPath": "9b437738-8336-4c90-ae33-87d43225bae7(1).png"
+        },
+        {
+          "name": "9f1c7af1171478b0a972190c9e3f2dbd4583b77a.png",
+          "path": "/lovart-comprehensive-assets/components/business/9f1c7af1171478b0a972190c9e3f2dbd4583b77a.png",
+          "size": 100323,
+          "originalPath": "9f1c7af1171478b0a972190c9e3f2dbd4583b77a.png"
+        },
+        {
+          "name": "b1e7183e-d7a8-4f92-bfe6-730a29674558(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/b1e7183e-d7a8-4f92-bfe6-730a29674558(1).png",
+          "size": 503575,
+          "originalPath": "b1e7183e-d7a8-4f92-bfe6-730a29674558(1).png"
+        },
+        {
+          "name": "b9b9254d-302a-4690-aa8a-1314e66021b8(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/b9b9254d-302a-4690-aa8a-1314e66021b8(1).png",
+          "size": 774946,
+          "originalPath": "b9b9254d-302a-4690-aa8a-1314e66021b8(1).png"
+        },
+        {
+          "name": "c1f779ee-1f6b-48cb-9754-67d02b7f3697(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/c1f779ee-1f6b-48cb-9754-67d02b7f3697(1).png",
+          "size": 634048,
+          "originalPath": "c1f779ee-1f6b-48cb-9754-67d02b7f3697(1).png"
+        },
+        {
+          "name": "d16f4947-2fbf-4a8e-841f-ccfae5031532(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/d16f4947-2fbf-4a8e-841f-ccfae5031532(1).png",
+          "size": 674088,
+          "originalPath": "d16f4947-2fbf-4a8e-841f-ccfae5031532(1).png"
+        },
+        {
+          "name": "dc8c2b87-8854-4104-aa98-8b9946f39125(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/dc8c2b87-8854-4104-aa98-8b9946f39125(1).png",
+          "size": 499883,
+          "originalPath": "dc8c2b87-8854-4104-aa98-8b9946f39125(1).png"
+        },
+        {
+          "name": "e2db6c01-a503-4012-9c6e-cffe27f34d2e(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/e2db6c01-a503-4012-9c6e-cffe27f34d2e(1).png",
+          "size": 700105,
+          "originalPath": "e2db6c01-a503-4012-9c6e-cffe27f34d2e(1).png"
+        },
+        {
+          "name": "e5748ccd-4db6-4c9a-b1b6-9e8021ce899f(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/e5748ccd-4db6-4c9a-b1b6-9e8021ce899f(1).png",
+          "size": 375190,
+          "originalPath": "e5748ccd-4db6-4c9a-b1b6-9e8021ce899f(1).png"
+        },
+        {
+          "name": "efa4007e-7c75-4ad2-8b5f-6a49e4d099c4(1).png",
+          "path": "/lovart-comprehensive-assets/components/business/efa4007e-7c75-4ad2-8b5f-6a49e4d099c4(1).png",
+          "size": 808921,
+          "originalPath": "efa4007e-7c75-4ad2-8b5f-6a49e4d099c4(1).png"
+        }
+      ],
+      "icons": [
+        {
+          "name": "042f185c-e76a-429e-b9ef-25f5e6745959(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/042f185c-e76a-429e-b9ef-25f5e6745959(2).png",
+          "size": 12518,
+          "originalPath": "042f185c-e76a-429e-b9ef-25f5e6745959(2).png"
+        },
+        {
+          "name": "0aa518d0-450c-4337-984b-1efad25253d4(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/0aa518d0-450c-4337-984b-1efad25253d4(2).png",
+          "size": 11394,
+          "originalPath": "0aa518d0-450c-4337-984b-1efad25253d4(2).png"
+        },
+        {
+          "name": "1283c5cb-4606-41aa-8c11-759c95d755ed(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/1283c5cb-4606-41aa-8c11-759c95d755ed(2).png",
+          "size": 12832,
+          "originalPath": "1283c5cb-4606-41aa-8c11-759c95d755ed(2).png"
+        },
+        {
+          "name": "27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8(2).png",
+          "size": 13444,
+          "originalPath": "27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8(2).png"
+        },
+        {
+          "name": "2dbc9555-3d61-4f66-ad72-9cfee9372d6a(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/2dbc9555-3d61-4f66-ad72-9cfee9372d6a(2).png",
+          "size": 19894,
+          "originalPath": "2dbc9555-3d61-4f66-ad72-9cfee9372d6a(2).png"
+        },
+        {
+          "name": "3eb25b31-457e-47dc-a691-20e399ea580b(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/3eb25b31-457e-47dc-a691-20e399ea580b(2).png",
+          "size": 15448,
+          "originalPath": "3eb25b31-457e-47dc-a691-20e399ea580b(2).png"
+        },
+        {
+          "name": "5122054d-82ae-4eca-948a-7c856a70e435(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/5122054d-82ae-4eca-948a-7c856a70e435(2).png",
+          "size": 10262,
+          "originalPath": "5122054d-82ae-4eca-948a-7c856a70e435(2).png"
+        },
+        {
+          "name": "59e7631d-f6d7-4172-a524-4738237f03ac(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/59e7631d-f6d7-4172-a524-4738237f03ac(2).png",
+          "size": 13924,
+          "originalPath": "59e7631d-f6d7-4172-a524-4738237f03ac(2).png"
+        },
+        {
+          "name": "678af2be-b04f-4c2a-b291-2982c76725cd(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/678af2be-b04f-4c2a-b291-2982c76725cd(2).png",
+          "size": 16058,
+          "originalPath": "678af2be-b04f-4c2a-b291-2982c76725cd(2).png"
+        },
+        {
+          "name": "78824c5d-0eab-4f76-a369-1e1d94d3f029(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/78824c5d-0eab-4f76-a369-1e1d94d3f029(2).png",
+          "size": 11666,
+          "originalPath": "78824c5d-0eab-4f76-a369-1e1d94d3f029(2).png"
+        },
+        {
+          "name": "858077f7-5c82-4211-a5cf-582f43f8a75b(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/858077f7-5c82-4211-a5cf-582f43f8a75b(2).png",
+          "size": 14734,
+          "originalPath": "858077f7-5c82-4211-a5cf-582f43f8a75b(2).png"
+        },
+        {
+          "name": "92ea8771-bb74-4be9-ba3c-62e199dbc1aa(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/92ea8771-bb74-4be9-ba3c-62e199dbc1aa(2).png",
+          "size": 14170,
+          "originalPath": "92ea8771-bb74-4be9-ba3c-62e199dbc1aa(2).png"
+        },
+        {
+          "name": "9e325608-d2df-4a4d-a880-b8011c69a720(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/9e325608-d2df-4a4d-a880-b8011c69a720(2).png",
+          "size": 13708,
+          "originalPath": "9e325608-d2df-4a4d-a880-b8011c69a720(2).png"
+        },
+        {
+          "name": "ba51f0f0-891a-4708-b9b0-16a9bef9b9ea(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/ba51f0f0-891a-4708-b9b0-16a9bef9b9ea(2).png",
+          "size": 13654,
+          "originalPath": "ba51f0f0-891a-4708-b9b0-16a9bef9b9ea(2).png"
+        },
+        {
+          "name": "cbe41657-dd95-4bb0-905f-bf324e52e982(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/cbe41657-dd95-4bb0-905f-bf324e52e982(2).png",
+          "size": 14116,
+          "originalPath": "cbe41657-dd95-4bb0-905f-bf324e52e982(2).png"
+        },
+        {
+          "name": "d6b2f72b-f624-45cb-836f-27b89263ad4a(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/d6b2f72b-f624-45cb-836f-27b89263ad4a(2).png",
+          "size": 14126,
+          "originalPath": "d6b2f72b-f624-45cb-836f-27b89263ad4a(2).png"
+        },
+        {
+          "name": "e48c07a9-4950-45f0-b1ce-fffd3be6fd9c(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/e48c07a9-4950-45f0-b1ce-fffd3be6fd9c(2).png",
+          "size": 10684,
+          "originalPath": "e48c07a9-4950-45f0-b1ce-fffd3be6fd9c(2).png"
+        },
+        {
+          "name": "efa4007e-7c75-4ad2-8b5f-6a49e4d099c4(2).png",
+          "path": "/lovart-comprehensive-assets/icons/business/efa4007e-7c75-4ad2-8b5f-6a49e4d099c4(2).png",
+          "size": 15694,
+          "originalPath": "efa4007e-7c75-4ad2-8b5f-6a49e4d099c4(2).png"
+        }
+      ],
+      "icon-sets": [],
+      "illustrations": [],
+      "backgrounds": [],
+      "logos": [],
+      "decorations": [
+        {
+          "name": "006c8387-5285-4e59-84a7-adb96b3d96a7.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/006c8387-5285-4e59-84a7-adb96b3d96a7.png",
+          "size": 714,
+          "originalPath": "006c8387-5285-4e59-84a7-adb96b3d96a7.png"
+        },
+        {
+          "name": "07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d.png",
+          "size": 1664,
+          "originalPath": "07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d.png"
+        },
+        {
+          "name": "0d8ddb75-d08b-48c0-be15-127dfb7e9e98.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/0d8ddb75-d08b-48c0-be15-127dfb7e9e98.png",
+          "size": 1394,
+          "originalPath": "0d8ddb75-d08b-48c0-be15-127dfb7e9e98.png"
+        },
+        {
+          "name": "17aaf1b8-5215-4cc8-99aa-0645625f0d5b.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/17aaf1b8-5215-4cc8-99aa-0645625f0d5b.png",
+          "size": 1046,
+          "originalPath": "17aaf1b8-5215-4cc8-99aa-0645625f0d5b.png"
+        },
+        {
+          "name": "239d3751-e13c-4c3f-91db-ece731449203(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/239d3751-e13c-4c3f-91db-ece731449203(2).png",
+          "size": 6046,
+          "originalPath": "239d3751-e13c-4c3f-91db-ece731449203(2).png"
+        },
+        {
+          "name": "27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8.png",
+          "size": 1546,
+          "originalPath": "27dbd717-42f5-4ad1-962b-e0dd4c4ef7a8.png"
+        },
+        {
+          "name": "2be10054-248f-433b-b223-3adc09e89f53.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/2be10054-248f-433b-b223-3adc09e89f53.png",
+          "size": 1598,
+          "originalPath": "2be10054-248f-433b-b223-3adc09e89f53.png"
+        },
+        {
+          "name": "31fed23f-372d-43c0-bc4c-366d220c2f19.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/31fed23f-372d-43c0-bc4c-366d220c2f19.png",
+          "size": 1938,
+          "originalPath": "31fed23f-372d-43c0-bc4c-366d220c2f19.png"
+        },
+        {
+          "name": "351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b.png",
+          "size": 902,
+          "originalPath": "351b3b44-fb3e-41b0-a0e2-c60e9ea28c8b.png"
+        },
+        {
+          "name": "3b87dd00-b354-441e-b4c1-b9686bd82949(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/3b87dd00-b354-441e-b4c1-b9686bd82949(2).png",
+          "size": 8824,
+          "originalPath": "3b87dd00-b354-441e-b4c1-b9686bd82949(2).png"
+        },
+        {
+          "name": "48370fc1-447a-4dec-9556-1c48b3932c08(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/48370fc1-447a-4dec-9556-1c48b3932c08(2).png",
+          "size": 8268,
+          "originalPath": "48370fc1-447a-4dec-9556-1c48b3932c08(2).png"
+        },
+        {
+          "name": "4b985711-8703-4729-93a1-06d9186e42b6.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/4b985711-8703-4729-93a1-06d9186e42b6.png",
+          "size": 652,
+          "originalPath": "4b985711-8703-4729-93a1-06d9186e42b6.png"
+        },
+        {
+          "name": "4f0053c1-d63a-43e9-ba05-dfd2546682a7.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/4f0053c1-d63a-43e9-ba05-dfd2546682a7.png",
+          "size": 542,
+          "originalPath": "4f0053c1-d63a-43e9-ba05-dfd2546682a7.png"
+        },
+        {
+          "name": "530c54d0-fe9b-4140-875b-7c9650e1be70.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/530c54d0-fe9b-4140-875b-7c9650e1be70.png",
+          "size": 1566,
+          "originalPath": "530c54d0-fe9b-4140-875b-7c9650e1be70.png"
+        },
+        {
+          "name": "59e7631d-f6d7-4172-a524-4738237f03ac.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/59e7631d-f6d7-4172-a524-4738237f03ac.png",
+          "size": 1188,
+          "originalPath": "59e7631d-f6d7-4172-a524-4738237f03ac.png"
+        },
+        {
+          "name": "62848ea0-b51d-45af-8415-5ce24e10f36a.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/62848ea0-b51d-45af-8415-5ce24e10f36a.png",
+          "size": 1524,
+          "originalPath": "62848ea0-b51d-45af-8415-5ce24e10f36a.png"
+        },
+        {
+          "name": "6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1(2).png",
+          "size": 8714,
+          "originalPath": "6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1(2).png"
+        },
+        {
+          "name": "72f3576e-caec-4176-b9d9-d4c13a994a39.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/72f3576e-caec-4176-b9d9-d4c13a994a39.png",
+          "size": 1310,
+          "originalPath": "72f3576e-caec-4176-b9d9-d4c13a994a39.png"
+        },
+        {
+          "name": "76dec646-f990-4051-8f4e-96874f59ca9d(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/76dec646-f990-4051-8f4e-96874f59ca9d(2).png",
+          "size": 9252,
+          "originalPath": "76dec646-f990-4051-8f4e-96874f59ca9d(2).png"
+        },
+        {
+          "name": "7b1f3415-f17d-43fc-ba4e-7a5014da1cd1.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/7b1f3415-f17d-43fc-ba4e-7a5014da1cd1.png",
+          "size": 1490,
+          "originalPath": "7b1f3415-f17d-43fc-ba4e-7a5014da1cd1.png"
+        },
+        {
+          "name": "839a4f2c-7f90-41e6-9def-f7f132d2a124.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/839a4f2c-7f90-41e6-9def-f7f132d2a124.png",
+          "size": 336,
+          "originalPath": "839a4f2c-7f90-41e6-9def-f7f132d2a124.png"
+        },
+        {
+          "name": "8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4.png",
+          "size": 1156,
+          "originalPath": "8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4.png"
+        },
+        {
+          "name": "8dd3a592-a5d0-44db-8002-6d110eac968c.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/8dd3a592-a5d0-44db-8002-6d110eac968c.png",
+          "size": 1420,
+          "originalPath": "8dd3a592-a5d0-44db-8002-6d110eac968c.png"
+        },
+        {
+          "name": "9894764b-b1ec-4448-98bd-00397ad0ddc3(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/9894764b-b1ec-4448-98bd-00397ad0ddc3(2).png",
+          "size": 8686,
+          "originalPath": "9894764b-b1ec-4448-98bd-00397ad0ddc3(2).png"
+        },
+        {
+          "name": "9b863e97-9e60-4933-a6c2-ed5c4400a84a(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/9b863e97-9e60-4933-a6c2-ed5c4400a84a(2).png",
+          "size": 6386,
+          "originalPath": "9b863e97-9e60-4933-a6c2-ed5c4400a84a(2).png"
+        },
+        {
+          "name": "9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217.png",
+          "size": 652,
+          "originalPath": "9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217.png"
+        },
+        {
+          "name": "a7821c9e-2b8b-45bc-9211-539da8f0a89e.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/a7821c9e-2b8b-45bc-9211-539da8f0a89e.png",
+          "size": 630,
+          "originalPath": "a7821c9e-2b8b-45bc-9211-539da8f0a89e.png"
+        },
+        {
+          "name": "b324bc6d-6cf2-4542-aa05-424191416330.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/b324bc6d-6cf2-4542-aa05-424191416330.png",
+          "size": 1320,
+          "originalPath": "b324bc6d-6cf2-4542-aa05-424191416330.png"
+        },
+        {
+          "name": "b83537c4-4315-4f1e-9970-b0416829e686(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/b83537c4-4315-4f1e-9970-b0416829e686(2).png",
+          "size": 6648,
+          "originalPath": "b83537c4-4315-4f1e-9970-b0416829e686(2).png"
+        },
+        {
+          "name": "c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63.png",
+          "size": 1356,
+          "originalPath": "c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63.png"
+        },
+        {
+          "name": "c1f779ee-1f6b-48cb-9754-67d02b7f3697.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/c1f779ee-1f6b-48cb-9754-67d02b7f3697.png",
+          "size": 960,
+          "originalPath": "c1f779ee-1f6b-48cb-9754-67d02b7f3697.png"
+        },
+        {
+          "name": "ce5676e4-9437-43e3-a0f1-f6ff6bfceea4(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/ce5676e4-9437-43e3-a0f1-f6ff6bfceea4(2).png",
+          "size": 8940,
+          "originalPath": "ce5676e4-9437-43e3-a0f1-f6ff6bfceea4(2).png"
+        },
+        {
+          "name": "d59721da-fd82-4d32-805b-14377478bf3d.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/d59721da-fd82-4d32-805b-14377478bf3d.png",
+          "size": 1358,
+          "originalPath": "d59721da-fd82-4d32-805b-14377478bf3d.png"
+        },
+        {
+          "name": "e0aaf0f4-fd36-4ca6-91bf-6963e817d827.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/e0aaf0f4-fd36-4ca6-91bf-6963e817d827.png",
+          "size": 566,
+          "originalPath": "e0aaf0f4-fd36-4ca6-91bf-6963e817d827.png"
+        },
+        {
+          "name": "e29fa5b0-6264-409d-9244-a6687c052e8a(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/business/e29fa5b0-6264-409d-9244-a6687c052e8a(2).png",
+          "size": 8916,
+          "originalPath": "e29fa5b0-6264-409d-9244-a6687c052e8a(2).png"
+        },
+        {
+          "name": "e472f1ab-e541-4fe2-add2-d6c1c6fb702a.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/e472f1ab-e541-4fe2-add2-d6c1c6fb702a.png",
+          "size": 1706,
+          "originalPath": "e472f1ab-e541-4fe2-add2-d6c1c6fb702a.png"
+        },
+        {
+          "name": "e610d030-1d1e-47f4-8ef8-88ac5f840c14.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/e610d030-1d1e-47f4-8ef8-88ac5f840c14.png",
+          "size": 1188,
+          "originalPath": "e610d030-1d1e-47f4-8ef8-88ac5f840c14.png"
+        },
+        {
+          "name": "efa4007e-7c75-4ad2-8b5f-6a49e4d099c4.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/efa4007e-7c75-4ad2-8b5f-6a49e4d099c4.png",
+          "size": 1740,
+          "originalPath": "efa4007e-7c75-4ad2-8b5f-6a49e4d099c4.png"
+        },
+        {
+          "name": "lovart-avatar.png",
+          "path": "/lovart-comprehensive-assets/decorations/business/lovart-avatar.png",
+          "size": 1514,
+          "originalPath": "lovart-avatar.png"
+        }
+      ]
+    },
+    "tech": {
+      "ui-interface": [
+        {
+          "name": "3b85c55c-c6ab-4c39-97c7-7b154ea64f5a.png",
+          "path": "/lovart-comprehensive-assets/ui-interface/tech/3b85c55c-c6ab-4c39-97c7-7b154ea64f5a.png",
+          "size": 1075094,
+          "originalPath": "3b85c55c-c6ab-4c39-97c7-7b154ea64f5a.png"
+        }
+      ],
+      "components": [
+        {
+          "name": "042f185c-e76a-429e-b9ef-25f5e6745959(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/042f185c-e76a-429e-b9ef-25f5e6745959(1).png",
+          "size": 700797,
+          "originalPath": "042f185c-e76a-429e-b9ef-25f5e6745959(1).png"
+        },
+        {
+          "name": "0aa518d0-450c-4337-984b-1efad25253d4(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/0aa518d0-450c-4337-984b-1efad25253d4(1).png",
+          "size": 686947,
+          "originalPath": "0aa518d0-450c-4337-984b-1efad25253d4(1).png"
+        },
+        {
+          "name": "1639d850-a711-4215-9f80-335697f71e57(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/1639d850-a711-4215-9f80-335697f71e57(1).png",
+          "size": 776188,
+          "originalPath": "1639d850-a711-4215-9f80-335697f71e57(1).png"
+        },
+        {
+          "name": "23db9ea3-4a72-4667-a811-eaff4b34ed88(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/23db9ea3-4a72-4667-a811-eaff4b34ed88(1).png",
+          "size": 828537,
+          "originalPath": "23db9ea3-4a72-4667-a811-eaff4b34ed88(1).png"
+        },
+        {
+          "name": "285e6817-9453-4663-98ca-599e602e29b1(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/285e6817-9453-4663-98ca-599e602e29b1(1).png",
+          "size": 563291,
+          "originalPath": "285e6817-9453-4663-98ca-599e602e29b1(1).png"
+        },
+        {
+          "name": "31fed23f-372d-43c0-bc4c-366d220c2f19(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/31fed23f-372d-43c0-bc4c-366d220c2f19(1).png",
+          "size": 858146,
+          "originalPath": "31fed23f-372d-43c0-bc4c-366d220c2f19(1).png"
+        },
+        {
+          "name": "35dedb17-1269-41df-a082-1c46af8ebd0d(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/35dedb17-1269-41df-a082-1c46af8ebd0d(1).png",
+          "size": 422770,
+          "originalPath": "35dedb17-1269-41df-a082-1c46af8ebd0d(1).png"
+        },
+        {
+          "name": "48370fc1-447a-4dec-9556-1c48b3932c08(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/48370fc1-447a-4dec-9556-1c48b3932c08(1).png",
+          "size": 609625,
+          "originalPath": "48370fc1-447a-4dec-9556-1c48b3932c08(1).png"
+        },
+        {
+          "name": "4ec73d19-7e5a-4be5-a51d-ca9e097e8e93(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/4ec73d19-7e5a-4be5-a51d-ca9e097e8e93(1).png",
+          "size": 686869,
+          "originalPath": "4ec73d19-7e5a-4be5-a51d-ca9e097e8e93(1).png"
+        },
+        {
+          "name": "530c54d0-fe9b-4140-875b-7c9650e1be70(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/530c54d0-fe9b-4140-875b-7c9650e1be70(1).png",
+          "size": 957441,
+          "originalPath": "530c54d0-fe9b-4140-875b-7c9650e1be70(1).png"
+        },
+        {
+          "name": "59e777b8-bac2-4759-b6d8-9facb3201794(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/59e777b8-bac2-4759-b6d8-9facb3201794(1).png",
+          "size": 534106,
+          "originalPath": "59e777b8-bac2-4759-b6d8-9facb3201794(1).png"
+        },
+        {
+          "name": "678af2be-b04f-4c2a-b291-2982c76725cd(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/678af2be-b04f-4c2a-b291-2982c76725cd(1).png",
+          "size": 676221,
+          "originalPath": "678af2be-b04f-4c2a-b291-2982c76725cd(1).png"
+        },
+        {
+          "name": "7288ca44-2d97-448e-af22-a5a07734562f(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/7288ca44-2d97-448e-af22-a5a07734562f(1).png",
+          "size": 494691,
+          "originalPath": "7288ca44-2d97-448e-af22-a5a07734562f(1).png"
+        },
+        {
+          "name": "78824c5d-0eab-4f76-a369-1e1d94d3f029(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/78824c5d-0eab-4f76-a369-1e1d94d3f029(1).png",
+          "size": 632959,
+          "originalPath": "78824c5d-0eab-4f76-a369-1e1d94d3f029(1).png"
+        },
+        {
+          "name": "809723b7-130e-478c-9b54-fe40739a1eee(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/809723b7-130e-478c-9b54-fe40739a1eee(1).png",
+          "size": 537732,
+          "originalPath": "809723b7-130e-478c-9b54-fe40739a1eee(1).png"
+        },
+        {
+          "name": "8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4(1).png",
+          "size": 609543,
+          "originalPath": "8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4(1).png"
+        },
+        {
+          "name": "92ea8771-bb74-4be9-ba3c-62e199dbc1aa(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/92ea8771-bb74-4be9-ba3c-62e199dbc1aa(1).png",
+          "size": 678251,
+          "originalPath": "92ea8771-bb74-4be9-ba3c-62e199dbc1aa(1).png"
+        },
+        {
+          "name": "9b863e97-9e60-4933-a6c2-ed5c4400a84a(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/9b863e97-9e60-4933-a6c2-ed5c4400a84a(1).png",
+          "size": 526335,
+          "originalPath": "9b863e97-9e60-4933-a6c2-ed5c4400a84a(1).png"
+        },
+        {
+          "name": "9fd2499b-dec3-478f-96b1-3385cb2965a5(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/9fd2499b-dec3-478f-96b1-3385cb2965a5(1).png",
+          "size": 717174,
+          "originalPath": "9fd2499b-dec3-478f-96b1-3385cb2965a5(1).png"
+        },
+        {
+          "name": "b324bc6d-6cf2-4542-aa05-424191416330(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/b324bc6d-6cf2-4542-aa05-424191416330(1).png",
+          "size": 738581,
+          "originalPath": "b324bc6d-6cf2-4542-aa05-424191416330(1).png"
+        },
+        {
+          "name": "ba51f0f0-891a-4708-b9b0-16a9bef9b9ea(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/ba51f0f0-891a-4708-b9b0-16a9bef9b9ea(1).png",
+          "size": 768349,
+          "originalPath": "ba51f0f0-891a-4708-b9b0-16a9bef9b9ea(1).png"
+        },
+        {
+          "name": "c50ca07d-bc9f-423a-8a2a-64a8b87c5a33(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/c50ca07d-bc9f-423a-8a2a-64a8b87c5a33(1).png",
+          "size": 715160,
+          "originalPath": "c50ca07d-bc9f-423a-8a2a-64a8b87c5a33(1).png"
+        },
+        {
+          "name": "d3387b00-4b46-4e89-9534-d0b71f0b1534(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/d3387b00-4b46-4e89-9534-d0b71f0b1534(1).png",
+          "size": 860133,
+          "originalPath": "d3387b00-4b46-4e89-9534-d0b71f0b1534(1).png"
+        },
+        {
+          "name": "e0aaf0f4-fd36-4ca6-91bf-6963e817d827(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/e0aaf0f4-fd36-4ca6-91bf-6963e817d827(1).png",
+          "size": 575207,
+          "originalPath": "e0aaf0f4-fd36-4ca6-91bf-6963e817d827(1).png"
+        },
+        {
+          "name": "e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141(1).png",
+          "size": 538473,
+          "originalPath": "e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141(1).png"
+        },
+        {
+          "name": "e610d030-1d1e-47f4-8ef8-88ac5f840c14(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/e610d030-1d1e-47f4-8ef8-88ac5f840c14(1).png",
+          "size": 622303,
+          "originalPath": "e610d030-1d1e-47f4-8ef8-88ac5f840c14(1).png"
+        },
+        {
+          "name": "f24b1997-8258-4300-8899-df366565c4e0(1).png",
+          "path": "/lovart-comprehensive-assets/components/tech/f24b1997-8258-4300-8899-df366565c4e0(1).png",
+          "size": 812988,
+          "originalPath": "f24b1997-8258-4300-8899-df366565c4e0(1).png"
+        }
+      ],
+      "icons": [
+        {
+          "name": "0467120e-fecf-4833-bab4-b92b8aa7102a(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/0467120e-fecf-4833-bab4-b92b8aa7102a(2).png",
+          "size": 15574,
+          "originalPath": "0467120e-fecf-4833-bab4-b92b8aa7102a(2).png"
+        },
+        {
+          "name": "0bc199bf-0e4e-43ba-b4b5-3482291efe5a(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/0bc199bf-0e4e-43ba-b4b5-3482291efe5a(2).png",
+          "size": 11988,
+          "originalPath": "0bc199bf-0e4e-43ba-b4b5-3482291efe5a(2).png"
+        },
+        {
+          "name": "1639d850-a711-4215-9f80-335697f71e57(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/1639d850-a711-4215-9f80-335697f71e57(2).png",
+          "size": 15382,
+          "originalPath": "1639d850-a711-4215-9f80-335697f71e57(2).png"
+        },
+        {
+          "name": "2824771b-f2dd-47cf-889b-f029bbaa76e8(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/2824771b-f2dd-47cf-889b-f029bbaa76e8(2).png",
+          "size": 13176,
+          "originalPath": "2824771b-f2dd-47cf-889b-f029bbaa76e8(2).png"
+        },
+        {
+          "name": "31fed23f-372d-43c0-bc4c-366d220c2f19(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/31fed23f-372d-43c0-bc4c-366d220c2f19(2).png",
+          "size": 21552,
+          "originalPath": "31fed23f-372d-43c0-bc4c-366d220c2f19(2).png"
+        },
+        {
+          "name": "3eb78c3e-0ef0-4f37-84ff-88794d785712(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/3eb78c3e-0ef0-4f37-84ff-88794d785712(2).png",
+          "size": 13292,
+          "originalPath": "3eb78c3e-0ef0-4f37-84ff-88794d785712(2).png"
+        },
+        {
+          "name": "514652c1-f90c-415f-84d9-7180dab6b2d6(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/514652c1-f90c-415f-84d9-7180dab6b2d6(2).png",
+          "size": 14322,
+          "originalPath": "514652c1-f90c-415f-84d9-7180dab6b2d6(2).png"
+        },
+        {
+          "name": "59e777b8-bac2-4759-b6d8-9facb3201794(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/59e777b8-bac2-4759-b6d8-9facb3201794(2).png",
+          "size": 10116,
+          "originalPath": "59e777b8-bac2-4759-b6d8-9facb3201794(2).png"
+        },
+        {
+          "name": "6a9b4deb-ac42-4042-b43b-0dd18e9bed68(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/6a9b4deb-ac42-4042-b43b-0dd18e9bed68(2).png",
+          "size": 13436,
+          "originalPath": "6a9b4deb-ac42-4042-b43b-0dd18e9bed68(2).png"
+        },
+        {
+          "name": "7a4f38e1-f68a-4aa2-b174-28d82b9ac38d(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/7a4f38e1-f68a-4aa2-b174-28d82b9ac38d(2).png",
+          "size": 15134,
+          "originalPath": "7a4f38e1-f68a-4aa2-b174-28d82b9ac38d(2).png"
+        },
+        {
+          "name": "89fb202c-a67d-4871-912a-64c22b0073b4(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/89fb202c-a67d-4871-912a-64c22b0073b4(2).png",
+          "size": 13404,
+          "originalPath": "89fb202c-a67d-4871-912a-64c22b0073b4(2).png"
+        },
+        {
+          "name": "9666dcc96aaac0ce6cf4a11b5a80ddaf0056f46d.png",
+          "path": "/lovart-comprehensive-assets/icons/tech/9666dcc96aaac0ce6cf4a11b5a80ddaf0056f46d.png",
+          "size": 99190,
+          "originalPath": "9666dcc96aaac0ce6cf4a11b5a80ddaf0056f46d.png"
+        },
+        {
+          "name": "9fd2499b-dec3-478f-96b1-3385cb2965a5(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/9fd2499b-dec3-478f-96b1-3385cb2965a5(2).png",
+          "size": 12212,
+          "originalPath": "9fd2499b-dec3-478f-96b1-3385cb2965a5(2).png"
+        },
+        {
+          "name": "baf973ed-e5d5-4231-9f2b-a388f755a5b2(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/baf973ed-e5d5-4231-9f2b-a388f755a5b2(2).png",
+          "size": 12922,
+          "originalPath": "baf973ed-e5d5-4231-9f2b-a388f755a5b2(2).png"
+        },
+        {
+          "name": "cfc863f5-f7d5-4cbe-bb43-2f1d855161f2(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/cfc863f5-f7d5-4cbe-bb43-2f1d855161f2(2).png",
+          "size": 15944,
+          "originalPath": "cfc863f5-f7d5-4cbe-bb43-2f1d855161f2(2).png"
+        },
+        {
+          "name": "dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad(2).png",
+          "size": 12078,
+          "originalPath": "dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad(2).png"
+        },
+        {
+          "name": "e5089260-90ad-4392-b4aa-c8ec5c83fa4b(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/e5089260-90ad-4392-b4aa-c8ec5c83fa4b(2).png",
+          "size": 13028,
+          "originalPath": "e5089260-90ad-4392-b4aa-c8ec5c83fa4b(2).png"
+        },
+        {
+          "name": "f24b1997-8258-4300-8899-df366565c4e0(2).png",
+          "path": "/lovart-comprehensive-assets/icons/tech/f24b1997-8258-4300-8899-df366565c4e0(2).png",
+          "size": 13080,
+          "originalPath": "f24b1997-8258-4300-8899-df366565c4e0(2).png"
+        }
+      ],
+      "icon-sets": [],
+      "illustrations": [],
+      "backgrounds": [],
+      "logos": [],
+      "decorations": [
+        {
+          "name": "038bf7a8-4966-452d-8c6c-fe78a9bf0e86.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/038bf7a8-4966-452d-8c6c-fe78a9bf0e86.png",
+          "size": 1144,
+          "originalPath": "038bf7a8-4966-452d-8c6c-fe78a9bf0e86.png"
+        },
+        {
+          "name": "09d65e82-3492-45e0-975a-4378ecfc4048.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/09d65e82-3492-45e0-975a-4378ecfc4048.png",
+          "size": 1540,
+          "originalPath": "09d65e82-3492-45e0-975a-4378ecfc4048.png"
+        },
+        {
+          "name": "114bf95c-312d-48f3-b51b-67f607d865aa.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/114bf95c-312d-48f3-b51b-67f607d865aa.png",
+          "size": 1528,
+          "originalPath": "114bf95c-312d-48f3-b51b-67f607d865aa.png"
+        },
+        {
+          "name": "1a069307-0244-4e66-86bb-486727c8b1e2(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/1a069307-0244-4e66-86bb-486727c8b1e2(2).png",
+          "size": 5638,
+          "originalPath": "1a069307-0244-4e66-86bb-486727c8b1e2(2).png"
+        },
+        {
+          "name": "239d3751-e13c-4c3f-91db-ece731449203.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/239d3751-e13c-4c3f-91db-ece731449203.png",
+          "size": 834,
+          "originalPath": "239d3751-e13c-4c3f-91db-ece731449203.png"
+        },
+        {
+          "name": "2824771b-f2dd-47cf-889b-f029bbaa76e8.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/2824771b-f2dd-47cf-889b-f029bbaa76e8.png",
+          "size": 1256,
+          "originalPath": "2824771b-f2dd-47cf-889b-f029bbaa76e8.png"
+        },
+        {
+          "name": "2d96d13d-828a-4c1f-88d4-8f094240a5a4(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/2d96d13d-828a-4c1f-88d4-8f094240a5a4(2).png",
+          "size": 9464,
+          "originalPath": "2d96d13d-828a-4c1f-88d4-8f094240a5a4(2).png"
+        },
+        {
+          "name": "32c55b88-bb84-4293-a8d0-1520b05d1618(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/32c55b88-bb84-4293-a8d0-1520b05d1618(2).png",
+          "size": 8830,
+          "originalPath": "32c55b88-bb84-4293-a8d0-1520b05d1618(2).png"
+        },
+        {
+          "name": "35dcbd85-76bb-4aff-afc6-51b6abe90115.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/35dcbd85-76bb-4aff-afc6-51b6abe90115.png",
+          "size": 1060,
+          "originalPath": "35dcbd85-76bb-4aff-afc6-51b6abe90115.png"
+        },
+        {
+          "name": "3b87dd00-b354-441e-b4c1-b9686bd82949.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/3b87dd00-b354-441e-b4c1-b9686bd82949.png",
+          "size": 994,
+          "originalPath": "3b87dd00-b354-441e-b4c1-b9686bd82949.png"
+        },
+        {
+          "name": "48370fc1-447a-4dec-9556-1c48b3932c08.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/48370fc1-447a-4dec-9556-1c48b3932c08.png",
+          "size": 788,
+          "originalPath": "48370fc1-447a-4dec-9556-1c48b3932c08.png"
+        },
+        {
+          "name": "4bad2fde-5258-41c8-bc08-b535bac8c4e3(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/4bad2fde-5258-41c8-bc08-b535bac8c4e3(2).png",
+          "size": 5844,
+          "originalPath": "4bad2fde-5258-41c8-bc08-b535bac8c4e3(2).png"
+        },
+        {
+          "name": "50908b62-4791-4501-a78c-8b480bb7f3b2(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/50908b62-4791-4501-a78c-8b480bb7f3b2(2).png",
+          "size": 7480,
+          "originalPath": "50908b62-4791-4501-a78c-8b480bb7f3b2(2).png"
+        },
+        {
+          "name": "571d497c-d3b3-4bee-b0cd-b207dd7ea963(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/571d497c-d3b3-4bee-b0cd-b207dd7ea963(2).png",
+          "size": 5730,
+          "originalPath": "571d497c-d3b3-4bee-b0cd-b207dd7ea963(2).png"
+        },
+        {
+          "name": "59e777b8-bac2-4759-b6d8-9facb3201794.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/59e777b8-bac2-4759-b6d8-9facb3201794.png",
+          "size": 786,
+          "originalPath": "59e777b8-bac2-4759-b6d8-9facb3201794.png"
+        },
+        {
+          "name": "65b47960-76e7-42e9-a604-4e9d9ba53ef7.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/65b47960-76e7-42e9-a604-4e9d9ba53ef7.png",
+          "size": 1236,
+          "originalPath": "65b47960-76e7-42e9-a604-4e9d9ba53ef7.png"
+        },
+        {
+          "name": "6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1.png",
+          "size": 1112,
+          "originalPath": "6d7b3af4-ec78-454b-bc9e-c5e4c66f50b1.png"
+        },
+        {
+          "name": "736be647-67f4-4816-b3a8-2a0de68c709b(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/736be647-67f4-4816-b3a8-2a0de68c709b(2).png",
+          "size": 7306,
+          "originalPath": "736be647-67f4-4816-b3a8-2a0de68c709b(2).png"
+        },
+        {
+          "name": "76dec646-f990-4051-8f4e-96874f59ca9d.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/76dec646-f990-4051-8f4e-96874f59ca9d.png",
+          "size": 938,
+          "originalPath": "76dec646-f990-4051-8f4e-96874f59ca9d.png"
+        },
+        {
+          "name": "7eed67fe-3ba7-4ddc-bb70-aa1135ff8335.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/7eed67fe-3ba7-4ddc-bb70-aa1135ff8335.png",
+          "size": 1390,
+          "originalPath": "7eed67fe-3ba7-4ddc-bb70-aa1135ff8335.png"
+        },
+        {
+          "name": "858077f7-5c82-4211-a5cf-582f43f8a75b.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/858077f7-5c82-4211-a5cf-582f43f8a75b.png",
+          "size": 1280,
+          "originalPath": "858077f7-5c82-4211-a5cf-582f43f8a75b.png"
+        },
+        {
+          "name": "8d1d8686-29d3-4c37-8822-086c5e76328f(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/8d1d8686-29d3-4c37-8822-086c5e76328f(2).png",
+          "size": 7520,
+          "originalPath": "8d1d8686-29d3-4c37-8822-086c5e76328f(2).png"
+        },
+        {
+          "name": "8de9f284-862d-490e-9e8a-760f4c142b3d.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/8de9f284-862d-490e-9e8a-760f4c142b3d.png",
+          "size": 996,
+          "originalPath": "8de9f284-862d-490e-9e8a-760f4c142b3d.png"
+        },
+        {
+          "name": "9894764b-b1ec-4448-98bd-00397ad0ddc3.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/9894764b-b1ec-4448-98bd-00397ad0ddc3.png",
+          "size": 1020,
+          "originalPath": "9894764b-b1ec-4448-98bd-00397ad0ddc3.png"
+        },
+        {
+          "name": "9b863e97-9e60-4933-a6c2-ed5c4400a84a.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/9b863e97-9e60-4933-a6c2-ed5c4400a84a.png",
+          "size": 588,
+          "originalPath": "9b863e97-9e60-4933-a6c2-ed5c4400a84a.png"
+        },
+        {
+          "name": "9e325608-d2df-4a4d-a880-b8011c69a720.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/9e325608-d2df-4a4d-a880-b8011c69a720.png",
+          "size": 1480,
+          "originalPath": "9e325608-d2df-4a4d-a880-b8011c69a720.png"
+        },
+        {
+          "name": "a8cf90e1-94e0-4280-ae4d-c5220a5a6a19(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/a8cf90e1-94e0-4280-ae4d-c5220a5a6a19(2).png",
+          "size": 7144,
+          "originalPath": "a8cf90e1-94e0-4280-ae4d-c5220a5a6a19(2).png"
+        },
+        {
+          "name": "b5b74992-564a-4140-8c38-2bbc5d327d3f(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/b5b74992-564a-4140-8c38-2bbc5d327d3f(2).png",
+          "size": 7728,
+          "originalPath": "b5b74992-564a-4140-8c38-2bbc5d327d3f(2).png"
+        },
+        {
+          "name": "b83537c4-4315-4f1e-9970-b0416829e686.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/b83537c4-4315-4f1e-9970-b0416829e686.png",
+          "size": 974,
+          "originalPath": "b83537c4-4315-4f1e-9970-b0416829e686.png"
+        },
+        {
+          "name": "c10a68c9-c09c-42af-b707-5f0341b094b7.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/c10a68c9-c09c-42af-b707-5f0341b094b7.png",
+          "size": 1598,
+          "originalPath": "c10a68c9-c09c-42af-b707-5f0341b094b7.png"
+        },
+        {
+          "name": "c50ca07d-bc9f-423a-8a2a-64a8b87c5a33.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/c50ca07d-bc9f-423a-8a2a-64a8b87c5a33.png",
+          "size": 790,
+          "originalPath": "c50ca07d-bc9f-423a-8a2a-64a8b87c5a33.png"
+        },
+        {
+          "name": "ce5676e4-9437-43e3-a0f1-f6ff6bfceea4.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/ce5676e4-9437-43e3-a0f1-f6ff6bfceea4.png",
+          "size": 652,
+          "originalPath": "ce5676e4-9437-43e3-a0f1-f6ff6bfceea4.png"
+        },
+        {
+          "name": "d6b2f72b-f624-45cb-836f-27b89263ad4a.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/d6b2f72b-f624-45cb-836f-27b89263ad4a.png",
+          "size": 1254,
+          "originalPath": "d6b2f72b-f624-45cb-836f-27b89263ad4a.png"
+        },
+        {
+          "name": "e13214bf-314d-4034-a01e-c241aa351f1b(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/e13214bf-314d-4034-a01e-c241aa351f1b(2).png",
+          "size": 5756,
+          "originalPath": "e13214bf-314d-4034-a01e-c241aa351f1b(2).png"
+        },
+        {
+          "name": "e29fa5b0-6264-409d-9244-a6687c052e8a.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/e29fa5b0-6264-409d-9244-a6687c052e8a.png",
+          "size": 1168,
+          "originalPath": "e29fa5b0-6264-409d-9244-a6687c052e8a.png"
+        },
+        {
+          "name": "e48c07a9-4950-45f0-b1ce-fffd3be6fd9c.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/e48c07a9-4950-45f0-b1ce-fffd3be6fd9c.png",
+          "size": 740,
+          "originalPath": "e48c07a9-4950-45f0-b1ce-fffd3be6fd9c.png"
+        },
+        {
+          "name": "e8502bc4-4a74-49bf-a8b1-5b077810385b.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/e8502bc4-4a74-49bf-a8b1-5b077810385b.png",
+          "size": 1626,
+          "originalPath": "e8502bc4-4a74-49bf-a8b1-5b077810385b.png"
+        },
+        {
+          "name": "f24b1997-8258-4300-8899-df366565c4e0.png",
+          "path": "/lovart-comprehensive-assets/decorations/tech/f24b1997-8258-4300-8899-df366565c4e0.png",
+          "size": 1284,
+          "originalPath": "f24b1997-8258-4300-8899-df366565c4e0.png"
+        }
+      ]
+    },
+    "nature": {
+      "ui-interface": [
+        {
+          "name": "99265f7e-d6e7-427e-ab31-64a734f3d562(1).png",
+          "path": "/lovart-comprehensive-assets/ui-interface/nature/99265f7e-d6e7-427e-ab31-64a734f3d562(1).png",
+          "size": 1052903,
+          "originalPath": "99265f7e-d6e7-427e-ab31-64a734f3d562(1).png"
+        }
+      ],
+      "components": [
+        {
+          "name": "0467120e-fecf-4833-bab4-b92b8aa7102a(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/0467120e-fecf-4833-bab4-b92b8aa7102a(1).png",
+          "size": 930472,
+          "originalPath": "0467120e-fecf-4833-bab4-b92b8aa7102a(1).png"
+        },
+        {
+          "name": "0bc199bf-0e4e-43ba-b4b5-3482291efe5a(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/0bc199bf-0e4e-43ba-b4b5-3482291efe5a(1).png",
+          "size": 708548,
+          "originalPath": "0bc199bf-0e4e-43ba-b4b5-3482291efe5a(1).png"
+        },
+        {
+          "name": "17aaf1b8-5215-4cc8-99aa-0645625f0d5b(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/17aaf1b8-5215-4cc8-99aa-0645625f0d5b(1).png",
+          "size": 642268,
+          "originalPath": "17aaf1b8-5215-4cc8-99aa-0645625f0d5b(1).png"
+        },
+        {
+          "name": "25c52fb3-7911-4d5d-8b91-b0a23420fbfb(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/25c52fb3-7911-4d5d-8b91-b0a23420fbfb(1).png",
+          "size": 883892,
+          "originalPath": "25c52fb3-7911-4d5d-8b91-b0a23420fbfb(1).png"
+        },
+        {
+          "name": "29a72b0a-15ed-4793-be6b-5a4a0949a72d(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/29a72b0a-15ed-4793-be6b-5a4a0949a72d(1).png",
+          "size": 627971,
+          "originalPath": "29a72b0a-15ed-4793-be6b-5a4a0949a72d(1).png"
+        },
+        {
+          "name": "32c55b88-bb84-4293-a8d0-1520b05d1618(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/32c55b88-bb84-4293-a8d0-1520b05d1618(1).png",
+          "size": 607187,
+          "originalPath": "32c55b88-bb84-4293-a8d0-1520b05d1618(1).png"
+        },
+        {
+          "name": "3b87dd00-b354-441e-b4c1-b9686bd82949(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/3b87dd00-b354-441e-b4c1-b9686bd82949(1).png",
+          "size": 525699,
+          "originalPath": "3b87dd00-b354-441e-b4c1-b9686bd82949(1).png"
+        },
+        {
+          "name": "48ac19a3-229a-4900-badc-fec4b220da2e(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/48ac19a3-229a-4900-badc-fec4b220da2e(1).png",
+          "size": 674934,
+          "originalPath": "48ac19a3-229a-4900-badc-fec4b220da2e(1).png"
+        },
+        {
+          "name": "4f0053c1-d63a-43e9-ba05-dfd2546682a7(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/4f0053c1-d63a-43e9-ba05-dfd2546682a7(1).png",
+          "size": 464496,
+          "originalPath": "4f0053c1-d63a-43e9-ba05-dfd2546682a7(1).png"
+        },
+        {
+          "name": "571d497c-d3b3-4bee-b0cd-b207dd7ea963(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/571d497c-d3b3-4bee-b0cd-b207dd7ea963(1).png",
+          "size": 568801,
+          "originalPath": "571d497c-d3b3-4bee-b0cd-b207dd7ea963(1).png"
+        },
+        {
+          "name": "5d028e00-b19d-403a-a2b3-77a12e91b25b(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/5d028e00-b19d-403a-a2b3-77a12e91b25b(1).png",
+          "size": 617398,
+          "originalPath": "5d028e00-b19d-403a-a2b3-77a12e91b25b(1).png"
+        },
+        {
+          "name": "6a9b4deb-ac42-4042-b43b-0dd18e9bed68(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/6a9b4deb-ac42-4042-b43b-0dd18e9bed68(1).png",
+          "size": 725019,
+          "originalPath": "6a9b4deb-ac42-4042-b43b-0dd18e9bed68(1).png"
+        },
+        {
+          "name": "72f3576e-caec-4176-b9d9-d4c13a994a39(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/72f3576e-caec-4176-b9d9-d4c13a994a39(1).png",
+          "size": 723432,
+          "originalPath": "72f3576e-caec-4176-b9d9-d4c13a994a39(1).png"
+        },
+        {
+          "name": "7a4f38e1-f68a-4aa2-b174-28d82b9ac38d(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/7a4f38e1-f68a-4aa2-b174-28d82b9ac38d(1).png",
+          "size": 808359,
+          "originalPath": "7a4f38e1-f68a-4aa2-b174-28d82b9ac38d(1).png"
+        },
+        {
+          "name": "839a4f2c-7f90-41e6-9def-f7f132d2a124(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/839a4f2c-7f90-41e6-9def-f7f132d2a124(1).png",
+          "size": 331804,
+          "originalPath": "839a4f2c-7f90-41e6-9def-f7f132d2a124(1).png"
+        },
+        {
+          "name": "8d1d8686-29d3-4c37-8822-086c5e76328f(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/8d1d8686-29d3-4c37-8822-086c5e76328f(1).png",
+          "size": 636886,
+          "originalPath": "8d1d8686-29d3-4c37-8822-086c5e76328f(1).png"
+        },
+        {
+          "name": "9684577b-2dde-4ccd-9cef-13853f26a0ff(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/9684577b-2dde-4ccd-9cef-13853f26a0ff(1).png",
+          "size": 791977,
+          "originalPath": "9684577b-2dde-4ccd-9cef-13853f26a0ff(1).png"
+        },
+        {
+          "name": "9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a(1).png",
+          "size": 600351,
+          "originalPath": "9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a(1).png"
+        },
+        {
+          "name": "a5f17821-366d-43b5-86e3-a9e712032684(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/a5f17821-366d-43b5-86e3-a9e712032684(1).png",
+          "size": 829643,
+          "originalPath": "a5f17821-366d-43b5-86e3-a9e712032684(1).png"
+        },
+        {
+          "name": "b5b74992-564a-4140-8c38-2bbc5d327d3f(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/b5b74992-564a-4140-8c38-2bbc5d327d3f(1).png",
+          "size": 811308,
+          "originalPath": "b5b74992-564a-4140-8c38-2bbc5d327d3f(1).png"
+        },
+        {
+          "name": "baf973ed-e5d5-4231-9f2b-a388f755a5b2(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/baf973ed-e5d5-4231-9f2b-a388f755a5b2(1).png",
+          "size": 688975,
+          "originalPath": "baf973ed-e5d5-4231-9f2b-a388f755a5b2(1).png"
+        },
+        {
+          "name": "cbe41657-dd95-4bb0-905f-bf324e52e982(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/cbe41657-dd95-4bb0-905f-bf324e52e982(1).png",
+          "size": 713433,
+          "originalPath": "cbe41657-dd95-4bb0-905f-bf324e52e982(1).png"
+        },
+        {
+          "name": "d59721da-fd82-4d32-805b-14377478bf3d(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/d59721da-fd82-4d32-805b-14377478bf3d(1).png",
+          "size": 600384,
+          "originalPath": "d59721da-fd82-4d32-805b-14377478bf3d(1).png"
+        },
+        {
+          "name": "e13214bf-314d-4034-a01e-c241aa351f1b(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/e13214bf-314d-4034-a01e-c241aa351f1b(1).png",
+          "size": 596486,
+          "originalPath": "e13214bf-314d-4034-a01e-c241aa351f1b(1).png"
+        },
+        {
+          "name": "e472f1ab-e541-4fe2-add2-d6c1c6fb702a(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/e472f1ab-e541-4fe2-add2-d6c1c6fb702a(1).png",
+          "size": 830852,
+          "originalPath": "e472f1ab-e541-4fe2-add2-d6c1c6fb702a(1).png"
+        },
+        {
+          "name": "e8502bc4-4a74-49bf-a8b1-5b077810385b(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/e8502bc4-4a74-49bf-a8b1-5b077810385b(1).png",
+          "size": 795763,
+          "originalPath": "e8502bc4-4a74-49bf-a8b1-5b077810385b(1).png"
+        },
+        {
+          "name": "fb7a18e9-0954-4cb7-aa14-14097fa1a79d(1).png",
+          "path": "/lovart-comprehensive-assets/components/nature/fb7a18e9-0954-4cb7-aa14-14097fa1a79d(1).png",
+          "size": 713187,
+          "originalPath": "fb7a18e9-0954-4cb7-aa14-14097fa1a79d(1).png"
+        }
+      ],
+      "icons": [
+        {
+          "name": "054b05e8-fda6-4bc0-862d-eb2fddf5412c(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/054b05e8-fda6-4bc0-862d-eb2fddf5412c(2).png",
+          "size": 11148,
+          "originalPath": "054b05e8-fda6-4bc0-862d-eb2fddf5412c(2).png"
+        },
+        {
+          "name": "0d5ccf94-742a-42c2-848d-fce3d26a312f(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/0d5ccf94-742a-42c2-848d-fce3d26a312f(2).png",
+          "size": 16720,
+          "originalPath": "0d5ccf94-742a-42c2-848d-fce3d26a312f(2).png"
+        },
+        {
+          "name": "23db9ea3-4a72-4667-a811-eaff4b34ed88(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/23db9ea3-4a72-4667-a811-eaff4b34ed88(2).png",
+          "size": 16350,
+          "originalPath": "23db9ea3-4a72-4667-a811-eaff4b34ed88(2).png"
+        },
+        {
+          "name": "29a72b0a-15ed-4793-be6b-5a4a0949a72d(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/29a72b0a-15ed-4793-be6b-5a4a0949a72d(2).png",
+          "size": 11768,
+          "originalPath": "29a72b0a-15ed-4793-be6b-5a4a0949a72d(2).png"
+        },
+        {
+          "name": "347d0c0e-20e2-4f08-a70c-282feb888831(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/347d0c0e-20e2-4f08-a70c-282feb888831(2).png",
+          "size": 11268,
+          "originalPath": "347d0c0e-20e2-4f08-a70c-282feb888831(2).png"
+        },
+        {
+          "name": "48ac19a3-229a-4900-badc-fec4b220da2e(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/48ac19a3-229a-4900-badc-fec4b220da2e(2).png",
+          "size": 13618,
+          "originalPath": "48ac19a3-229a-4900-badc-fec4b220da2e(2).png"
+        },
+        {
+          "name": "530c54d0-fe9b-4140-875b-7c9650e1be70(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/530c54d0-fe9b-4140-875b-7c9650e1be70(2).png",
+          "size": 14242,
+          "originalPath": "530c54d0-fe9b-4140-875b-7c9650e1be70(2).png"
+        },
+        {
+          "name": "5d115a96-e349-4ce9-859a-35b4151c94a4(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/5d115a96-e349-4ce9-859a-35b4151c94a4(2).png",
+          "size": 14848,
+          "originalPath": "5d115a96-e349-4ce9-859a-35b4151c94a4(2).png"
+        },
+        {
+          "name": "6d204f55-eb20-4dc8-aa7b-0adab5c388c9(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/6d204f55-eb20-4dc8-aa7b-0adab5c388c9(2).png",
+          "size": 12992,
+          "originalPath": "6d204f55-eb20-4dc8-aa7b-0adab5c388c9(2).png"
+        },
+        {
+          "name": "7a9fa38b-1e7b-4838-84a4-c02034e0cb3a(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/7a9fa38b-1e7b-4838-84a4-c02034e0cb3a(2).png",
+          "size": 14076,
+          "originalPath": "7a9fa38b-1e7b-4838-84a4-c02034e0cb3a(2).png"
+        },
+        {
+          "name": "8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4(2).png",
+          "size": 11740,
+          "originalPath": "8b4a271f-13bc-4ea4-b70a-a0b1b433a9a4(2).png"
+        },
+        {
+          "name": "9684577b-2dde-4ccd-9cef-13853f26a0ff(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/9684577b-2dde-4ccd-9cef-13853f26a0ff(2).png",
+          "size": 12346,
+          "originalPath": "9684577b-2dde-4ccd-9cef-13853f26a0ff(2).png"
+        },
+        {
+          "name": "a5f17821-366d-43b5-86e3-a9e712032684(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/a5f17821-366d-43b5-86e3-a9e712032684(2).png",
+          "size": 14926,
+          "originalPath": "a5f17821-366d-43b5-86e3-a9e712032684(2).png"
+        },
+        {
+          "name": "c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63(2).png",
+          "size": 13286,
+          "originalPath": "c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63(2).png"
+        },
+        {
+          "name": "d16f4947-2fbf-4a8e-841f-ccfae5031532(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/d16f4947-2fbf-4a8e-841f-ccfae5031532(2).png",
+          "size": 12718,
+          "originalPath": "d16f4947-2fbf-4a8e-841f-ccfae5031532(2).png"
+        },
+        {
+          "name": "dc8c2b87-8854-4104-aa98-8b9946f39125(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/dc8c2b87-8854-4104-aa98-8b9946f39125(2).png",
+          "size": 10218,
+          "originalPath": "dc8c2b87-8854-4104-aa98-8b9946f39125(2).png"
+        },
+        {
+          "name": "e610d030-1d1e-47f4-8ef8-88ac5f840c14(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/e610d030-1d1e-47f4-8ef8-88ac5f840c14(2).png",
+          "size": 15184,
+          "originalPath": "e610d030-1d1e-47f4-8ef8-88ac5f840c14(2).png"
+        },
+        {
+          "name": "fb7a18e9-0954-4cb7-aa14-14097fa1a79d(2).png",
+          "path": "/lovart-comprehensive-assets/icons/nature/fb7a18e9-0954-4cb7-aa14-14097fa1a79d(2).png",
+          "size": 11568,
+          "originalPath": "fb7a18e9-0954-4cb7-aa14-14097fa1a79d(2).png"
+        }
+      ],
+      "icon-sets": [],
+      "illustrations": [],
+      "backgrounds": [],
+      "logos": [],
+      "decorations": [
+        {
+          "name": "042f185c-e76a-429e-b9ef-25f5e6745959.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/042f185c-e76a-429e-b9ef-25f5e6745959.png",
+          "size": 1494,
+          "originalPath": "042f185c-e76a-429e-b9ef-25f5e6745959.png"
+        },
+        {
+          "name": "0aa518d0-450c-4337-984b-1efad25253d4.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/0aa518d0-450c-4337-984b-1efad25253d4.png",
+          "size": 1172,
+          "originalPath": "0aa518d0-450c-4337-984b-1efad25253d4.png"
+        },
+        {
+          "name": "1283c5cb-4606-41aa-8c11-759c95d755ed.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/1283c5cb-4606-41aa-8c11-759c95d755ed.png",
+          "size": 1474,
+          "originalPath": "1283c5cb-4606-41aa-8c11-759c95d755ed.png"
+        },
+        {
+          "name": "1a069307-0244-4e66-86bb-486727c8b1e2.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/1a069307-0244-4e66-86bb-486727c8b1e2.png",
+          "size": 694,
+          "originalPath": "1a069307-0244-4e66-86bb-486727c8b1e2.png"
+        },
+        {
+          "name": "23db9ea3-4a72-4667-a811-eaff4b34ed88.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/23db9ea3-4a72-4667-a811-eaff4b34ed88.png",
+          "size": 1702,
+          "originalPath": "23db9ea3-4a72-4667-a811-eaff4b34ed88.png"
+        },
+        {
+          "name": "285e6817-9453-4663-98ca-599e602e29b1(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/285e6817-9453-4663-98ca-599e602e29b1(2).png",
+          "size": 7738,
+          "originalPath": "285e6817-9453-4663-98ca-599e602e29b1(2).png"
+        },
+        {
+          "name": "2d96d13d-828a-4c1f-88d4-8f094240a5a4.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/2d96d13d-828a-4c1f-88d4-8f094240a5a4.png",
+          "size": 1944,
+          "originalPath": "2d96d13d-828a-4c1f-88d4-8f094240a5a4.png"
+        },
+        {
+          "name": "32c55b88-bb84-4293-a8d0-1520b05d1618.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/32c55b88-bb84-4293-a8d0-1520b05d1618.png",
+          "size": 958,
+          "originalPath": "32c55b88-bb84-4293-a8d0-1520b05d1618.png"
+        },
+        {
+          "name": "35dedb17-1269-41df-a082-1c46af8ebd0d(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/35dedb17-1269-41df-a082-1c46af8ebd0d(2).png",
+          "size": 6838,
+          "originalPath": "35dedb17-1269-41df-a082-1c46af8ebd0d(2).png"
+        },
+        {
+          "name": "3c9038b9-a062-4fed-85f2-bbd67093c4f1.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/3c9038b9-a062-4fed-85f2-bbd67093c4f1.png",
+          "size": 1414,
+          "originalPath": "3c9038b9-a062-4fed-85f2-bbd67093c4f1.png"
+        },
+        {
+          "name": "48ac19a3-229a-4900-badc-fec4b220da2e.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/48ac19a3-229a-4900-badc-fec4b220da2e.png",
+          "size": 1410,
+          "originalPath": "48ac19a3-229a-4900-badc-fec4b220da2e.png"
+        },
+        {
+          "name": "4bad2fde-5258-41c8-bc08-b535bac8c4e3.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/4bad2fde-5258-41c8-bc08-b535bac8c4e3.png",
+          "size": 566,
+          "originalPath": "4bad2fde-5258-41c8-bc08-b535bac8c4e3.png"
+        },
+        {
+          "name": "50908b62-4791-4501-a78c-8b480bb7f3b2.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/50908b62-4791-4501-a78c-8b480bb7f3b2.png",
+          "size": 772,
+          "originalPath": "50908b62-4791-4501-a78c-8b480bb7f3b2.png"
+        },
+        {
+          "name": "571d497c-d3b3-4bee-b0cd-b207dd7ea963.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/571d497c-d3b3-4bee-b0cd-b207dd7ea963.png",
+          "size": 586,
+          "originalPath": "571d497c-d3b3-4bee-b0cd-b207dd7ea963.png"
+        },
+        {
+          "name": "5d028e00-b19d-403a-a2b3-77a12e91b25b(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/5d028e00-b19d-403a-a2b3-77a12e91b25b(2).png",
+          "size": 8518,
+          "originalPath": "5d028e00-b19d-403a-a2b3-77a12e91b25b(2).png"
+        },
+        {
+          "name": "678af2be-b04f-4c2a-b291-2982c76725cd.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/678af2be-b04f-4c2a-b291-2982c76725cd.png",
+          "size": 1458,
+          "originalPath": "678af2be-b04f-4c2a-b291-2982c76725cd.png"
+        },
+        {
+          "name": "70fe2cda-1280-4e56-81d9-beb31419d6a6.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/70fe2cda-1280-4e56-81d9-beb31419d6a6.png",
+          "size": 1478,
+          "originalPath": "70fe2cda-1280-4e56-81d9-beb31419d6a6.png"
+        },
+        {
+          "name": "736be647-67f4-4816-b3a8-2a0de68c709b.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/736be647-67f4-4816-b3a8-2a0de68c709b.png",
+          "size": 1036,
+          "originalPath": "736be647-67f4-4816-b3a8-2a0de68c709b.png"
+        },
+        {
+          "name": "78824c5d-0eab-4f76-a369-1e1d94d3f029.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/78824c5d-0eab-4f76-a369-1e1d94d3f029.png",
+          "size": 1220,
+          "originalPath": "78824c5d-0eab-4f76-a369-1e1d94d3f029.png"
+        },
+        {
+          "name": "809723b7-130e-478c-9b54-fe40739a1eee(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/809723b7-130e-478c-9b54-fe40739a1eee(2).png",
+          "size": 8812,
+          "originalPath": "809723b7-130e-478c-9b54-fe40739a1eee(2).png"
+        },
+        {
+          "name": "86e394a7-f886-4abd-9b19-72301c36a392(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/86e394a7-f886-4abd-9b19-72301c36a392(2).png",
+          "size": 7100,
+          "originalPath": "86e394a7-f886-4abd-9b19-72301c36a392(2).png"
+        },
+        {
+          "name": "8d1d8686-29d3-4c37-8822-086c5e76328f.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/8d1d8686-29d3-4c37-8822-086c5e76328f.png",
+          "size": 1128,
+          "originalPath": "8d1d8686-29d3-4c37-8822-086c5e76328f.png"
+        },
+        {
+          "name": "92ea8771-bb74-4be9-ba3c-62e199dbc1aa.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/92ea8771-bb74-4be9-ba3c-62e199dbc1aa.png",
+          "size": 1140,
+          "originalPath": "92ea8771-bb74-4be9-ba3c-62e199dbc1aa.png"
+        },
+        {
+          "name": "99265f7e-d6e7-427e-ab31-64a734f3d562.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/99265f7e-d6e7-427e-ab31-64a734f3d562.png",
+          "size": 1570,
+          "originalPath": "99265f7e-d6e7-427e-ab31-64a734f3d562.png"
+        },
+        {
+          "name": "9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a(2).png",
+          "size": 8264,
+          "originalPath": "9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a(2).png"
+        },
+        {
+          "name": "9fd2499b-dec3-478f-96b1-3385cb2965a5.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/9fd2499b-dec3-478f-96b1-3385cb2965a5.png",
+          "size": 1178,
+          "originalPath": "9fd2499b-dec3-478f-96b1-3385cb2965a5.png"
+        },
+        {
+          "name": "a8cf90e1-94e0-4280-ae4d-c5220a5a6a19.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/a8cf90e1-94e0-4280-ae4d-c5220a5a6a19.png",
+          "size": 704,
+          "originalPath": "a8cf90e1-94e0-4280-ae4d-c5220a5a6a19.png"
+        },
+        {
+          "name": "b5b74992-564a-4140-8c38-2bbc5d327d3f.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/b5b74992-564a-4140-8c38-2bbc5d327d3f.png",
+          "size": 868,
+          "originalPath": "b5b74992-564a-4140-8c38-2bbc5d327d3f.png"
+        },
+        {
+          "name": "b9b9254d-302a-4690-aa8a-1314e66021b8.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/b9b9254d-302a-4690-aa8a-1314e66021b8.png",
+          "size": 1480,
+          "originalPath": "b9b9254d-302a-4690-aa8a-1314e66021b8.png"
+        },
+        {
+          "name": "c1bcffd3-ce57-4b3a-9571-f1a674db54cc(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/c1bcffd3-ce57-4b3a-9571-f1a674db54cc(2).png",
+          "size": 9884,
+          "originalPath": "c1bcffd3-ce57-4b3a-9571-f1a674db54cc(2).png"
+        },
+        {
+          "name": "c9457355-729f-43e4-b7ee-fa7f037c3228(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/c9457355-729f-43e4-b7ee-fa7f037c3228(2).png",
+          "size": 6676,
+          "originalPath": "c9457355-729f-43e4-b7ee-fa7f037c3228(2).png"
+        },
+        {
+          "name": "cfc863f5-f7d5-4cbe-bb43-2f1d855161f2.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/cfc863f5-f7d5-4cbe-bb43-2f1d855161f2.png",
+          "size": 1392,
+          "originalPath": "cfc863f5-f7d5-4cbe-bb43-2f1d855161f2.png"
+        },
+        {
+          "name": "dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad.png",
+          "size": 1146,
+          "originalPath": "dc7cc8c9-8cd6-498c-8ab6-d7eabcdcdaad.png"
+        },
+        {
+          "name": "e13214bf-314d-4034-a01e-c241aa351f1b.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/e13214bf-314d-4034-a01e-c241aa351f1b.png",
+          "size": 546,
+          "originalPath": "e13214bf-314d-4034-a01e-c241aa351f1b.png"
+        },
+        {
+          "name": "e2db6c01-a503-4012-9c6e-cffe27f34d2e.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/e2db6c01-a503-4012-9c6e-cffe27f34d2e.png",
+          "size": 1852,
+          "originalPath": "e2db6c01-a503-4012-9c6e-cffe27f34d2e.png"
+        },
+        {
+          "name": "e5089260-90ad-4392-b4aa-c8ec5c83fa4b.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/e5089260-90ad-4392-b4aa-c8ec5c83fa4b.png",
+          "size": 1524,
+          "originalPath": "e5089260-90ad-4392-b4aa-c8ec5c83fa4b.png"
+        },
+        {
+          "name": "e9e10106-54be-46aa-9ef1-431bb9b89e7d.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/e9e10106-54be-46aa-9ef1-431bb9b89e7d.png",
+          "size": 1290,
+          "originalPath": "e9e10106-54be-46aa-9ef1-431bb9b89e7d.png"
+        },
+        {
+          "name": "fb7a18e9-0954-4cb7-aa14-14097fa1a79d.png",
+          "path": "/lovart-comprehensive-assets/decorations/nature/fb7a18e9-0954-4cb7-aa14-14097fa1a79d.png",
+          "size": 1100,
+          "originalPath": "fb7a18e9-0954-4cb7-aa14-14097fa1a79d.png"
+        }
+      ]
+    },
+    "art": {
+      "ui-interface": [
+        {
+          "name": "c10a68c9-c09c-42af-b707-5f0341b094b7(1).png",
+          "path": "/lovart-comprehensive-assets/ui-interface/art/c10a68c9-c09c-42af-b707-5f0341b094b7(1).png",
+          "size": 1128219,
+          "originalPath": "c10a68c9-c09c-42af-b707-5f0341b094b7(1).png"
+        }
+      ],
+      "components": [
+        {
+          "name": "054b05e8-fda6-4bc0-862d-eb2fddf5412c(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/054b05e8-fda6-4bc0-862d-eb2fddf5412c(1).png",
+          "size": 841027,
+          "originalPath": "054b05e8-fda6-4bc0-862d-eb2fddf5412c(1).png"
+        },
+        {
+          "name": "0d5ccf94-742a-42c2-848d-fce3d26a312f(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/0d5ccf94-742a-42c2-848d-fce3d26a312f(1).png",
+          "size": 905474,
+          "originalPath": "0d5ccf94-742a-42c2-848d-fce3d26a312f(1).png"
+        },
+        {
+          "name": "1a069307-0244-4e66-86bb-486727c8b1e2(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/1a069307-0244-4e66-86bb-486727c8b1e2(1).png",
+          "size": 434039,
+          "originalPath": "1a069307-0244-4e66-86bb-486727c8b1e2(1).png"
+        },
+        {
+          "name": "26360e34-6732-411a-b777-1fd9622e1bb6(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/26360e34-6732-411a-b777-1fd9622e1bb6(1).png",
+          "size": 619348,
+          "originalPath": "26360e34-6732-411a-b777-1fd9622e1bb6(1).png"
+        },
+        {
+          "name": "2be10054-248f-433b-b223-3adc09e89f53(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/2be10054-248f-433b-b223-3adc09e89f53(1).png",
+          "size": 670936,
+          "originalPath": "2be10054-248f-433b-b223-3adc09e89f53(1).png"
+        },
+        {
+          "name": "347d0c0e-20e2-4f08-a70c-282feb888831(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/347d0c0e-20e2-4f08-a70c-282feb888831(1).png",
+          "size": 677580,
+          "originalPath": "347d0c0e-20e2-4f08-a70c-282feb888831(1).png"
+        },
+        {
+          "name": "3c9038b9-a062-4fed-85f2-bbd67093c4f1(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/3c9038b9-a062-4fed-85f2-bbd67093c4f1(1).png",
+          "size": 896327,
+          "originalPath": "3c9038b9-a062-4fed-85f2-bbd67093c4f1(1).png"
+        },
+        {
+          "name": "4ae5a8af-60df-4e63-afed-fbbb0990cca8(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/4ae5a8af-60df-4e63-afed-fbbb0990cca8(1).png",
+          "size": 610291,
+          "originalPath": "4ae5a8af-60df-4e63-afed-fbbb0990cca8(1).png"
+        },
+        {
+          "name": "50908b62-4791-4501-a78c-8b480bb7f3b2(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/50908b62-4791-4501-a78c-8b480bb7f3b2(1).png",
+          "size": 604240,
+          "originalPath": "50908b62-4791-4501-a78c-8b480bb7f3b2(1).png"
+        },
+        {
+          "name": "58ca7bdb-4775-4e4f-b312-4c43a9103bd9(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/58ca7bdb-4775-4e4f-b312-4c43a9103bd9(1).png",
+          "size": 915955,
+          "originalPath": "58ca7bdb-4775-4e4f-b312-4c43a9103bd9(1).png"
+        },
+        {
+          "name": "5d115a96-e349-4ce9-859a-35b4151c94a4(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/5d115a96-e349-4ce9-859a-35b4151c94a4(1).png",
+          "size": 789020,
+          "originalPath": "5d115a96-e349-4ce9-859a-35b4151c94a4(1).png"
+        },
+        {
+          "name": "6d204f55-eb20-4dc8-aa7b-0adab5c388c9(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/6d204f55-eb20-4dc8-aa7b-0adab5c388c9(1).png",
+          "size": 687771,
+          "originalPath": "6d204f55-eb20-4dc8-aa7b-0adab5c388c9(1).png"
+        },
+        {
+          "name": "736be647-67f4-4816-b3a8-2a0de68c709b(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/736be647-67f4-4816-b3a8-2a0de68c709b(1).png",
+          "size": 592511,
+          "originalPath": "736be647-67f4-4816-b3a8-2a0de68c709b(1).png"
+        },
+        {
+          "name": "7a9fa38b-1e7b-4838-84a4-c02034e0cb3a(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/7a9fa38b-1e7b-4838-84a4-c02034e0cb3a(1).png",
+          "size": 913011,
+          "originalPath": "7a9fa38b-1e7b-4838-84a4-c02034e0cb3a(1).png"
+        },
+        {
+          "name": "858077f7-5c82-4211-a5cf-582f43f8a75b(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/858077f7-5c82-4211-a5cf-582f43f8a75b(1).png",
+          "size": 804575,
+          "originalPath": "858077f7-5c82-4211-a5cf-582f43f8a75b(1).png"
+        },
+        {
+          "name": "8d9807e9-b61b-49df-a2d8-cb0b3762958e(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/8d9807e9-b61b-49df-a2d8-cb0b3762958e(1).png",
+          "size": 522992,
+          "originalPath": "8d9807e9-b61b-49df-a2d8-cb0b3762958e(1).png"
+        },
+        {
+          "name": "987eee03-a5bf-4fa9-b266-c0447f62c561(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/987eee03-a5bf-4fa9-b266-c0447f62c561(1).png",
+          "size": 800261,
+          "originalPath": "987eee03-a5bf-4fa9-b266-c0447f62c561(1).png"
+        },
+        {
+          "name": "9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217(1).png",
+          "size": 258741,
+          "originalPath": "9df65d9a-d1f5-4ac2-93a5-4d7ce1e73217(1).png"
+        },
+        {
+          "name": "a7821c9e-2b8b-45bc-9211-539da8f0a89e(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/a7821c9e-2b8b-45bc-9211-539da8f0a89e(1).png",
+          "size": 505925,
+          "originalPath": "a7821c9e-2b8b-45bc-9211-539da8f0a89e(1).png"
+        },
+        {
+          "name": "b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12(1).png",
+          "size": 581873,
+          "originalPath": "b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12(1).png"
+        },
+        {
+          "name": "c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63(1).png",
+          "size": 891969,
+          "originalPath": "c0c764ff-ff2f-45b4-a8c3-78d8bfdcab63(1).png"
+        },
+        {
+          "name": "ce5676e4-9437-43e3-a0f1-f6ff6bfceea4(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/ce5676e4-9437-43e3-a0f1-f6ff6bfceea4(1).png",
+          "size": 528791,
+          "originalPath": "ce5676e4-9437-43e3-a0f1-f6ff6bfceea4(1).png"
+        },
+        {
+          "name": "d6b2f72b-f624-45cb-836f-27b89263ad4a(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/d6b2f72b-f624-45cb-836f-27b89263ad4a(1).png",
+          "size": 607436,
+          "originalPath": "d6b2f72b-f624-45cb-836f-27b89263ad4a(1).png"
+        },
+        {
+          "name": "e1c70a1e-cf2b-4ce8-a133-9b8961b12a19(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/e1c70a1e-cf2b-4ce8-a133-9b8961b12a19(1).png",
+          "size": 599491,
+          "originalPath": "e1c70a1e-cf2b-4ce8-a133-9b8961b12a19(1).png"
+        },
+        {
+          "name": "e48c07a9-4950-45f0-b1ce-fffd3be6fd9c(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/e48c07a9-4950-45f0-b1ce-fffd3be6fd9c(1).png",
+          "size": 578329,
+          "originalPath": "e48c07a9-4950-45f0-b1ce-fffd3be6fd9c(1).png"
+        },
+        {
+          "name": "e9e10106-54be-46aa-9ef1-431bb9b89e7d(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/e9e10106-54be-46aa-9ef1-431bb9b89e7d(1).png",
+          "size": 683400,
+          "originalPath": "e9e10106-54be-46aa-9ef1-431bb9b89e7d(1).png"
+        },
+        {
+          "name": "fe097527-d9d5-4442-a018-7b79bb23a23a(1).png",
+          "path": "/lovart-comprehensive-assets/components/art/fe097527-d9d5-4442-a018-7b79bb23a23a(1).png",
+          "size": 472593,
+          "originalPath": "fe097527-d9d5-4442-a018-7b79bb23a23a(1).png"
+        }
+      ],
+      "icons": [
+        {
+          "name": "07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d(2).png",
+          "size": 19066,
+          "originalPath": "07db38d9-d7d8-407f-9be6-d6d8ea1aaa3d(2).png"
+        },
+        {
+          "name": "0d8ddb75-d08b-48c0-be15-127dfb7e9e98(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/0d8ddb75-d08b-48c0-be15-127dfb7e9e98(2).png",
+          "size": 15966,
+          "originalPath": "0d8ddb75-d08b-48c0-be15-127dfb7e9e98(2).png"
+        },
+        {
+          "name": "25c52fb3-7911-4d5d-8b91-b0a23420fbfb(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/25c52fb3-7911-4d5d-8b91-b0a23420fbfb(2).png",
+          "size": 14646,
+          "originalPath": "25c52fb3-7911-4d5d-8b91-b0a23420fbfb(2).png"
+        },
+        {
+          "name": "2be10054-248f-433b-b223-3adc09e89f53(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/2be10054-248f-433b-b223-3adc09e89f53(2).png",
+          "size": 16130,
+          "originalPath": "2be10054-248f-433b-b223-3adc09e89f53(2).png"
+        },
+        {
+          "name": "35dcbd85-76bb-4aff-afc6-51b6abe90115(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/35dcbd85-76bb-4aff-afc6-51b6abe90115(2).png",
+          "size": 14522,
+          "originalPath": "35dcbd85-76bb-4aff-afc6-51b6abe90115(2).png"
+        },
+        {
+          "name": "4ae5a8af-60df-4e63-afed-fbbb0990cca8(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/4ae5a8af-60df-4e63-afed-fbbb0990cca8(2).png",
+          "size": 10788,
+          "originalPath": "4ae5a8af-60df-4e63-afed-fbbb0990cca8(2).png"
+        },
+        {
+          "name": "58ca7bdb-4775-4e4f-b312-4c43a9103bd9(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/58ca7bdb-4775-4e4f-b312-4c43a9103bd9(2).png",
+          "size": 13598,
+          "originalPath": "58ca7bdb-4775-4e4f-b312-4c43a9103bd9(2).png"
+        },
+        {
+          "name": "62848ea0-b51d-45af-8415-5ce24e10f36a(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/62848ea0-b51d-45af-8415-5ce24e10f36a(2).png",
+          "size": 13856,
+          "originalPath": "62848ea0-b51d-45af-8415-5ce24e10f36a(2).png"
+        },
+        {
+          "name": "70fe2cda-1280-4e56-81d9-beb31419d6a6(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/70fe2cda-1280-4e56-81d9-beb31419d6a6(2).png",
+          "size": 12476,
+          "originalPath": "70fe2cda-1280-4e56-81d9-beb31419d6a6(2).png"
+        },
+        {
+          "name": "7b1f3415-f17d-43fc-ba4e-7a5014da1cd1(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/7b1f3415-f17d-43fc-ba4e-7a5014da1cd1(2).png",
+          "size": 14084,
+          "originalPath": "7b1f3415-f17d-43fc-ba4e-7a5014da1cd1(2).png"
+        },
+        {
+          "name": "8dd3a592-a5d0-44db-8002-6d110eac968c(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/8dd3a592-a5d0-44db-8002-6d110eac968c(2).png",
+          "size": 11992,
+          "originalPath": "8dd3a592-a5d0-44db-8002-6d110eac968c(2).png"
+        },
+        {
+          "name": "987eee03-a5bf-4fa9-b266-c0447f62c561(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/987eee03-a5bf-4fa9-b266-c0447f62c561(2).png",
+          "size": 13408,
+          "originalPath": "987eee03-a5bf-4fa9-b266-c0447f62c561(2).png"
+        },
+        {
+          "name": "b324bc6d-6cf2-4542-aa05-424191416330(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/b324bc6d-6cf2-4542-aa05-424191416330(2).png",
+          "size": 13286,
+          "originalPath": "b324bc6d-6cf2-4542-aa05-424191416330(2).png"
+        },
+        {
+          "name": "c10a68c9-c09c-42af-b707-5f0341b094b7(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/c10a68c9-c09c-42af-b707-5f0341b094b7(2).png",
+          "size": 20330,
+          "originalPath": "c10a68c9-c09c-42af-b707-5f0341b094b7(2).png"
+        },
+        {
+          "name": "d3387b00-4b46-4e89-9534-d0b71f0b1534(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/d3387b00-4b46-4e89-9534-d0b71f0b1534(2).png",
+          "size": 14112,
+          "originalPath": "d3387b00-4b46-4e89-9534-d0b71f0b1534(2).png"
+        },
+        {
+          "name": "e2db6c01-a503-4012-9c6e-cffe27f34d2e(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/e2db6c01-a503-4012-9c6e-cffe27f34d2e(2).png",
+          "size": 15224,
+          "originalPath": "e2db6c01-a503-4012-9c6e-cffe27f34d2e(2).png"
+        },
+        {
+          "name": "e8502bc4-4a74-49bf-a8b1-5b077810385b(2).png",
+          "path": "/lovart-comprehensive-assets/icons/art/e8502bc4-4a74-49bf-a8b1-5b077810385b(2).png",
+          "size": 15962,
+          "originalPath": "e8502bc4-4a74-49bf-a8b1-5b077810385b(2).png"
+        }
+      ],
+      "icon-sets": [],
+      "illustrations": [],
+      "backgrounds": [],
+      "logos": [],
+      "decorations": [
+        {
+          "name": "0467120e-fecf-4833-bab4-b92b8aa7102a.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/0467120e-fecf-4833-bab4-b92b8aa7102a.png",
+          "size": 1514,
+          "originalPath": "0467120e-fecf-4833-bab4-b92b8aa7102a.png"
+        },
+        {
+          "name": "0bc199bf-0e4e-43ba-b4b5-3482291efe5a.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/0bc199bf-0e4e-43ba-b4b5-3482291efe5a.png",
+          "size": 1314,
+          "originalPath": "0bc199bf-0e4e-43ba-b4b5-3482291efe5a.png"
+        },
+        {
+          "name": "1639d850-a711-4215-9f80-335697f71e57.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/1639d850-a711-4215-9f80-335697f71e57.png",
+          "size": 1474,
+          "originalPath": "1639d850-a711-4215-9f80-335697f71e57.png"
+        },
+        {
+          "name": "1e2f3c9c-506c-4599-8735-06aea7aa21dd(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/1e2f3c9c-506c-4599-8735-06aea7aa21dd(2).png",
+          "size": 7112,
+          "originalPath": "1e2f3c9c-506c-4599-8735-06aea7aa21dd(2).png"
+        },
+        {
+          "name": "25c52fb3-7911-4d5d-8b91-b0a23420fbfb.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/25c52fb3-7911-4d5d-8b91-b0a23420fbfb.png",
+          "size": 1420,
+          "originalPath": "25c52fb3-7911-4d5d-8b91-b0a23420fbfb.png"
+        },
+        {
+          "name": "285e6817-9453-4663-98ca-599e602e29b1.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/285e6817-9453-4663-98ca-599e602e29b1.png",
+          "size": 884,
+          "originalPath": "285e6817-9453-4663-98ca-599e602e29b1.png"
+        },
+        {
+          "name": "2dac7146-e195-4fb5-a8c1-8ce9dbd93066.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/2dac7146-e195-4fb5-a8c1-8ce9dbd93066.png",
+          "size": 1146,
+          "originalPath": "2dac7146-e195-4fb5-a8c1-8ce9dbd93066.png"
+        },
+        {
+          "name": "347d0c0e-20e2-4f08-a70c-282feb888831.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/347d0c0e-20e2-4f08-a70c-282feb888831.png",
+          "size": 1272,
+          "originalPath": "347d0c0e-20e2-4f08-a70c-282feb888831.png"
+        },
+        {
+          "name": "35dedb17-1269-41df-a082-1c46af8ebd0d.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/35dedb17-1269-41df-a082-1c46af8ebd0d.png",
+          "size": 798,
+          "originalPath": "35dedb17-1269-41df-a082-1c46af8ebd0d.png"
+        },
+        {
+          "name": "3eb25b31-457e-47dc-a691-20e399ea580b.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/3eb25b31-457e-47dc-a691-20e399ea580b.png",
+          "size": 1404,
+          "originalPath": "3eb25b31-457e-47dc-a691-20e399ea580b.png"
+        },
+        {
+          "name": "4ae5a8af-60df-4e63-afed-fbbb0990cca8.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/4ae5a8af-60df-4e63-afed-fbbb0990cca8.png",
+          "size": 1188,
+          "originalPath": "4ae5a8af-60df-4e63-afed-fbbb0990cca8.png"
+        },
+        {
+          "name": "4ec73d19-7e5a-4be5-a51d-ca9e097e8e93.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/4ec73d19-7e5a-4be5-a51d-ca9e097e8e93.png",
+          "size": 740,
+          "originalPath": "4ec73d19-7e5a-4be5-a51d-ca9e097e8e93.png"
+        },
+        {
+          "name": "5122054d-82ae-4eca-948a-7c856a70e435.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/5122054d-82ae-4eca-948a-7c856a70e435.png",
+          "size": 1088,
+          "originalPath": "5122054d-82ae-4eca-948a-7c856a70e435.png"
+        },
+        {
+          "name": "58ca7bdb-4775-4e4f-b312-4c43a9103bd9.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/58ca7bdb-4775-4e4f-b312-4c43a9103bd9.png",
+          "size": 1304,
+          "originalPath": "58ca7bdb-4775-4e4f-b312-4c43a9103bd9.png"
+        },
+        {
+          "name": "5d028e00-b19d-403a-a2b3-77a12e91b25b.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/5d028e00-b19d-403a-a2b3-77a12e91b25b.png",
+          "size": 806,
+          "originalPath": "5d028e00-b19d-403a-a2b3-77a12e91b25b.png"
+        },
+        {
+          "name": "6a9b4deb-ac42-4042-b43b-0dd18e9bed68.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/6a9b4deb-ac42-4042-b43b-0dd18e9bed68.png",
+          "size": 1290,
+          "originalPath": "6a9b4deb-ac42-4042-b43b-0dd18e9bed68.png"
+        },
+        {
+          "name": "7288ca44-2d97-448e-af22-a5a07734562f(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/7288ca44-2d97-448e-af22-a5a07734562f(2).png",
+          "size": 8622,
+          "originalPath": "7288ca44-2d97-448e-af22-a5a07734562f(2).png"
+        },
+        {
+          "name": "742a7ecb-e413-4030-ac61-21d78c915ede(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/742a7ecb-e413-4030-ac61-21d78c915ede(2).png",
+          "size": 8784,
+          "originalPath": "742a7ecb-e413-4030-ac61-21d78c915ede(2).png"
+        },
+        {
+          "name": "7a4f38e1-f68a-4aa2-b174-28d82b9ac38d.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/7a4f38e1-f68a-4aa2-b174-28d82b9ac38d.png",
+          "size": 1514,
+          "originalPath": "7a4f38e1-f68a-4aa2-b174-28d82b9ac38d.png"
+        },
+        {
+          "name": "809723b7-130e-478c-9b54-fe40739a1eee.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/809723b7-130e-478c-9b54-fe40739a1eee.png",
+          "size": 672,
+          "originalPath": "809723b7-130e-478c-9b54-fe40739a1eee.png"
+        },
+        {
+          "name": "86e394a7-f886-4abd-9b19-72301c36a392.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/86e394a7-f886-4abd-9b19-72301c36a392.png",
+          "size": 644,
+          "originalPath": "86e394a7-f886-4abd-9b19-72301c36a392.png"
+        },
+        {
+          "name": "8d9807e9-b61b-49df-a2d8-cb0b3762958e(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/8d9807e9-b61b-49df-a2d8-cb0b3762958e(2).png",
+          "size": 7980,
+          "originalPath": "8d9807e9-b61b-49df-a2d8-cb0b3762958e(2).png"
+        },
+        {
+          "name": "9684577b-2dde-4ccd-9cef-13853f26a0ff.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/9684577b-2dde-4ccd-9cef-13853f26a0ff.png",
+          "size": 1286,
+          "originalPath": "9684577b-2dde-4ccd-9cef-13853f26a0ff.png"
+        },
+        {
+          "name": "9b437738-8336-4c90-ae33-87d43225bae7(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/9b437738-8336-4c90-ae33-87d43225bae7(2).png",
+          "size": 9914,
+          "originalPath": "9b437738-8336-4c90-ae33-87d43225bae7(2).png"
+        },
+        {
+          "name": "9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a.png",
+          "size": 1058,
+          "originalPath": "9c4595c6-73c8-4e2c-8f4f-3a89cc16cf2a.png"
+        },
+        {
+          "name": "a5f17821-366d-43b5-86e3-a9e712032684.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/a5f17821-366d-43b5-86e3-a9e712032684.png",
+          "size": 1400,
+          "originalPath": "a5f17821-366d-43b5-86e3-a9e712032684.png"
+        },
+        {
+          "name": "b1e7183e-d7a8-4f92-bfe6-730a29674558(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/b1e7183e-d7a8-4f92-bfe6-730a29674558(2).png",
+          "size": 6954,
+          "originalPath": "b1e7183e-d7a8-4f92-bfe6-730a29674558(2).png"
+        },
+        {
+          "name": "b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12(2).png",
+          "size": 7308,
+          "originalPath": "b5fa6fc4-2b76-41c9-bd28-8670ec2dfa12(2).png"
+        },
+        {
+          "name": "ba51f0f0-891a-4708-b9b0-16a9bef9b9ea.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/ba51f0f0-891a-4708-b9b0-16a9bef9b9ea.png",
+          "size": 1538,
+          "originalPath": "ba51f0f0-891a-4708-b9b0-16a9bef9b9ea.png"
+        },
+        {
+          "name": "c1bcffd3-ce57-4b3a-9571-f1a674db54cc.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/c1bcffd3-ce57-4b3a-9571-f1a674db54cc.png",
+          "size": 986,
+          "originalPath": "c1bcffd3-ce57-4b3a-9571-f1a674db54cc.png"
+        },
+        {
+          "name": "c9457355-729f-43e4-b7ee-fa7f037c3228.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/c9457355-729f-43e4-b7ee-fa7f037c3228.png",
+          "size": 624,
+          "originalPath": "c9457355-729f-43e4-b7ee-fa7f037c3228.png"
+        },
+        {
+          "name": "d16f4947-2fbf-4a8e-841f-ccfae5031532.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/d16f4947-2fbf-4a8e-841f-ccfae5031532.png",
+          "size": 1066,
+          "originalPath": "d16f4947-2fbf-4a8e-841f-ccfae5031532.png"
+        },
+        {
+          "name": "dc8c2b87-8854-4104-aa98-8b9946f39125.png",
+          "path": "/lovart-comprehensive-assets/decorations/art/dc8c2b87-8854-4104-aa98-8b9946f39125.png",
+          "size": 1272,
+          "originalPath": "dc8c2b87-8854-4104-aa98-8b9946f39125.png"
+        },
+        {
+          "name": "e1c70a1e-cf2b-4ce8-a133-9b8961b12a19(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/e1c70a1e-cf2b-4ce8-a133-9b8961b12a19(2).png",
+          "size": 8930,
+          "originalPath": "e1c70a1e-cf2b-4ce8-a133-9b8961b12a19(2).png"
+        },
+        {
+          "name": "e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141(2).png",
+          "size": 9610,
+          "originalPath": "e3b4ff3d-7a50-4b0f-8f45-14d0f9a3f141(2).png"
+        },
+        {
+          "name": "e5748ccd-4db6-4c9a-b1b6-9e8021ce899f(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/e5748ccd-4db6-4c9a-b1b6-9e8021ce899f(2).png",
+          "size": 5264,
+          "originalPath": "e5748ccd-4db6-4c9a-b1b6-9e8021ce899f(2).png"
+        },
+        {
+          "name": "ea95ca79-2933-4cef-b0ce-b69453d8836b(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/ea95ca79-2933-4cef-b0ce-b69453d8836b(2).png",
+          "size": 5124,
+          "originalPath": "ea95ca79-2933-4cef-b0ce-b69453d8836b(2).png"
+        },
+        {
+          "name": "fe097527-d9d5-4442-a018-7b79bb23a23a(2).png",
+          "path": "/lovart-comprehensive-assets/decorations/art/fe097527-d9d5-4442-a018-7b79bb23a23a(2).png",
+          "size": 7674,
+          "originalPath": "fe097527-d9d5-4442-a018-7b79bb23a23a(2).png"
+        }
+      ]
+    }
+  }
+}

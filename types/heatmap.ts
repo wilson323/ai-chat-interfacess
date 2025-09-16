@@ -1,7 +1,7 @@
 // 热点地图相关的类型定义
 
 // 地理位置
-export interface GeoLocation {
+export interface GeoLocationInfo {
   country: string;
   countryCode: string;
   region?: string;
@@ -20,14 +20,23 @@ export interface UserGeoAttributes {
   userId?: number; // 关联用户ID，匿名用户为null
   sessionId?: string; // 会话ID，用于匿名用户追踪
   ipAddress: string;
-  location: GeoLocation;
+  location: GeoLocationInfo;
   lastSeen: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface UserGeoCreationAttributes
-  extends Optional<UserGeoAttributes, 'id' | 'userId' | 'sessionId' | 'createdAt' | 'updatedAt'> {}
+  extends Omit<
+    UserGeoAttributes,
+    'id' | 'userId' | 'sessionId' | 'createdAt' | 'updatedAt'
+  > {
+  id?: number;
+  userId?: number;
+  sessionId?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 // 智能体使用统计
 export interface AgentUsageAttributes {
@@ -51,7 +60,32 @@ export interface AgentUsageAttributes {
 }
 
 export interface AgentUsageCreationAttributes
-  extends Optional<AgentUsageAttributes, 'id' | 'userId' | 'tokenUsage' | 'responseTime' | 'endTime' | 'duration' | 'userSatisfaction' | 'geoLocationId' | 'deviceInfo' | 'createdAt' | 'updatedAt'> {}
+  extends Omit<
+    AgentUsageAttributes,
+    | 'id'
+    | 'userId'
+    | 'tokenUsage'
+    | 'responseTime'
+    | 'endTime'
+    | 'duration'
+    | 'userSatisfaction'
+    | 'geoLocationId'
+    | 'deviceInfo'
+    | 'createdAt'
+    | 'updatedAt'
+  > {
+  id?: number;
+  userId?: number;
+  tokenUsage?: number;
+  responseTime?: number;
+  endTime?: Date;
+  duration?: number;
+  userSatisfaction?: 'positive' | 'negative' | 'neutral';
+  geoLocationId?: number;
+  deviceInfo?: DeviceInfo;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 // 设备信息
 export interface DeviceInfo {
@@ -127,12 +161,14 @@ export interface HeatmapQueryParams {
 
 // 地理位置服务接口
 export interface GeoLocationService {
-  getLocationByIp(ipAddress: string): Promise<GeoLocation>;
-  getLocationByBatch(ipAddresses: string[]): Promise<Array<{
-    ip: string;
-    location: GeoLocation | null;
-    error?: string;
-  }>>;
+  getLocationByIp(ipAddress: string): Promise<GeoLocationInfo>;
+  getLocationByBatch(ipAddresses: string[]): Promise<
+    Array<{
+      ip: string;
+      location: GeoLocationInfo | null;
+      error?: string;
+    }>
+  >;
   clearCache(): Promise<void>;
 }
 
@@ -141,20 +177,23 @@ export interface HeatmapService {
   getHeatmapData(params: HeatmapQueryParams): Promise<HeatmapDataPoint[]>;
   getUsageStatistics(params: HeatmapQueryParams): Promise<UsageStatistics>;
   getRealtimeActivity(): Promise<HeatmapDataPoint[]>;
-  exportData(params: HeatmapQueryParams, format: 'csv' | 'json'): Promise<string>;
+  exportData(
+    params: HeatmapQueryParams,
+    format: 'csv' | 'json'
+  ): Promise<string>;
 }
 
 // IP地理位置解析器类型
 export interface IpGeoResolver {
   name: string;
-  resolve(ipAddress: string): Promise<GeoLocation>;
+  resolve(ipAddress: string): Promise<GeoLocationInfo>;
   isAvailable(): Promise<boolean>;
 }
 
 // 缓存策略
 export interface CacheStrategy {
-  get(key: string): Promise<any>;
-  set(key: string, value: any, ttl?: number): Promise<void>;
+  get(key: string): Promise<unknown>;
+  set(key: string, value: unknown, ttl?: number): Promise<void>;
   del(key: string): Promise<void>;
   clear(): Promise<void>;
 }

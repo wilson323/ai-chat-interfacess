@@ -30,6 +30,7 @@ POST /api/chat
 ```
 
 **请求体:**
+
 ```json
 {
   "message": "你好，请介绍一下自己",
@@ -42,6 +43,7 @@ POST /api/chat
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -61,10 +63,12 @@ GET /api/chat-history?sessionId=session-123&limit=50
 ```
 
 **查询参数:**
+
 - `sessionId` (string): 会话ID
 - `limit` (number): 返回消息数量限制，默认50
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -88,11 +92,13 @@ GET /api/analytics/usage?startDate=2024-01-01&endDate=2024-01-31
 ```
 
 **查询参数:**
+
 - `startDate` (string): 开始日期 (ISO 8601)
 - `endDate` (string): 结束日期 (ISO 8601)
 - `agentId` (string, 可选): 智能体ID
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -119,12 +125,14 @@ GET /api/analytics/export?format=csv&dataType=usage
 ```
 
 **查询参数:**
+
 - `format` (string): 导出格式 (csv, json, excel)
 - `dataType` (string): 数据类型 (usage, sessions, agents, locations)
 - `startDate` (string, 可选): 开始日期
 - `endDate` (string, 可选): 结束日期
 
 **响应:**
+
 - CSV格式: 直接返回CSV文件
 - JSON格式: 返回JSON数据
 - Excel格式: 返回Excel文件
@@ -138,11 +146,13 @@ GET /api/admin/users?page=1&limit=20
 ```
 
 **查询参数:**
+
 - `page` (number): 页码，默认1
 - `limit` (number): 每页数量，默认20
 - `search` (string, 可选): 搜索关键词
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -174,6 +184,7 @@ PUT /api/admin/users/{userId}
 ```
 
 **请求体:**
+
 ```json
 {
   "name": "新用户名",
@@ -183,6 +194,7 @@ PUT /api/admin/users/{userId}
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -205,6 +217,7 @@ GET /api/health
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -224,6 +237,7 @@ GET /api/system/status
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -262,15 +276,15 @@ GET /api/system/status
 
 ### 常见错误代码
 
-| 错误代码 | HTTP状态码 | 描述 |
-|---------|-----------|------|
-| `VALIDATION_ERROR` | 400 | 请求参数验证失败 |
-| `UNAUTHORIZED` | 401 | 未授权访问 |
-| `FORBIDDEN` | 403 | 权限不足 |
-| `NOT_FOUND` | 404 | 资源不存在 |
-| `RATE_LIMITED` | 429 | 请求频率过高 |
-| `INTERNAL_ERROR` | 500 | 服务器内部错误 |
-| `SERVICE_UNAVAILABLE` | 503 | 服务不可用 |
+| 错误代码              | HTTP状态码 | 描述             |
+| --------------------- | ---------- | ---------------- |
+| `VALIDATION_ERROR`    | 400        | 请求参数验证失败 |
+| `UNAUTHORIZED`        | 401        | 未授权访问       |
+| `FORBIDDEN`           | 403        | 权限不足         |
+| `NOT_FOUND`           | 404        | 资源不存在       |
+| `RATE_LIMITED`        | 429        | 请求频率过高     |
+| `INTERNAL_ERROR`      | 500        | 服务器内部错误   |
+| `SERVICE_UNAVAILABLE` | 503        | 服务不可用       |
 
 ## 数据验证
 
@@ -284,17 +298,19 @@ const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(100),
   role: z.enum(['user', 'moderator', 'admin']),
-  password: z.string().min(8)
+  password: z.string().min(8),
 });
 
 // 聊天消息请求
 const chatMessageSchema = z.object({
   message: z.string().min(1).max(4000),
   agentId: z.string().optional(),
-  options: z.object({
-    temperature: z.number().min(0).max(2).optional(),
-    maxTokens: z.number().min(1).max(4000).optional()
-  }).optional()
+  options: z
+    .object({
+      temperature: z.number().min(0).max(2).optional(),
+      maxTokens: z.number().min(1).max(4000).optional(),
+    })
+    .optional(),
 });
 ```
 
@@ -328,6 +344,7 @@ API的OpenAPI 3.0规范文件位于 `docs/openapi.yaml`。
 ## 更新日志
 
 ### v1.0.0 (2024-01-15)
+
 - 初始版本发布
 - 基础聊天功能
 - 用户管理功能

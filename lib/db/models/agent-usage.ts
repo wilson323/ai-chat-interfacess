@@ -1,6 +1,10 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import sequelize, { Op } from '../sequelize';
-import { AgentUsageAttributes, AgentUsageCreationAttributes, DeviceInfo } from '@/types/heatmap';
+import { DataTypes, Model, Op } from 'sequelize';
+import sequelize from '../sequelize';
+import {
+  AgentUsageAttributes,
+  AgentUsageCreationAttributes,
+  DeviceInfo,
+} from '@/types/heatmap';
 
 export class AgentUsage
   extends Model<AgentUsageAttributes, AgentUsageCreationAttributes>
@@ -198,15 +202,21 @@ AgentUsage.init(
         // 自动计算持续时间
         if (agentUsage.endTime && agentUsage.startTime) {
           agentUsage.duration = Math.floor(
-            (agentUsage.endTime.getTime() - agentUsage.startTime.getTime()) / 1000
+            (agentUsage.endTime.getTime() - agentUsage.startTime.getTime()) /
+              1000
           );
         }
       },
       beforeUpdate: async (agentUsage: AgentUsage) => {
         // 如果结束时间有变化，重新计算持续时间
-        if (agentUsage.changed('endTime') && agentUsage.endTime && agentUsage.startTime) {
+        if (
+          agentUsage.changed('endTime') &&
+          agentUsage.endTime &&
+          agentUsage.startTime
+        ) {
           agentUsage.duration = Math.floor(
-            (agentUsage.endTime.getTime() - agentUsage.startTime.getTime()) / 1000
+            (agentUsage.endTime.getTime() - agentUsage.startTime.getTime()) /
+              1000
           );
         }
       },
@@ -215,92 +225,93 @@ AgentUsage.init(
 );
 
 // 实例方法
-AgentUsage.prototype.toJSON = function(): object {
-  const values = Object.assign({}, this.get());
+AgentUsage.prototype.toJSON = function (): Record<string, unknown> {
+  const values = Object.assign({}, this.get()) as unknown as Record<string, unknown>;
   // 隐藏敏感信息
-  if (values.deviceInfo) {
-    delete values.deviceInfo.userAgent;
+  if (values.deviceInfo && typeof values.deviceInfo === 'object') {
+    delete (values.deviceInfo as Record<string, unknown>).userAgent;
   }
   return values;
 };
 
-// 静态方法
-AgentUsage.startSession = async function(
-  sessionId: string,
-  userId: number | undefined,
-  agentId: number,
-  messageType: 'text' | 'image' | 'file' | 'voice' | 'mixed',
-  geoLocationId?: number,
-  deviceInfo?: DeviceInfo
-): Promise<AgentUsage> {
-  return await AgentUsage.create({
-    sessionId,
-    userId,
-    agentId,
-    messageType,
-    messageCount: 0,
-    startTime: new Date(),
-    isCompleted: false,
-    geoLocationId,
-    deviceInfo,
-  });
-};
-
-AgentUsage.endSession = async function(
-  sessionId: string,
-  tokenUsage?: number,
-  userSatisfaction?: 'positive' | 'negative' | 'neutral'
-): Promise<AgentUsage | null> {
-  const session = await AgentUsage.findOne({
-    where: {
+// 静态方法 - 通过类方法实现
+export class AgentUsageService {
+  static async startSession(
+    sessionId: string,
+    userId: number | undefined,
+    agentId: number,
+    messageType: 'text' | 'image' | 'file' | 'voice' | 'mixed',
+    geoLocationId?: number,
+    deviceInfo?: DeviceInfo
+  ): Promise<AgentUsage> {
+    return await AgentUsage.create({
       sessionId,
+      userId,
+      agentId,
+      messageType,
+      messageCount: 0,
+      startTime: new Date(),
       isCompleted: false,
-    },
-    order: [['startTime', 'DESC']],
-  });
-
-  if (session) {
-    const endTime = new Date();
-    await session.update({
-      endTime,
-      isCompleted: true,
-      tokenUsage,
-      userSatisfaction,
+      geoLocationId,
+      deviceInfo,
     });
   }
 
-  return session;
-};
-
-AgentUsage.updateMessageCount = async function(
-  sessionId: string,
-  increment: number = 1
-): Promise<void> {
-  await AgentUsage.increment('messageCount', {
-    where: {
-      sessionId,
-      isCompleted: false,
-    },
-  });
-};
-
-AgentUsage.updateResponseTime = async function(
-  sessionId: string,
-  responseTime: number
-): Promise<void> {
-  await AgentUsage.update(
-    { responseTime },
-    {
+  static async endSession(
+    sessionId: string,
+    tokenUsage?: number,
+    userSatisfaction?: 'positive' | 'negative' | 'neutral'
+  ): Promise<AgentUsage | null> {
+    const session = await AgentUsage.findOne({
       where: {
         sessionId,
         isCompleted: false,
       },
-    }
-  );
-};
+      order: [['startTime', 'DESC']],
+    });
 
-AgentUsage.getUsageStatistics = async function(
-  params: {
+    if (session) {
+      const endTime = new Date();
+      await session.update({
+        endTime,
+        isCompleted: true,
+        tokenUsage,
+        userSatisfaction,
+      });
+    }
+
+    return session;
+  }
+
+  static async updateMessageCount(
+    sessionId: string,
+    _increment: number = 1
+  ): Promise<void> {
+    // 忽略未使用的 increment 参数，使用默认值1
+    await AgentUsage.increment('messageCount', {
+      where: {
+        sessionId,
+        isCompleted: false,
+      },
+    });
+  }
+
+  static async updateResponseTime(
+    sessionId: string,
+    responseTime: number
+  ): Promise<void> {
+    await AgentUsage.update(
+      { responseTime },
+      {
+        where: {
+          sessionId,
+          isCompleted: false,
+        },
+      }
+    );
+  }
+
+  static async getUsageStatistics(params: {
     startDate?: Date;
     endDate?: Date;
     agentId?: number;
@@ -308,7 +319,7 @@ AgentUsage.getUsageStatistics = async function(
     messageType?: string;
     groupBy?: 'hour' | 'day' | 'week' | 'month';
   } = {}
-): Promise<any[]> {
+): Promise<Array<Record<string, unknown>>> {
   const {
     startDate,
     endDate,
@@ -318,32 +329,27 @@ AgentUsage.getUsageStatistics = async function(
     groupBy = 'day',
   } = params;
 
-  const where: any = {};
-  if (startDate) where.startTime = { [sequelize.Op.gte]: startDate };
-  if (endDate) where.startTime = { ...where.startTime, [sequelize.Op.lte]: endDate };
+  const where: Record<string, unknown> = {};
+  if (startDate) where.startTime = { [Op.gte]: startDate };
+  if (endDate) {
+    where.startTime = {
+      ...(where.startTime as Record<string, unknown> || {}),
+      [Op.lte]: endDate
+    };
+  }
   if (agentId) where.agentId = agentId;
   if (userId) where.userId = userId;
   if (messageType) where.messageType = messageType;
 
-  let dateFormat: string;
-  switch (groupBy) {
-    case 'hour':
-      dateFormat = 'YYYY-MM-DD HH24:00:00';
-      break;
-    case 'week':
-      dateFormat = 'YYYY-"W"WW';
-      break;
-    case 'month':
-      dateFormat = 'YYYY-MM';
-      break;
-    default:
-      dateFormat = 'YYYY-MM-DD';
-  }
+  // dateFormat 变量已移除，因为未使用
 
-  return await AgentUsage.findAll({
+  const results = await AgentUsage.findAll({
     where,
     attributes: [
-      [sequelize.fn('DATE_TRUNC', groupBy, sequelize.col('startTime')), 'time_period'],
+      [
+        sequelize.fn('DATE_TRUNC', groupBy, sequelize.col('startTime')),
+        'time_period',
+      ],
       [sequelize.fn('COUNT', sequelize.col('id')), 'session_count'],
       [sequelize.fn('SUM', sequelize.col('messageCount')), 'total_messages'],
       [sequelize.fn('AVG', sequelize.col('duration')), 'avg_duration'],
@@ -351,63 +357,83 @@ AgentUsage.getUsageStatistics = async function(
       [sequelize.fn('SUM', sequelize.col('tokenUsage')), 'total_tokens'],
     ],
     group: [sequelize.fn('DATE_TRUNC', groupBy, sequelize.col('startTime'))],
-    order: [[sequelize.fn('DATE_TRUNC', groupBy, sequelize.col('startTime')), 'ASC']],
+    order: [
+      [sequelize.fn('DATE_TRUNC', groupBy, sequelize.col('startTime')), 'ASC'],
+    ],
     raw: true,
   });
-};
 
-AgentUsage.getTopAgents = async function(
-  limit: number = 10,
-  timeRange?: { start: Date; end: Date }
-): Promise<Array<{ agentId: number; usageCount: number }>> {
-  const where: any = {};
-  if (timeRange) {
-    where.startTime = {
-      [sequelize.Op.between]: [timeRange.start, timeRange.end],
-    };
+  return results.map((result: any) => ({
+    date: result.getDataValue('date'),
+    count: result.getDataValue('count'),
+    agentId: result.agentId,
+    userId: result.userId,
+    messageType: result.messageType,
+  }));
   }
 
-  return await AgentUsage.findAll({
-    where,
-    attributes: [
-      'agentId',
-      [sequelize.fn('COUNT', sequelize.col('id')), 'usageCount'],
-    ],
-    group: ['agentId'],
-    order: [[sequelize.literal('usageCount'), 'DESC']],
-    limit,
-    raw: true,
-  });
-};
+  static async getTopAgents(
+    limit: number = 10,
+    timeRange?: { start: Date; end: Date }
+  ): Promise<Array<{ agentId: number; usageCount: number }>> {
+    const where: Record<string, unknown> = {};
+    if (timeRange) {
+      where.startTime = {
+        [Op.between]: [timeRange.start, timeRange.end],
+      };
+    }
 
-AgentUsage.getCleanupCandidates = async function(daysToKeep: number = 365): Promise<AgentUsage[]> {
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+    const results = await AgentUsage.findAll({
+      where,
+      attributes: [
+        'agentId',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'usageCount'],
+      ],
+      group: ['agentId'],
+      order: [[sequelize.literal('usageCount'), 'DESC']],
+      limit,
+      raw: true,
+    });
 
-  return await AgentUsage.findAll({
-    where: {
-      createdAt: {
-        [sequelize.Op.lt]: cutoffDate,
+    return results.map((result: any) => ({
+      agentId: parseInt(String(result.agentId)) || 0,
+      usageCount: parseInt(String(result.usageCount)) || 0,
+    }));
+  }
+
+  static async getCleanupCandidates(
+    daysToKeep: number = 365
+  ): Promise<AgentUsage[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+
+    return await AgentUsage.findAll({
+      where: {
+        createdAt: {
+          [Op.lt]: cutoffDate,
+        },
       },
-    },
-    order: [['createdAt', 'ASC']],
-    limit: 1000,
-  });
-};
+      order: [['createdAt', 'ASC']],
+      limit: 1000,
+    });
+  }
 
-AgentUsage.cleanupOldData = async function(daysToKeep: number = 365): Promise<number> {
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+  static async cleanupOldData(
+    daysToKeep: number = 365
+  ): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-  const result = await AgentUsage.destroy({
-    where: {
-      createdAt: {
-        [sequelize.Op.lt]: cutoffDate,
+    const result = await AgentUsage.destroy({
+      where: {
+        createdAt: {
+          [Op.lt]: cutoffDate,
+        },
       },
-    },
-  });
+    });
 
-  return result;
-};
+    return result;
+  }
+}
 
 export default AgentUsage;

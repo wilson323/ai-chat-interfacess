@@ -1,41 +1,36 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import React, { useState, useEffect, useMemo } from 'react';
+// Removed unused import
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+} from './ui/select';
+// Removed unused Card imports
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from './ui/dialog';
+import { Alert, AlertDescription } from './ui/alert';
 import { CheckCircle, AlertCircle } from 'lucide-react';
-import type { GlobalVariable, Agent } from '@/types/agent';
+import type { GlobalVariable, Agent } from '../types/agent';
 
 interface GlobalVariablesFormProps {
   agent: Agent;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (variables: Record<string, any>) => void;
-  initialValues?: Record<string, any>; // 新增：初始值
+  onSubmit: (variables: Record<string, unknown>) => void;
+  initialValues?: Record<string, unknown>;
 }
 
 export function GlobalVariablesForm({
@@ -45,18 +40,20 @@ export function GlobalVariablesForm({
   onSubmit,
   initialValues,
 }: GlobalVariablesFormProps) {
-  const [variables, setVariables] = useState<Record<string, any>>({});
+  const [variables, setVariables] = useState<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 获取必填的全局变量
-  const requiredVariables =
-    agent.globalVariables?.filter(v => v.required) || [];
+  const requiredVariables = useMemo(
+    () => agent.globalVariables?.filter(v => v.required) || [],
+    [agent.globalVariables]
+  );
 
   // 初始化变量值
   useEffect(() => {
     if (isOpen && requiredVariables.length > 0) {
-      const formInitialValues: Record<string, any> = {};
+      const formInitialValues: Record<string, unknown> = {};
 
       // 优先级：传入的初始值 > localStorage保存的值 > 变量默认值 > 空值
       const savedValues = localStorage.getItem(`agent-variables-${agent.id}`);
@@ -73,12 +70,12 @@ export function GlobalVariablesForm({
       setVariables(formInitialValues);
       setErrors({});
     }
-  }, [isOpen, agent.id, initialValues]); // 添加initialValues依赖
+  }, [isOpen, agent.id, initialValues, requiredVariables]);
 
   // 验证单个变量
   const validateVariable = (
     variable: GlobalVariable,
-    value: any
+    value: unknown
   ): string | null => {
     if (variable.required && (!value || value.toString().trim() === '')) {
       return `${variable.label}是必填项`;
@@ -96,7 +93,7 @@ export function GlobalVariablesForm({
   };
 
   // 处理变量值变化
-  const handleVariableChange = (key: string, value: any) => {
+  const handleVariableChange = (key: string, value: unknown) => {
     setVariables(prev => ({ ...prev, [key]: value }));
 
     // 清除该字段的错误
@@ -151,12 +148,14 @@ export function GlobalVariablesForm({
 
   // 渲染变量输入组件
   const renderVariableInput = (variable: GlobalVariable) => {
-    const value = variables[variable.key] || '';
+    const value = variables[variable.key] ?? '';
     const error = errors[variable.key];
 
     switch (variable.type) {
       case 'select':
-      case 'option':
+      case 'text':
+      case 'number':
+      case 'boolean':
         return (
           <div key={variable.key} className='space-y-2'>
             <Label htmlFor={variable.key} className='flex items-center gap-1'>
@@ -164,7 +163,7 @@ export function GlobalVariablesForm({
               {variable.required && <span className='text-red-500'>*</span>}
             </Label>
             <Select
-              value={value}
+              value={value as string}
               onValueChange={val => handleVariableChange(variable.key, val)}
             >
               <SelectTrigger className={error ? 'border-red-500' : ''}>
@@ -172,7 +171,7 @@ export function GlobalVariablesForm({
               </SelectTrigger>
               <SelectContent>
                 {(variable.list || variable.enums || []).map(
-                  (option, index) => (
+                  (option: any, index: number) => (
                     <SelectItem key={index} value={option.value}>
                       {option.label || option.value}
                     </SelectItem>
@@ -201,7 +200,7 @@ export function GlobalVariablesForm({
               </Label>
               <Textarea
                 id={variable.key}
-                value={value}
+                value={value as string}
                 onChange={e =>
                   handleVariableChange(variable.key, e.target.value)
                 }
@@ -211,7 +210,7 @@ export function GlobalVariablesForm({
               />
               {variable.maxLen && (
                 <p className='text-xs text-muted-foreground text-right'>
-                  {value.length}/{variable.maxLen}
+                  {(value as string).length}/{variable.maxLen}
                 </p>
               )}
               {variable.description && (
@@ -238,7 +237,7 @@ export function GlobalVariablesForm({
             <Input
               id={variable.key}
               type={variable.valueType === 'number' ? 'number' : 'text'}
-              value={value}
+              value={value as string}
               onChange={e => handleVariableChange(variable.key, e.target.value)}
               placeholder={variable.description || `请输入${variable.label}`}
               className={error ? 'border-red-500' : ''}
@@ -268,7 +267,7 @@ export function GlobalVariablesForm({
             <Input
               id={variable.key}
               type='number'
-              value={value}
+              value={value as string}
               onChange={e => handleVariableChange(variable.key, e.target.value)}
               placeholder={variable.description || `请输入${variable.label}`}
               className={error ? 'border-red-500' : ''}
@@ -297,7 +296,7 @@ export function GlobalVariablesForm({
             </Label>
             <Input
               id={variable.key}
-              value={value}
+              value={value as string}
               onChange={e => handleVariableChange(variable.key, e.target.value)}
               placeholder={variable.description || `请输入${variable.label}`}
               className={error ? 'border-red-500' : ''}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +16,10 @@ import {
   Line,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import {
@@ -31,7 +28,6 @@ import {
   TrendingDown,
   Clock,
   DollarSign,
-  AlertTriangle,
   CheckCircle,
   RefreshCw,
   Download,
@@ -79,10 +75,9 @@ interface ModelPerformanceMetrics {
 }
 
 export default function ModelMonitorPage() {
-  const [models, setModels] = useState<ModelConfig[]>([]);
+  const [, setModels] = useState<ModelConfig[]>([]);
   const [metrics, setMetrics] = useState<ModelPerformanceMetrics[]>([]);
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('all');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
 

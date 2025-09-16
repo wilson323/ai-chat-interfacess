@@ -1,45 +1,32 @@
 'use client';
-
-import type React from 'react';
-
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
+import { logger } from '@/lib/utils/logger';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAgent } from '@/context/agent-context';
-import { Bot, Save, Trash2, AlertCircle } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Bot, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { useLanguage } from '@/context/language-context';
+import { useLanguage } from '../../context/language-context';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { updateAgent, deleteAgent } from '@/lib/services/admin-agent-service';
+import { deleteAgent } from '@/lib/services/admin-agent-service';
 import { initializeChat } from '@/lib/api/fastgpt';
-import type { GlobalVariable } from '@/types/agent';
-
-// 1. props 定义
-import type { AgentInstance } from '@/types/agent';
+import type { GlobalVariable, UnifiedAgent } from '@/types/agent';
 
 export interface AgentFormProps {
-  agent?: AgentInstance;
-  onSave: (agentData: AgentInstance | undefined) => void;
+  agent?: UnifiedAgent;
+  onSave: (agentData: UnifiedAgent | undefined) => void;
   onClose: () => void;
 }
 
@@ -55,7 +42,6 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
   ); // API端点
   const [apiKey, setApiKey] = useState('');
   const [appId, setAppId] = useState('');
-  const [model, setModel] = useState('qwen-max');
   const [isPublished, setIsPublished] = useState(false);
   // 根据agent的类型设置初始类型，如果是新建则使用"fastgpt"
   const [type] = useState<import('@/types/agent').AgentType>(
@@ -79,7 +65,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
 
   useEffect(() => {
     if (agent) {
-      console.log('Agent loaded:', agent.name, 'Type:', agent.type);
+      logger.debug(`Agent loaded: ${agent.name}, Type: ${agent.type}`);
       setName(agent.name || '');
       setDescription(agent.description || '');
       setApiUrl(
@@ -157,7 +143,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
   // 3. handleSubmit 支持新增和编辑
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('表单提交，类型:', type, '是否编辑模式:', !!agent);
+    logger.debug(`表单提交，类型: ${type}, 是否编辑模式: ${!!agent}`);
 
     // 对于FastGPT智能体，API Key和App ID是必填的，但在新增时可以先保存空值
     if (type === 'fastgpt' && (!apiKey || !appId) && agent) {
@@ -198,49 +184,108 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
     try {
       // 确保使用正确的type值，如果是编辑现有智能体，优先使用agent.type
       const agentType = agent?.type || type;
-      console.log(
-        '保存智能体，使用类型:',
-        agentType,
-        '原始类型:',
-        agent?.type,
-        '表单类型:',
-        type
-      );
+      logger.debug(`保存智能体，使用类型: ${agentType}, 原始类型: ${agent?.type}, 表单类型: ${type}`);
 
-      const agentData = {
+      const agentData: UnifiedAgent = {
+        // 基础标识
+        id: agent?.id || Date.now().toString(),
         name: name || '默认智能体',
         description: description || '',
+        type: agentType,
+
+        // 显示属性
+        welcomeText: welcomeText || '',
+
+        // 排序和状态
+        order: Number(order) || 100,
+        isPublished,
+        isActive: true,
+
+        // API配置
         apiUrl: apiUrl || 'https://zktecoaihub.com/api/v1/chat/completions',
         apiKey: apiKey || '',
         appId: appId || '',
-        isPublished,
-        type: agentType, // 使用确定的类型
+
+        // 模型配置
         systemPrompt: systemPrompt || '',
         temperature: temperature ?? 0.7,
         maxTokens: maxTokens ?? 2000,
-        supportsFileUpload,
-        supportsImageUpload,
-        supportsStream: true, // 强制为 true
-        supportsDetail: true, // 强制为 true
         ...(agentType === 'image-editor' || agentType === 'cad-analyzer'
           ? { multimodalModel: multimodalModel || 'qwen-vl-max' }
           : {}),
-        order: Number(order) || 100,
+
+        // 功能支持
+        supportsFileUpload,
+        supportsImageUpload,
+        supportsStream: true,
+        supportsDetail: true,
+
+        // 全局变量
         globalVariables: globalVariables || [],
-        welcomeText: welcomeText || '',
+
+        // 统一配置（必需）
+        config: {
+          version: '1.0.0',
+          type: agentType,
+          id: agent?.id || Date.now().toString(),
+          name: name || '默认智能体',
+          description: description || '',
+          apiKey: apiKey || '',
+          appId: appId || '',
+          apiUrl: apiUrl || 'https://zktecoaihub.com/api/v1/chat/completions',
+          systemPrompt: systemPrompt || '',
+          temperature: temperature ?? 0.7,
+          maxTokens: maxTokens ?? 2000,
+          multimodalModel: agentType === 'image-editor' || agentType === 'cad-analyzer' ? (multimodalModel || 'qwen-vl-max') : undefined,
+          supportsFileUpload,
+          supportsImageUpload,
+          supportsStream: true,
+          supportsDetail: true,
+          globalVariables: globalVariables || [],
+          welcomeText: welcomeText || '',
+          order: Number(order) || 100,
+          isPublished,
+          isActive: true,
+          settings: {
+            timeout: 30000,
+            retryCount: 3,
+            cacheEnabled: true,
+            logLevel: 'info' as const,
+            healthCheckInterval: 60000,
+            circuitBreakerThreshold: 5,
+            loadBalanceWeight: 1,
+          },
+          features: {
+            streaming: true,
+            fileUpload: supportsFileUpload,
+            imageUpload: supportsImageUpload,
+            voiceInput: false,
+            voiceOutput: false,
+            multimodal: agentType === 'image-editor' || agentType === 'cad-analyzer',
+            detail: true,
+            questionGuide: true,
+          },
+          limits: {
+            maxTokens: maxTokens ?? 2000,
+            maxFileSize: 10 * 1024 * 1024, // 10MB
+            maxRequests: 1000,
+            rateLimit: 100,
+            maxConnections: 10,
+          },
+        },
       };
 
-      console.log('准备保存智能体数据:', JSON.stringify(agentData, null, 2));
+      logger.debug('准备保存智能体数据:', JSON.stringify(agentData, null, 2));
 
       try {
         await onSave(agentData);
-        console.log('智能体保存成功');
+        logger.debug('智能体保存成功');
         toast({
           title: agent ? '智能体已更新' : '智能体已创建',
           variant: 'default',
         });
       } catch (saveError) {
-        console.error('调用onSave失败:', saveError);
+        logger.error('调用onSave失败:', saveError);
         toast({
           title: '保存失败',
           description: String(saveError),
@@ -248,7 +293,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
         });
       }
     } catch (err) {
-      console.error('表单提交过程中发生错误:', err);
+      logger.error('表单提交过程中发生错误:', err);
       toast({
         title: '保存失败',
         description: String(err),
@@ -259,18 +304,6 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
     }
   };
 
-  // 添加直接保存方法，不依赖表单提交
-  const handleSaveClick = () => {
-    console.log('Save button clicked');
-    if (formRef.current) {
-      formRef.current.dispatchEvent(
-        new Event('submit', { cancelable: true, bubbles: true })
-      );
-    } else {
-      // 如果表单引用不可用，直接调用handleSubmit
-      handleSubmit({ preventDefault: () => {} } as React.FormEvent);
-    }
-  };
 
   const handleDelete = async () => {
     if (!agent) return;
@@ -311,11 +344,16 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
 
       // 构造临时智能体对象用于调用初始化接口
       const tempAgent = {
+        id: Date.now().toString(), // 临时ID
+        description: '', // 默认空描述
         apiKey,
         appId,
         apiUrl: apiUrl || 'https://zktecoaihub.com/api/v1/chat/completions',
         name: name || '临时智能体',
         type: 'fastgpt' as const,
+        supportsStream: true, // 默认值
+        supportsDetail: true, // 默认值
+        isActive: true, // 默认激活
       };
 
       // 调用 FastGPT 初始化接口
@@ -345,7 +383,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
           app.chatConfig?.variables &&
           Array.isArray(app.chatConfig.variables)
         ) {
-          setGlobalVariables(app.chatConfig.variables);
+          setGlobalVariables(app.chatConfig.variables as GlobalVariable[]);
         }
 
         // 如果有模型信息，设置多模态模型
@@ -377,7 +415,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
         });
       }
     } catch (error) {
-      console.error('获取参数失败:', error);
+      logger.error('获取参数失败:', error);
       toast({
         title: '获取参数失败',
         description: String(error),
@@ -681,7 +719,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
               {type === 'fastgpt' && (!apiKey || !appId) && (
                 <div className='text-center'>
                   <p className='text-xs text-muted-foreground'>
-                    请先输入 API 密钥和 App ID 后点击"获取参数"按钮
+                    请先输入 API 密钥和 App ID 后点击&quot;获取参数&quot;按钮
                   </p>
                 </div>
               )}
@@ -818,7 +856,7 @@ export function AgentForm({ agent, onSave, onClose }: AgentFormProps) {
                     )}
                   </div>
                   <p className='text-xs text-muted-foreground'>
-                    全局变量由FastGPT应用配置决定，用于在对话中传递特定参数。点击"获取参数"按钮可自动获取最新配置。
+                    全局变量由FastGPT应用配置决定，用于在对话中传递特定参数。点击&quot;获取参数&quot;按钮可自动获取最新配置。
                   </p>
                 </div>
               )}

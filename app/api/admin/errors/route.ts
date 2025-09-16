@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+// Removed invalid typescript import
 import { withErrorHandler } from '@/lib/middleware/error-handler';
 import { globalErrorHandler } from '@/lib/errors/global-error-handler';
 import { z } from 'zod';
@@ -100,7 +101,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   const stats = globalErrorHandler.getErrorStats();
 
-  let exportData: any;
+  let exportData: string | Record<string, unknown> | Array<Record<string, unknown>>;
 
   switch (format) {
     case 'csv':

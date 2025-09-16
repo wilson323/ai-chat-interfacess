@@ -2,6 +2,7 @@
  * 存储模块工具函数
  */
 import type { Message } from '@/types/message';
+// Record is a built-in TypeScript utility type, no need to import
 import type { StorageMeta } from './types';
 import {
   STORAGE_META_KEY,
@@ -44,7 +45,12 @@ export function getStorageMeta(): StorageMeta {
   try {
     const metaJson = localStorage.getItem(STORAGE_META_KEY);
     if (metaJson) {
-      return JSON.parse(metaJson);
+      const parsed = JSON.parse(metaJson) as Partial<StorageMeta> & Record<string, unknown>;
+      // 兼容旧数据：缺失 version 时补齐
+      if (typeof parsed.version !== 'number') {
+        (parsed as StorageMeta).version = 1;
+      }
+      return parsed as StorageMeta;
     }
   } catch (error) {
     console.error('Failed to parse storage metadata:', error);
@@ -57,6 +63,7 @@ export function getStorageMeta(): StorageMeta {
     chatIds: [],
     chatSizes: {},
     chatLastAccessed: {},
+    version: 1,
   };
 }
 

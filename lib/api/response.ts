@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 
+// Record is a built-in TypeScript utility type
 /**
  * API错误码枚举
  */
@@ -35,7 +36,7 @@ export enum ApiErrorCode {
 /**
  * 成功响应接口
  */
-export interface ApiSuccessResponse<T = any> {
+export interface ApiSuccessResponse<T = Record<string, unknown>> {
   success: true;
   data: T;
   message?: string;
@@ -55,7 +56,7 @@ export interface ApiErrorResponse {
   error: {
     code: string;
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
     timestamp: string;
     requestId: string;
     version?: string;
@@ -131,7 +132,7 @@ export function createSuccessResponse<T>(
 export function createErrorResponse(
   code: ApiErrorCode | string,
   message: string,
-  details?: any,
+  details?: unknown,
   status: number = 400
 ): NextResponse<ApiErrorResponse> {
   const response: ApiErrorResponse = {
@@ -139,7 +140,7 @@ export function createErrorResponse(
     error: {
       code,
       message,
-      details,
+      details: details as Record<string, unknown> | undefined,
       timestamp: new Date().toISOString(),
       requestId: generateRequestId(),
       version: getApiVersion(),
@@ -172,12 +173,12 @@ export function createPaginatedResponse<T>(
  * @returns NextResponse
  */
 export function createValidationErrorResponse(
-  errors: any[]
+  errors: Array<Record<string, unknown>>
 ): NextResponse<ApiErrorResponse> {
   return createErrorResponse(
     ApiErrorCode.VALIDATION_ERROR,
     '请求参数验证失败',
-    errors,
+    { errors: errors as unknown as Record<string, unknown> },
     400
   );
 }
@@ -238,12 +239,12 @@ export function createNotFoundErrorResponse(
  */
 export function createInternalErrorResponse(
   message: string = '服务器内部错误',
-  details?: any
+  details?: unknown
 ): NextResponse<ApiErrorResponse> {
   return createErrorResponse(
     ApiErrorCode.INTERNAL_ERROR,
     message,
-    details,
+    details ? { details: details as Record<string, unknown> } : undefined,
     500
   );
 }
@@ -275,10 +276,10 @@ export function createRateLimitErrorResponse(
 export function createBusinessErrorResponse(
   code: ApiErrorCode,
   message: string,
-  details?: any,
+  details?: unknown,
   status: number = 400
 ): NextResponse<ApiErrorResponse> {
-  return createErrorResponse(code, message, details, status);
+  return createErrorResponse(code, message, details ? { details: details as Record<string, unknown> } : undefined, status);
 }
 
 /**
@@ -291,12 +292,12 @@ export function createBusinessErrorResponse(
 export function createExternalServiceErrorResponse(
   service: string,
   message: string,
-  details?: any
+  details?: unknown
 ): NextResponse<ApiErrorResponse> {
   return createErrorResponse(
     ApiErrorCode.EXTERNAL_API_ERROR,
     `${service}服务错误: ${message}`,
-    details,
+    details ? { details: details as Record<string, unknown> } : undefined,
     502
   );
 }
@@ -309,12 +310,12 @@ export function createExternalServiceErrorResponse(
  */
 export function createDatabaseErrorResponse(
   message: string = '数据库操作失败',
-  details?: any
+  details?: unknown
 ): NextResponse<ApiErrorResponse> {
   return createErrorResponse(
     ApiErrorCode.DATABASE_ERROR,
     message,
-    details,
+    details ? { details: details as Record<string, unknown> } : undefined,
     500
   );
 }
@@ -327,9 +328,9 @@ export function createDatabaseErrorResponse(
  */
 export function createStorageErrorResponse(
   message: string = '存储操作失败',
-  details?: any
+  details?: unknown
 ): NextResponse<ApiErrorResponse> {
-  return createErrorResponse(ApiErrorCode.STORAGE_ERROR, message, details, 500);
+  return createErrorResponse(ApiErrorCode.STORAGE_ERROR, message, details ? { details: details as Record<string, unknown> } : undefined, 500);
 }
 
 /**
@@ -339,15 +340,15 @@ export class ResponseUtils {
   /**
    * 检查响应是否成功
    */
-  static isSuccess(response: any): response is ApiSuccessResponse {
-    return response && response.success === true;
+  static isSuccess(response: unknown): response is ApiSuccessResponse {
+    return !!(response && typeof response === 'object' && 'success' in response && (response as ApiSuccessResponse).success);
   }
 
   /**
    * 检查响应是否失败
    */
-  static isError(response: any): response is ApiErrorResponse {
-    return response && response.success === false;
+  static isError(response: unknown): response is ApiErrorResponse {
+    return !!(response && typeof response === 'object' && 'success' in response && !(response as ApiErrorResponse).success);
   }
 
   /**
@@ -393,9 +394,9 @@ export class ResponseUtils {
 }
 
 /**
- * 默认导出
+ * API响应工具集合
  */
-export default {
+const apiResponseUtils = {
   createSuccessResponse,
   createErrorResponse,
   createPaginatedResponse,
@@ -412,3 +413,5 @@ export default {
   ResponseUtils,
   ApiErrorCode,
 };
+
+export default apiResponseUtils;

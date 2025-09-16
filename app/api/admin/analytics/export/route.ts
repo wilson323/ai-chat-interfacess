@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { AdvancedAnalyticsService } from '@/lib/services/advanced-analytics';
 import { z } from 'zod';
 
@@ -68,20 +66,36 @@ export async function GET(request: NextRequest) {
         AdvancedAnalyticsService.getPredictionAnalytics(startDate, endDate),
       ]);
 
-      data = {
+      // 创建AnalyticsData格式的数据
+      const analyticsData: AnalyticsData = {
         userBehavior,
         agentPerformance,
         conversation,
         businessValue,
         prediction,
-        metadata: {
-          generatedAt: new Date().toISOString(),
-          dateRange: {
-            start: startDate.toISOString(),
-            end: endDate.toISOString(),
-          },
+        summary: {
+          totalSessions: userBehavior.userRetention.activeUsers.reduce(
+            (sum: number, day: { count: number }) => sum + day.count,
+            0
+          ),
+          activeUsers: userBehavior.userSegments.reduce(
+            (sum: number, segment: { userCount: number }) =>
+              sum + segment.userCount,
+            0
+          ),
+          avgSatisfaction:
+            agentPerformance.satisfactionAnalysis.reduce(
+              (sum: number, agent: { avgSatisfaction: number }) =>
+                sum + agent.avgSatisfaction,
+              0
+            ) / agentPerformance.satisfactionAnalysis.length || 0,
+          totalCost: businessValue.costAnalysis.estimatedCost,
+          roi: businessValue.roiAnalysis.roi,
+          predictedGrowth: prediction.userGrowth.growthRate,
         },
       };
+
+      data = analyticsData;
     } else {
       switch (validatedQuery.type) {
         case 'user-behavior':
@@ -189,32 +203,87 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// 分析数据类型定义 - 使用从高级分析服务导入的精确类型
+import type {
+  UserBehaviorData,
+  AgentPerformanceData,
+  ConversationAnalyticsData,
+  BusinessValueData,
+  PredictionData,
+} from '@/lib/services/advanced-analytics';
+
+interface AnalyticsData {
+  userBehavior?: UserBehaviorData;
+  agentPerformance?: AgentPerformanceData;
+  conversation?: ConversationAnalyticsData;
+  businessValue?: BusinessValueData;
+  prediction?: PredictionData;
+  summary?: {
+    totalSessions?: number;
+    activeUsers?: number;
+    avgSatisfaction?: number;
+    totalCost?: number;
+    roi?: number;
+    predictedGrowth?: number;
+  };
+}
+
+// 单个分析数据类型（当type不是'all'时）
+type SingleAnalyticsData = UserBehaviorData | AgentPerformanceData | ConversationAnalyticsData | BusinessValueData | PredictionData;
+
+// 统一的分析数据类型
+type UnifiedAnalyticsData = AnalyticsData | SingleAnalyticsData;
+
+// 辅助函数：将单个分析数据转换为AnalyticsData格式
+function convertToAnalyticsData(data: UnifiedAnalyticsData): AnalyticsData {
+  // 如果已经是AnalyticsData格式，直接返回
+  if ('userBehavior' in data || 'agentPerformance' in data || 'conversation' in data ||
+      'businessValue' in data || 'prediction' in data || 'summary' in data) {
+    return data as AnalyticsData;
+  }
+
+  // 如果是单个数据类型，包装成AnalyticsData格式
+  const result: AnalyticsData = {};
+
+  if ('hourlyActivity' in data) {
+    result.userBehavior = data as UserBehaviorData;
+  } else if ('responseTimeDistribution' in data) {
+    result.agentPerformance = data as AgentPerformanceData;
+  } else if ('messageTypeDistribution' in data) {
+    result.conversation = data as ConversationAnalyticsData;
+  } else if ('costAnalysis' in data) {
+    result.businessValue = data as BusinessValueData;
+  } else if ('usageTrend' in data) {
+    result.prediction = data as PredictionData;
+  }
+
+  return result;
+}
+
 // 将数据转换为CSV格式
-function convertToCSV(data: Record<string, unknown>): string {
+function convertToCSV(data: UnifiedAnalyticsData): string {
   const rows: string[] = [];
 
-  // 简化的CSV转换逻辑
-  if (data.userBehavior) {
+  // 简化的CSV转换逻辑 - 处理联合类型
+  const analyticsData = data as AnalyticsData;
+
+  if (analyticsData.userBehavior?.hourlyActivity) {
     rows.push('用户行为分析');
     rows.push('小时,活跃用户数');
-    (data.userBehavior as { hourlyActivity: Array<{ hour: number; count: number }> }).hourlyActivity.forEach((item) => {
+    analyticsData.userBehavior.hourlyActivity.forEach(item => {
       rows.push(`${item.hour},${item.count}`);
     });
     rows.push('');
   }
 
-  if (data.agentPerformance) {
+  if (analyticsData.agentPerformance?.responseTimeDistribution) {
     rows.push('智能体性能分析');
     rows.push('智能体ID,智能体名称,响应时间中位数,错误率,满意度');
-    (data.agentPerformance as { responseTimeDistribution: Array<{ agentId: string; agentName: string; median: number }> }).responseTimeDistribution.forEach((agent) => {
-      const errorRate = (data.agentPerformance as { errorRates: Array<{ agentId: string; errorRate: number }> }).errorRates.find(
-        (e) => e.agentId === agent.agentId
-      );
-      const satisfaction = (data.agentPerformance as { satisfactionAnalysis: Array<{ agentId: string; avgSatisfaction: number }> }).satisfactionAnalysis.find(
-        (s) => s.agentId === agent.agentId
-      );
+    analyticsData.agentPerformance.responseTimeDistribution.forEach(agent => {
+      const errorRate = analyticsData.agentPerformance?.errorRates?.find(e => e.agentId === agent.agentId);
+      const satisfaction = analyticsData.agentPerformance?.satisfactionAnalysis?.find(s => s.agentId === agent.agentId);
       rows.push(
-        `${agent.agentId},"${agent.agentName}",${agent.median},${(errorRate?.errorRate * 100 || 0).toFixed(2)}%,${(satisfaction?.avgSatisfaction || 0).toFixed(2)}`
+        `${agent.agentId},"${agent.agentName}",${agent.median},${((errorRate?.errorRate || 0) * 100).toFixed(2)}%,${(satisfaction?.avgSatisfaction || 0).toFixed(2)}`
       );
     });
     rows.push('');
@@ -224,8 +293,9 @@ function convertToCSV(data: Record<string, unknown>): string {
 }
 
 // 生成HTML报告
-function generateHTMLReport(data: any, includeCharts: boolean): string {
+function generateHTMLReport(data: UnifiedAnalyticsData, includeCharts: boolean): string {
   const generatedAt = new Date().toLocaleString('zh-CN');
+  const analyticsData = convertToAnalyticsData(data);
 
   return `
 <!DOCTYPE html>
@@ -345,33 +415,33 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
         </div>
 
         ${
-          data.summary
+          analyticsData.summary
             ? `
         <div class="section">
             <h2>核心指标概览</h2>
             <div class="metric-grid">
                 <div class="metric-card">
-                    <div class="metric-value">${data.summary.totalSessions?.toLocaleString() || 0}</div>
+                    <div class="metric-value">${analyticsData.summary.totalSessions?.toLocaleString() || 0}</div>
                     <div class="metric-label">总会话数</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">${data.summary.activeUsers?.toLocaleString() || 0}</div>
+                    <div class="metric-value">${analyticsData.summary.activeUsers?.toLocaleString() || 0}</div>
                     <div class="metric-label">活跃用户</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">${((data.summary.avgSatisfaction || 0) * 100).toFixed(1)}%</div>
+                    <div class="metric-value">${((analyticsData.summary.avgSatisfaction || 0) * 100).toFixed(1)}%</div>
                     <div class="metric-label">平均满意度</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">$${(data.summary.totalCost || 0).toFixed(2)}</div>
+                    <div class="metric-value">$${(analyticsData.summary.totalCost || 0).toFixed(2)}</div>
                     <div class="metric-label">总成本</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">${(data.summary.roi || 0).toFixed(1)}%</div>
+                    <div class="metric-value">${(analyticsData.summary.roi || 0).toFixed(1)}%</div>
                     <div class="metric-label">投资回报率</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">${(data.summary.predictedGrowth || 0).toFixed(1)}%</div>
+                    <div class="metric-value">${(analyticsData.summary.predictedGrowth || 0).toFixed(1)}%</div>
                     <div class="metric-label">预测增长率</div>
                 </div>
             </div>
@@ -381,7 +451,7 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
         }
 
         ${
-          data.userBehavior
+          analyticsData.userBehavior
             ? `
         <div class="section">
             <h2>用户行为分析</h2>
@@ -398,9 +468,9 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
                     </tr>
                 </thead>
                 <tbody>
-                    ${data.userBehavior.userSegments
-                      .map(
-                        (segment: any) => `
+                    ${analyticsData.userBehavior?.userSegments
+                      ?.map(
+                        (segment) => `
                         <tr>
                             <td>${segment.segment}</td>
                             <td>${segment.userCount}</td>
@@ -409,7 +479,7 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
                         </tr>
                     `
                       )
-                      .join('')}
+                      .join('') ?? ''}
                 </tbody>
             </table>
         </div>
@@ -418,7 +488,7 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
         }
 
         ${
-          data.agentPerformance
+          analyticsData.agentPerformance
             ? `
         <div class="section">
             <h2>智能体性能分析</h2>
@@ -437,16 +507,16 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
                     </tr>
                 </thead>
                 <tbody>
-                    ${data.agentPerformance.responseTimeDistribution
+                    ${analyticsData.agentPerformance.responseTimeDistribution
                       .map(
-                        (agent: any) => `
+                        (agent) => `
                         <tr>
                             <td>${agent.agentName}</td>
-                            <td>${agent.min}ms</td>
-                            <td>${agent.q1}ms</td>
+                            <td>${agent.min ?? 0}ms</td>
+                            <td>${agent.q1 ?? 0}ms</td>
                             <td>${agent.median}ms</td>
-                            <td>${agent.q3}ms</td>
-                            <td>${agent.max}ms</td>
+                            <td>${agent.q3 ?? 0}ms</td>
+                            <td>${agent.max ?? 0}ms</td>
                         </tr>
                     `
                       )
@@ -459,7 +529,7 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
         }
 
         ${
-          data.businessValue
+          analyticsData.businessValue
             ? `
         <div class="section">
             <h2>业务价值分析</h2>
@@ -467,11 +537,11 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
             <h3>成本分析</h3>
             <div class="metric-grid">
                 <div class="metric-card">
-                    <div class="metric-value">${data.businessValue.costAnalysis.totalTokens?.toLocaleString() || 0}</div>
+                    <div class="metric-value">${analyticsData.businessValue.costAnalysis.totalTokens?.toLocaleString() || 0}</div>
                     <div class="metric-label">总Token使用量</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">$${(data.businessValue.costAnalysis.estimatedCost || 0).toFixed(2)}</div>
+                    <div class="metric-value">$${(analyticsData.businessValue.costAnalysis.estimatedCost || 0).toFixed(2)}</div>
                     <div class="metric-label">估计成本</div>
                 </div>
             </div>
@@ -479,13 +549,13 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
             <div class="insight-box">
                 <h3>优化建议</h3>
                 <ul>
-                    ${data.businessValue.costAnalysis.optimizationSuggestions
-                      .map(
-                        (suggestion: any) => `
-                        <li><strong>${suggestion.type}:</strong> ${suggestion.description} (预计节省 $${suggestion.potentialSavings.toFixed(2)})</li>
+                    ${analyticsData.businessValue.costAnalysis.optimizationSuggestions
+                      ?.map(
+                        (suggestion) => `
+                        <li><strong>${suggestion.type}:</strong> ${suggestion.description} (预计节省 $${suggestion.potentialSavings?.toFixed(2) ?? '0.00'})</li>
                     `
                       )
-                      .join('')}
+                      .join('') ?? ''}
                 </ul>
             </div>
         </div>
@@ -494,7 +564,7 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
         }
 
         ${
-          data.prediction
+          analyticsData.prediction
             ? `
         <div class="section">
             <h2>预测分析</h2>
@@ -511,9 +581,9 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
                     </tr>
                 </thead>
                 <tbody>
-                    ${data.prediction.resourceForecast.recommendations
-                      .map(
-                        (rec: any) => `
+                    ${analyticsData.prediction?.resourceForecast?.recommendations
+                      ?.map(
+                        (rec) => `
                         <tr>
                             <td>${rec.type}</td>
                             <td>${rec.action}</td>
@@ -522,7 +592,7 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
                         </tr>
                     `
                       )
-                      .join('')}
+                      .join('') ?? ''}
                 </tbody>
             </table>
         </div>
@@ -532,7 +602,7 @@ function generateHTMLReport(data: any, includeCharts: boolean): string {
 
         <div class="footer">
             <p>本报告由 NeuroGlass AI Chat Interface 系统自动生成</p>
-            <p>数据准确性: ${data.prediction?.usageTrend?.accuracy || 85}% | 生成时间: ${generatedAt}</p>
+            <p>数据准确性: ${analyticsData.prediction?.usageTrend?.accuracy ?? 85}% | 生成时间: ${generatedAt}</p>
         </div>
     </div>
 </body>

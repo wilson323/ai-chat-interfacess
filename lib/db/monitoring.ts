@@ -5,7 +5,7 @@
 
 import { Sequelize } from 'sequelize';
 import { createClient } from 'redis';
-import { appConfig } from '@/lib/config';
+// import { appConfig } from '@/lib/config';
 
 interface DatabaseMetrics {
   // 连接池指标
@@ -175,15 +175,15 @@ class DatabaseMonitor {
    */
   private async collectConnectionPoolMetrics(): Promise<void> {
     try {
-      const pool = this.sequelize.connectionManager.pool;
+      const pool = (this.sequelize.connectionManager as any).pool;
 
       this.metrics.connectionPool = {
-        total: pool.size,
-        active: pool.used,
-        idle: pool.pending,
-        waiting: pool.pending,
-        max: pool.max,
-        min: pool.min,
+        total: pool?.size || 0,
+        active: pool?.used || 0,
+        idle: pool?.pending || 0,
+        waiting: pool?.pending || 0,
+        max: pool?.max || 0,
+        min: pool?.min || 0,
       };
     } catch (error) {
       console.error('收集连接池指标失败:', error);

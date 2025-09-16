@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { Button } from './ui/button';
+import { cn } from '../lib/utils';
 import { Check, Brain } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import type { InteractiveData } from '@/types/message';
+import type { InteractiveData } from '../types/message';
 
 interface InlineBubbleInteractiveProps {
   interactiveData: InteractiveData;
@@ -43,7 +42,7 @@ export function InlineBubbleInteractive({
   );
 
   // 获取思考节点名称的函数
-  const getThinkingNodeName = (steps: any[]) => {
+  const getThinkingNodeName = (steps: Array<{name?: string}>) => {
     // 优先获取最后一个有名称的步骤
     const namedStep = [...steps]
       .reverse()
@@ -96,7 +95,7 @@ export function InlineBubbleInteractive({
           <div className='flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300'>
             <Brain className='w-3 h-3' />
             <span>
-              基于 {getThinkingNodeName(thinkingStepsFiltered)} 思考过程生成选项
+              基于 {getThinkingNodeName(thinkingStepsFiltered as Array<{name?: string}>)} 思考过程生成选项
             </span>
           </div>
         </div>

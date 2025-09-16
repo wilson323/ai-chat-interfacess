@@ -1,0 +1,486 @@
+/**
+ * 增强主题动画系统
+ * 基于Lovart设计语言的动效规范
+ */
+
+/* 主题切换动画 */
+.theme-transition {
+  transition: all 0.3s ease-out;
+}
+
+.theme-transition * {
+  transition: all 0.3s ease-out !important;
+}
+
+/* 组件进入动画 */
+@keyframes theme-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes theme-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes theme-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes theme-bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes theme-flip-in {
+  from {
+    opacity: 0;
+    transform: perspective(400px) rotateY(90deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(400px) rotateY(0deg);
+  }
+}
+
+/* 组件退出动画 */
+@keyframes theme-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes theme-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+@keyframes theme-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* 交互动画 */
+@keyframes theme-hover {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes theme-press {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0.98);
+  }
+}
+
+@keyframes theme-focus {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--theme-primary-rgb), 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(var(--theme-primary-rgb), 0.1);
+  }
+}
+
+/* 加载动画 */
+@keyframes theme-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes theme-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes theme-dots {
+  0%, 20% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 成功动画 */
+@keyframes theme-success {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes theme-success-check {
+  0% {
+    stroke-dasharray: 0 100;
+  }
+  100% {
+    stroke-dasharray: 100 0;
+  }
+}
+
+/* 错误动画 */
+@keyframes theme-error {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+@keyframes theme-error-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+/* 主题特定的动画类 */
+
+/* 现代简约主题动画 */
+.theme-modern {
+  --theme-animation-enter: theme-fade-in 0.3s ease-out;
+  --theme-animation-exit: theme-fade-out 0.2s ease-in;
+  --theme-animation-interaction: theme-hover 0.2s ease-out;
+  --theme-animation-loading: theme-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 商务专业主题动画 */
+.theme-business {
+  --theme-animation-enter: theme-slide-in 0.4s ease-out;
+  --theme-animation-exit: theme-slide-out 0.3s ease-in;
+  --theme-animation-interaction: theme-press 0.1s ease-out;
+  --theme-animation-loading: theme-dots 1.4s ease-in-out infinite;
+}
+
+/* 科技未来主题动画 */
+.theme-tech {
+  --theme-animation-enter: theme-flip-in 0.5s ease-out;
+  --theme-animation-exit: theme-fade-out 0.2s ease-in;
+  --theme-animation-interaction: theme-focus 0.3s ease-out;
+  --theme-animation-loading: theme-spin 1s linear infinite;
+}
+
+/* 自然清新主题动画 */
+.theme-nature {
+  --theme-animation-enter: theme-bounce-in 0.6s ease-out;
+  --theme-animation-exit: theme-scale-out 0.3s ease-in;
+  --theme-animation-interaction: theme-hover 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --theme-animation-loading: theme-pulse 2s ease-in-out infinite;
+}
+
+/* 艺术创意主题动画 */
+.theme-art {
+  --theme-animation-enter: theme-scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --theme-animation-exit: theme-fade-out 0.3s ease-in-out;
+  --theme-animation-interaction: theme-hover 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --theme-animation-loading: theme-dots 1.2s ease-in-out infinite;
+}
+
+/* 动画工具类 */
+.animate-theme-enter {
+  animation: var(--theme-animation-enter);
+}
+
+.animate-theme-exit {
+  animation: var(--theme-animation-exit);
+}
+
+.animate-theme-interaction {
+  animation: var(--theme-animation-interaction);
+}
+
+.animate-theme-loading {
+  animation: var(--theme-animation-loading);
+}
+
+.animate-theme-success {
+  animation: theme-success 0.5s ease-out;
+}
+
+.animate-theme-success-check {
+  animation: theme-success-check 0.6s ease-out;
+}
+
+.animate-theme-error {
+  animation: theme-error 0.5s ease-out;
+}
+
+.animate-theme-error-shake {
+  animation: theme-error-shake 0.5s ease-in-out;
+}
+
+/* 响应式动画调整 */
+@media (max-width: 640px) {
+  .animate-theme-enter {
+    animation-duration: 0.2s;
+  }
+
+  .animate-theme-exit {
+    animation-duration: 0.15s;
+  }
+
+  .animate-theme-interaction {
+    animation-duration: 0.15s;
+  }
+}
+
+/* 深色模式动画调整 */
+.dark-theme .animate-theme-enter {
+  animation-timing-function: ease-in-out;
+}
+
+.dark-theme .animate-theme-interaction {
+  animation-timing-function: ease-in-out;
+}
+
+/* 性能优化 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-theme-enter,
+  .animate-theme-exit,
+  .animate-theme-interaction,
+  .animate-theme-loading,
+  .animate-theme-success,
+  .animate-theme-success-check,
+  .animate-theme-error,
+  .animate-theme-error-shake {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* 主题切换动画 */
+.theme-switching {
+  pointer-events: none;
+  user-select: none;
+}
+
+.theme-switching * {
+  transition: all var(--theme-switch-duration, 0.3s) var(--theme-switch-easing, ease-out) !important;
+}
+
+/* 色彩过渡动画 */
+.theme-color-transition {
+  transition: background-color 0.3s ease-out, color 0.3s ease-out, border-color 0.3s ease-out;
+}
+
+/* 色阶动画 */
+.theme-scale-transition {
+  transition: all 0.2s ease-out;
+}
+
+/* 响应式动画 */
+@media (max-width: 768px) {
+  .theme-responsive-animate {
+    animation-duration: 0.2s !important;
+  }
+}
+
+/* 自定义属性动画 */
+:root {
+  --theme-animation-duration-fast: 0.15s;
+  --theme-animation-duration-normal: 0.3s;
+  --theme-animation-duration-slow: 0.5s;
+  --theme-animation-easing-ease-out: ease-out;
+  --theme-animation-easing-ease-in: ease-in;
+  --theme-animation-easing-ease-in-out: ease-in-out;
+  --theme-animation-easing-cubic-bezier: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 主题特定的CSS变量 */
+.theme-modern {
+  --theme-animation-duration: 0.3s;
+  --theme-animation-easing: ease-out;
+}
+
+.theme-business {
+  --theme-animation-duration: 0.4s;
+  --theme-animation-easing: ease-out;
+}
+
+.theme-tech {
+  --theme-animation-duration: 0.5s;
+  --theme-animation-easing: ease-out;
+}
+
+.theme-nature {
+  --theme-animation-duration: 0.6s;
+  --theme-animation-easing: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.theme-art {
+  --theme-animation-duration: 0.4s;
+  --theme-animation-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 动画状态类 */
+.theme-animating {
+  animation-fill-mode: both;
+}
+
+.theme-animating-paused {
+  animation-play-state: paused;
+}
+
+.theme-animating-reverse {
+  animation-direction: reverse;
+}
+
+/* 动画延迟类 */
+.theme-delay-100 {
+  animation-delay: 0.1s;
+}
+
+.theme-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.theme-delay-300 {
+  animation-delay: 0.3s;
+}
+
+.theme-delay-500 {
+  animation-delay: 0.5s;
+}
+
+/* 动画迭代类 */
+.theme-iteration-1 {
+  animation-iteration-count: 1;
+}
+
+.theme-iteration-2 {
+  animation-iteration-count: 2;
+}
+
+.theme-iteration-infinite {
+  animation-iteration-count: infinite;
+}
+
+/* 动画方向类 */
+.theme-direction-normal {
+  animation-direction: normal;
+}
+
+.theme-direction-reverse {
+  animation-direction: reverse;
+}
+
+.theme-direction-alternate {
+  animation-direction: alternate;
+}
+
+.theme-direction-alternate-reverse {
+  animation-direction: alternate-reverse;
+}
+
+/* 动画填充模式类 */
+.theme-fill-none {
+  animation-fill-mode: none;
+}
+
+.theme-fill-forwards {
+  animation-fill-mode: forwards;
+}
+
+.theme-fill-backwards {
+  animation-fill-mode: backwards;
+}
+
+.theme-fill-both {
+  animation-fill-mode: both;
+}
+
+/* 动画播放状态类 */
+.theme-play-running {
+  animation-play-state: running;
+}
+
+.theme-play-paused {
+  animation-play-state: paused;
+}

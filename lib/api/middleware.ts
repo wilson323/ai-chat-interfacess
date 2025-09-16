@@ -3,6 +3,7 @@
  * 提供统一的API中间件功能，包括日志、验证、认证、限流等
  */
 
+import { logger } from '@/lib/utils/logger';
 import { NextRequest, NextResponse } from 'next/server';
 import { createErrorResponse, ApiErrorCode } from './response';
 import { validateQueryParams } from './validators';
@@ -13,7 +14,9 @@ import { appConfig } from '@/lib/config';
  * 请求日志中间件
  * 记录API请求和响应信息
  */
-export function withLogging(handler: Function) {
+export function withLogging(
+  handler: (request: NextRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest) => {
     const startTime = Date.now();
     const requestId = generateRequestId();
@@ -23,7 +26,7 @@ export function withLogging(handler: Function) {
     const ip = getClientIP(request);
 
     // 记录请求开始
-    console.log(`[${requestId}] ${method} ${url} - ${userAgent} - ${ip}`);
+    logger.debug(`[${requestId}] ${method} ${url} - ${userAgent} - ${ip}`);
 
     try {
       const response = await handler(request);
@@ -31,7 +34,7 @@ export function withLogging(handler: Function) {
       const status = response.status;
 
       // 记录请求完成
-      console.log(
+      logger.debug(
         `[${requestId}] ${method} ${url} - ${status} - ${duration}ms`
       );
 
@@ -41,7 +44,7 @@ export function withLogging(handler: Function) {
       return response;
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(
+      logger.error(
         `[${requestId}] ${method} ${url} - Error - ${duration}ms:`,
         error
       );
@@ -61,7 +64,9 @@ export function withLogging(handler: Function) {
  * 请求验证中间件
  * 验证请求参数和格式
  */
-export function withValidation(handler: Function) {
+export function withValidation(
+  handler: (request: NextRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest) => {
     try {
       // 验证查询参数
@@ -81,7 +86,9 @@ export function withValidation(handler: Function) {
  * 认证中间件
  * 验证JWT令牌
  */
-export function withAuth(handler: Function) {
+export function withAuth(
+  handler: (request: NextRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest) => {
     const token = getAuthToken(request);
 
@@ -99,7 +106,7 @@ export function withAuth(handler: Function) {
 
       return await handler(request);
     } catch (error) {
-      console.error('JWT验证失败:', error);
+      logger.error('JWT验证失败:', error);
       return createErrorResponse(
         ApiErrorCode.AUTHENTICATION_ERROR,
         '认证令牌无效或已过期'
@@ -113,7 +120,7 @@ export function withAuth(handler: Function) {
  * 检查用户权限
  */
 export function withPermission(permission: string) {
-  return function (handler: Function) {
+  return function (handler: (request: NextRequest) => Promise<NextResponse>) {
     return async (request: NextRequest) => {
       const user = (request as any).user;
 
@@ -140,7 +147,9 @@ export function withPermission(permission: string) {
  * 管理员权限中间件
  * 检查管理员权限
  */
-export function withAdminAuth(handler: Function) {
+export function withAdminAuth(
+  handler: (request: NextRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest) => {
     const token = getAuthToken(request);
 
@@ -164,7 +173,7 @@ export function withAdminAuth(handler: Function) {
       (request as any).user = payload;
       return await handler(request);
     } catch (error) {
-      console.error('管理员认证失败:', error);
+      logger.error('管理员认证失败:', error);
       return createErrorResponse(
         ApiErrorCode.AUTHENTICATION_ERROR,
         '管理员认证失败'
@@ -177,7 +186,9 @@ export function withAdminAuth(handler: Function) {
  * 请求限流中间件
  * 防止API滥用
  */
-export function withRateLimit(handler: Function) {
+export function withRateLimit(
+  handler: (request: NextRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest) => {
     const clientId = getClientId(request);
     const pathname = new URL(request.url).pathname;
@@ -198,7 +209,9 @@ export function withRateLimit(handler: Function) {
  * CORS中间件
  * 处理跨域请求
  */
-export function withCORS(handler: Function) {
+export function withCORS(
+  handler: (request: NextRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest) => {
     const response = await handler(request);
 
@@ -223,7 +236,7 @@ export function withCORS(handler: Function) {
  * 添加缓存头
  */
 export function withCache(ttl: number = 300) {
-  return function (handler: Function) {
+  return function (handler: (request: NextRequest) => Promise<NextResponse>) {
     return async (request: NextRequest) => {
       const response = await handler(request);
 
@@ -242,7 +255,9 @@ export function withCache(ttl: number = 300) {
  * 压缩中间件
  * 启用响应压缩
  */
-export function withCompression(handler: Function) {
+export function withCompression(
+  handler: (request: NextRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest) => {
     const response = await handler(request);
 
@@ -260,12 +275,14 @@ export function withCompression(handler: Function) {
  * 错误处理中间件
  * 统一错误处理
  */
-export function withErrorHandler(handler: Function) {
+export function withErrorHandler(
+  handler: (request: NextRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest) => {
     try {
       return await handler(request);
     } catch (error) {
-      console.error('API Error:', error);
+      logger.error('API Error:', error);
 
       // 如果已经是NextResponse，直接返回
       if (error instanceof NextResponse) {
@@ -294,7 +311,7 @@ export function withErrorHandler(handler: Function) {
           return createErrorResponse(
             ApiErrorCode.EXTERNAL_API_ERROR,
             '外部服务调用失败',
-            process.env.NODE_ENV === 'development' ? error.message : undefined
+            process.env.NODE_ENV === 'development' ? { message: error.message } as Record<string, unknown> : undefined
           );
         }
 
@@ -302,7 +319,7 @@ export function withErrorHandler(handler: Function) {
         return createErrorResponse(
           ApiErrorCode.INTERNAL_ERROR,
           '服务器内部错误',
-          process.env.NODE_ENV === 'development' ? error.message : undefined
+          process.env.NODE_ENV === 'development' ? { message: error.message } as Record<string, unknown> : undefined
         );
       }
 
@@ -316,9 +333,16 @@ export function withErrorHandler(handler: Function) {
  * 组合中间件
  * 将多个中间件组合使用
  */
-export function compose(...middlewares: Function[]) {
+export function compose(
+  ...middlewares: Array<
+    (
+      handler: (request: NextRequest) => Promise<NextResponse>
+    ) => (request: NextRequest) => Promise<NextResponse>
+  >
+) {
   return middlewares.reduce((acc, middleware) => {
-    return (handler: Function) => middleware(acc(handler));
+    return (handler: (request: NextRequest) => Promise<NextResponse>) =>
+      middleware(acc(handler));
   });
 }
 
@@ -406,7 +430,7 @@ function getAuthToken(request: NextRequest): string | null {
 async function verifyJWT(token: string): Promise<any> {
   try {
     const secret = appConfig.security.jwtSecret;
-    const payload = jwt.verify(token, secret) as any;
+    const payload = jwt.verify(token, secret) as { exp?: number; [key: string]: any };
 
     // 检查令牌是否过期
     if (payload.exp && payload.exp < Date.now() / 1000) {
@@ -470,7 +494,7 @@ declare global {
 /**
  * 默认导出
  */
-export default {
+const apiMiddleware = {
   withLogging,
   withValidation,
   withAuth,
@@ -484,3 +508,5 @@ export default {
   compose,
   commonMiddlewares,
 };
+
+export default apiMiddleware;

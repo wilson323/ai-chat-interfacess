@@ -2,9 +2,11 @@
  * 统一配置管理中心
  * 基于环境变量的配置管理，确保全局一致性和安全性
  */
+import { logger } from '../utils/logger';
+import { ErrorFactory } from '../utils/error-utils';
+import type { AppConfig } from '../../types';
 
-import type { AppConfig } from '@/types';
-
+// Record is a built-in TypeScript utility type
 // 环境配置
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const isDevelopment = NODE_ENV === 'development';
@@ -23,7 +25,7 @@ function getEnvVar<T = string>(
     if (defaultValue !== undefined) {
       return defaultValue;
     }
-    throw new Error(`Environment variable ${key} is required`);
+    throw ErrorFactory.internal(`Environment variable ${key} is required`);
   }
 
   return transform ? transform(value) : (value as T);
@@ -44,41 +46,50 @@ function getArrayEnvVar(key: string, defaultValue: string[] = []): string[] {
 }
 
 // 智能体配置（从配置文件加载，但支持环境变量覆盖）
-let defaultAgents: any;
-try {
-  defaultAgents = require('@/config/default-agents').DEFAULT_AGENTS;
-} catch (error) {
-  console.warn('Failed to load default agents config:', error);
-  defaultAgents = [];
+let defaultAgents: Array<Record<string, unknown>> = [];
+let cadAnalyzerConfig: Record<string, unknown> = {
+  supportedFormats: ['dwg', 'dxf', 'step', 'stp'],
+  maxFileSize: 10485760,
+  defaultModel: 'qwen-vl-max',
+  apiEndpoints: {},
+};
+let imageEditorConfig: Record<string, unknown> = {
+  supportedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+  maxFileSize: 10485760,
+  defaultModel: 'qwen-vl-max',
+  processingOptions: {},
+};
+
+// 异步初始化配置
+async function initializeConfig() {
+  try {
+    const { DEFAULT_AGENTS } = await import('../../config/default-agents');
+    defaultAgents = DEFAULT_AGENTS as Array<Record<string, unknown>>;
+  } catch {
+    logger.warn('Failed to load default agents config');
+  }
+
+  try {
+    // @ts-ignore - TypeScript has issues with JSON imports in this context
+    const cadConfig = require('../../config/cad-analyzer-config.json');
+    cadAnalyzerConfig = cadConfig.default || cadConfig;
+  } catch {
+    logger.warn('Failed to load CAD analyzer config');
+  }
+
+  try {
+    // @ts-ignore - TypeScript has issues with JSON imports in this context
+    const imgConfig = require('../../config/image-editor-config.json');
+    imageEditorConfig = imgConfig.default || imgConfig;
+  } catch {
+    logger.warn('Failed to load image editor config');
+  }
 }
 
-// CAD分析器配置（从配置文件加载，但支持环境变量覆盖）
-let cadAnalyzerConfig: any;
-try {
-  cadAnalyzerConfig = require('@/config/cad-analyzer-config.json');
-} catch (error) {
-  console.warn('Failed to load CAD analyzer config:', error);
-  cadAnalyzerConfig = {
-    supportedFormats: ['dwg', 'dxf', 'step', 'stp'],
-    maxFileSize: 10485760,
-    defaultModel: 'qwen-vl-max',
-    apiEndpoints: {},
-  };
-}
-
-// 图像编辑器配置（从配置文件加载，但支持环境变量覆盖）
-let imageEditorConfig: any;
-try {
-  imageEditorConfig = require('@/config/image-editor-config.json');
-} catch (error) {
-  console.warn('Failed to load image editor config:', error);
-  imageEditorConfig = {
-    supportedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    maxFileSize: 10485760,
-    defaultModel: 'qwen-vl-max',
-    processingOptions: {},
-  };
-}
+// 初始化配置
+initializeConfig().catch(error => {
+  logger.error('Failed to initialize config:', error);
+});
 
 // 统一应用配置 - 完全基于环境变量
 export const appConfig: AppConfig = {
@@ -129,6 +140,7 @@ export const appConfig: AppConfig = {
       'wav',
       'mp4',
     ]),
+    enableThemeEnhancement: getBooleanEnvVar('ENABLE_THEME_ENHANCEMENT', true),
   },
   security: {
     jwtSecret: (() => {
@@ -164,6 +176,36 @@ export const appConfig: AppConfig = {
     enabled: getBooleanEnvVar('ENABLE_MONITORING', true),
     endpoint: getEnvVar('MONITORING_ENDPOINT', 'http://localhost:9090'),
     logLevel: getEnvVar('LOG_LEVEL', 'info'),
+  },
+  theme: {
+    enhancedFeatures: {
+      colorEnhancement: getBooleanEnvVar('ENABLE_THEME_ENHANCEMENT', true),
+      responsiveDesign: true,
+      darkMode: true,
+      animations: true,
+      smartRecommendation: getBooleanEnvVar('ENABLE_THEME_ENHANCEMENT', true),
+      performanceMonitoring: true,
+      consistencyCheck: true,
+    },
+    defaultTheme: 'modern',
+    themes: [],
+    monitoring: {
+      enabled: getBooleanEnvVar('ENABLE_MONITORING', true),
+      endpoint: getEnvVar('MONITORING_ENDPOINT', 'http://localhost:9090'),
+      logLevel: getEnvVar('LOG_LEVEL', 'info'),
+    },
+    recommendation: {
+      enabled: true,
+      algorithm: 'hybrid',
+      weights: {
+        userPreference: 0.4,
+        popularity: 0.3,
+        recency: 0.2,
+        relevance: 0.1,
+      },
+      refreshInterval: 30,
+      maxRecommendations: 5,
+    },
   },
 };
 
@@ -288,11 +330,11 @@ export function validateConfig(): void {
   const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
   if (missingVars.length > 0) {
-    console.error('❌ 缺少必需的环境变量:');
+    logger.error('❌ 缺少必需的环境变量:');
     missingVars.forEach(varName => {
-      console.error(`  - ${varName}`);
+      logger.error(`  - ${varName}`);
     });
-    console.error('\n请参考 docs/环境配置管理规范.md 配置环境变量');
+    logger.error('\n请参考 docs/环境配置管理规范.md 配置环境变量');
     throw new Error(
       `Missing required environment variables: ${missingVars.join(', ')}`
     );
@@ -310,20 +352,20 @@ export function validateConfig(): void {
       throw new Error('API configuration is incomplete');
     }
 
-    console.log('✅ 配置验证通过');
+    logger.debug('✅ 配置验证通过');
   } catch (error) {
-    console.error('❌ 配置验证失败:', error);
+    logger.error('❌ 配置验证失败:', error);
     throw error;
   }
 }
 
 // 配置获取工具函数
-export function getConfig<T = any>(path: string, defaultValue?: T): T {
+export function getConfig<T = unknown>(path: string, defaultValue?: T): T {
   const keys = path.split('.');
-  let value: any = appConfig;
+  let value: unknown = appConfig;
 
   for (const key of keys) {
-    value = value?.[key];
+    value = (value as Record<string, unknown>)?.[key];
     if (value === undefined) {
       return defaultValue as T;
     }

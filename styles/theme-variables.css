@@ -1,0 +1,141 @@
+/**
+ * 主题变量定义
+ * 定义所有主题相关的CSS变量
+ */
+
+@layer base {
+  :root {
+    /* 主题色彩变量 */
+    --theme-primary: #6cb33f;
+    --theme-secondary: #8bc565;
+    --theme-accent: #4a7c59;
+    --theme-background: #ffffff;
+    --theme-surface: #f8f9fa;
+    --theme-text: #2d3436;
+    --theme-text-secondary: #636e72;
+    --theme-border: #e9ecef;
+    --theme-success: #00b894;
+    --theme-warning: #fdcb6e;
+    --theme-error: #e17055;
+    --theme-info: #74b9ff;
+
+    /* 主题样式变量 */
+    --theme-radius-sm: 4px;
+    --theme-radius-md: 8px;
+    --theme-radius-lg: 12px;
+    --theme-radius-xl: 16px;
+    --theme-radius-full: 9999px;
+
+    --theme-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --theme-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --theme-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --theme-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+
+    --theme-animation-fast: 0.15s ease-out;
+    --theme-animation-normal: 0.3s ease-out;
+    --theme-animation-slow: 0.5s ease-out;
+
+    --theme-spacing-xs: 4px;
+    --theme-spacing-sm: 8px;
+    --theme-spacing-md: 16px;
+    --theme-spacing-lg: 24px;
+    --theme-spacing-xl: 32px;
+
+    /* 主题排版变量 */
+    --theme-font-family: Inter, system-ui, sans-serif;
+    --theme-font-size-xs: 12px;
+    --theme-font-size-sm: 14px;
+    --theme-font-size-base: 16px;
+    --theme-font-size-lg: 18px;
+    --theme-font-size-xl: 20px;
+    --theme-font-size-2xl: 24px;
+    --theme-font-size-3xl: 30px;
+
+    --theme-line-height-tight: 1.25;
+    --theme-line-height-normal: 1.5;
+    --theme-line-height-relaxed: 1.75;
+
+    --theme-font-weight-normal: 400;
+    --theme-font-weight-medium: 500;
+    --theme-font-weight-semibold: 600;
+    --theme-font-weight-bold: 700;
+  }
+
+  /* 暗色主题变量 */
+  .dark {
+    --theme-background: #0a0a0a;
+    --theme-surface: #1a1a1a;
+    --theme-text: #ffffff;
+    --theme-text-secondary: #b3b3b3;
+    --theme-border: #333333;
+  }
+}
+
+/* 主题工具类 */
+@layer utilities {
+  .theme-primary {
+    color: var(--theme-primary);
+  }
+
+  .theme-bg-primary {
+    background-color: var(--theme-primary);
+  }
+
+  .theme-border-primary {
+    border-color: var(--theme-primary);
+  }
+
+  .theme-shadow {
+    box-shadow: var(--theme-shadow-md);
+  }
+
+  .theme-shadow-lg {
+    box-shadow: var(--theme-shadow-lg);
+  }
+
+  .theme-radius {
+    border-radius: var(--theme-radius-md);
+  }
+
+  .theme-radius-lg {
+    border-radius: var(--theme-radius-lg);
+  }
+
+  .theme-animation {
+    transition: all var(--theme-animation-normal);
+  }
+
+  .theme-animation-fast {
+    transition: all var(--theme-animation-fast);
+  }
+
+  .theme-spacing {
+    padding: var(--theme-spacing-md);
+  }
+
+  .theme-spacing-lg {
+    padding: var(--theme-spacing-lg);
+  }
+
+  .theme-text {
+    font-family: var(--theme-font-family);
+    font-size: var(--theme-font-size-base);
+    line-height: var(--theme-line-height-normal);
+  }
+
+  .theme-text-sm {
+    font-size: var(--theme-font-size-sm);
+  }
+
+  .theme-text-lg {
+    font-size: var(--theme-font-size-lg);
+  }
+
+  .theme-font-medium {
+    font-weight: var(--theme-font-weight-medium);
+  }
+
+  .theme-font-semibold {
+    font-weight: var(--theme-font-weight-semibold);
+  }
+}

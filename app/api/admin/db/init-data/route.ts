@@ -20,6 +20,10 @@ export async function POST() {
         isPublished: true,
         description: '系统内置默认智能体',
         order: 1,
+        supportsStream: true,
+        supportsDetail: true,
+        globalVariables: '[]',
+        welcomeText: '欢迎使用AI助手！',
       },
     ]);
     return NextResponse.json({ success: true });

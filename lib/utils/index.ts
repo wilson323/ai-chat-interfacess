@@ -238,13 +238,13 @@ export function deepClone<T>(obj: T): T {
  * @param delay 延迟时间（毫秒）
  * @returns 防抖后的函数
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
   let timer: NodeJS.Timeout | null = null;
 
-  return function (this: any, ...args: Parameters<T>): void {
+  return function (this: unknown, ...args: Parameters<T>): void {
     if (timer) {
       clearTimeout(timer);
     }
@@ -262,7 +262,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * @param limit 时间限制（毫秒）
  * @returns 节流后的函数
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   fn: T,
   limit: number
 ): (...args: Parameters<T>) => void {
@@ -270,7 +270,7 @@ export function throttle<T extends (...args: any[]) => any>(
   let lastFunc: NodeJS.Timeout;
   let lastRan: number;
 
-  return function (this: any, ...args: Parameters<T>): void {
+  return function (this: unknown, ...args: Parameters<T>): void {
     if (!inThrottle) {
       fn.apply(this, args);
       lastRan = Date.now();

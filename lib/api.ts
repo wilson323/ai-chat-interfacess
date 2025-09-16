@@ -1,18 +1,19 @@
-import type { Agent } from '@/types/agent';
-import type { Message } from '@/types/message';
+import type { Agent } from '../types/agent';
+import { logger } from './utils/logger';
+import type { Message } from '../types/message';
 
 interface ChatCompletionRequest {
   model: string;
   messages: {
     role: string;
-    content: string | Array<{ type: string; [key: string]: any }>;
+    content: string | Array<{ type: string; [key: string]: unknown }>;
   }[];
   temperature?: number;
   max_tokens?: number;
   stream?: boolean;
-  tools?: any[];
+  tools?: Array<Record<string, unknown>>;
   tool_choice?: string | object;
-  files?: any[];
+  files?: File[];
   detail?: boolean;
 }
 
@@ -26,7 +27,7 @@ interface ChatCompletionResponse {
     message: {
       role: string;
       content: string;
-      tool_calls?: any[];
+      tool_calls?: Array<Record<string, unknown>>;
     };
     finish_reason: string;
   }[];
@@ -35,7 +36,7 @@ interface ChatCompletionResponse {
     completion_tokens: number;
     total_tokens: number;
   };
-  detail?: any;
+  detail?: Record<string, unknown>;
 }
 
 export async function sendChatRequest(
@@ -113,7 +114,7 @@ export async function sendChatRequest(
               content += textChunk;
               options.onChunk(textChunk);
             } catch (e) {
-              console.error('Error parsing SSE chunk:', e);
+              logger.error('Error parsing SSE chunk:', e);
             }
           }
         }
@@ -160,7 +161,7 @@ export async function sendChatRequest(
       return await response.json();
     }
   } catch (error) {
-    console.error('API request error:', error);
+    logger.error('API request error:', error);
     throw error;
   }
 }

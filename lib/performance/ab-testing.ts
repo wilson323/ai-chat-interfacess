@@ -119,14 +119,19 @@ export class ABTestingManager {
         tests: Array.from(this.tests.values()),
       };
       localStorage.setItem('ab_tests', JSON.stringify(data));
-      localStorage.setItem('ab_user_assignments', JSON.stringify(Array.from(this.userAssignments.entries())));
+      localStorage.setItem(
+        'ab_user_assignments',
+        JSON.stringify(Array.from(this.userAssignments.entries()))
+      );
     } catch (error) {
       console.warn('Failed to save A/B tests to storage:', error);
     }
   }
 
   // 创建A/B测试
-  public createTest(testData: Omit<ABTest, 'id' | 'createdAt' | 'updatedAt'>): ABTest {
+  public createTest(
+    testData: Omit<ABTest, 'id' | 'createdAt' | 'updatedAt'>
+  ): ABTest {
     const test: ABTest = {
       ...testData,
       id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -135,7 +140,10 @@ export class ABTestingManager {
     };
 
     // 验证版本配置
-    const totalAllocation = testData.versions.reduce((sum, version) => sum + version.trafficAllocation, 0);
+    const totalAllocation = testData.versions.reduce(
+      (sum, version) => sum + version.trafficAllocation,
+      0
+    );
     if (Math.abs(totalAllocation - 1) > 0.001) {
       throw new Error('Version traffic allocations must sum to 1');
     }
@@ -190,7 +198,11 @@ export class ABTestingManager {
   }
 
   // 记录性能指标
-  public recordMetrics(testId: string, versionId: string, metrics: Partial<ABTestMetrics>): void {
+  public recordMetrics(
+    testId: string,
+    versionId: string,
+    metrics: Partial<ABTestMetrics>
+  ): void {
     const key = `${testId}_${versionId}`;
     if (!this.metrics.has(key)) {
       this.metrics.set(key, []);
@@ -246,7 +258,8 @@ export class ABTestingManager {
       Object.entries(versionResults).forEach(([versionId, result]) => {
         if (versionId !== controlVersion.id) {
           const versionConversion = result.metrics.conversionRate.value;
-          const uplift = ((versionConversion - controlConversion) / controlConversion) * 100;
+          const uplift =
+            ((versionConversion - controlConversion) / controlConversion) * 100;
           versionResults[versionId].uplift = uplift;
         }
       });
@@ -278,100 +291,134 @@ export class ABTestingManager {
     return result;
   }
 
-  private aggregateMetrics(metrics: ABTestMetrics[]): Record<string, ABTestVersionResult['metrics']['string']> {
+  private aggregateMetrics(
+    metrics: ABTestMetrics[]
+  ): Record<string, ABTestVersionResult['metrics']['string']> {
     if (metrics.length === 0) {
-      return {
-        conversionRate: { value: 0, change: 0, significance: false, confidence: 0 },
-        averagePageLoadTime: { value: 0, change: 0, significance: false, confidence: 0 },
-        averageApiResponseTime: { value: 0, change: 0, significance: false, confidence: 0 },
-        bounceRate: { value: 0, change: 0, significance: false, confidence: 0 },
-        sessionDuration: { value: 0, change: 0, significance: false, confidence: 0 },
-        errorRate: { value: 0, change: 0, significance: false, confidence: 0 },
-        userSatisfaction: { value: 0, change: 0, significance: false, confidence: 0 },
-      };
+      return this.getEmptyMetrics();
     }
 
-    const aggregated: Record<string, ABTestVersionResult['metrics']['string']> = {};
+    // 一次性计算所有指标，避免多次遍历
+    const totals = metrics.reduce(
+      (acc, m) => {
+        const sampleSize = m.sampleSize;
+        acc.totalSamples += sampleSize;
+        acc.totalConversions += m.conversionRate * sampleSize;
+        acc.totalPageLoadTime += m.averagePageLoadTime * sampleSize;
+        acc.totalApiResponseTime += m.averageApiResponseTime * sampleSize;
+        acc.totalBounceRate += m.bounceRate * sampleSize;
+        acc.totalSessionDuration += m.sessionDuration * sampleSize;
+        acc.totalErrorRate += m.errorRate * sampleSize;
+        acc.totalUserSatisfaction += m.userSatisfaction * sampleSize;
+        return acc;
+      },
+      {
+        totalSamples: 0,
+        totalConversions: 0,
+        totalPageLoadTime: 0,
+        totalApiResponseTime: 0,
+        totalBounceRate: 0,
+        totalSessionDuration: 0,
+        totalErrorRate: 0,
+        totalUserSatisfaction: 0,
+      }
+    );
 
-    // 转换率
-    const totalConversions = metrics.reduce((sum, m) => sum + m.conversionRate * m.sampleSize, 0);
-    const totalSamples = metrics.reduce((sum, m) => sum + m.sampleSize, 0);
-    aggregated.conversionRate = {
-      value: totalSamples > 0 ? totalConversions / totalSamples : 0,
-      change: 0,
-      significance: false,
-      confidence: 0,
+    const { totalSamples } = totals;
+    const getValue = (total: number) =>
+      totalSamples > 0 ? total / totalSamples : 0;
+
+    return {
+      conversionRate: {
+        value: getValue(totals.totalConversions),
+        change: 0,
+        significance: false,
+        confidence: 0,
+      },
+      averagePageLoadTime: {
+        value: getValue(totals.totalPageLoadTime),
+        change: 0,
+        significance: false,
+        confidence: 0,
+      },
+      averageApiResponseTime: {
+        value: getValue(totals.totalApiResponseTime),
+        change: 0,
+        significance: false,
+        confidence: 0,
+      },
+      bounceRate: {
+        value: getValue(totals.totalBounceRate),
+        change: 0,
+        significance: false,
+        confidence: 0,
+      },
+      sessionDuration: {
+        value: getValue(totals.totalSessionDuration),
+        change: 0,
+        significance: false,
+        confidence: 0,
+      },
+      errorRate: {
+        value: getValue(totals.totalErrorRate),
+        change: 0,
+        significance: false,
+        confidence: 0,
+      },
+      userSatisfaction: {
+        value: getValue(totals.totalUserSatisfaction),
+        change: 0,
+        significance: false,
+        confidence: 0,
+      },
     };
-
-    // 页面加载时间
-    const totalPageLoadTime = metrics.reduce((sum, m) => sum + m.averagePageLoadTime * m.sampleSize, 0);
-    aggregated.averagePageLoadTime = {
-      value: totalSamples > 0 ? totalPageLoadTime / totalSamples : 0,
-      change: 0,
-      significance: false,
-      confidence: 0,
-    };
-
-    // API响应时间
-    const totalApiResponseTime = metrics.reduce((sum, m) => sum + m.averageApiResponseTime * m.sampleSize, 0);
-    aggregated.averageApiResponseTime = {
-      value: totalSamples > 0 ? totalApiResponseTime / totalSamples : 0,
-      change: 0,
-      significance: false,
-      confidence: 0,
-    };
-
-    // 跳出率
-    const totalBounceRate = metrics.reduce((sum, m) => sum + m.bounceRate * m.sampleSize, 0);
-    aggregated.bounceRate = {
-      value: totalSamples > 0 ? totalBounceRate / totalSamples : 0,
-      change: 0,
-      significance: false,
-      confidence: 0,
-    };
-
-    // 会话时长
-    const totalSessionDuration = metrics.reduce((sum, m) => sum + m.sessionDuration * m.sampleSize, 0);
-    aggregated.sessionDuration = {
-      value: totalSamples > 0 ? totalSessionDuration / totalSamples : 0,
-      change: 0,
-      significance: false,
-      confidence: 0,
-    };
-
-    // 错误率
-    const totalErrorRate = metrics.reduce((sum, m) => sum + m.errorRate * m.sampleSize, 0);
-    aggregated.errorRate = {
-      value: totalSamples > 0 ? totalErrorRate / totalSamples : 0,
-      change: 0,
-      significance: false,
-      confidence: 0,
-    };
-
-    // 用户满意度
-    const totalUserSatisfaction = metrics.reduce((sum, m) => sum + m.userSatisfaction * m.sampleSize, 0);
-    aggregated.userSatisfaction = {
-      value: totalSamples > 0 ? totalUserSatisfaction / totalSamples : 0,
-      change: 0,
-      significance: false,
-      confidence: 0,
-    };
-
-    return aggregated;
   }
 
-  private determineWinner(test: ABTest, results: Record<string, ABTestVersionResult>): { versionId: string; confidence: number; improvement: number } | null {
+  private getEmptyMetrics(): Record<
+    string,
+    ABTestVersionResult['metrics']['string']
+  > {
+    const emptyMetric = {
+      value: 0,
+      change: 0,
+      significance: false,
+      confidence: 0,
+    };
+    return {
+      conversionRate: emptyMetric,
+      averagePageLoadTime: emptyMetric,
+      averageApiResponseTime: emptyMetric,
+      bounceRate: emptyMetric,
+      sessionDuration: emptyMetric,
+      errorRate: emptyMetric,
+      userSatisfaction: emptyMetric,
+    };
+  }
+
+  private determineWinner(
+    test: ABTest,
+    results: Record<string, ABTestVersionResult>
+  ): { versionId: string; confidence: number; improvement: number } | null {
     const primaryMetric = test.config.successCriteria.primary;
-    let bestVersion: { versionId: string; value: number; } | null = null;
+    let bestVersion: { versionId: string; value: number } | null = null;
 
     Object.entries(results).forEach(([versionId, result]) => {
       const value = result.metrics[primaryMetric]?.value || 0;
 
       // 对于某些指标，值越小越好（如页面加载时间）
-      const isLowerBetter = ['averagePageLoadTime', 'averageApiResponseTime', 'bounceRate', 'errorRate'].includes(primaryMetric);
+      const isLowerBetter = [
+        'averagePageLoadTime',
+        'averageApiResponseTime',
+        'bounceRate',
+        'errorRate',
+      ].includes(primaryMetric);
       const normalizedValue = isLowerBetter ? -value : value;
 
-      if (!bestVersion || normalizedValue > (isLowerBetter ? -bestVersion.value : bestVersion.value)) {
+      if (
+        !bestVersion ||
+        normalizedValue >
+          (isLowerBetter ? -bestVersion.value : bestVersion.value)
+      ) {
         bestVersion = { versionId, value };
       }
     });
@@ -381,18 +428,25 @@ export class ABTestingManager {
     }
 
     // 计算置信度和改进幅度
-    const winnerResult = results[bestVersion.versionId];
-    const confidence = this.calculateConfidence(winnerResult);
-    const improvement = this.calculateImprovement(test, results, bestVersion.versionId);
+    const winnerResult = results[(bestVersion as any).versionId];
+    const confidence = this.calculateConfidence(winnerResult, test);
+    const improvement = this.calculateImprovement(
+      test,
+      results,
+      (bestVersion as any).versionId
+    );
 
     return {
-      versionId: bestVersion.versionId,
+      versionId: (bestVersion as any).versionId,
       confidence,
       improvement,
     };
   }
 
-  private calculateConfidence(result: ABTestVersionResult): number {
+  private calculateConfidence(
+    result: ABTestVersionResult,
+    test: ABTest
+  ): number {
     // 简化的置信度计算
     const sampleSize = result.sampleSize;
     const conversionRate = result.conversionRate;
@@ -404,7 +458,11 @@ export class ABTestingManager {
     return (sampleScore + metricScore) / 2;
   }
 
-  private calculateImprovement(test: ABTest, results: Record<string, ABTestVersionResult>, winnerId: string): number {
+  private calculateImprovement(
+    test: ABTest,
+    results: Record<string, ABTestVersionResult>,
+    winnerId: string
+  ): number {
     const primaryMetric = test.config.successCriteria.primary;
     const winnerResult = results[winnerId];
 
@@ -426,7 +484,12 @@ export class ABTestingManager {
     }
 
     // 对于某些指标，值越小越好
-    const isLowerBetter = ['averagePageLoadTime', 'averageApiResponseTime', 'bounceRate', 'errorRate'].includes(primaryMetric);
+    const isLowerBetter = [
+      'averagePageLoadTime',
+      'averageApiResponseTime',
+      'bounceRate',
+      'errorRate',
+    ].includes(primaryMetric);
     const improvement = isLowerBetter
       ? ((controlValue - winnerValue) / controlValue) * 100
       : ((winnerValue - controlValue) / controlValue) * 100;
@@ -434,7 +497,10 @@ export class ABTestingManager {
     return improvement;
   }
 
-  private checkSignificance(test: ABTest, results: Record<string, ABTestVersionResult>): { isSignificant: boolean; pValue: number } {
+  private checkSignificance(
+    test: ABTest,
+    results: Record<string, ABTestVersionResult>
+  ): { isSignificant: boolean; pValue: number } {
     // 简化的显著性检验
     const primaryMetric = test.config.successCriteria.primary;
     const versionEntries = Object.entries(results);
@@ -444,17 +510,19 @@ export class ABTestingManager {
     }
 
     // 计算版本间的差异
-    const values = versionEntries.map(([_, result]) =>
-      result.metrics[primaryMetric]?.value || 0
+    const values = versionEntries.map(
+      ([_, result]) => result.metrics[primaryMetric]?.value || 0
     );
 
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+    const variance =
+      values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+      values.length;
     const stdDev = Math.sqrt(variance);
 
     // 简化的p值计算
     const maxDiff = Math.max(...values) - Math.min(...values);
-    const pValue = Math.max(0, 1 - (maxDiff / (stdDev + 0.001)));
+    const pValue = Math.max(0, 1 - maxDiff / (stdDev + 0.001));
 
     return {
       isSignificant: pValue < test.config.significanceLevel,
@@ -468,8 +536,10 @@ export class ABTestingManager {
     }
 
     const testDuration = Date.now() - test.createdAt;
-    const minimumDurationReached = testDuration >= test.config.autoStop.minimumDuration;
-    const confidenceThresholdReached = result.confidence >= test.config.autoStop.confidenceThreshold;
+    const minimumDurationReached =
+      testDuration >= test.config.autoStop.minimumDuration;
+    const confidenceThresholdReached =
+      result.confidence >= test.config.autoStop.confidenceThreshold;
 
     return minimumDurationReached && confidenceThresholdReached;
   }
@@ -484,7 +554,9 @@ export class ABTestingManager {
   }
 
   public getActiveTests(): ABTest[] {
-    return Array.from(this.tests.values()).filter(test => test.status === 'active');
+    return Array.from(this.tests.values()).filter(
+      test => test.status === 'active'
+    );
   }
 
   public getTestResult(testId: string): ABTestResult | null {
@@ -521,10 +593,14 @@ export class ABTestingManager {
     if (deleted) {
       this.results.delete(testId);
       // 清理相关数据
-      const keysToDelete = Array.from(this.userAssignments.keys()).filter(key => key.startsWith(`${testId}_`));
+      const keysToDelete = Array.from(this.userAssignments.keys()).filter(key =>
+        key.startsWith(`${testId}_`)
+      );
       keysToDelete.forEach(key => this.userAssignments.delete(key));
 
-      const metricKeysToDelete = Array.from(this.metrics.keys()).filter(key => key.startsWith(`${testId}_`));
+      const metricKeysToDelete = Array.from(this.metrics.keys()).filter(key =>
+        key.startsWith(`${testId}_`)
+      );
       metricKeysToDelete.forEach(key => this.metrics.delete(key));
 
       this.saveToStorage();
@@ -542,11 +618,15 @@ export class ABTestingManager {
       return null;
     }
 
-    const totalUsers = Array.from(this.userAssignments.keys()).filter(key => key.startsWith(`${testId}_`)).length;
+    const totalUsers = Array.from(this.userAssignments.keys()).filter(key =>
+      key.startsWith(`${testId}_`)
+    ).length;
 
     const versionDistribution: Record<string, number> = {};
     test.versions.forEach(version => {
-      versionDistribution[version.id] = Array.from(this.userAssignments.values()).filter(v => v === version.id).length;
+      versionDistribution[version.id] = Array.from(
+        this.userAssignments.values()
+      ).filter(v => v === version.id).length;
     });
 
     const realTimeMetrics: Record<string, ABTestMetrics> = {};
@@ -574,20 +654,37 @@ export class ABTestingManager {
     const result = this.results.get(testId);
     const statistics = this.getTestStatistics(testId);
 
-    return JSON.stringify({
-      test,
-      result,
-      statistics,
-      exportedAt: new Date().toISOString(),
-    }, null, 2);
+    return JSON.stringify(
+      {
+        test,
+        result,
+        statistics,
+        exportedAt: new Date().toISOString(),
+      },
+      null,
+      2
+    );
   }
 
   // 性能监控集成
-  public recordPerformanceMetrics(testId: string, versionId: string, performanceData: any): void {
+  public recordPerformanceMetrics(
+    testId: string,
+    versionId: string,
+    performanceData: {
+      pageLoadTime: number;
+      averageApiResponseTime: number;
+      errorRate?: number;
+      sessionDuration?: number;
+      bounceRate?: number;
+      conversionRate?: number;
+      userSatisfaction?: number;
+      [key: string]: unknown;
+    }
+  ): void {
     const metrics: Partial<ABTestMetrics> = {
       averagePageLoadTime: performanceData.pageLoadTime,
       averageApiResponseTime: performanceData.averageApiResponseTime,
-      errorRate: performanceData.errorRate || 0,
+      errorRate: (performanceData as any).errorRate || 0,
       sessionDuration: performanceData.sessionDuration || 0,
       bounceRate: performanceData.bounceRate || 0,
       conversionRate: performanceData.conversionRate || 0,
@@ -601,12 +698,4 @@ export class ABTestingManager {
 // 创建全局实例
 export const abTestingManager = new ABTestingManager();
 
-// 导出类型和实例
-export type {
-  ABTest,
-  ABTestVersion,
-  ABTestMetrics,
-  ABTestConfig,
-  ABTestResult,
-  ABTestVersionResult,
-};
+// 类型已经在文件开头导出，这里不需要重复导出

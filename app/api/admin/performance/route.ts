@@ -33,7 +33,7 @@ let errorCount = 0;
 let totalResponseTime = 0;
 
 // 记录请求性能
-export function recordRequest(responseTime: number, success: boolean) {
+function recordRequest(responseTime: number, success: boolean) {
   requestCount++;
   totalResponseTime += responseTime;
 
@@ -241,23 +241,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// 性能监控中间件
-export function withPerformanceMonitoring(handler: Function) {
-  return async (request: NextRequest, ...args: any[]) => {
-    const startTime = performance.now();
-    let success = true;
-
-    try {
-      const response = await handler(request, ...args);
-      return response;
-    } catch (error) {
-      success = false;
-      throw error;
-    } finally {
-      const responseTime = performance.now() - startTime;
-      recordRequest(responseTime, success);
-    }
-  };
 }

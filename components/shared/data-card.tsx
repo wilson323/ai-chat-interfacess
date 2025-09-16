@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import type { Record } from '@/types/utils';
 import {
   Card,
   CardContent,
@@ -13,10 +14,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Image } from '@/components/ui/image';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import type { DataCardProps } from './types';
 
@@ -127,7 +127,7 @@ const DataCard = <T,>({
       <CardContent>
         {/* 数据展示 */}
         <div className='space-y-2'>
-          {Object.entries(data as Record<string, any>).map(([key, value]) => {
+          {Object.entries(data as Record<string, unknown>).map(([key, value]) => {
             // 跳过特殊字段
             if (['id', 'createdAt', 'updatedAt'].includes(key)) return null;
 

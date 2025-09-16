@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { geoLocationService } from '@/lib/services/geo-location-service';
 import { UserGeo, AgentUsage } from '@/lib/db/models';
 import { DeviceInfo } from '@/types/heatmap';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * 用户使用情况追踪中间件
@@ -39,10 +39,15 @@ export class UsageTrackingMiddleware {
       const geoLocation = await geoLocationService.getLocationByIp(ipAddress);
 
       // 保存用户地理位置
-      const userGeo = await UserGeo.upsertUserGeo(userId, sessionId, ipAddress, geoLocation);
+      const userGeo = await (UserGeo as any).upsertUserGeo(
+        userId,
+        sessionId,
+        ipAddress,
+        geoLocation
+      );
 
       // 开始智能体使用会话追踪
-      await AgentUsage.startSession(
+      await (AgentUsage as any).startSession(
         sessionId,
         userId,
         agentId,
@@ -66,7 +71,7 @@ export class UsageTrackingMiddleware {
     increment: number = 1
   ): Promise<void> {
     try {
-      await AgentUsage.updateMessageCount(sessionId, increment);
+      await (AgentUsage as any).updateMessageCount(sessionId, increment);
     } catch (error) {
       logger.error('Failed to track message:', error);
     }
@@ -80,7 +85,7 @@ export class UsageTrackingMiddleware {
     responseTime: number
   ): Promise<void> {
     try {
-      await AgentUsage.updateResponseTime(sessionId, responseTime);
+      await (AgentUsage as any).updateResponseTime(sessionId, responseTime);
     } catch (error) {
       logger.error('Failed to track response time:', error);
     }
@@ -95,7 +100,7 @@ export class UsageTrackingMiddleware {
     userSatisfaction?: 'positive' | 'negative' | 'neutral'
   ): Promise<void> {
     try {
-      await AgentUsage.endSession(sessionId, tokenUsage, userSatisfaction);
+      await (AgentUsage as any).endSession(sessionId, tokenUsage, userSatisfaction);
       logger.info(`Session tracking ended for ${sessionId}`);
     } catch (error) {
       logger.error('Failed to track session end:', error);
@@ -114,7 +119,7 @@ export class UsageTrackingMiddleware {
       const ipAddress = this.getClientIpAddress(request);
       const geoLocation = await geoLocationService.getLocationByIp(ipAddress);
 
-      await UserGeo.upsertUserGeo(userId, sessionId, ipAddress, geoLocation);
+      await (UserGeo as any).upsertUserGeo(userId, sessionId, ipAddress, geoLocation);
     } catch (error) {
       logger.error('Failed to update geo location:', error);
     }
@@ -161,7 +166,11 @@ export class UsageTrackingMiddleware {
       deviceInfo.platform = 'linux';
     } else if (userAgent.includes('Android')) {
       deviceInfo.platform = 'android';
-    } else if (userAgent.includes('iOS') || userAgent.includes('iPhone') || userAgent.includes('iPad')) {
+    } else if (
+      userAgent.includes('iOS') ||
+      userAgent.includes('iPhone') ||
+      userAgent.includes('iPad')
+    ) {
       deviceInfo.platform = 'ios';
     }
 
@@ -177,7 +186,11 @@ export class UsageTrackingMiddleware {
     }
 
     // 检测设备类型
-    if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iPhone')) {
+    if (
+      userAgent.includes('Mobile') ||
+      userAgent.includes('Android') ||
+      userAgent.includes('iPhone')
+    ) {
       deviceInfo.deviceType = 'mobile';
     } else if (userAgent.includes('iPad') || userAgent.includes('Tablet')) {
       deviceInfo.deviceType = 'tablet';
@@ -205,10 +218,12 @@ export class UsageTrackingMiddleware {
    */
   public async cleanupOldData(): Promise<void> {
     try {
-      const geoCleanupCount = await UserGeo.cleanupOldData();
-      const usageCleanupCount = await AgentUsage.cleanupOldData();
+      const geoCleanupCount = await (UserGeo as any).cleanupOldData();
+      const usageCleanupCount = await (AgentUsage as any).cleanupOldData();
 
-      logger.info(`Cleanup completed: ${geoCleanupCount} geo records, ${usageCleanupCount} usage records removed`);
+      logger.info(
+        `Cleanup completed: ${geoCleanupCount} geo records, ${usageCleanupCount} usage records removed`
+      );
     } catch (error) {
       logger.error('Failed to cleanup old data:', error);
     }

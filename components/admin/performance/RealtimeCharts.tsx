@@ -1,10 +1,16 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   LineChart,
   Line,
@@ -25,7 +31,6 @@ import {
 } from 'recharts';
 import {
   TrendingUp,
-  TrendingDown,
   Activity,
   Clock,
   Zap,
@@ -33,7 +38,11 @@ import {
   CheckCircle,
   RefreshCw,
 } from 'lucide-react';
-import { enhancedMonitor, type PerformanceHistory, type PerformanceSummary } from '@/lib/performance/enhanced-monitor';
+import {
+  enhancedMonitor,
+  type PerformanceHistory,
+  type PerformanceSummary,
+} from '@/lib/performance/enhanced-monitor';
 
 interface ChartDataPoint {
   timestamp: number;
@@ -56,10 +65,25 @@ interface ResourceUsageData {
 
 export function RealtimeCharts() {
   const [history, setHistory] = useState<PerformanceHistory[]>([]);
-  const [currentSummary, setCurrentSummary] = useState<PerformanceSummary | null>(null);
+  const [currentSummary, setCurrentSummary] =
+    useState<PerformanceSummary | null>(null);
   const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h'>('1h');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const allHistory = enhancedMonitor.getHistory();
+      const filteredHistory = filterHistoryByTimeRange(allHistory, timeRange);
+      setHistory(filteredHistory);
+      setCurrentSummary(enhancedMonitor.getEnhancedSummary());
+    } catch (error) {
+      logger.error('Failed to load performance data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [timeRange]);
 
   useEffect(() => {
     loadData();
@@ -68,23 +92,13 @@ export function RealtimeCharts() {
       const interval = setInterval(loadData, 5000);
       return () => clearInterval(interval);
     }
-  }, [timeRange, autoRefresh]);
+    return undefined;
+  }, [timeRange, autoRefresh, loadData]);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const allHistory = enhancedMonitor.getHistory();
-      const filteredHistory = filterHistoryByTimeRange(allHistory, timeRange);
-      setHistory(filteredHistory);
-      setCurrentSummary(enhancedMonitor.getEnhancedSummary());
-    } catch (error) {
-      console.error('Failed to load performance data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filterHistoryByTimeRange = (allHistory: PerformanceHistory[], range: '1h' | '6h' | '24h'): PerformanceHistory[] => {
+  const filterHistoryByTimeRange = (
+    allHistory: PerformanceHistory[],
+    range: '1h' | '6h' | '24h'
+  ): PerformanceHistory[] => {
     const now = Date.now();
     const ranges = {
       '1h': 60 * 60 * 1000,
@@ -110,13 +124,23 @@ export function RealtimeCharts() {
     }));
   };
 
-  const getResourceUsageData = (summary: PerformanceSummary): ResourceUsageData[] => {
-    const total = summary.memoryUsage + (summary.resourceCount * 1024 * 1024);
+  const getResourceUsageData = (
+    summary: PerformanceSummary
+  ): ResourceUsageData[] => {
+    const total = summary.memoryUsage + summary.resourceCount * 1024 * 1024;
 
     return [
-      { name: 'JavaScript', value: summary.memoryUsage / 1024 / 1024, color: '#8884d8' },
+      {
+        name: 'JavaScript',
+        value: summary.memoryUsage / 1024 / 1024,
+        color: '#8884d8',
+      },
       { name: 'Resources', value: summary.resourceCount * 2, color: '#82ca9d' },
-      { name: 'Other', value: Math.max(0, (total - summary.memoryUsage) / 1024 / 1024), color: '#ffc658' },
+      {
+        name: 'Other',
+        value: Math.max(0, (total - summary.memoryUsage) / 1024 / 1024),
+        color: '#ffc658',
+      },
     ];
   };
 
@@ -140,24 +164,24 @@ export function RealtimeCharts() {
 
     const overallScore = totalScore / totalWeight;
 
-    if (overallScore >= 80) return { level: 'excellent', color: 'text-green-600', icon: CheckCircle };
-    if (overallScore >= 60) return { level: 'good', color: 'text-blue-600', icon: TrendingUp };
-    if (overallScore >= 40) return { level: 'fair', color: 'text-yellow-600', icon: Activity };
+    if (overallScore >= 80)
+      return { level: 'excellent', color: 'text-green-600', icon: CheckCircle };
+    if (overallScore >= 60)
+      return { level: 'good', color: 'text-blue-600', icon: TrendingUp };
+    if (overallScore >= 40)
+      return { level: 'fair', color: 'text-yellow-600', icon: Activity };
     return { level: 'poor', color: 'text-red-600', icon: AlertTriangle };
   };
 
   const chartData = formatChartData(history);
-  const resourceData = currentSummary ? getResourceUsageData(currentSummary) : [];
-  const performanceStatus = currentSummary ? getPerformanceStatus(currentSummary) : null;
+  const resourceData = currentSummary
+    ? getResourceUsageData(currentSummary)
+    : [];
+  const performanceStatus = currentSummary
+    ? getPerformanceStatus(currentSummary)
+    : null;
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-  };
-
+  
   const formatTime = (ms: number) => {
     if (ms < 1000) return `${Math.round(ms)}ms`;
     return `${(ms / 1000).toFixed(2)}s`;
@@ -181,7 +205,10 @@ export function RealtimeCharts() {
         </div>
 
         <div className='flex items-center gap-2'>
-          <Select value={timeRange} onValueChange={(value: any) => setTimeRange(value)}>
+          <Select
+            value={timeRange}
+            onValueChange={(value: '1h' | '6h' | '24h') => setTimeRange(value)}
+          >
             <SelectTrigger className='w-32'>
               <SelectValue />
             </SelectTrigger>
@@ -200,8 +227,15 @@ export function RealtimeCharts() {
             {autoRefresh ? '自动刷新' : '手动刷新'}
           </Button>
 
-          <Button variant='outline' size='sm' onClick={loadData} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={loadData}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`}
+            />
             刷新
           </Button>
         </div>
@@ -214,12 +248,22 @@ export function RealtimeCharts() {
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <p className='text-sm font-medium text-gray-600'>页面加载时间</p>
-                  <p className='text-xl font-bold'>{formatTime(currentSummary.pageLoadTime)}</p>
+                  <p className='text-sm font-medium text-gray-600'>
+                    页面加载时间
+                  </p>
+                  <p className='text-xl font-bold'>
+                    {formatTime(currentSummary.pageLoadTime)}
+                  </p>
                 </div>
                 <Clock className='h-8 w-8 text-blue-600' />
               </div>
-              <Badge className={currentSummary.pageLoadTime < 3000 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+              <Badge
+                className={
+                  currentSummary.pageLoadTime < 3000
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }
+              >
                 {currentSummary.pageLoadTime < 3000 ? '良好' : '需优化'}
               </Badge>
             </CardContent>
@@ -229,12 +273,22 @@ export function RealtimeCharts() {
             <CardContent className='p-4'>
               <div className='flex items-center justify-between'>
                 <div>
-                  <p className='text-sm font-medium text-gray-600'>API响应时间</p>
-                  <p className='text-xl font-bold'>{formatTime(currentSummary.averageApiResponseTime)}</p>
+                  <p className='text-sm font-medium text-gray-600'>
+                    API响应时间
+                  </p>
+                  <p className='text-xl font-bold'>
+                    {formatTime(currentSummary.averageApiResponseTime)}
+                  </p>
                 </div>
                 <Zap className='h-8 w-8 text-green-600' />
               </div>
-              <Badge className={currentSummary.averageApiResponseTime < 1000 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+              <Badge
+                className={
+                  currentSummary.averageApiResponseTime < 1000
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }
+              >
                 {currentSummary.averageApiResponseTime < 1000 ? '快速' : '一般'}
               </Badge>
             </CardContent>
@@ -245,12 +299,22 @@ export function RealtimeCharts() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-sm font-medium text-gray-600'>内存使用</p>
-                  <p className='text-xl font-bold'>{(currentSummary.memoryUsage / 1024 / 1024).toFixed(1)}MB</p>
+                  <p className='text-xl font-bold'>
+                    {(currentSummary.memoryUsage / 1024 / 1024).toFixed(1)}MB
+                  </p>
                 </div>
                 <Activity className='h-8 w-8 text-purple-600' />
               </div>
-              <Badge className={currentSummary.memoryUsage < 100 * 1024 * 1024 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                {currentSummary.memoryUsage < 100 * 1024 * 1024 ? '正常' : '较高'}
+              <Badge
+                className={
+                  currentSummary.memoryUsage < 100 * 1024 * 1024
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }
+              >
+                {currentSummary.memoryUsage < 100 * 1024 * 1024
+                  ? '正常'
+                  : '较高'}
               </Badge>
             </CardContent>
           </Card>
@@ -260,11 +324,19 @@ export function RealtimeCharts() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-sm font-medium text-gray-600'>错误数量</p>
-                  <p className='text-xl font-bold'>{currentSummary.errorCount}</p>
+                  <p className='text-xl font-bold'>
+                    {currentSummary.errorCount}
+                  </p>
                 </div>
                 <AlertTriangle className='h-8 w-8 text-red-600' />
               </div>
-              <Badge className={currentSummary.errorCount === 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+              <Badge
+                className={
+                  currentSummary.errorCount === 0
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }
+              >
                 {currentSummary.errorCount === 0 ? '无错误' : '有错误'}
               </Badge>
             </CardContent>
@@ -290,7 +362,7 @@ export function RealtimeCharts() {
                 <YAxis />
                 <Tooltip
                   formatter={(value: number) => [formatTime(value), '加载时间']}
-                  labelFormatter={(label) => `时间: ${label}`}
+                  labelFormatter={label => `时间: ${label}`}
                 />
                 <Line
                   type='monotone'
@@ -299,7 +371,12 @@ export function RealtimeCharts() {
                   strokeWidth={2}
                   dot={{ r: 3 }}
                 />
-                <ReferenceLine y={3000} stroke='#ef4444' strokeDasharray='5 5' label={{ value: '阈值', position: 'top' }} />
+                <ReferenceLine
+                  y={3000}
+                  stroke='#ef4444'
+                  strokeDasharray='5 5'
+                  label={{ value: '阈值', position: 'top' }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -321,7 +398,7 @@ export function RealtimeCharts() {
                 <YAxis />
                 <Tooltip
                   formatter={(value: number) => [formatTime(value), '响应时间']}
-                  labelFormatter={(label) => `时间: ${label}`}
+                  labelFormatter={label => `时间: ${label}`}
                 />
                 <Area
                   type='monotone'
@@ -330,7 +407,12 @@ export function RealtimeCharts() {
                   fill='#82ca9d'
                   fillOpacity={0.3}
                 />
-                <ReferenceLine y={1000} stroke='#ef4444' strokeDasharray='5 5' label={{ value: '阈值', position: 'top' }} />
+                <ReferenceLine
+                  y={1000}
+                  stroke='#ef4444'
+                  strokeDasharray='5 5'
+                  label={{ value: '阈值', position: 'top' }}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -352,10 +434,34 @@ export function RealtimeCharts() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type='monotone' dataKey='fcp' stroke='#8884d8' name='FCP (ms)' strokeWidth={2} />
-                <Line type='monotone' dataKey='lcp' stroke='#82ca9d' name='LCP (ms)' strokeWidth={2} />
-                <Line type='monotone' dataKey='fid' stroke='#ffc658' name='FID (ms)' strokeWidth={2} />
-                <Line type='monotone' dataKey='cls' stroke='#ff7300' name='CLS (x100)' strokeWidth={2} />
+                <Line
+                  type='monotone'
+                  dataKey='fcp'
+                  stroke='#8884d8'
+                  name='FCP (ms)'
+                  strokeWidth={2}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='lcp'
+                  stroke='#82ca9d'
+                  name='LCP (ms)'
+                  strokeWidth={2}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='fid'
+                  stroke='#ffc658'
+                  name='FID (ms)'
+                  strokeWidth={2}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='cls'
+                  stroke='#ff7300'
+                  name='CLS (x100)'
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -376,8 +482,11 @@ export function RealtimeCharts() {
                 <XAxis dataKey='time' />
                 <YAxis />
                 <Tooltip
-                  formatter={(value: number) => [`${value.toFixed(1)}MB`, '内存使用']}
-                  labelFormatter={(label) => `时间: ${label}`}
+                  formatter={(value: number) => [
+                    `${value.toFixed(1)}MB`,
+                    '内存使用',
+                  ]}
+                  labelFormatter={label => `时间: ${label}`}
                 />
                 <Area
                   type='monotone'
@@ -386,7 +495,12 @@ export function RealtimeCharts() {
                   fill='#8884d8'
                   fillOpacity={0.3}
                 />
-                <ReferenceLine y={100} stroke='#ef4444' strokeDasharray='5 5' label={{ value: '阈值', position: 'top' }} />
+                <ReferenceLine
+                  y={100}
+                  stroke='#ef4444'
+                  strokeDasharray='5 5'
+                  label={{ value: '阈值', position: 'top' }}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -430,8 +544,7 @@ export function RealtimeCharts() {
                     cx='50%'
                     cy='50%'
                     labelLine={false}
-                    label={({ name, value }) => `${name}: ${value.toFixed(1)}MB`}
-                    outerRadius={80}
+                      outerRadius={80}
                     fill='#8884d8'
                     dataKey='value'
                   >
@@ -439,7 +552,12 @@ export function RealtimeCharts() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [`${value.toFixed(1)}MB`, '使用量']} />
+                  <Tooltip
+                    formatter={(value: number) => [
+                      `${value.toFixed(1)}MB`,
+                      '使用量',
+                    ]}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -463,7 +581,10 @@ export function RealtimeCharts() {
               <div className='text-center'>
                 <p className='text-sm text-gray-600'>平均加载时间</p>
                 <p className='text-2xl font-bold'>
-                  {formatTime(chartData.reduce((sum, d) => sum + d.pageLoadTime, 0) / chartData.length)}
+                  {formatTime(
+                    chartData.reduce((sum, d) => sum + d.pageLoadTime, 0) /
+                      chartData.length
+                  )}
                 </p>
               </div>
               <div className='text-center'>

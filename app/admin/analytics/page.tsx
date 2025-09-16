@@ -1,16 +1,20 @@
 'use client';
 
+import type { Viewport } from 'next';
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
+};
 import React, { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+// 移除未使用的导入
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   LineChart,
   BarChart3,
@@ -29,6 +33,17 @@ import AgentUsageChart from '@/components/analytics/AgentUsageChart';
 import ComparisonChart from '@/components/analytics/ComparisonChart';
 import RealTimeMonitor from '@/components/analytics/RealTimeMonitor';
 import DataExport from '@/components/analytics/DataExport';
+import { StatCard } from '@/components/admin/analytics/StatCard';
+import { ChartGrid } from '@/components/admin/analytics/ChartGrid';
+
+// 默认配置常量
+const DEFAULT_METRICS = {
+  SESSIONS: 'sessions',
+  USERS: 'users',
+  RESPONSE_TIME: 'responseTime',
+  DURATION: 'duration',
+  TOKENS: 'tokens',
+} as const;
 
 export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -55,61 +70,46 @@ export default function AnalyticsPage() {
 
         {/* 快速统计卡片 */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-8'>
-          <Card className='bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200'>
-            <CardContent className='p-4'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-blue-600 font-medium'>今日会话</p>
-                  <p className='text-2xl font-bold text-blue-900'>1,234</p>
-                  <p className='text-xs text-blue-700'>+12.5% 较昨日</p>
-                </div>
-                <LineChart className='h-8 w-8 text-blue-600' />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className='bg-gradient-to-r from-green-50 to-green-100 border-green-200'>
-            <CardContent className='p-4'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-green-600 font-medium'>活跃用户</p>
-                  <p className='text-2xl font-bold text-green-900'>856</p>
-                  <p className='text-xs text-green-700'>+8.3% 较昨日</p>
-                </div>
-                <Users className='h-8 w-8 text-green-600' />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className='bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200'>
-            <CardContent className='p-4'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-purple-600 font-medium'>
-                    平均响应时间
-                  </p>
-                  <p className='text-2xl font-bold text-purple-900'>1.2s</p>
-                  <p className='text-xs text-purple-700'>-15.2% 较昨日</p>
-                </div>
-                <TrendingUp className='h-8 w-8 text-purple-600' />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className='bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200'>
-            <CardContent className='p-4'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm text-orange-600 font-medium'>
-                    活跃地区
-                  </p>
-                  <p className='text-2xl font-bold text-orange-900'>23</p>
-                  <p className='text-xs text-orange-700'>+2 较昨日</p>
-                </div>
-                <MapPin className='h-8 w-8 text-orange-600' />
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title='今日会话'
+            value='1,234'
+            description='+12.5% 较昨日'
+            icon={LineChart}
+            gradientFrom='from-blue-50'
+            gradientTo='to-blue-100'
+            borderColor='border-blue-200'
+            textColor='text-blue-600'
+          />
+          <StatCard
+            title='活跃用户'
+            value='856'
+            description='+8.3% 较昨日'
+            icon={Users}
+            gradientFrom='from-green-50'
+            gradientTo='to-green-100'
+            borderColor='border-green-200'
+            textColor='text-green-600'
+          />
+          <StatCard
+            title='平均响应时间'
+            value='1.2s'
+            description='-15.2% 较昨日'
+            icon={TrendingUp}
+            gradientFrom='from-purple-50'
+            gradientTo='to-purple-100'
+            borderColor='border-purple-200'
+            textColor='text-purple-600'
+          />
+          <StatCard
+            title='活跃地区'
+            value='23'
+            description='+2 较昨日'
+            icon={MapPin}
+            gradientFrom='from-orange-50'
+            gradientTo='to-orange-100'
+            borderColor='border-orange-200'
+            textColor='text-orange-600'
+          />
         </div>
       </div>
 
@@ -145,12 +145,12 @@ export default function AnalyticsPage() {
 
           {/* 概览页面 */}
           <TabsContent value='overview' className='space-y-6'>
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            <ChartGrid>
               <LineChartComponent
                 title='使用趋势概览'
                 description='最近30天的系统使用趋势'
                 height={300}
-                defaultMetric='sessions'
+                defaultMetric={DEFAULT_METRICS.SESSIONS}
               />
               <AgentUsageChart
                 title='智能体使用占比'
@@ -159,74 +159,74 @@ export default function AnalyticsPage() {
                 defaultChartType='pie'
                 defaultGroupBy='usage'
               />
-            </div>
+            </ChartGrid>
 
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            <ChartGrid>
               <ComparisonChart
                 title='用户类型对比'
                 description='登录用户与匿名用户的使用对比'
                 height={300}
                 defaultDimensions={['userType', 'deviceType']}
-                defaultMetric='sessions'
+                defaultMetric={DEFAULT_METRICS.SESSIONS}
               />
               <RealTimeMonitor
                 title='实时状态概览'
                 description='系统实时运行状态和关键指标'
                 refreshInterval={60000}
               />
-            </div>
+            </ChartGrid>
           </TabsContent>
 
           {/* 趋势分析页面 */}
           <TabsContent value='trends' className='space-y-6'>
-            <div className='grid grid-cols-1 gap-6'>
+            <ChartGrid cols={1}>
               <LineChartComponent
                 title='每日使用趋势'
                 description='按天统计的会话次数变化趋势'
                 height={400}
-                defaultMetric='sessions'
+                defaultMetric={DEFAULT_METRICS.SESSIONS}
                 defaultGroupBy='day'
               />
-            </div>
+            </ChartGrid>
 
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            <ChartGrid>
               <LineChartComponent
                 title='用户数量趋势'
                 description='每日活跃用户数量的变化趋势'
                 height={350}
-                defaultMetric='users'
+                defaultMetric={DEFAULT_METRICS.USERS}
                 defaultGroupBy='day'
               />
               <LineChartComponent
                 title='响应时间趋势'
                 description='系统平均响应时间的变化趋势'
                 height={350}
-                defaultMetric='responseTime'
+                defaultMetric={DEFAULT_METRICS.RESPONSE_TIME}
                 defaultGroupBy='day'
               />
-            </div>
+            </ChartGrid>
 
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            <ChartGrid>
               <LineChartComponent
                 title='会话时长趋势'
                 description='用户平均会话时长的变化趋势'
                 height={350}
-                defaultMetric='duration'
+                defaultMetric={DEFAULT_METRICS.DURATION}
                 defaultGroupBy='day'
               />
               <LineChartComponent
                 title='Token使用趋势'
                 description='每日Token使用量的变化趋势'
                 height={350}
-                defaultMetric='tokens'
+                defaultMetric={DEFAULT_METRICS.TOKENS}
                 defaultGroupBy='day'
               />
-            </div>
+            </ChartGrid>
           </TabsContent>
 
           {/* 智能体分析页面 */}
           <TabsContent value='agents' className='space-y-6'>
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            <ChartGrid>
               <AgentUsageChart
                 title='智能体使用次数'
                 description='各智能体的使用次数统计'
@@ -241,9 +241,9 @@ export default function AnalyticsPage() {
                 defaultChartType='radar'
                 defaultGroupBy='usage'
               />
-            </div>
+            </ChartGrid>
 
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            <ChartGrid>
               <AgentUsageChart
                 title='智能体使用时长'
                 description='各智能体的平均使用时长对比'
@@ -258,7 +258,7 @@ export default function AnalyticsPage() {
                 defaultChartType='bar'
                 defaultGroupBy='responseTime'
               />
-            </div>
+            </ChartGrid>
           </TabsContent>
 
           {/* 多维对比页面 */}
@@ -271,22 +271,22 @@ export default function AnalyticsPage() {
               defaultMetric='sessions'
             />
 
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            <ChartGrid>
               <ComparisonChart
                 title='用户设备对比'
                 description='不同设备类型的使用情况对比'
                 height={350}
                 defaultDimensions={['deviceType', 'agentType']}
-                defaultMetric='sessions'
+                defaultMetric={DEFAULT_METRICS.SESSIONS}
               />
               <ComparisonChart
                 title='地理分布对比'
                 description='不同地区的使用情况对比'
                 height={350}
                 defaultDimensions={['location']}
-                defaultMetric='users'
+                defaultMetric={DEFAULT_METRICS.USERS}
               />
-            </div>
+            </ChartGrid>
           </TabsContent>
 
           {/* 实时监控页面 */}

@@ -129,27 +129,7 @@ export interface HeatmapData {
   };
 }
 
-export interface PerformanceMetrics {
-  timestamp: number;
-  deviceType: 'smartphone' | 'tablet' | 'desktop';
-  os: string;
-  browser: string;
-  networkType: string;
-  batteryLevel: number;
-  isCharging: boolean;
-  memoryUsage: number;
-  cpuUsage: number;
-  touchResponseTime: number;
-  scrollPerformance: number;
-  viewportWidth: number;
-  viewportHeight: number;
-  devicePixelRatio: number;
-  isLowPowerMode: boolean;
-  connectionType: string;
-  effectiveType: string;
-  downlink: number;
-  rtt: number;
-}
+// PerformanceMetrics moved to lib/performance/monitor.ts
 
 export interface MobileOptimization {
   type: 'image' | 'font' | 'script' | 'css' | 'lazy-loading' | 'compression';

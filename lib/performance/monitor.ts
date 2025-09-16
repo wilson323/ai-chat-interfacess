@@ -48,10 +48,34 @@ export interface PerformanceMetrics {
   }>;
 }
 
+/**
+ * Web Performance API LayoutShift 接口
+ */
+interface LayoutShift {
+  /** 布局偏移值 */
+  value: number;
+  /** 是否最近有用户输入 */
+  hadRecentInput: boolean;
+  /** 最近输入时间 */
+  lastInputTime?: number;
+  /** 条目类型 */
+  name: string;
+  /** 条目类型 */
+  entryType: string;
+  /** 开始时间 */
+  startTime: number;
+  /** 持续时间 */
+  duration: number;
+}
+
 export class PerformanceMonitor {
   private metrics: PerformanceMetrics;
   private observers: PerformanceObserver[];
-  private isEnabled: boolean;
+  private errorHandlers: {
+    error: (event: ErrorEvent) => void;
+    unhandledrejection: (event: PromiseRejectionEvent) => void;
+  } | null = null;
+  private _isEnabled: boolean = true;
 
   constructor() {
     this.metrics = {
@@ -67,7 +91,12 @@ export class PerformanceMonitor {
       errors: [],
     };
     this.observers = [];
-    this.isEnabled = true;
+    this._isEnabled = true;
+
+    // 设置全局引用以便XMLHttpRequest拦截器访问
+    if (typeof window !== 'undefined') {
+      (window as any).__performanceMonitor = this;
+    }
 
     this.init();
   }
@@ -144,8 +173,9 @@ export class PerformanceMonitor {
     // First Input Delay (FID)
     const fidObserver = new PerformanceObserver(list => {
       for (const entry of list.getEntries()) {
+        const eventEntry = entry as PerformanceEventTiming;
         this.metrics.firstInputDelay =
-          (entry as any).processingStart - entry.startTime;
+          eventEntry.processingStart - entry.startTime;
       }
     });
     fidObserver.observe({ entryTypes: ['first-input'] });
@@ -155,8 +185,9 @@ export class PerformanceMonitor {
     let clsValue = 0;
     const clsObserver = new PerformanceObserver(list => {
       for (const entry of list.getEntries()) {
-        if (!(entry as any).hadRecentInput) {
-          clsValue += (entry as any).value;
+        const layoutEntry = entry as unknown as LayoutShift;
+        if (!layoutEntry.hadRecentInput) {
+          clsValue += layoutEntry.value;
         }
       }
       this.metrics.cumulativeLayoutShift = clsValue;
@@ -231,7 +262,8 @@ export class PerformanceMonitor {
   private observeErrors(): void {
     if (typeof window === 'undefined') return;
 
-    window.addEventListener('error', event => {
+    // 创建错误处理函数
+    const errorHandler = (event: ErrorEvent) => {
       this.metrics.errors.push({
         type: 'javascript',
         message: event.message,
@@ -239,9 +271,9 @@ export class PerformanceMonitor {
         timestamp: Date.now(),
         url: window.location.href,
       });
-    });
+    };
 
-    window.addEventListener('unhandledrejection', event => {
+    const unhandledRejectionHandler = (event: PromiseRejectionEvent) => {
       this.metrics.errors.push({
         type: 'promise',
         message: event.reason?.message || 'Unhandled Promise Rejection',
@@ -249,7 +281,17 @@ export class PerformanceMonitor {
         timestamp: Date.now(),
         url: window.location.href,
       });
-    });
+    };
+
+    // 保存处理函数引用以便清理
+    this.errorHandlers = {
+      error: errorHandler,
+      unhandledrejection: unhandledRejectionHandler,
+    };
+
+    // 添加事件监听器
+    window.addEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', unhandledRejectionHandler);
   }
 
   /**
@@ -306,9 +348,12 @@ export class PerformanceMonitor {
       method: string,
       url: string | URL
     ) {
-      this._method = method;
-      this._url = url.toString();
-      return originalOpen.apply(this, arguments as any);
+      (this as XMLHttpRequest & { _method?: string; _url?: string })._method = method;
+      (this as XMLHttpRequest & { _method?: string; _url?: string })._url = url.toString();
+      return originalOpen.apply(
+        this,
+        arguments as unknown as [string, string, boolean, string?]
+      );
     };
 
     XMLHttpRequest.prototype.send = function () {
@@ -316,25 +361,25 @@ export class PerformanceMonitor {
 
       this.addEventListener('loadend', () => {
         const duration = performance.now() - startTime;
-        monitor.recordApiCall({
-          url: this._url,
-          method: this._method,
-          duration,
-          status: this.status,
-          timestamp: Date.now(),
-        });
+        // 通过闭包访问PerformanceMonitor实例
+        if (typeof (window as any).__performanceMonitor !== 'undefined') {
+          (window as any).__performanceMonitor.recordApiCall({
+            url: (this as XMLHttpRequest & { _url?: string })._url || '',
+            method: (this as XMLHttpRequest & { _method?: string })._method || '',
+            duration,
+            status: this.status,
+            timestamp: Date.now(),
+          });
+        }
       });
 
-      return originalSend.apply(this, arguments as any);
+      return originalSend.apply(
+        this,
+        arguments as unknown as [Document | XMLHttpRequestBodyInit | null]
+      );
     };
   }
 
-  /**
-   * 记录API调用
-   */
-  public recordApiCall(call: PerformanceMetrics['apiCalls'][0]): void {
-    this.metrics.apiCalls.push(call);
-  }
 
   /**
    * 获取性能指标
@@ -395,23 +440,50 @@ export class PerformanceMonitor {
    * 启用/禁用监控
    */
   public setEnabled(enabled: boolean): void {
-    this.isEnabled = enabled;
+    this._isEnabled = enabled;
     if (!enabled) {
       this.observers.forEach(observer => observer.disconnect());
     }
   }
 
   /**
+   * 获取监控状态
+   */
+  public get isEnabled(): boolean {
+    return this._isEnabled;
+  }
+
+  /**
+   * 记录API调用
+   */
+  public recordApiCall(call: {
+    url: string;
+    method: string;
+    duration: number;
+    status: number;
+    timestamp: number;
+  }): void {
+    if (!this._isEnabled) return;
+
+    this.metrics.apiCalls.push(call);
+  }
+
+  /**
    * 销毁监控器
    */
   public destroy(): void {
+    // 清理性能观察器
     this.observers.forEach(observer => observer.disconnect());
     this.observers = [];
+
+    // 清理事件监听器
+    if (typeof window !== 'undefined' && this.errorHandlers) {
+      window.removeEventListener('error', this.errorHandlers.error);
+      window.removeEventListener('unhandledrejection', this.errorHandlers.unhandledrejection);
+      this.errorHandlers = null;
+    }
   }
 }
 
 // 创建全局实例
 export const monitor = new PerformanceMonitor();
-
-// 导出类型和实例
-export type { PerformanceMetrics };

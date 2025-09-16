@@ -9,6 +9,7 @@
 ### 1. 数据库模型测试 (`__tests__/models/`)
 
 #### UserGeo 模型测试 (`UserGeo.test.ts`)
+
 - **CRUD操作测试**: 创建、读取、更新、删除用户地理位置记录
 - **批量操作测试**: 批量创建、更新、删除地理位置数据
 - **IP验证测试**: IPv4/IPv6地址格式验证、唯一性约束
@@ -20,6 +21,7 @@
   - `cleanupOldData()` - 清理过期数据
 
 #### AgentUsage 模型测试 (`AgentUsage.test.ts`)
+
 - **会话管理测试**:
   - `startSession()` - 开始新会话
   - `endSession()` - 结束会话
@@ -35,6 +37,7 @@
 ### 2. API接口测试 (`__tests__/api/`)
 
 #### 热点地图API测试 (`admin/heatmap.test.ts`)
+
 - **基础功能测试**:
   - `GET /api/admin/heatmap` - 获取热点地图统计数据
   - `GET /api/admin/heatmap/data` - 获取热点地图可视化数据
@@ -45,6 +48,7 @@
 - **性能测试**: 并发请求、大数据量查询
 
 #### 数据分析API测试 (`analytics.test.ts`)
+
 - **概览分析测试** (`GET /api/analytics/overview`):
   - 总会话数、总用户数、总消息数统计
   - 平均会话时长、平均响应时间计算
@@ -69,6 +73,7 @@
 ### 3. 服务层测试 (`__tests__/services/`)
 
 #### 地理位置解析服务测试 (`geo-location.test.ts`)
+
 - **IP地址解析测试**:
   - 有效IPv4/IPv6地址解析
   - 无效IP地址处理
@@ -84,6 +89,7 @@
 - **性能优化测试**: 请求去重、断路器模式、重试机制
 
 #### 热点地图服务测试 (`heatmap.test.ts`)
+
 - **数据生成测试**: 基础热点地图数据生成
 - **数据聚合测试**: 按时间、地理位置、智能体类型聚合
 - **统计计算测试**: 总计、平均值、强度指标计算
@@ -94,6 +100,7 @@
 ### 4. 前端组件测试 (`__tests__/components/`)
 
 #### 热点地图组件测试 (`heatmap.test.tsx`)
+
 - **HeatmapComponent测试**:
   - 初始加载状态
   - 数据加载和显示
@@ -112,6 +119,7 @@
 ### 5. 集成测试 (`__tests__/integration/`)
 
 #### 热点地图分析集成测试 (`heatmap-analytics.test.ts`)
+
 - **端到端用户会话追踪测试**:
   - 完整会话生命周期（开始、更新、结束）
   - 并发会话处理
@@ -136,6 +144,7 @@
 ### 6. 性能和边界测试 (`__tests__/performance/`)
 
 #### 热点地图性能测试 (`heatmap-performance.test.ts`)
+
 - **大数据集处理测试**:
   - 10,000条会话数据处理
   - 100,000条会话分页处理
@@ -166,6 +175,7 @@
 ## 测试覆盖率
 
 ### 目标覆盖率
+
 - **总覆盖率**: ≥ 90%
 - **分支覆盖率**: ≥ 80%
 - **函数覆盖率**: ≥ 80%
@@ -173,6 +183,7 @@
 - **语句覆盖率**: ≥ 80%
 
 ### 覆盖的文件和功能
+
 1. **数据库层** (100%)
    - `lib/db/models/UserGeo.ts`
    - `lib/db/models/AgentUsage.ts`
@@ -201,7 +212,9 @@
 ## 运行测试
 
 ### 前置条件
+
 1. **数据库配置**:
+
    ```bash
    # 确保PostgreSQL运行在端口5433
    # 测试数据库名: test_heatmap
@@ -214,6 +227,7 @@
    ```
 
 ### 运行完整测试套件
+
 ```bash
 # 运行所有测试
 chmod +x scripts/test-heatmap.sh
@@ -221,6 +235,7 @@ chmod +x scripts/test-heatmap.sh
 ```
 
 ### 运行特定测试类别
+
 ```bash
 # 数据库模型测试
 npx jest --config=jest.config.heatmap.js __tests__/models/
@@ -242,6 +257,7 @@ npx jest --config=jest.config.heatmap.js __tests__/performance/
 ```
 
 ### 运行覆盖率测试
+
 ```bash
 # 生成覆盖率报告
 npx jest --config=jest.config.heatmap.js --coverage
@@ -251,6 +267,7 @@ open coverage/heatmap/index.html
 ```
 
 ### 运行单个测试文件
+
 ```bash
 # 运行UserGeo模型测试
 npx jest --config=jest.config.heatmap.js __tests__/models/UserGeo.test.ts
@@ -262,6 +279,7 @@ npx jest --config=jest.config.heatmap.js __tests__/api/admin/heatmap.test.ts
 ## 测试环境配置
 
 ### 环境变量
+
 ```bash
 # 数据库配置
 POSTGRES_USER=test
@@ -275,13 +293,16 @@ NODE_ENV=test
 ```
 
 ### Jest配置
+
 - **配置文件**: `jest.config.heatmap.js`
 - **设置文件**: `jest.setup.heatmap.js`
 - **超时时间**: 30秒（性能测试60秒）
 - **最大工作进程**: 4
 
 ### Mock配置
+
 测试套件包含以下Mock：
+
 - **数据库连接**: Sequelize和PostgreSQL
 - **Redis**: 缓存服务
 - **外部API**: IP解析服务
@@ -292,6 +313,7 @@ NODE_ENV=test
 ## 测试结果分析
 
 ### 成功标准
+
 1. **所有测试通过**: 0个失败
 2. **覆盖率达标**: ≥90%总覆盖率
 3. **性能指标**:
@@ -301,12 +323,15 @@ NODE_ENV=test
 4. **内存使用**: 单次测试内存增长 < 100MB
 
 ### 报告生成
+
 测试完成后生成以下报告：
+
 1. **HTML覆盖率报告**: `coverage/heatmap/index.html`
 2. **LCOV覆盖率报告**: `coverage/heatmap/lcov.info`
 3. **测试摘要**: `test-results/heatmap-test-summary.md`
 
 ### 性能基准
+
 - **数据库操作**:
   - 批量插入1,000条记录 < 5秒
   - 复杂查询响应 < 2秒
@@ -325,6 +350,7 @@ NODE_ENV=test
 ## 故障排除
 
 ### 常见问题
+
 1. **数据库连接失败**
    - 检查PostgreSQL是否运行
    - 验证测试数据库配置
@@ -346,6 +372,7 @@ NODE_ENV=test
    - 验证Mock实现逻辑
 
 ### 调试技巧
+
 1. **详细输出**: 使用 `--verbose` 标志
 2. **单步调试**: 使用 `--runInBand` 运行单个进程
 3. **测试筛选**: 使用 `--testNamePattern` 过滤测试
@@ -359,17 +386,20 @@ npx jest --config=jest.config.heatmap.js --verbose --runInBand --testNamePattern
 ## 维护和扩展
 
 ### 添加新测试
+
 1. **遵循命名约定**: `*.test.ts` 或 `*.test.tsx`
 2. **使用测试工具**: 利用 `testUtils` 中的辅助函数
 3. **包含边界情况**: 测试正常和异常流程
 4. **添加性能测试**: 对关键路径进行性能测试
 
 ### 更新Mock
+
 1. **保持Mock更新**: 与实际API保持同步
 2. **添加错误场景**: 模拟各种错误情况
 3. **配置默认行为**: 提供合理的默认返回值
 
 ### 监控测试健康度
+
 1. **定期运行**: 在CI/CD流水线中集成
 2. **监控覆盖率**: 确保覆盖率不下降
 3. **性能回归**: 监控关键性能指标

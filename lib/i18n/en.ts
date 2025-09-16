@@ -1,4 +1,4 @@
-export default {
+const enTranslations = {
   dbSchema: {
     title: 'DB Schema & Sync',
     sync: 'Sync Schema',
@@ -27,3 +27,5 @@ export default {
   },
   // ...other modules
 };
+
+export default enTranslations;

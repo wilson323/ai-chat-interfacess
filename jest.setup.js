@@ -4,6 +4,54 @@
 // Used for __tests__/testing-library.js
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
+// 确保扩展匹配器已注册（对某些运行器需要显式调用）
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const jestDom = require('@testing-library/jest-dom');
+if (jestDom && typeof expect !== 'undefined' && typeof expect.extend === 'function') {
+  // @ts-ignore
+  expect.extend(jestDom.matchers || {});
+}
+// 已通过直接导入 '@testing-library/jest-dom' 自动注册匹配器，无需手动 extend
+// 简单映射 vi.fn => jest.fn（避免 swc 解析 as/?. 语法）
+// @ts-ignore
+globalThis.vi = { fn: function () { return jest.fn.apply(jest, arguments); } };
+
+// jsdom 环境补齐 URL.createObjectURL / revokeObjectURL
+if (!('createObjectURL' in URL)) {
+  // @ts-ignore
+  URL.createObjectURL = () => 'blob:jest-mock';
+}
+if (!('revokeObjectURL' in URL)) {
+  // @ts-ignore
+  URL.revokeObjectURL = () => {};
+}
+
+// Mock SpeechSynthesisUtterance（jsdom 默认无该构造）
+if (typeof globalThis.SpeechSynthesisUtterance === 'undefined') {
+  // 简单 JS 版本，无 TS 注解
+  // eslint-disable-next-line no-undef
+  globalThis.SpeechSynthesisUtterance = function (text) {
+    this.text = text || '';
+    this.lang = '';
+    this.rate = 1;
+    this.volume = 1;
+    this.pitch = 1;
+    this.onend = null;
+    this.onerror = null;
+  };
+}
+
+// Mock AudioContext（jsdom 默认无该构造）
+if (typeof globalThis.AudioContext === 'undefined') {
+  // eslint-disable-next-line no-undef
+  globalThis.AudioContext = function () {
+    this.createMediaStreamDestination = function () {
+      return { stream: {} };
+    };
+  };
+}
+
+// 类型声明由 tsconfig.types 提供，这里的全局声明会导致构建冲突，移除
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -132,7 +180,7 @@ global.fetch = jest.fn((url) => {
       })
     });
   }
-  
+
   if (url.includes('/api/admin/agent-config')) {
     return Promise.resolve({
       ok: true,
@@ -151,7 +199,7 @@ global.fetch = jest.fn((url) => {
       })
     });
   }
-  
+
   // Default mock response
   return Promise.resolve({
     ok: true,
@@ -167,7 +215,9 @@ beforeAll(() => {
   console.error = (...args) => {
     if (
       typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render is no longer supported')
+      (args[0].includes('Warning: ReactDOM.render is no longer supported') ||
+       args[0].includes('Warning: An update to') ||
+       args[0].includes('Warning: A component is changing'))
     ) {
       return;
     }
@@ -176,7 +226,8 @@ beforeAll(() => {
   console.warn = (...args) => {
     if (
       typeof args[0] === 'string' &&
-      args[0].includes('componentWillReceiveProps')
+      (args[0].includes('componentWillReceiveProps') ||
+       args[0].includes('Warning: An update to'))
     ) {
       return;
     }

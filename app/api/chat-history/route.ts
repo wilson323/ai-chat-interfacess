@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ChatHistory from '@/lib/db/models/chat-history';
-import AgentConfig from '@/lib/db/models/agent-config';
+import ChatHistory from '../../../lib/db/models/chat-history';
+import AgentConfig from '../../../lib/db/models/agent-config';
 import { Op } from 'sequelize';
 
-// 清理2天前的历史
-export async function cleanupOldHistory() {
+// 清理2天前的历史（内部使用，不导出）
+async function cleanupOldHistory() {
   const cutoff = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
   await ChatHistory.destroy({ where: { updatedAt: { [Op.lt]: cutoff } } });
 }
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 构建查询条件
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (userId) where.userId = userId;
     if (agentId) where.agentId = agentId;
     if (keyword) where['messages'] = { [Op.iLike]: `%${keyword}%` };
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         const messages = Array.isArray(row.messages) ? row.messages : [];
         return {
           ...row.toJSON(),
-          messages: messages.map((msg: any) => ({
+          messages: messages.map((msg: Record<string, unknown>) => ({
             ...msg,
             message_id:
               msg.id ||

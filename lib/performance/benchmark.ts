@@ -78,7 +78,12 @@ export class PerformanceBenchmark {
         pageLoad: { a: 1000, b: 2000, c: 3000, d: 4000 },
         api: { a: 200, b: 500, c: 1000, d: 2000 },
         render: { a: 16, b: 32, c: 64, d: 100 },
-        memory: { a: 50 * 1024 * 1024, b: 100 * 1024 * 1024, c: 200 * 1024 * 1024, d: 500 * 1024 * 1024 },
+        memory: {
+          a: 50 * 1024 * 1024,
+          b: 100 * 1024 * 1024,
+          c: 200 * 1024 * 1024,
+          d: 500 * 1024 * 1024,
+        },
       },
     };
   }
@@ -233,20 +238,28 @@ export class PerformanceBenchmark {
 
   // 页面加载测试方法
   private async measureFirstContentfulPaint(): Promise<BenchmarkRunResult> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (typeof window === 'undefined') {
-        resolve({ duration: 0, success: false, error: 'Not in browser environment' });
+        resolve({
+          duration: 0,
+          success: false,
+          error: 'Not in browser environment',
+        });
         return;
       }
 
       const startTime = performance.now();
 
-      const observer = new PerformanceObserver((list) => {
+      const observer = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
           if (entry.name === 'first-contentful-paint') {
             const duration = entry.startTime;
             observer.disconnect();
-            resolve({ duration, success: true, metadata: { entryType: entry.entryType } });
+            resolve({
+              duration,
+              success: true,
+              metadata: { entryType: entry.entryType },
+            });
             return;
           }
         }
@@ -257,27 +270,39 @@ export class PerformanceBenchmark {
       // 超时处理
       setTimeout(() => {
         observer.disconnect();
-        resolve({ duration: performance.now() - startTime, success: false, error: 'FCP measurement timeout' });
+        resolve({
+          duration: performance.now() - startTime,
+          success: false,
+          error: 'FCP measurement timeout',
+        });
       }, 5000);
     });
   }
 
   private async measureLargestContentfulPaint(): Promise<BenchmarkRunResult> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (typeof window === 'undefined') {
-        resolve({ duration: 0, success: false, error: 'Not in browser environment' });
+        resolve({
+          duration: 0,
+          success: false,
+          error: 'Not in browser environment',
+        });
         return;
       }
 
       const startTime = performance.now();
 
-      const observer = new PerformanceObserver((list) => {
+      const observer = new PerformanceObserver(list => {
         const entries = list.getEntries();
         if (entries.length > 0) {
           const lastEntry = entries[entries.length - 1];
           const duration = lastEntry.startTime;
           observer.disconnect();
-          resolve({ duration, success: true, metadata: { entryType: lastEntry.entryType } });
+          resolve({
+            duration,
+            success: true,
+            metadata: { entryType: lastEntry.entryType },
+          });
           return;
         }
       });
@@ -287,22 +312,36 @@ export class PerformanceBenchmark {
       // 超时处理
       setTimeout(() => {
         observer.disconnect();
-        resolve({ duration: performance.now() - startTime, success: false, error: 'LCP measurement timeout' });
+        resolve({
+          duration: performance.now() - startTime,
+          success: false,
+          error: 'LCP measurement timeout',
+        });
       }, 5000);
     });
   }
 
   private async measureTimeToInteractive(): Promise<BenchmarkRunResult> {
     if (typeof window === 'undefined') {
-      return { duration: 0, success: false, error: 'Not in browser environment' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Not in browser environment',
+      };
     }
 
-    const startTime = performance.now();
+    // const _startTime = performance.now(); // 暂时注释掉，未使用
 
     // 简化的TTI计算
-    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const nav = performance.getEntriesByType(
+      'navigation'
+    )[0] as PerformanceNavigationTiming;
     if (!nav) {
-      return { duration: 0, success: false, error: 'Navigation timing not available' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Navigation timing not available',
+      };
     }
 
     const fcp = await this.getFirstContentfulPaint();
@@ -328,8 +367,8 @@ export class PerformanceBenchmark {
   }
 
   private async getFirstContentfulPaint(): Promise<number> {
-    return new Promise((resolve) => {
-      const observer = new PerformanceObserver((list) => {
+    return new Promise(resolve => {
+      const observer = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
           if (entry.name === 'first-contentful-paint') {
             observer.disconnect();
@@ -346,14 +385,14 @@ export class PerformanceBenchmark {
   // API性能测试方法
   private async measureAPIResponseTime(): Promise<BenchmarkRunResult> {
     if (typeof window === 'undefined') {
-      return { duration: 0, success: false, error: 'Not in browser environment' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Not in browser environment',
+      };
     }
 
-    const testUrls = [
-      '/api/health',
-      '/api/get-config',
-      '/api/chat-history',
-    ];
+    const testUrls = ['/api/health', '/api/get-config', '/api/chat-history'];
 
     const results: number[] = [];
 
@@ -375,7 +414,8 @@ export class PerformanceBenchmark {
       return { duration: 0, success: false, error: 'All API tests failed' };
     }
 
-    const averageTime = results.reduce((sum, time) => sum + time, 0) / results.length;
+    const averageTime =
+      results.reduce((sum, time) => sum + time, 0) / results.length;
 
     return {
       duration: averageTime,
@@ -390,16 +430,20 @@ export class PerformanceBenchmark {
 
   private async measureAPIConcurrency(): Promise<BenchmarkRunResult> {
     if (typeof window === 'undefined') {
-      return { duration: 0, success: false, error: 'Not in browser environment' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Not in browser environment',
+      };
     }
 
     const concurrentRequests = 10;
     const testUrl = '/api/health';
 
     const startTime = performance.now();
-    const promises = Array(concurrentRequests).fill(null).map(() =>
-      fetch(testUrl).catch(() => null)
-    );
+    const promises = Array(concurrentRequests)
+      .fill(null)
+      .map(() => fetch(testUrl).catch(() => null));
 
     try {
       const responses = await Promise.all(promises);
@@ -419,7 +463,8 @@ export class PerformanceBenchmark {
       return {
         duration: performance.now() - startTime,
         success: false,
-        error: error instanceof Error ? error.message : 'Concurrency test failed',
+        error:
+          error instanceof Error ? error.message : 'Concurrency test failed',
       };
     }
   }
@@ -427,7 +472,11 @@ export class PerformanceBenchmark {
   // 渲染性能测试方法
   private async measureDOMManipulation(): Promise<BenchmarkRunResult> {
     if (typeof window === 'undefined') {
-      return { duration: 0, success: false, error: 'Not in browser environment' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Not in browser environment',
+      };
     }
 
     const container = document.createElement('div');
@@ -467,7 +516,11 @@ export class PerformanceBenchmark {
 
   private async measureAnimationPerformance(): Promise<BenchmarkRunResult> {
     if (typeof window === 'undefined') {
-      return { duration: 0, success: false, error: 'Not in browser environment' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Not in browser environment',
+      };
     }
 
     const container = document.createElement('div');
@@ -532,11 +585,17 @@ export class PerformanceBenchmark {
   }
 
   private async detectMemoryLeak(): Promise<BenchmarkRunResult> {
-    if (typeof window === 'undefined' || !(performance as Performance & { memory?: { usedJSHeapSize: number } }).memory) {
+    if (
+      typeof window === 'undefined' ||
+      !(performance as Performance & { memory?: { usedJSHeapSize: number } })
+        .memory
+    ) {
       return { duration: 0, success: false, error: 'Memory API not available' };
     }
 
-    const memory = (performance as Performance & { memory: { usedJSHeapSize: number } }).memory;
+    const memory = (
+      performance as Performance & { memory: { usedJSHeapSize: number } }
+    ).memory;
     const initialMemory = memory.usedJSHeapSize;
 
     // 创建可能导致内存泄漏的对象
@@ -582,12 +641,20 @@ export class PerformanceBenchmark {
   // 网络性能测试方法
   private async measureResourceLoading(): Promise<BenchmarkRunResult> {
     if (typeof window === 'undefined') {
-      return { duration: 0, success: false, error: 'Not in browser environment' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Not in browser environment',
+      };
     }
 
     const resources = performance.getEntriesByType('resource');
-    const totalDuration = resources.reduce((sum, resource) => sum + resource.duration, 0);
-    const averageDuration = resources.length > 0 ? totalDuration / resources.length : 0;
+    const totalDuration = resources.reduce(
+      (sum, resource) => sum + resource.duration,
+      0
+    );
+    const averageDuration =
+      resources.length > 0 ? totalDuration / resources.length : 0;
 
     return {
       duration: averageDuration,
@@ -596,7 +663,7 @@ export class PerformanceBenchmark {
         resourceCount: resources.length,
         totalDuration,
         averageDuration,
-        resourceTypes: this.getResourceTypeStats(resources),
+        resourceTypes: this.getResourceTypeStats(resources as PerformanceResourceTiming[]),
       },
     };
   }
@@ -620,11 +687,15 @@ export class PerformanceBenchmark {
 
   private async measureCachePerformance(): Promise<BenchmarkRunResult> {
     if (typeof window === 'undefined') {
-      return { duration: 0, success: false, error: 'Not in browser environment' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Not in browser environment',
+      };
     }
 
     const testUrl = '/api/health';
-    const iterations = 5;
+    // const iterations = 5;
 
     // 第一次请求（冷缓存）
     const coldStart = performance.now();
@@ -654,7 +725,11 @@ export class PerformanceBenchmark {
 
   private async testOfflineCapability(): Promise<BenchmarkRunResult> {
     if (typeof window === 'undefined') {
-      return { duration: 0, success: false, error: 'Not in browser environment' };
+      return {
+        duration: 0,
+        success: false,
+        error: 'Not in browser environment',
+      };
     }
 
     const startTime = performance.now();
@@ -749,9 +824,11 @@ export class PerformanceBenchmark {
 
         // 计算平均值和评分
         const successfulResults = testResults.filter(r => r.success);
-        const averageDuration = successfulResults.length > 0
-          ? successfulResults.reduce((sum, r) => sum + r.duration, 0) / successfulResults.length
-          : 0;
+        const averageDuration =
+          successfulResults.length > 0
+            ? successfulResults.reduce((sum, r) => sum + r.duration, 0) /
+              successfulResults.length
+            : 0;
 
         const score = this.calculateScore(test.category, averageDuration);
         const grade = this.calculateGrade(test.category, averageDuration);
@@ -779,7 +856,6 @@ export class PerformanceBenchmark {
         };
 
         results.push(result);
-
       } catch (error) {
         console.error(`Test failed: ${test.name}`, error);
         results.push({
@@ -806,8 +882,11 @@ export class PerformanceBenchmark {
     return results;
   }
 
-  private calculateScore(category: BenchmarkResult['category'], duration: number): number {
-    const thresholds = this.config.thresholds[category];
+  private calculateScore(
+    category: BenchmarkResult['category'],
+    duration: number
+  ): number {
+    const thresholds = this.config.thresholds[category as keyof typeof this.config.thresholds];
     const maxScore = 100;
 
     if (duration <= thresholds.a) return maxScore;
@@ -817,8 +896,11 @@ export class PerformanceBenchmark {
     return maxScore * 0.2;
   }
 
-  private calculateGrade(category: BenchmarkResult['category'], duration: number): 'A' | 'B' | 'C' | 'D' | 'F' {
-    const thresholds = this.config.thresholds[category];
+  private calculateGrade(
+    category: BenchmarkResult['category'],
+    duration: number
+  ): 'A' | 'B' | 'C' | 'D' | 'F' {
+    const thresholds = this.config.thresholds[category as keyof typeof this.config.thresholds];
 
     if (duration <= thresholds.a) return 'A';
     if (duration <= thresholds.b) return 'B';
@@ -827,15 +909,20 @@ export class PerformanceBenchmark {
     return 'F';
   }
 
-  private calculateBreakdown(category: BenchmarkResult['category'], duration: number): Record<string, number> {
-    const thresholds = this.config.thresholds[category];
+  private calculateBreakdown(
+    category: BenchmarkResult['category'],
+    duration: number
+  ): Record<string, number> {
+    const thresholds = this.config.thresholds[category as keyof typeof this.config.thresholds];
+    const percentage = Math.max(0, 100 - (duration / thresholds.d) * 100);
+
     return {
       rawScore: duration,
       thresholdA: thresholds.a,
       thresholdB: thresholds.b,
       thresholdC: thresholds.c,
       thresholdD: thresholds.d,
-      percentage: Math.max(0, 100 - (duration / thresholds.d) * 100),
+      percentage,
     };
   }
 
@@ -857,27 +944,40 @@ export class PerformanceBenchmark {
         successfulTests: 0,
         failedTests: results.length,
         averageScore: 0,
-        grade: 'F',
+        grade: 'F' as const,
         categoryScores: {},
       };
     }
 
-    const categoryScores: Record<string, { total: number; count: number }> = {};
+    // 一次性计算所有分类分数
+    const categoryScores = successful.reduce(
+      (acc, result) => {
+        const category = result.category;
+        if (!acc[category]) {
+          acc[category] = { total: 0, count: 0 };
+        }
+        acc[category].total += result.metrics.score;
+        acc[category].count += 1;
+        return acc;
+      },
+      {} as Record<string, { total: number; count: number }>
+    );
 
-    successful.forEach(result => {
-      if (!categoryScores[result.category]) {
-        categoryScores[result.category] = { total: 0, count: 0 };
-      }
-      categoryScores[result.category].total += result.metrics.score;
-      categoryScores[result.category].count += 1;
-    });
+    // 计算平均分数
+    const averageCategoryScores = Object.entries(categoryScores).reduce(
+      (acc, [category, scores]) => {
+        acc[category] = scores.total / scores.count;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    const averageCategoryScores: Record<string, number> = {};
-    Object.entries(categoryScores).forEach(([category, scores]) => {
-      averageCategoryScores[category] = scores.total / scores.count;
-    });
-
-    const overallAverage = Object.values(averageCategoryScores).reduce((sum, score) => sum + score, 0) / Object.keys(averageCategoryScores).length;
+    const categoryValues = Object.values(averageCategoryScores);
+    const overallAverage =
+      categoryValues.length > 0
+        ? categoryValues.reduce((sum, score) => sum + score, 0) /
+          categoryValues.length
+        : 0;
 
     return {
       totalTests: results.length,
@@ -902,12 +1002,16 @@ export class PerformanceBenchmark {
   }
 
   public exportResults(): string {
-    return JSON.stringify({
-      results: this.results,
-      summary: this.getSummary(),
-      config: this.config,
-      exportedAt: new Date().toISOString(),
-    }, null, 2);
+    return JSON.stringify(
+      {
+        results: this.results,
+        summary: this.getSummary(),
+        config: this.config,
+        exportedAt: new Date().toISOString(),
+      },
+      null,
+      2
+    );
   }
 
   public updateConfig(newConfig: Partial<BenchmarkConfig>): void {
@@ -918,11 +1022,4 @@ export class PerformanceBenchmark {
 // 创建全局实例
 export const performanceBenchmark = new PerformanceBenchmark();
 
-// 导出类型和实例
-export type {
-  BenchmarkResult,
-  BenchmarkSuite,
-  BenchmarkTest,
-  BenchmarkRunResult,
-  BenchmarkConfig,
-};
+// 类型已经在文件开头导出，这里不需要重复导出

@@ -7,7 +7,7 @@ export async function fetchUserChatHistory() {
 
 export async function sendUserMessage(payload: {
   content: string;
-  files?: any[];
+  files?: File[];
 }) {
   const res = await fetch('/api/chat-proxy/send', {
     method: 'POST',

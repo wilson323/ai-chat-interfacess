@@ -1,24 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+// Removed invalid typescript import
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   LineChart,
   Line,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -33,21 +24,14 @@ import {
   Smartphone,
   Battery,
   Wifi,
-  WifiOff,
   Signal,
-  SignalLow,
-  SignalMedium,
-  SignalHigh,
-  Zap,
   Activity,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
+  SignalHigh,
+  SignalMedium,
+  SignalLow,
   Cpu,
-  HardDrive,
-  Thermometer,
+  TrendingUp,
+  CheckCircle,
 } from 'lucide-react';
 
 interface MobileMetrics {
@@ -86,13 +70,25 @@ interface MobileOptimization {
 export function MobilePerformance() {
   const [metrics, setMetrics] = useState<MobileMetrics[]>([]);
   const [isMonitoring, setIsMonitoring] = useState(false);
-  const [currentMetrics, setCurrentMetrics] = useState<MobileMetrics | null>(null);
+  const [currentMetrics, setCurrentMetrics] = useState<MobileMetrics | null>(
+    null
+  );
   const [optimizations, setOptimizations] = useState<MobileOptimization[]>([]);
   const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h' | '7d'>('1h');
 
   // 检测移动设备信息
-  const detectDeviceInfo = (): MobileMetrics => {
-    const connection = (navigator as Navigator & { connection?: { type?: string; effectiveType?: string; downlink?: number; rtt?: number } }).connection || {};
+  const detectDeviceInfo = useCallback((): MobileMetrics => {
+    const connection =
+      (
+        navigator as Navigator & {
+          connection?: {
+            type?: string;
+            effectiveType?: string;
+            downlink?: number;
+            rtt?: number;
+          };
+        }
+      ).connection || {};
     return {
       timestamp: Date.now(),
       deviceType: getDeviceType(),
@@ -114,7 +110,7 @@ export function MobilePerformance() {
       downlink: connection.downlink || 0,
       rtt: connection.rtt || 0,
     };
-  };
+  }, []);
 
   // 获取设备类型
   const getDeviceType = () => {
@@ -149,7 +145,7 @@ export function MobilePerformance() {
 
   // 估算内存使用
   const estimateMemoryUsage = () => {
-    if ('memory' in (performance as any)) {
+    if ('memory' in performance) {
       const memory = (performance as any).memory;
       return Math.round((memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100);
     }
@@ -271,7 +267,9 @@ export function MobilePerformance() {
         viewportHeight: [667, 896, 1024, 1180][Math.floor(Math.random() * 4)],
         devicePixelRatio: [2, 3][Math.floor(Math.random() * 2)],
         isLowPowerMode: Math.random() > 0.8,
-        connectionType: ['cellular', 'wifi', 'unknown'][Math.floor(Math.random() * 3)],
+        connectionType: ['cellular', 'wifi', 'unknown'][
+          Math.floor(Math.random() * 3)
+        ],
         effectiveType: ['4g', '3g', '2g'][Math.floor(Math.random() * 3)],
         downlink: Math.random() * 10 + 1,
         rtt: Math.random() * 500 + 50,
@@ -279,7 +277,9 @@ export function MobilePerformance() {
     }
 
     setMetrics(mockMetrics);
-    setCurrentMetrics(mockMetrics[mockMetrics.length - 1]);
+    setCurrentMetrics(mockMetrics.length > 0 ? mockMetrics[mockMetrics.length - 1] : null);
+
+    return mockMetrics[mockMetrics.length - 1];
   };
 
   // 监听网络变化
@@ -297,7 +297,8 @@ export function MobilePerformance() {
       connection.addEventListener('change', handleChange);
       return () => connection.removeEventListener('change', handleChange);
     }
-  }, [isMonitoring]);
+    return undefined;
+  }, [isMonitoring, detectDeviceInfo]);
 
   // 监听窗口变化
   useEffect(() => {
@@ -310,7 +311,8 @@ export function MobilePerformance() {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     }
-  }, [isMonitoring]);
+    return undefined;
+  }, [isMonitoring, detectDeviceInfo]);
 
   // 定时采集数据
   useEffect(() => {
@@ -323,7 +325,7 @@ export function MobilePerformance() {
       }, 5000);
     }
     return () => clearInterval(interval);
-  }, [isMonitoring]);
+  }, [isMonitoring, detectDeviceInfo]);
 
   // 初始化数据
   useEffect(() => {
@@ -378,8 +380,10 @@ export function MobilePerformance() {
     };
 
     const threshold = thresholds[type] || { good: 50, poor: 80 };
-    if (value <= threshold.good) return { level: 'good', color: 'text-green-600' };
-    if (value <= threshold.poor) return { level: 'fair', color: 'text-yellow-600' };
+    if (value <= threshold.good)
+      return { level: 'good', color: 'text-green-600' };
+    if (value <= threshold.poor)
+      return { level: 'fair', color: 'text-yellow-600' };
     return { level: 'poor', color: 'text-red-600' };
   };
 
@@ -397,23 +401,34 @@ export function MobilePerformance() {
 
   // 设备分布数据
   const getDeviceDistribution = () => {
-    const distribution = metrics.reduce((acc, metric) => {
-      acc[metric.deviceType] = (acc[metric.deviceType] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const distribution = metrics.reduce(
+      (acc, metric) => {
+        acc[metric.deviceType] = (acc[metric.deviceType] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return Object.entries(distribution).map(([device, count]) => ({
-      name: device === 'smartphone' ? '智能手机' : device === 'tablet' ? '平板电脑' : '桌面设备',
+      name:
+        device === 'smartphone'
+          ? '智能手机'
+          : device === 'tablet'
+            ? '平板电脑'
+            : '桌面设备',
       value: count,
     }));
   };
 
   // 网络类型分布
   const getNetworkDistribution = () => {
-    const distribution = metrics.reduce((acc, metric) => {
-      acc[metric.networkType] = (acc[metric.networkType] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const distribution = metrics.reduce(
+      (acc, metric) => {
+        acc[metric.networkType] = (acc[metric.networkType] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return Object.entries(distribution).map(([network, count]) => ({
       name: network,
@@ -437,7 +452,9 @@ export function MobilePerformance() {
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-2xl font-bold text-gray-900'>移动设备性能监控</h2>
-          <p className='text-gray-600 mt-1'>监控移动设备特定性能指标和用户体验</p>
+          <p className='text-gray-600 mt-1'>
+            监控移动设备特定性能指标和用户体验
+          </p>
         </div>
         <div className='flex items-center gap-2'>
           <Button
@@ -448,8 +465,10 @@ export function MobilePerformance() {
             {isMonitoring ? '停止监控' : '开始监控'}
           </Button>
           <select
+            id='mobilePerfTimeRange'
+            name='mobilePerfTimeRange'
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as any)}
+            onChange={e => setTimeRange(e.target.value as '1h' | '6h' | '24h' | '7d')}
             className='px-3 py-1 border rounded-md text-sm'
           >
             <option value='1h'>最近1小时</option>
@@ -478,8 +497,8 @@ export function MobilePerformance() {
                     {currentMetrics.deviceType === 'smartphone'
                       ? '智能手机'
                       : currentMetrics.deviceType === 'tablet'
-                      ? '平板电脑'
-                      : '桌面设备'}
+                        ? '平板电脑'
+                        : '桌面设备'}
                   </span>
                 </div>
                 <div className='flex items-center justify-between'>
@@ -493,7 +512,8 @@ export function MobilePerformance() {
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>屏幕分辨率</span>
                   <span className='font-medium'>
-                    {currentMetrics.viewportWidth} × {currentMetrics.viewportHeight}
+                    {currentMetrics.viewportWidth} ×{' '}
+                    {currentMetrics.viewportHeight}
                   </span>
                 </div>
               </div>
@@ -503,7 +523,9 @@ export function MobilePerformance() {
                   <span className='text-sm text-gray-600'>网络类型</span>
                   <div className='flex items-center gap-1'>
                     {getNetworkIcon(currentMetrics.networkType)}
-                    <span className='font-medium'>{currentMetrics.networkType}</span>
+                    <span className='font-medium'>
+                      {currentMetrics.networkType}
+                    </span>
                   </div>
                 </div>
                 <div className='flex items-center justify-between'>
@@ -518,7 +540,9 @@ export function MobilePerformance() {
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>有效类型</span>
-                  <span className='font-medium'>{currentMetrics.effectiveType}</span>
+                  <span className='font-medium'>
+                    {currentMetrics.effectiveType}
+                  </span>
                 </div>
               </div>
 
@@ -526,7 +550,10 @@ export function MobilePerformance() {
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>电池电量</span>
                   <div className='flex items-center gap-1'>
-                    {getBatteryStatus(currentMetrics.batteryLevel, currentMetrics.isCharging)}
+                    {getBatteryStatus(
+                      currentMetrics.batteryLevel,
+                      currentMetrics.isCharging
+                    )}
                     <span className='font-medium'>
                       {currentMetrics.batteryLevel.toFixed(0)}%
                     </span>
@@ -534,44 +561,62 @@ export function MobilePerformance() {
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>充电状态</span>
-                  <Badge variant={currentMetrics.isCharging ? 'default' : 'secondary'}>
+                  <Badge
+                    variant={
+                      currentMetrics.isCharging ? 'default' : 'secondary'
+                    }
+                  >
                     {currentMetrics.isCharging ? '充电中' : '使用电池'}
                   </Badge>
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>低功耗模式</span>
-                  <Badge variant={currentMetrics.isLowPowerMode ? 'destructive' : 'default'}>
+                  <Badge
+                    variant={
+                      currentMetrics.isLowPowerMode ? 'destructive' : 'default'
+                    }
+                  >
                     {currentMetrics.isLowPowerMode ? '开启' : '关闭'}
                   </Badge>
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>像素比</span>
-                  <span className='font-medium'>{currentMetrics.devicePixelRatio}x</span>
+                  <span className='font-medium'>
+                    {currentMetrics.devicePixelRatio}x
+                  </span>
                 </div>
               </div>
 
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>内存使用</span>
-                  <span className={`font-medium ${getPerformanceLevel(currentMetrics.memoryUsage, 'memory').color}`}>
+                  <span
+                    className={`font-medium ${getPerformanceLevel(currentMetrics.memoryUsage, 'memory').color}`}
+                  >
                     {currentMetrics.memoryUsage.toFixed(1)}%
                   </span>
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>CPU使用率</span>
-                  <span className={`font-medium ${getPerformanceLevel(currentMetrics.cpuUsage, 'cpu').color}`}>
+                  <span
+                    className={`font-medium ${getPerformanceLevel(currentMetrics.cpuUsage, 'cpu').color}`}
+                  >
                     {currentMetrics.cpuUsage.toFixed(1)}%
                   </span>
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>触摸响应</span>
-                  <span className={`font-medium ${getPerformanceLevel(currentMetrics.touchResponseTime, 'touchResponse').color}`}>
+                  <span
+                    className={`font-medium ${getPerformanceLevel(currentMetrics.touchResponseTime, 'touchResponse').color}`}
+                  >
                     {formatTime(currentMetrics.touchResponseTime)}
                   </span>
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='text-sm text-gray-600'>滚动性能</span>
-                  <span className={`font-medium ${getPerformanceLevel(currentMetrics.scrollPerformance, 'scroll').color}`}>
+                  <span
+                    className={`font-medium ${getPerformanceLevel(currentMetrics.scrollPerformance, 'scroll').color}`}
+                  >
                     {currentMetrics.scrollPerformance.toFixed(0)}%
                   </span>
                 </div>
@@ -662,13 +707,15 @@ export function MobilePerformance() {
                   cx='50%'
                   cy='50%'
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill='#8884d8'
                   dataKey='value'
                 >
-                  {getDeviceDistribution().map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {getDeviceDistribution().map((_entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -693,13 +740,15 @@ export function MobilePerformance() {
                   cx='50%'
                   cy='50%'
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill='#8884d8'
                   dataKey='value'
                 >
-                  {getNetworkDistribution().map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {getNetworkDistribution().map((_entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -719,7 +768,7 @@ export function MobilePerformance() {
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            {optimizations.map((opt) => (
+            {optimizations.map(opt => (
               <div key={opt.id} className='border rounded-lg p-4'>
                 <div className='flex items-start justify-between'>
                   <div className='flex-1'>
@@ -731,25 +780,35 @@ export function MobilePerformance() {
                           opt.impact === 'high'
                             ? 'destructive'
                             : opt.impact === 'medium'
-                            ? 'default'
-                            : 'secondary'
+                              ? 'default'
+                              : 'secondary'
                         }
                       >
-                        {opt.impact === 'high' ? '高影响' : opt.impact === 'medium' ? '中等影响' : '低影响'}
+                        {opt.impact === 'high'
+                          ? '高影响'
+                          : opt.impact === 'medium'
+                            ? '中等影响'
+                            : '低影响'}
                       </Badge>
                       <Badge
                         variant={
                           opt.difficulty === 'easy'
                             ? 'default'
                             : opt.difficulty === 'medium'
-                            ? 'secondary'
-                            : 'destructive'
+                              ? 'secondary'
+                              : 'destructive'
                         }
                       >
-                        {opt.difficulty === 'easy' ? '简单' : opt.difficulty === 'medium' ? '中等' : '困难'}
+                        {opt.difficulty === 'easy'
+                          ? '简单'
+                          : opt.difficulty === 'medium'
+                            ? '中等'
+                            : '困难'}
                       </Badge>
                     </div>
-                    <p className='text-sm text-gray-600 mb-2'>{opt.description}</p>
+                    <p className='text-sm text-gray-600 mb-2'>
+                      {opt.description}
+                    </p>
                     <div className='flex items-center gap-4 text-sm'>
                       <span className='text-green-600'>
                         预计改进: +{opt.estimatedImprovement}%
@@ -758,7 +817,10 @@ export function MobilePerformance() {
                   </div>
                   <div className='flex items-center gap-2'>
                     {opt.implemented ? (
-                      <Badge variant='default' className='bg-green-100 text-green-800'>
+                      <Badge
+                        variant='default'
+                        className='bg-green-100 text-green-800'
+                      >
                         <CheckCircle className='h-3 w-3 mr-1' />
                         已实现
                       </Badge>
@@ -790,36 +852,52 @@ export function MobilePerformance() {
         <CardContent>
           <div className='space-y-3'>
             <div className='flex items-center gap-2'>
-              <input type='checkbox' id='touch' className='rounded' />
-              <label htmlFor='touch' className='text-sm'>触摸响应时间 {'<'} 50ms</label>
+              <input type='checkbox' id='touch' name='touch' className='rounded' />
+              <label htmlFor='touch' className='text-sm'>
+                触摸响应时间 {'<'} 50ms
+              </label>
             </div>
             <div className='flex items-center gap-2'>
-              <input type='checkbox' id='network' className='rounded' />
-              <label htmlFor='network' className='text-sm'>支持离线功能</label>
+              <input type='checkbox' id='network' name='network' className='rounded' />
+              <label htmlFor='network' className='text-sm'>
+                支持离线功能
+              </label>
             </div>
             <div className='flex items-center gap-2'>
-              <input type='checkbox' id='memory' className='rounded' />
-              <label htmlFor='memory' className='text-sm'>内存使用 {'<'} 100MB</label>
+              <input type='checkbox' id='memory' name='memory' className='rounded' />
+              <label htmlFor='memory' className='text-sm'>
+                内存使用 {'<'} 100MB
+              </label>
             </div>
             <div className='flex items-center gap-2'>
-              <input type='checkbox' id='battery' className='rounded' />
-              <label htmlFor='battery' className='text-sm'>电池消耗优化</label>
+              <input type='checkbox' id='battery' name='battery' className='rounded' />
+              <label htmlFor='battery' className='text-sm'>
+                电池消耗优化
+              </label>
             </div>
             <div className='flex items-center gap-2'>
-              <input type='checkbox' id='responsive' className='rounded' />
-              <label htmlFor='responsive' className='text-sm'>响应式设计</label>
+              <input type='checkbox' id='responsive' name='responsive' className='rounded' />
+              <label htmlFor='responsive' className='text-sm'>
+                响应式设计
+              </label>
             </div>
             <div className='flex items-center gap-2'>
-              <input type='checkbox' id='animations' className='rounded' />
-              <label htmlFor='animations' className='text-sm'>流畅的动画效果</label>
+              <input type='checkbox' id='animations' name='animations' className='rounded' />
+              <label htmlFor='animations' className='text-sm'>
+                流畅的动画效果
+              </label>
             </div>
             <div className='flex items-center gap-2'>
-              <input type='checkbox' id='gestures' className='rounded' />
-              <label htmlFor='gestures' className='text-sm'>支持手势操作</label>
+              <input type='checkbox' id='gestures' name='gestures' className='rounded' />
+              <label htmlFor='gestures' className='text-sm'>
+                支持手势操作
+              </label>
             </div>
             <div className='flex items-center gap-2'>
-              <input type='checkbox' id='accessibility' className='rounded' />
-              <label htmlFor='accessibility' className='text-sm'>无障碍访问</label>
+              <input type='checkbox' id='accessibility' name='accessibility' className='rounded' />
+              <label htmlFor='accessibility' className='text-sm'>
+                无障碍访问
+              </label>
             </div>
           </div>
         </CardContent>

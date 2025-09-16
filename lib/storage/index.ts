@@ -13,43 +13,18 @@ export * from './features/chat/chat-session';
 export * from './features/management/storage-manager';
 export * from './features/agent/agent-storage';
 
-// 聊天会话索引项接口
-export interface ChatSessionIndexItem {
-  id: string;
-  title: string;
-  preview: string;
-  timestamp: number;
-  agentId?: string;
-  messageCount?: number;
-}
+// 聊天会话索引项接口（从 shared/types 已导出，避免重复定义）
+// 保留向后兼容的 re-export
+export type { ChatSessionIndexItem } from './shared/types';
 
-// 存储元数据接口
-interface StorageMeta {
-  lastCleanup: number; // 上次清理的时间戳
-  totalSize: number; // 估计的总大小（字节）
-  chatIds: string[]; // 所有聊天ID列表
-  chatSizes: Record<string, number>; // 每个聊天的大小（字节）
-  chatLastAccessed: Record<string, number>; // 每个聊天的最后访问时间戳
-  version?: number; // 存储版本
-}
+// 存储元数据接口：统一从 shared/types 导入
+export type { StorageMeta } from './shared/types';
 
 // 存储统计信息接口
-export interface StorageStats {
-  totalSizeMB: number;
-  maxSizeMB: number;
-  usagePercent: number;
-  chatCount: number;
-}
+export type { StorageStats } from './shared/types';
 
 // 存储提供者接口
-export interface StorageProvider {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  removeItem(key: string): void;
-  clear(): void;
-  key(index: number): string | null;
-  length: number;
-}
+export type { StorageProvider } from './shared/types';
 
 export {
   exportAllChatSessions,
@@ -74,6 +49,7 @@ import {
 
 import { deleteChatSession as _deleteChatSession } from './features/management/storage-manager';
 
+// Record is a built-in TypeScript utility type, no need to import
 import {
   loadLocallyModifiedAgents as _loadLocallyModifiedAgents,
   loadSelectedAgentId as _loadSelectedAgentId,
@@ -131,7 +107,7 @@ export function saveSelectedAgent(
 ): ReturnType<typeof _saveSelectedAgent> {
   return _saveSelectedAgent(agentId);
 }
-export function saveAgents(agents: any[]): ReturnType<typeof _saveAgents> {
+export function saveAgents(agents: import('@/types/agent').Agent[]): ReturnType<typeof _saveAgents> {
   return _saveAgents(agents);
 }
 export function loadAgents(): ReturnType<typeof _loadAgents> {

@@ -32,7 +32,10 @@ AgentUsage.belongsTo(AgentConfig, { foreignKey: 'agentId', as: 'agent' });
 
 // 用户地理位置关联使用统计
 UserGeo.hasMany(AgentUsage, { foreignKey: 'geoLocationId', as: 'usages' });
-AgentUsage.belongsTo(UserGeo, { foreignKey: 'geoLocationId', as: 'geoLocation' });
+AgentUsage.belongsTo(UserGeo, {
+  foreignKey: 'geoLocationId',
+  as: 'geoLocation',
+});
 
 // 聊天会话关联使用统计
 ChatSession.hasMany(AgentUsage, { foreignKey: 'sessionId', as: 'agentUsages' });

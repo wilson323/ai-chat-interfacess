@@ -11,7 +11,11 @@ const DEBUG_MODE = true;
  * @param message 日志消息
  * @param data 相关数据
  */
-export function debugLog(category: string, message: string, data?: any): void {
+export function debugLog(
+  category: string,
+  message: string,
+  data?: unknown
+): void {
   if (!DEBUG_MODE) return;
 
   const timestamp = new Date().toISOString();
@@ -29,7 +33,7 @@ export function debugLog(category: string, message: string, data?: any): void {
  * @param eventType 事件类型
  * @param data 事件数据
  */
-export function logFastGPTEvent(eventType: string, data: any): void {
+export function logFastGPTEvent(eventType: string, data: unknown): void {
   if (!DEBUG_MODE) return;
 
   const timestamp = new Date().toISOString();
@@ -40,12 +44,13 @@ export function logFastGPTEvent(eventType: string, data: any): void {
  * 记录处理步骤
  * @param step 处理步骤
  */
-export function logProcessingStep(step: any): void {
+export function logProcessingStep(step: unknown): void {
   if (!DEBUG_MODE) return;
 
   const timestamp = new Date().toISOString();
+  const stepObj = step as { type?: string; name?: string; status?: string };
   console.log(
-    `[${timestamp}] [Processing Step: ${step.type}] ${step.name} (${step.status})`,
+    `[${timestamp}] [Processing Step: ${stepObj.type || 'unknown'}] ${stepObj.name || 'unknown'} (${stepObj.status || 'unknown'})`,
     step
   );
 }
@@ -59,7 +64,7 @@ export function logProcessingStep(step: any): void {
 export function logApiRequest(
   method: string,
   url: string,
-  requestData?: any
+  requestData?: unknown
 ): void {
   if (!DEBUG_MODE) return;
 
@@ -79,7 +84,7 @@ export function logApiRequest(
 export function logApiResponse(
   url: string,
   status: number,
-  responseData?: any
+  responseData?: unknown
 ): void {
   if (!DEBUG_MODE) return;
 
@@ -96,7 +101,11 @@ export function logApiResponse(
  * @param error 错误对象
  * @param context 错误上下文
  */
-export function logError(category: string, error: Error, context?: any): void {
+export function logError(
+  category: string,
+  error: Error,
+  context?: unknown
+): void {
   if (!DEBUG_MODE) return;
 
   const timestamp = new Date().toISOString();
@@ -113,7 +122,7 @@ export function logError(category: string, error: Error, context?: any): void {
  * @param space 缩进空格数
  * @returns JSON字符串或错误消息
  */
-export function safeStringify(obj: any, space?: string | number): string {
+export function safeStringify(obj: unknown, space?: string | number): string {
   try {
     return JSON.stringify(obj, null, space);
   } catch (error) {

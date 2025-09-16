@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,7 +49,7 @@ export default function ImageEditorHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -81,11 +81,11 @@ export default function ImageEditorHistoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, statusFilter, toast]);
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, searchTerm, statusFilter]);
+  }, [fetchData]);
 
   const handleViewImage = (imageUrl: string) => {
     window.open(imageUrl, '_blank');

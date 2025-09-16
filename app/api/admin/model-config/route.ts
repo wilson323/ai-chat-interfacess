@@ -4,6 +4,8 @@ import type {
   ModelConfig,
   ModelConfigQuery,
   ModelConfigResponse,
+  ModelType,
+  ModelStatus,
 } from '@/types/model-config';
 
 // 模型配置验证模式
@@ -39,7 +41,7 @@ const modelConfigSchema = z.object({
     frequencyPenalty: z.number().min(-2).max(2),
     presencePenalty: z.number().min(-2).max(2),
     stopSequences: z.array(z.string()),
-    customParameters: z.record(z.any()),
+    customParameters: z.record(z.unknown()),
     timeout: z.number().optional(),
     retryCount: z.number().optional(),
   }),
@@ -107,16 +109,39 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     // 解析查询参数
+    // 类型安全的查询参数解析
+    const typeParam = searchParams.get('type');
+    const statusParam = searchParams.get('status');
+    const sortByParam = searchParams.get('sortBy');
+    const sortOrderParam = searchParams.get('sortOrder');
+
     const query: ModelConfigQuery = {
       search: searchParams.get('search') || undefined,
-      type: (searchParams.get('type') as any) || undefined,
-      status: (searchParams.get('status') as any) || undefined,
+      type:
+        typeParam &&
+        ['openai', 'fastgpt', 'local', 'custom', 'azure', 'anthropic'].includes(
+          typeParam
+        )
+          ? (typeParam as ModelType)
+          : undefined,
+      status:
+        statusParam &&
+        ['active', 'inactive', 'deprecated', 'testing'].includes(statusParam)
+          ? (statusParam as ModelStatus)
+          : undefined,
       provider: searchParams.get('provider') || undefined,
       category: searchParams.get('category') || undefined,
       page: parseInt(searchParams.get('page') || '1'),
       limit: parseInt(searchParams.get('limit') || '10'),
-      sortBy: (searchParams.get('sortBy') as any) || 'name',
-      sortOrder: (searchParams.get('sortOrder') as any) || 'asc',
+      sortBy:
+        sortByParam &&
+        ['name', 'createdAt', 'updatedAt', 'usageCount'].includes(sortByParam)
+          ? (sortByParam as 'name' | 'createdAt' | 'updatedAt' | 'usageCount')
+          : 'name',
+      sortOrder:
+        sortOrderParam && ['asc', 'desc'].includes(sortOrderParam)
+          ? (sortOrderParam as 'asc' | 'desc')
+          : 'asc',
     };
 
     // 过滤数据
@@ -158,7 +183,7 @@ export async function GET(request: NextRequest) {
 
     // 排序
     filteredModels.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
 
       switch (query.sortBy) {
         case 'name':
@@ -166,12 +191,12 @@ export async function GET(request: NextRequest) {
           bValue = b.name;
           break;
         case 'createdAt':
-          aValue = a.createdAt;
-          bValue = b.createdAt;
+          aValue = a.createdAt.getTime();
+          bValue = b.createdAt.getTime();
           break;
         case 'updatedAt':
-          aValue = a.updatedAt;
-          bValue = b.updatedAt;
+          aValue = a.updatedAt.getTime();
+          bValue = b.updatedAt.getTime();
           break;
         case 'usageCount':
           aValue = a.metadata.usageCount;

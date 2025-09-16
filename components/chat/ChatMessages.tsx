@@ -7,9 +7,8 @@ import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageCard } from '@/components/business/MessageCard';
-import { Message } from '@/types/message';
-import { ProcessingStep } from '@/types/message';
+import { MessageCard } from '../business/MessageCard';
+import { Message, ProcessingStep } from '../../types/message';
 import { cn } from '@/lib/utils';
 import { Loader2, AlertCircle } from 'lucide-react';
 
@@ -67,15 +66,15 @@ export function ChatMessages({
                       <div
                         className={cn(
                           'w-2 h-2 rounded-full',
-                          step.status === 'completed'
+                          step.status === 'success'
                             ? 'bg-green-500'
-                            : step.status === 'processing'
+                            : step.status === 'running'
                               ? 'bg-blue-500'
                               : 'bg-gray-300'
                         )}
                       />
                       <span className='text-sm'>{step.name}</span>
-                      {step.status === 'processing' && (
+                      {step.status === 'running' && (
                         <Loader2 className='h-3 w-3 animate-spin' />
                       )}
                     </div>

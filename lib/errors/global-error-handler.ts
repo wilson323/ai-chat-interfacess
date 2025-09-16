@@ -5,6 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import React from 'react';
+import { logger } from '@/lib/utils/logger';
 
 // 错误类型枚举
 export enum ErrorType {
@@ -34,7 +36,7 @@ export interface GlobalError {
   type: ErrorType;
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
   severity: ErrorSeverity;
   timestamp: string;
   requestId?: string;
@@ -55,7 +57,7 @@ export interface ErrorResponse {
     type: string;
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
   meta: {
     timestamp: string;
@@ -69,7 +71,7 @@ export class AppError extends Error {
   public readonly type: ErrorType;
   public readonly code: string;
   public readonly severity: ErrorSeverity;
-  public readonly details?: any;
+  public readonly details?: Record<string, unknown>;
   public readonly statusCode: number;
 
   constructor(
@@ -78,7 +80,7 @@ export class AppError extends Error {
     code: string = type,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     statusCode: number = 500,
-    details?: any
+    details?: unknown
   ) {
     super(message);
     this.name = 'AppError';
@@ -86,7 +88,7 @@ export class AppError extends Error {
     this.code = code;
     this.severity = severity;
     this.statusCode = statusCode;
-    this.details = details;
+    this.details = details ? (details as Record<string, unknown>) : undefined;
 
     // 确保堆栈跟踪正确
     if (Error.captureStackTrace) {
@@ -97,7 +99,7 @@ export class AppError extends Error {
 
 // 具体错误类
 export class ValidationError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(
       ErrorType.VALIDATION_ERROR,
       message,
@@ -146,7 +148,7 @@ export class NotFoundError extends AppError {
 }
 
 export class ConflictError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(
       ErrorType.CONFLICT_ERROR,
       message,
@@ -171,7 +173,7 @@ export class RateLimitError extends AppError {
 }
 
 export class DatabaseError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(
       ErrorType.DATABASE_ERROR,
       message,
@@ -184,7 +186,7 @@ export class DatabaseError extends AppError {
 }
 
 export class NetworkError extends AppError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(
       ErrorType.NETWORK_ERROR,
       message,
@@ -197,13 +199,30 @@ export class NetworkError extends AppError {
 }
 
 export class ExternalApiError extends AppError {
-  constructor(service: string, message: string, details?: any) {
+  constructor(
+    service: string,
+    message: string,
+    details?: Record<string, unknown>
+  ) {
     super(
       ErrorType.EXTERNAL_API_ERROR,
       `${service}: ${message}`,
       'EXTERNAL_API_ERROR',
       ErrorSeverity.MEDIUM,
       502,
+      details
+    );
+  }
+}
+
+export class InternalError extends AppError {
+  constructor(message: string, details?: unknown) {
+    super(
+      ErrorType.INTERNAL_SERVER_ERROR,
+      message,
+      'INTERNAL_ERROR',
+      ErrorSeverity.HIGH,
+      500,
       details
     );
   }
@@ -288,7 +307,7 @@ export class GlobalErrorHandler {
 
     // 处理Sequelize错误
     if (error && typeof error === 'object' && 'name' in error) {
-      const sequelizeError = error as any;
+      const sequelizeError = error as { name?: string; stack?: string };
       if (sequelizeError.name?.includes('Sequelize')) {
         return {
           type: ErrorType.DATABASE_ERROR,
@@ -356,7 +375,7 @@ export class GlobalErrorHandler {
       },
       meta: {
         timestamp: globalError.timestamp,
-        requestId: globalError.requestId,
+        requestId: globalError.requestId || 'unknown',
       },
     };
 
@@ -383,16 +402,16 @@ export class GlobalErrorHandler {
 
     switch (globalError.severity) {
       case ErrorSeverity.CRITICAL:
-        console.error('🚨 CRITICAL:', logMessage, globalError);
+        logger.error('🚨 CRITICAL:', logMessage, globalError);
         break;
       case ErrorSeverity.HIGH:
-        console.error('❌ HIGH:', logMessage, globalError);
+        logger.error('❌ HIGH:', logMessage, globalError);
         break;
       case ErrorSeverity.MEDIUM:
-        console.warn('⚠️  MEDIUM:', logMessage, globalError);
+        logger.warn('⚠️  MEDIUM:', logMessage, globalError);
         break;
       case ErrorSeverity.LOW:
-        console.info('ℹ️  LOW:', logMessage, globalError);
+        logger.info('ℹ️  LOW:', logMessage, globalError);
         break;
     }
 
@@ -416,7 +435,7 @@ export class GlobalErrorHandler {
         },
         body: JSON.stringify(globalError),
       }).catch(err => {
-        console.error('Failed to send error to monitoring service:', err);
+        logger.error('Failed to send error to monitoring service:', err);
       });
     }
   }
@@ -441,17 +460,18 @@ export class GlobalErrorHandler {
   /**
    * 获取Sequelize错误消息
    */
-  private getSequelizeErrorMessage(error: any): string {
-    if (error.parent?.code === '23505') {
+  private getSequelizeErrorMessage(error: unknown): string {
+    const err = error as { parent?: { code?: string }; message?: string };
+    if (err.parent?.code === '23505') {
       return 'Data already exists';
     }
-    if (error.parent?.code === '23503') {
+    if (err.parent?.code === '23503') {
       return 'Foreign key constraint violation';
     }
-    if (error.parent?.code === '23502') {
+    if (err.parent?.code === '23502') {
       return 'Required field is missing';
     }
-    return error.message || 'Database operation failed';
+    return err.message || 'Database operation failed';
   }
 
   /**
@@ -541,7 +561,7 @@ export function handleError(
 }
 
 // 错误边界组件（用于React组件）
-export function withErrorBoundary<T extends React.ComponentType<any>>(
+export function withErrorBoundary<T extends React.ComponentType<Record<string, unknown>>>(
   Component: T,
   fallback?: React.ComponentType<{ error: Error; resetError: () => void }>
 ) {
@@ -550,7 +570,7 @@ export function withErrorBoundary<T extends React.ComponentType<any>>(
 
     React.useEffect(() => {
       const handleError = (event: ErrorEvent) => {
-        const globalError = globalErrorHandler.normalizeError(event.error, {
+        const globalError = globalErrorHandler['normalizeError'](event.error, {
           requestId: globalErrorHandler['generateRequestId'](),
         });
         globalErrorHandler['logError'](globalError);

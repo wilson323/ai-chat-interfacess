@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { CadAnalyzerConfig } from '@/types/api/agent-config/cad-analyzer';
+import { useEffect, useState, useCallback } from 'react';
+import { CadAnalyzerConfig, CadAnalyzerModelConfig } from '@/types/api/agent-config/cad-analyzer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +22,7 @@ import {
 import { AgentProvider } from '@/context/agent-context';
 import { LanguageProvider } from '@/context/language-context';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { ErrorAlert } from '@/components/admin/shared/ErrorAlert';
 import Link from 'next/link';
 
 // 分离出配置表单组件
@@ -35,6 +36,19 @@ function CadAnalyzerConfigForm() {
   const [testResult, setTestResult] = useState<string | null>(null);
   const [showTestDialog, setShowTestDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  // 统一的错误处理函数
+  const handleError = useCallback(
+    (title: string, error: unknown) => {
+      setError(title);
+      toast({
+        title,
+        description: String(error),
+        variant: 'destructive',
+      });
+    },
+    [toast]
+  );
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -62,19 +76,14 @@ function CadAnalyzerConfigForm() {
         // 合并API返回的数据和默认值
         setConfig({ ...defaultConfig, ...data });
       } catch (e) {
-        setError('加载配置失败');
-        toast({
-          title: '加载失败',
-          description: String(e),
-          variant: 'destructive',
-        });
+        handleError('加载配置失败', e);
       } finally {
         setLoading(false);
       }
     };
 
     loadConfig();
-  }, [toast]);
+  }, [handleError]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -105,22 +114,13 @@ function CadAnalyzerConfigForm() {
         duration: 5000, // 显示5秒
       });
     } catch (e) {
-      setError('保存失败');
-      toast({
-        title: '保存失败',
-        description: String(e),
-        variant: 'destructive',
-      });
+      handleError('保存失败', e);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleTestModel = async (model: {
-    name: string;
-    apiKey: string;
-    baseUrl: string;
-  }) => {
+  const handleTestModel = async (model: CadAnalyzerModelConfig) => {
     try {
       const res = await fetch('/api/admin/cad-analyzer-config/test', {
         method: 'POST',
@@ -131,11 +131,7 @@ function CadAnalyzerConfigForm() {
       setTestResult(data.success ? '连通性正常' : `连通性异常：${data.error}`);
       setShowTestDialog(true);
     } catch (e) {
-      toast({
-        title: '测试失败',
-        description: String(e),
-        variant: 'destructive',
-      });
+      handleError('测试失败', e);
     }
   };
 
@@ -151,12 +147,7 @@ function CadAnalyzerConfigForm() {
         description: '已恢复默认配置',
       });
     } catch (e) {
-      setError('恢复默认配置失败');
-      toast({
-        title: '恢复失败',
-        description: String(e),
-        variant: 'destructive',
-      });
+      handleError('恢复默认配置失败', e);
     } finally {
       setLoading(false);
     }
@@ -192,44 +183,13 @@ function CadAnalyzerConfigForm() {
         <CardDescription>配置CAD智能体的参数、模型和API密钥</CardDescription>
       </CardHeader>
       <CardContent>
-        {error && (
-          <div className='bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 flex items-start'>
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              className='h-5 w-5 mr-2 mt-0.5 flex-shrink-0'
-              viewBox='0 0 20 20'
-              fill='currentColor'
-            >
-              <path
-                fillRule='evenodd'
-                d='M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
-                clipRule='evenodd'
-              />
-            </svg>
-            <div>{error}</div>
-          </div>
-        )}
+        {error && <ErrorAlert type='error' message={error} />}
         {success && (
-          <div className='bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 flex items-start'>
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              className='h-5 w-5 mr-2 mt-0.5 flex-shrink-0'
-              viewBox='0 0 20 20'
-              fill='currentColor'
-            >
-              <path
-                fillRule='evenodd'
-                d='M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
-                clipRule='evenodd'
-              />
-            </svg>
-            <div>
-              <p className='font-medium'>保存成功</p>
-              <p className='text-sm'>
-                CAD智能体配置已同时更新到数据库和配置文件
-              </p>
-            </div>
-          </div>
+          <ErrorAlert
+            type='success'
+            message='保存成功'
+            details='CAD智能体配置已同时更新到数据库和配置文件'
+          />
         )}
         <div className='mb-4'>
           <label className='block font-medium mb-1'>启用状态</label>

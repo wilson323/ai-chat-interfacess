@@ -1,0 +1,87 @@
+---
+alwaysApply: true
+description: 代码质量标准和检查要求
+---
+
+# 代码质量标准
+
+## 核心要求
+- 代码可读性优先，避免冗余逻辑
+- 保障代码逻辑严谨性
+- 测试优先：所有变更必须使用真实数据测试
+- 确保100%通过（覆盖率 >80%）
+- 集成钩子执行测试
+
+## 命名规范
+- 使用camelCase命名变量和函数
+- 文件使用kebab-case命名
+- 仅使用命名导出
+- 严格类型检查
+
+## 代码组织
+```typescript
+// 1. 导入语句
+import React from 'react';
+import { Button } from '@/components/ui';
+
+// 2. 类型定义
+interface ComponentProps {
+  // 属性定义
+}
+
+// 3. 组件定义
+export function Component({ ...props }: ComponentProps) {
+  // 4. 状态定义
+  const [state, setState] = useState();
+  
+  // 5. 副作用
+  useEffect(() => {
+    // 副作用逻辑
+  }, []);
+  
+  // 6. 事件处理
+  const handleEvent = () => {
+    // 事件逻辑
+  };
+  
+  // 7. 渲染
+  return (
+    <div>
+      {/* JSX内容 */}
+    </div>
+  );
+}
+```
+
+## 测试要求
+- 测试优先：先写测试，后写实现
+- 边界覆盖：覆盖正常流程、边界条件、异常情况
+- 集成测试：确保模块间正确集成
+- 真实数据测试：禁止使用模拟数据
+
+## 性能要求
+- 合理使用React.memo、useMemo、useCallback
+- 避免不必要的重渲染
+- 优化组件拆分
+- 使用虚拟化处理大列表
+
+## 安全要求
+- API密钥等敏感信息使用`.env`文件管理
+- 实施输入验证和输出编码
+- 避免硬编码敏感信息
+- 使用HTTPS和安全头
+
+## 文档要求
+- 复杂函数必须添加JSDoc注释
+- 保持README和API文档的时效性
+- 记录重要的设计决策
+- 代码变更同时更新相关文档
+
+## 禁止事项
+- ❌ 使用模拟数据、模拟服务
+- ❌ 硬编码敏感信息
+- ❌ 忽略错误处理
+- ❌ 使用any类型（除非绝对必要）
+- ❌ 代码冗余和重复
+
+参考配置文件：[package.json](mdc:package.json)

@@ -100,14 +100,19 @@ class PerformanceOptimizer {
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        if (!line) continue;
+
         const importMatch = line.match(/import\s+.*?from\s+['"]([^'"]+)['"]/);
 
-        if (importMatch) {
+        if (importMatch && importMatch[1]) {
           const importPath = importMatch[1];
           if (!imports.has(importPath)) {
             imports.set(importPath, []);
           }
-          imports.get(importPath)!.push(i + 1);
+          const existingLines = imports.get(importPath);
+          if (existingLines) {
+            existingLines.push(i + 1);
+          }
         }
       }
 
@@ -115,7 +120,7 @@ class PerformanceOptimizer {
         if (lineNumbers.length > 1) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
-            line: lineNumbers[0],
+            line: lineNumbers[0] || 1,
             type: 'bundle-size',
             severity: 'low',
             message: `重复导入 ${importPath}`,
@@ -140,9 +145,14 @@ class PerformanceOptimizer {
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        if (!line) continue;
 
         // 检查循环中的DOM操作
-        if (line.includes('for') && lines[i + 1]?.includes('document.')) {
+        if (
+          line &&
+          line.includes('for') &&
+          lines[i + 1]?.includes('document.')
+        ) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -154,7 +164,7 @@ class PerformanceOptimizer {
         }
 
         // 检查未优化的正则表达式
-        if (line.includes('new RegExp') && line.includes('+')) {
+        if (line && line.includes('new RegExp') && line.includes('+')) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -166,7 +176,7 @@ class PerformanceOptimizer {
         }
 
         // 检查深度嵌套的对象访问
-        if (line.match(/\.\w+\.\w+\.\w+\.\w+/)) {
+        if (line && line.match(/\.\w+\.\w+\.\w+\.\w+/)) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -194,9 +204,11 @@ class PerformanceOptimizer {
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        if (!line) continue;
 
         // 检查可能的内存泄漏
         if (
+          line &&
           line.includes('addEventListener') &&
           !line.includes('removeEventListener')
         ) {
@@ -212,6 +224,7 @@ class PerformanceOptimizer {
 
         // 检查大数组操作
         if (
+          line &&
           line.includes('map') &&
           line.includes('filter') &&
           line.includes('reduce')
@@ -227,7 +240,7 @@ class PerformanceOptimizer {
         }
 
         // 检查全局变量
-        if (line.includes('window.') && !line.includes('declare')) {
+        if (line && line.includes('window.') && !line.includes('declare')) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -255,9 +268,10 @@ class PerformanceOptimizer {
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        if (!line) continue;
 
         // 检查未优化的API调用
-        if (line.includes('fetch') && !line.includes('cache')) {
+        if (line && line.includes('fetch') && !line.includes('cache')) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -269,7 +283,7 @@ class PerformanceOptimizer {
         }
 
         // 检查串行API调用
-        if (line.includes('await') && lines[i + 1]?.includes('await')) {
+        if (line && line.includes('await') && lines[i + 1]?.includes('await')) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -281,7 +295,7 @@ class PerformanceOptimizer {
         }
 
         // 检查大文件上传
-        if (line.includes('FormData') && line.includes('append')) {
+        if (line && line.includes('FormData') && line.includes('append')) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -309,9 +323,10 @@ class PerformanceOptimizer {
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        if (!line) continue;
 
         // 检查图像懒加载
-        if (line.includes('<img') && !line.includes('loading=')) {
+        if (line && line.includes('<img') && !line.includes('loading=')) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -323,7 +338,7 @@ class PerformanceOptimizer {
         }
 
         // 检查图像格式
-        if (line.includes('.jpg') || line.includes('.png')) {
+        if (line && (line.includes('.jpg') || line.includes('.png'))) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -351,9 +366,14 @@ class PerformanceOptimizer {
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        if (!line) continue;
 
         // 检查N+1查询问题
-        if (line.includes('findAll') && lines[i + 1]?.includes('findByPk')) {
+        if (
+          line &&
+          line.includes('findAll') &&
+          lines[i + 1]?.includes('findByPk')
+        ) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -365,7 +385,7 @@ class PerformanceOptimizer {
         }
 
         // 检查未优化的查询
-        if (line.includes('SELECT *')) {
+        if (line && line.includes('SELECT *')) {
           this.addIssue({
             file: path.relative(this.projectRoot, file),
             line: i + 1,
@@ -378,6 +398,7 @@ class PerformanceOptimizer {
 
         // 检查缺少索引的查询
         if (
+          line &&
           line.includes('WHERE') &&
           line.includes('LIKE') &&
           line.includes('%')
@@ -476,7 +497,7 @@ class PerformanceOptimizer {
 }
 
 // 运行优化
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const optimizer = new PerformanceOptimizer();
   optimizer.runOptimization().catch(console.error);
 }

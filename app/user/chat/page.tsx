@@ -1,87 +1,80 @@
 'use client';
-import React, { useEffect } from 'react';
-import { ChatContainer } from '../../../components/chat/ChatContainerRefactored';
-import { useAgent } from '../../../context/agent-context';
-import { useChat } from '../../../hooks/useChat';
+import type { Viewport } from 'next';
+import React, { useEffect, useState } from 'react';
+import { ChatContainer } from '@/components/chat/ChatContainer';
+import { logger } from '@/lib/utils/logger';
+import { errorHandler } from '@/lib/utils/error-handler';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
+};
 
 export default function UserChatPage() {
-  // 页面级别的清理逻辑
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
+    const initialize = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        logger.chatInfo('Initializing chat page');
+
+        // 延迟加载主要组件，避免水合错误
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        setIsLoading(false);
+        logger.chatInfo('Chat page initialized successfully');
+      } catch (err) {
+        const errorInfo = errorHandler.handleChatError(err, 'UserChatPage.initialize');
+        setError(errorInfo.message);
+        setIsLoading(false);
+        logger.chatError('Failed to initialize chat page', errorInfo);
+      }
+    };
+
+    initialize();
+
     return () => {
-      // 页面卸载时的清理工作
+      logger.chatInfo('Chat page cleanup');
     };
   }, []);
 
-  const {
-    agents,
-    selectedAgent,
-    selectAgent,
-    globalVariables,
-    setGlobalVariables,
-    onSettingsClick,
-    abortCurrentRequest,
-    isRequestActive
-  } = useAgent();
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">正在加载聊天界面...</h2>
+          <p className="text-gray-600">请稍候，正在初始化聊天功能</p>
+        </div>
+      </div>
+    );
+  }
 
-  const {
-    messages,
-    input,
-    onInputChange,
-    onSendMessage,
-    onFileUpload,
-    onVoiceStart,
-    onVoiceStop,
-    uploadedFiles,
-    onRemoveFile,
-    isTyping,
-    isRecording,
-    isSending,
-    processingSteps,
-    showProcessingFlow,
-    onSelectHistory,
-    onNewChat,
-    onManageHistory,
-    onEditMessage,
-    onDeleteMessage,
-    onCopyMessage,
-    onLikeMessage,
-    onDislikeMessage
-  } = useChat();
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-red-50">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-800 mb-2">加载错误</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-sm text-gray-500">请刷新页面重试</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className='h-screen flex flex-col'>
-      <ChatContainer
-        selectedAgent={selectedAgent}
-        agents={agents || []}
-        onAgentChange={selectAgent}
-        messages={messages}
-        onEditMessage={onEditMessage}
-        onDeleteMessage={onDeleteMessage}
-        onCopyMessage={onCopyMessage}
-        onLikeMessage={onLikeMessage}
-        onDislikeMessage={onDislikeMessage}
-        input={input}
-        onInputChange={onInputChange}
-        onSendMessage={onSendMessage}
-        onFileUpload={onFileUpload}
-        onVoiceStart={onVoiceStart}
-        onVoiceStop={onVoiceStop}
-        uploadedFiles={uploadedFiles}
-        onRemoveFile={onRemoveFile}
-        isTyping={isTyping}
-        isRecording={isRecording}
-        isSending={isSending}
-        processingSteps={processingSteps}
-        showProcessingFlow={showProcessingFlow}
-        globalVariables={globalVariables}
-        onGlobalVariablesChange={setGlobalVariables}
-        onSelectHistory={onSelectHistory}
-        onNewChat={onNewChat}
-        onManageHistory={onManageHistory}
-        onSettingsClick={onSettingsClick}
-        onRequestAbort={abortCurrentRequest}
-        isRequestActive={isRequestActive}
-      />
+    <div className="h-screen flex flex-col bg-white">
+      <ChatContainer className="flex-1" />
     </div>
   );
 }

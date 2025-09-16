@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 
 export function DbAdminPanel() {
   const [schema, setSchema] = useState<any>({});
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [activeTable, setActiveTable] = useState<string>('');
   const [migrating, setMigrating] = useState(false);
   const [migrateResult, setMigrateResult] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export function DbAdminPanel() {
   const router = useRouter();
 
   const fetchSchema = async () => {
-    setLoading(true);
+    _setLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/admin/db-schema');
@@ -26,10 +26,10 @@ export function DbAdminPanel() {
       if (!res.ok) throw new Error(data.error || '获取表结构失败');
       setSchema(data);
       setActiveTable(Object.keys(data)[0] || '');
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '未知错误');
     } finally {
-      setLoading(false);
+      _setLoading(false);
     }
   };
 
@@ -43,8 +43,8 @@ export function DbAdminPanel() {
       if (!res.ok) throw new Error(data.error || '迁移失败');
       setMigrateResult(data.output || '迁移成功');
       fetchSchema();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '未知错误');
     } finally {
       setMigrating(false);
     }
@@ -61,8 +61,8 @@ export function DbAdminPanel() {
       } else {
         alert('初始化失败：' + data.error);
       }
-    } catch (e: any) {
-      alert('初始化失败：' + e.message);
+    } catch (e: unknown) {
+      alert('初始化失败：' + (e instanceof Error ? e.message : '未知错误'));
     }
   };
 
@@ -142,23 +142,25 @@ export function DbAdminPanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(fields as any).map(([field, info]: any) => (
-                    <tr key={field}>
-                      <td className='p-2 border font-mono'>{field}</td>
-                      <td className='p-2 border font-mono'>{info.type}</td>
-                      <td className='p-2 border text-center'>
-                        {info.primaryKey ? '是' : ''}
-                      </td>
-                      <td className='p-2 border text-center'>
-                        {info.allowNull ? '是' : '否'}
-                      </td>
-                      <td className='p-2 border font-mono'>
-                        {info.defaultValue === undefined
-                          ? ''
-                          : String(info.defaultValue)}
-                      </td>
-                    </tr>
-                  ))}
+                  {Object.entries(fields as Record<string, any>).map(
+                    ([field, info]: [string, any]) => (
+                      <tr key={field}>
+                        <td className='p-2 border font-mono'>{field}</td>
+                        <td className='p-2 border font-mono'>{info.type}</td>
+                        <td className='p-2 border text-center'>
+                          {info.primaryKey ? '是' : ''}
+                        </td>
+                        <td className='p-2 border text-center'>
+                          {info.allowNull ? '是' : '否'}
+                        </td>
+                        <td className='p-2 border font-mono'>
+                          {info.defaultValue === undefined
+                            ? ''
+                            : String(info.defaultValue)}
+                        </td>
+                      </tr>
+                    )
+                  )}
                 </tbody>
               </table>
             </TabsContent>

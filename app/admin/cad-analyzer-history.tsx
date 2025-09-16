@@ -51,6 +51,7 @@ export default function CadAnalyzerHistoryPage() {
   const [exportFormat, setExportFormat] = useState<string | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
 
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {

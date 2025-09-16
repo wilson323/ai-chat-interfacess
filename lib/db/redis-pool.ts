@@ -4,7 +4,9 @@
  */
 
 import { createClient, RedisClientType } from 'redis';
+// // Record is a built-in TypeScript utility type // 移除错误的Record导入，使用内置Record类型
 import { appConfig } from '@/lib/config';
+import { logger } from '@/lib/utils/logger';
 
 interface RedisStats {
   totalConnections: number;
@@ -39,15 +41,11 @@ class RedisConnectionPool {
       socket: {
         reconnectStrategy: retries => Math.min(retries * 50, 2000),
         connectTimeout: 10000,
-        commandTimeout: 5000,
-        keepAlive: 30000,
+        keepAlive: true,
       },
 
       // 连接池配置
       commandsQueueMaxLength: 1000,
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
-      lazyConnect: true,
     });
 
     this.setupEventListeners();
@@ -61,27 +59,27 @@ class RedisConnectionPool {
       this.stats.totalConnections++;
       this.stats.activeConnections++;
       this.isConnected = true;
-      console.log('Redis connection established');
+      logger.info('Redis connection established');
     });
 
     this.client.on('disconnect', () => {
       this.stats.activeConnections--;
       this.isConnected = false;
-      console.log('Redis connection closed');
+      logger.info('Redis connection closed');
     });
 
     this.client.on('error', error => {
       this.stats.errors++;
-      console.error('Redis error:', error);
+      logger.error('Redis error:', error);
     });
 
     this.client.on('ready', () => {
       this.isConnected = true;
-      console.log('Redis client ready');
+      logger.info('Redis client ready');
     });
 
     this.client.on('reconnecting', () => {
-      console.log('Redis reconnecting...');
+      logger.info('Redis reconnecting...');
     });
   }
 
@@ -104,7 +102,7 @@ class RedisConnectionPool {
     // 记录慢命令
     if (duration > 100) {
       this.stats.slowCommands++;
-      console.warn('Slow Redis command detected:', `${duration}ms`);
+      logger.warn('Slow Redis command detected:', `${duration}ms`);
     }
   }
 
@@ -149,10 +147,10 @@ class RedisConnectionPool {
       this.stats.commandsExecuted++;
       this.recordCommandTime(duration);
 
-      return result;
+      return result as T;
     } catch (error) {
       this.stats.errors++;
-      console.error(
+      logger.error(
         `Redis command failed${commandName ? ` (${commandName})` : ''}:`,
         error
       );
@@ -178,7 +176,7 @@ class RedisConnectionPool {
       } else if (options?.nx) {
         await this.client.setNX(key, value);
       } else if (options?.xx) {
-        await this.client.setXX(key, value);
+        await this.client.set(key, value, { XX: true });
       } else {
         await this.client.set(key, value);
       }
@@ -222,7 +220,7 @@ class RedisConnectionPool {
       return await this.client.expire(key, ttl);
     }, 'EXPIRE');
 
-    return result;
+    return Boolean(result);
   }
 
   /**
@@ -241,7 +239,7 @@ class RedisConnectionPool {
     await this.executeCommand(async () => {
       const args: string[] = [];
       for (const [key, value] of Object.entries(keyValuePairs)) {
-        args.push(key, value);
+        args.push(key, String(value));
       }
       await this.client.mSet(args);
     }, 'MSET');
@@ -352,7 +350,7 @@ class RedisConnectionPool {
   /**
    * 获取慢命令
    */
-  getSlowCommands(threshold: number = 100): Array<{
+  getSlowCommands(_threshold: number = 100): Array<{
     command: string;
     duration: number;
     timestamp: number;
@@ -373,9 +371,9 @@ class RedisConnectionPool {
         await this.client.connect();
       }
 
-      console.log('Redis connection pool optimized');
+      logger.info('Redis connection pool optimized');
     } catch (error) {
-      console.error('Failed to optimize Redis connection pool:', error);
+      logger.error('Failed to optimize Redis connection pool:', error);
       throw error;
     }
   }

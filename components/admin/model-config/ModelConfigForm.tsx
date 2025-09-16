@@ -2,8 +2,6 @@
 
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,63 +29,9 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Info, Settings, Zap, Shield } from 'lucide-react';
 import type {
   ModelConfigFormData,
-  ModelCapability,
   CapabilityType,
-} from '@/types/model-config';
+} from '../../../types/model-config';
 
-// 表单验证模式
-const modelConfigSchema = z.object({
-  name: z.string().min(1, '模型名称不能为空'),
-  type: z.enum(['openai', 'fastgpt', 'local', 'custom', 'azure', 'anthropic']),
-  provider: z.string().min(1, '提供商不能为空'),
-  version: z.string().min(1, '版本不能为空'),
-  status: z.enum(['active', 'inactive', 'deprecated', 'testing']),
-  capabilities: z.array(
-    z.object({
-      type: z.enum([
-        'text',
-        'image',
-        'audio',
-        'multimodal',
-        'code',
-        'function',
-      ]),
-      supported: z.boolean(),
-      maxTokens: z.number().optional(),
-      maxImages: z.number().optional(),
-      maxAudioDuration: z.number().optional(),
-      maxFileSize: z.number().optional(),
-      supportedFormats: z.array(z.string()).optional(),
-      description: z.string().optional(),
-    })
-  ),
-  parameters: z.object({
-    temperature: z.number().min(0).max(2),
-    maxTokens: z.number().min(1),
-    topP: z.number().min(0).max(1),
-    frequencyPenalty: z.number().min(-2).max(2),
-    presencePenalty: z.number().min(-2).max(2),
-    stopSequences: z.array(z.string()),
-    customParameters: z.record(z.any()),
-    timeout: z.number().optional(),
-    retryCount: z.number().optional(),
-  }),
-  metadata: z.object({
-    description: z.string().min(1, '描述不能为空'),
-    tags: z.array(z.string()),
-    category: z.string().min(1, '分类不能为空'),
-    costPerToken: z.number().min(0),
-    latency: z.number().min(0),
-    accuracy: z.number().min(0).max(1),
-    version: z.string().min(1, '版本不能为空'),
-    releaseDate: z.date().optional(),
-    documentation: z.string().optional(),
-    examples: z.array(z.string()).optional(),
-  }),
-  apiKey: z.string().optional(),
-  apiEndpoint: z.string().optional(),
-  isDefault: z.boolean(),
-});
 
 interface ModelConfigFormProps {
   initialData?: Partial<ModelConfigFormData>;
@@ -119,7 +63,6 @@ export function ModelConfigForm({
   const [newStopSequence, setNewStopSequence] = useState('');
 
   const form = useForm<ModelConfigFormData>({
-    resolver: zodResolver(modelConfigSchema),
     defaultValues: {
       name: initialData?.name || '',
       type: initialData?.type || 'openai',
@@ -162,7 +105,7 @@ export function ModelConfigForm({
 
   const addCapability = (type: CapabilityType) => {
     const currentCapabilities = form.getValues('capabilities');
-    if (!currentCapabilities.some(cap => cap.type === type)) {
+    if (!currentCapabilities.some((cap: any) => cap.type === type)) {
       form.setValue('capabilities', [
         ...currentCapabilities,
         { type, supported: true },
@@ -174,7 +117,7 @@ export function ModelConfigForm({
     const currentCapabilities = form.getValues('capabilities');
     form.setValue(
       'capabilities',
-      currentCapabilities.filter((_, i) => i !== index)
+      currentCapabilities.filter((_: any, i: number) => i !== index)
     );
   };
 
@@ -192,7 +135,7 @@ export function ModelConfigForm({
     const currentTags = form.getValues('metadata.tags');
     form.setValue(
       'metadata.tags',
-      currentTags.filter(t => t !== tag)
+      currentTags.filter((t: string) => t !== tag)
     );
   };
 
@@ -213,7 +156,7 @@ export function ModelConfigForm({
     const currentSequences = form.getValues('parameters.stopSequences');
     form.setValue(
       'parameters.stopSequences',
-      currentSequences.filter(s => s !== sequence)
+      currentSequences.filter((s: string) => s !== sequence)
     );
   };
 
@@ -464,7 +407,7 @@ export function ModelConfigForm({
                               <Input
                                 type='number'
                                 value={capability.maxTokens || ''}
-                                onChange={e => {
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                   const capabilities =
                                     form.getValues('capabilities');
                                   capabilities[index].maxTokens =
@@ -481,7 +424,7 @@ export function ModelConfigForm({
                               <Input
                                 type='number'
                                 value={capability.maxImages || ''}
-                                onChange={e => {
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                   const capabilities =
                                     form.getValues('capabilities');
                                   capabilities[index].maxImages =
@@ -525,7 +468,7 @@ export function ModelConfigForm({
                             min='0'
                             max='2'
                             {...field}
-                            onChange={e =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               field.onChange(parseFloat(e.target.value))
                             }
                           />
@@ -547,7 +490,7 @@ export function ModelConfigForm({
                           <Input
                             type='number'
                             {...field}
-                            onChange={e =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               field.onChange(parseInt(e.target.value))
                             }
                           />
@@ -573,7 +516,7 @@ export function ModelConfigForm({
                             min='0'
                             max='1'
                             {...field}
-                            onChange={e =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               field.onChange(parseFloat(e.target.value))
                             }
                           />
@@ -596,7 +539,7 @@ export function ModelConfigForm({
                             min='-2'
                             max='2'
                             {...field}
-                            onChange={e =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               field.onChange(parseFloat(e.target.value))
                             }
                           />
@@ -637,9 +580,9 @@ export function ModelConfigForm({
                   <div className='flex gap-2 mt-2'>
                     <Input
                       value={newStopSequence}
-                      onChange={e => setNewStopSequence(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStopSequence(e.target.value)}
                       placeholder='输入停止序列'
-                      onKeyPress={e => e.key === 'Enter' && addStopSequence()}
+                      onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addStopSequence()}
                     />
                     <Button type='button' onClick={addStopSequence}>
                       <Plus className='h-4 w-4' />
@@ -721,9 +664,9 @@ export function ModelConfigForm({
                   <div className='flex gap-2 mt-2'>
                     <Input
                       value={newTag}
-                      onChange={e => setNewTag(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value)}
                       placeholder='输入标签'
-                      onKeyPress={e => e.key === 'Enter' && addTag()}
+                      onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addTag()}
                     />
                     <Button type='button' onClick={addTag}>
                       <Plus className='h-4 w-4' />
@@ -763,7 +706,7 @@ export function ModelConfigForm({
                             type='number'
                             step='0.00001'
                             {...field}
-                            onChange={e =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               field.onChange(parseFloat(e.target.value))
                             }
                           />
@@ -782,7 +725,7 @@ export function ModelConfigForm({
                           <Input
                             type='number'
                             {...field}
-                            onChange={e =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               field.onChange(parseInt(e.target.value))
                             }
                           />
@@ -804,7 +747,7 @@ export function ModelConfigForm({
                             min='0'
                             max='1'
                             {...field}
-                            onChange={e =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               field.onChange(parseFloat(e.target.value))
                             }
                           />

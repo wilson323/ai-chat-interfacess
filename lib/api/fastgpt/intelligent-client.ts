@@ -3,8 +3,6 @@
  * 基于多智能体管理器，提供智能路由、自动重试和性能优化
  */
 
-import type { Agent } from '../../../types/agent';
-import type { Message } from '../../../types/message';
 import {
   FastGPTMultiAgentManager,
   type AgentConfig,
@@ -12,8 +10,8 @@ import {
   getGlobalMultiAgentManager,
   initializeMultiAgentManagerFromDB,
 } from './multi-agent-manager';
-import { simpleCacheManager } from '@/lib/cache/simple-cache';
-import { API_CONSTANTS } from '@/lib/storage/shared/constants';
+import { logger } from '@/lib/utils/logger';
+import { simpleCacheManager } from '../../cache/simple-cache';
 
 export interface IntelligentClientOptions {
   autoInitialize?: boolean;
@@ -31,11 +29,15 @@ export interface ChatRequestOptions {
   detail?: boolean;
   stream?: boolean;
   agentId?: string; // 指定智能体ID
-  variables?: Record<string, any>;
+  variables?: Record<string, string | number | boolean>;
   onStart?: () => void;
   onChunk?: (chunk: string) => void;
-  onIntermediateValue?: (value: any, eventType: string) => void;
-  onProcessingStep?: (step: any) => void;
+  onIntermediateValue?: (value: string | object, eventType: string) => void;
+  onProcessingStep?: (step: {
+    type: string;
+    description: string;
+    progress?: number;
+  }) => void;
   onError?: (error: Error) => void;
   onFinish?: () => void;
   signal?: AbortSignal;
@@ -66,7 +68,9 @@ export class FastGPTIntelligentClient {
     this.manager = getGlobalMultiAgentManager();
     this.options = {
       autoInitialize: options.autoInitialize ?? true,
-      loadBalanceStrategy: options.loadBalanceStrategy ?? { type: 'round-robin' },
+      loadBalanceStrategy: options.loadBalanceStrategy ?? {
+        type: 'round-robin',
+      },
       enableCache: options.enableCache ?? true,
       enableMetrics: options.enableMetrics ?? true,
       maxRetries: options.maxRetries ?? 3,
@@ -108,7 +112,7 @@ export class FastGPTIntelligentClient {
    */
   private async doInitialize(): Promise<void> {
     try {
-      console.log('🚀 正在初始化FastGPT智能客户端...');
+      logger.debug('🚀 正在初始化FastGPT智能客户端...');
 
       // 从数据库初始化多智能体管理器
       await initializeMultiAgentManagerFromDB();
@@ -119,9 +123,9 @@ export class FastGPTIntelligentClient {
       }
 
       this.isInitialized = true;
-      console.log('✅ FastGPT智能客户端初始化完成');
+      logger.debug('✅ FastGPT智能客户端初始化完成');
     } catch (error) {
-      console.error('❌ FastGPT智能客户端初始化失败:', error);
+      logger.error('❌ FastGPT智能客户端初始化失败:', error);
       throw error;
     }
   }
@@ -130,7 +134,10 @@ export class FastGPTIntelligentClient {
    * 流式聊天
    */
   async streamChat(
-    messages: any[],
+    messages: Array<{
+      role: 'system' | 'user' | 'assistant';
+      content: string;
+    }>,
     options: ChatRequestOptions = {}
   ): Promise<{ agentId: string; response: Promise<void> }> {
     const startTime = Date.now();
@@ -169,7 +176,8 @@ export class FastGPTIntelligentClient {
 
       // 记录智能体使用情况
       if (result.agentId) {
-        this.metrics.agentUsage[result.agentId] = (this.metrics.agentUsage[result.agentId] || 0) + 1;
+        this.metrics.agentUsage[result.agentId] =
+          (this.metrics.agentUsage[result.agentId] || 0) + 1;
       }
 
       // 包装响应以记录指标
@@ -178,7 +186,7 @@ export class FastGPTIntelligentClient {
           const responseTime = Date.now() - startTime;
           this.updateMetrics('success', responseTime);
         })
-        .catch((error) => {
+        .catch(error => {
           this.updateMetrics('error');
           throw error;
         });
@@ -198,7 +206,10 @@ export class FastGPTIntelligentClient {
   /**
    * 初始化聊天会话
    */
-  async initializeChat(agentId?: string, chatId?: string): Promise<any> {
+  async initializeChat(
+    agentId?: string,
+    _chatId?: string
+  ): Promise<Record<string, unknown>> {
     try {
       // 确保已初始化
       if (!this.isInitialized) {
@@ -213,10 +224,10 @@ export class FastGPTIntelligentClient {
         client = optimal.client;
       }
 
-      return await client.initializeChat(chatId);
+      return await client.initializeChat(_chatId) as unknown as Record<string, unknown>;
     } catch (error) {
       if (this.options.fallbackToOffline) {
-        return this.generateFallbackInitializeResponse(agentId, chatId);
+        return this.generateFallbackInitializeResponse(agentId, _chatId) as Record<string, unknown>;
       }
       throw error;
     }
@@ -227,7 +238,7 @@ export class FastGPTIntelligentClient {
    */
   async getQuestionSuggestions(
     agentId?: string,
-    chatId?: string,
+    _chatId?: string,
     customConfig?: {
       open?: boolean;
       model?: string;
@@ -250,7 +261,7 @@ export class FastGPTIntelligentClient {
 
       return await client.getQuestionSuggestions(customConfig);
     } catch (error) {
-      console.warn('获取问题建议失败:', error);
+      logger.warn('获取问题建议失败:', error);
       return this.getDefaultSuggestions();
     }
   }
@@ -267,7 +278,7 @@ export class FastGPTIntelligentClient {
 
       return this.manager.getAllAgentConfigs().filter(agent => agent.isEnabled);
     } catch (error) {
-      console.error('获取可用智能体失败:', error);
+      logger.error('获取可用智能体失败:', error);
       return [];
     }
   }
@@ -275,14 +286,16 @@ export class FastGPTIntelligentClient {
   /**
    * 获取智能体指标
    */
-  async getAgentMetrics(agentId?: string): Promise<Record<string, any> | undefined> {
+  async getAgentMetrics(
+    agentId?: string
+  ): Promise<Record<string, unknown> | undefined> {
     try {
       if (agentId) {
-        return this.manager.getAgentMetrics(agentId);
+        return this.manager.getAgentMetrics(agentId) as unknown as Record<string, unknown>;
       }
       return this.manager.getAllMetrics();
     } catch (error) {
-      console.error('获取智能体指标失败:', error);
+      logger.error('获取智能体指标失败:', error);
       return undefined;
     }
   }
@@ -316,7 +329,7 @@ export class FastGPTIntelligentClient {
       }
       return await this.manager.healthCheck();
     } catch (error) {
-      console.error('健康检查失败:', error);
+      logger.error('健康检查失败:', error);
       return {};
     }
   }
@@ -330,15 +343,14 @@ export class FastGPTIntelligentClient {
       await this.manager.destroy();
 
       // 重新初始化
-      resetGlobalMultiAgentManager();
       this.manager = getGlobalMultiAgentManager();
 
       // 重新加载配置
       await initializeMultiAgentManagerFromDB();
 
-      console.log('✅ 智能体配置重新加载完成');
+      logger.debug('✅ 智能体配置重新加载完成');
     } catch (error) {
-      console.error('重新加载智能体配置失败:', error);
+      logger.error('重新加载智能体配置失败:', error);
       throw error;
     }
   }
@@ -351,9 +363,9 @@ export class FastGPTIntelligentClient {
       await this.manager.destroy();
       this.isInitialized = false;
       this.initializationPromise = undefined;
-      console.log('✅ FastGPT智能客户端已销毁');
+      logger.debug('✅ FastGPT智能客户端已销毁');
     } catch (error) {
-      console.error('销毁智能客户端失败:', error);
+      logger.error('销毁智能客户端失败:', error);
     }
   }
 
@@ -363,7 +375,7 @@ export class FastGPTIntelligentClient {
    * 从缓存获取响应
    */
   private async getFromCache(
-    messages: any[],
+    messages: unknown[],
     agentId?: string
   ): Promise<string | null> {
     try {
@@ -373,17 +385,19 @@ export class FastGPTIntelligentClient {
       const cacheKey = {
         agentId: agentId || 'auto',
         chatId: 'default',
-        messageId: this.hashMessage(lastMessage.content),
+        messageId: this.hashMessage(String((lastMessage as Record<string, unknown>).content || '')),
         userId: 'anonymous',
       };
 
-      const cached = await simpleCacheManager.get<any>(`${cacheKey.agentId}:${cacheKey.chatId}:${cacheKey.messageId}`);
+      const cached = await simpleCacheManager.get<Record<string, unknown>>(
+        `${cacheKey.agentId}:${cacheKey.chatId}:${cacheKey.messageId}`
+      );
       if (cached && this.isValidCache(cached)) {
-        console.log('🎯 智能客户端缓存命中');
-        return cached.response;
+        logger.debug('🎯 智能客户端缓存命中');
+        return cached.response as string | null;
       }
     } catch (error) {
-      console.warn('缓存查询失败:', error);
+      logger.warn('缓存查询失败:', error);
     }
     return null;
   }
@@ -395,20 +409,24 @@ export class FastGPTIntelligentClient {
     cachedResponse: string,
     options: ChatRequestOptions
   ): { agentId: string; response: Promise<void> } {
-    const response = new Promise<void>((resolve) => {
+    const response = new Promise<void>(resolve => {
       if (options.onStart) options.onStart();
+      let chunks: string[] = [];
       if (options.onChunk) {
         // 模拟流式输出
-        const chunks = this.splitIntoChunks(cachedResponse, 10);
+        chunks = this.splitIntoChunks(cachedResponse, 10);
         chunks.forEach((chunk, index) => {
           setTimeout(() => options.onChunk!(chunk), index * 50);
         });
       }
       if (options.onFinish) {
-        setTimeout(() => {
-          options.onFinish();
-          resolve();
-        }, chunks.length * 50 + 100);
+        setTimeout(
+          () => {
+            options.onFinish?.();
+            resolve();
+          },
+          chunks.length * 50 + 100
+        );
       }
     });
 
@@ -419,8 +437,8 @@ export class FastGPTIntelligentClient {
    * 智能选择最佳智能体
    */
   private async selectBestAgent(
-    messages: any[],
-    options: ChatRequestOptions
+    _messages: unknown[],
+    _options: ChatRequestOptions
   ): Promise<string | undefined> {
     try {
       const availableAgents = await this.getAvailableAgents();
@@ -430,13 +448,13 @@ export class FastGPTIntelligentClient {
 
       // 简单的智能选择策略
       // 可以根据查询内容、对话历史、智能体专长等进行选择
-      const lastMessage = messages[messages.length - 1];
-      const query = lastMessage?.content || '';
+      const lastMessage = _messages[_messages.length - 1];
+      const query = String((lastMessage as Record<string, unknown>)?.content || '');
 
       // 基于关键词匹配选择智能体
       for (const agent of availableAgents) {
         if (this.isAgentSuitableForQuery(agent, query)) {
-          console.log(`🎯 智能选择智能体: ${agent.name} (${agent.id})`);
+          logger.debug(`🎯 智能选择智能体: ${agent.name} (${agent.id})`);
           return agent.id;
         }
       }
@@ -444,7 +462,7 @@ export class FastGPTIntelligentClient {
       // 默认返回第一个可用智能体
       return availableAgents[0].id;
     } catch (error) {
-      console.warn('智能选择智能体失败:', error);
+      logger.warn('智能选择智能体失败:', error);
       return undefined;
     }
   }
@@ -456,11 +474,9 @@ export class FastGPTIntelligentClient {
     const lowerQuery = query.toLowerCase();
 
     // 基于系统提示词和描述进行匹配
-    const contexts = [
-      agent.systemPrompt,
-      agent.welcomeText,
-      agent.name,
-    ].join(' ').toLowerCase();
+    const contexts = [agent.systemPrompt, agent.welcomeText, agent.name]
+      .join(' ')
+      .toLowerCase();
 
     // 简单的关键词匹配逻辑
     // 可以根据业务需求扩展更复杂的匹配算法
@@ -469,7 +485,10 @@ export class FastGPTIntelligentClient {
     };
 
     for (const [category, words] of Object.entries(keywords)) {
-      if (words.some(word => lowerQuery.includes(word)) && contexts.includes(category)) {
+      if (
+        Array.isArray(words) && words.some((word: string) => lowerQuery.includes(word)) &&
+        contexts.includes(category)
+      ) {
         return true;
       }
     }
@@ -481,14 +500,14 @@ export class FastGPTIntelligentClient {
    * 处理回退响应
    */
   private async handleFallbackResponse(
-    messages: any[],
+    _messages: unknown[],
     options: ChatRequestOptions,
     error: Error
   ): Promise<{ agentId: string; response: Promise<void> }> {
-    console.warn('🔄 使用回退响应模式:', error.message);
+    logger.warn('🔄 使用回退响应模式:', error.message);
 
     const fallbackMessage = this.generateFallbackMessage(error);
-    const response = new Promise<void>((resolve) => {
+    const response = new Promise<void>(resolve => {
       if (options.onStart) options.onStart();
       if (options.onChunk) options.onChunk(fallbackMessage);
       if (options.onFinish) {
@@ -520,11 +539,14 @@ export class FastGPTIntelligentClient {
   /**
    * 生成回退初始化响应
    */
-  private generateFallbackInitializeResponse(agentId?: string, chatId?: string): any {
+  private generateFallbackInitializeResponse(
+    _agentId?: string,
+    _chatId?: string
+  ): Record<string, unknown> {
     return {
       code: 200,
       data: {
-        chatId: chatId || `fallback_${Date.now()}`,
+        chatId: _chatId || `fallback_${Date.now()}`,
         appId: 'fallback',
         variables: {},
         app: {
@@ -576,10 +598,10 @@ export class FastGPTIntelligentClient {
    */
   private async warmupCache(): Promise<void> {
     try {
-      console.log('🔥 预热智能客户端缓存...');
+      logger.debug('🔥 预热智能客户端缓存...');
       // 预热逻辑可以根据需要实现
     } catch (error) {
-      console.warn('缓存预热失败:', error);
+      logger.warn('缓存预热失败:', error);
     }
   }
 
@@ -600,7 +622,8 @@ export class FastGPTIntelligentClient {
       case 'success':
         this.metrics.successfulRequests++;
         if (responseTime) {
-          this.metrics.averageResponseTime = this.calculateAverageResponseTime(responseTime);
+          this.metrics.averageResponseTime =
+            this.calculateAverageResponseTime(responseTime);
         }
         break;
 
@@ -614,9 +637,10 @@ export class FastGPTIntelligentClient {
     }
 
     // 计算错误率
-    this.metrics.errorRate = this.metrics.totalRequests > 0
-      ? this.metrics.failedRequests / this.metrics.totalRequests
-      : 0;
+    this.metrics.errorRate =
+      this.metrics.totalRequests > 0
+        ? this.metrics.failedRequests / this.metrics.totalRequests
+        : 0;
   }
 
   /**
@@ -652,7 +676,7 @@ export class FastGPTIntelligentClient {
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return Math.abs(hash).toString(36);
@@ -672,10 +696,11 @@ export class FastGPTIntelligentClient {
   /**
    * 检查缓存是否有效
    */
-  private isValidCache(cached: any): boolean {
+  private isValidCache(cached: unknown): boolean {
     const now = Date.now();
-    const age = now - cached.timestamp;
-    return age < cached.ttl * 1000;
+    const cachedData = cached as Record<string, unknown>;
+    const age = now - Number(cachedData.timestamp || 0);
+    return age < Number(cachedData.ttl || 0) * 1000;
   }
 }
 

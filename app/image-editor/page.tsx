@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import NextImage from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,9 +44,15 @@ export default function ImageEditorPage() {
     }
   };
 
-  const handleSave = (imageData: string) => {
+  const handleSave = (file: File | Blob, _meta: { marks: { x: number; y: number }[] }) => {
     // 保存图像逻辑
-    setImageHistory(prev => [...prev, imageData]);
+    // 将Blob转换为DataURL
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const imageData = e.target?.result as string;
+      setImageHistory(prev => [...prev, imageData]);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUndo = () => {
@@ -71,7 +78,7 @@ export default function ImageEditorPage() {
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-4'>
               <Button variant='ghost' size='icon' onClick={() => router.back()}>
-                <ArrowLeft className='h-4 w-4' />
+                <ArrowLeft className='h-4 w-4' aria-label='返回' />
               </Button>
               <div>
                 <h1 className='text-2xl font-bold'>AI图像编辑器</h1>
@@ -81,15 +88,15 @@ export default function ImageEditorPage() {
 
             <div className='flex items-center gap-2'>
               <Button variant='outline' size='sm' onClick={handleUndo}>
-                <RotateCcw className='h-4 w-4 mr-2' />
+                <RotateCcw className='h-4 w-4 mr-2' aria-label='撤销' />
                 撤销
               </Button>
               <Button variant='outline' size='sm' onClick={handleRedo}>
-                <RotateCw className='h-4 w-4 mr-2' />
+                <RotateCw className='h-4 w-4 mr-2' aria-label='重做' />
                 重做
               </Button>
               <Button size='sm'>
-                <Download className='h-4 w-4 mr-2' />
+                <Download className='h-4 w-4 mr-2' aria-label='导出' />
                 导出
               </Button>
             </div>
@@ -111,7 +118,7 @@ export default function ImageEditorPage() {
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Upload className='h-5 w-5' />
+                  <Upload className='h-5 w-5' aria-label='上传' />
                   上传图像
                 </CardTitle>
               </CardHeader>
@@ -144,10 +151,13 @@ export default function ImageEditorPage() {
                   <div className='mt-4'>
                     <Label>预览图像</Label>
                     <div className='mt-2 border rounded-lg p-4'>
-                      <img
+                      <NextImage
                         src={currentImage}
-                        alt='预览'
+                        alt="编辑图像预览"
+                        width={400}
+                        height={300}
                         className='max-w-full h-auto max-h-64 mx-auto'
+                        style={{ objectFit: 'contain' }}
                       />
                     </div>
                   </div>
@@ -161,7 +171,7 @@ export default function ImageEditorPage() {
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Image className='h-5 w-5' />
+                  <Image className='h-5 w-5' aria-label='图像' />
                   图像编辑
                 </CardTitle>
               </CardHeader>
@@ -170,11 +180,10 @@ export default function ImageEditorPage() {
                   <ImageEditor
                     onSave={handleSave}
                     referenceImageUrl={referenceUrl}
-                    initialImage={currentImage}
                   />
                 ) : (
                   <div className='text-center py-12'>
-                    <Image className='h-12 w-12 mx-auto text-gray-400 mb-4' />
+                    <Image className='h-12 w-12 mx-auto text-gray-400 mb-4' aria-label='图像' />
                     <p className='text-gray-600 mb-4'>请先上传图像开始编辑</p>
                     <Button onClick={() => setActiveTab('upload')}>
                       上传图像
@@ -190,7 +199,7 @@ export default function ImageEditorPage() {
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
               <Card className='cursor-pointer hover:shadow-md transition-shadow'>
                 <CardContent className='p-4 text-center'>
-                  <Crop className='h-8 w-8 mx-auto mb-2 text-blue-600' />
+                  <Crop className='h-8 w-8 mx-auto mb-2 text-blue-600' aria-label='裁剪' />
                   <h3 className='font-medium'>裁剪</h3>
                   <p className='text-sm text-gray-600'>裁剪图像区域</p>
                 </CardContent>
@@ -198,7 +207,7 @@ export default function ImageEditorPage() {
 
               <Card className='cursor-pointer hover:shadow-md transition-shadow'>
                 <CardContent className='p-4 text-center'>
-                  <ZoomIn className='h-8 w-8 mx-auto mb-2 text-green-600' />
+                  <ZoomIn className='h-8 w-8 mx-auto mb-2 text-green-600' aria-label='缩放' />
                   <h3 className='font-medium'>缩放</h3>
                   <p className='text-sm text-gray-600'>调整图像大小</p>
                 </CardContent>
@@ -206,7 +215,7 @@ export default function ImageEditorPage() {
 
               <Card className='cursor-pointer hover:shadow-md transition-shadow'>
                 <CardContent className='p-4 text-center'>
-                  <RotateCw className='h-8 w-8 mx-auto mb-2 text-orange-600' />
+                  <RotateCw className='h-8 w-8 mx-auto mb-2 text-orange-600' aria-label='旋转' />
                   <h3 className='font-medium'>旋转</h3>
                   <p className='text-sm text-gray-600'>旋转图像角度</p>
                 </CardContent>
@@ -214,7 +223,7 @@ export default function ImageEditorPage() {
 
               <Card className='cursor-pointer hover:shadow-md transition-shadow'>
                 <CardContent className='p-4 text-center'>
-                  <Type className='h-8 w-8 mx-auto mb-2 text-purple-600' />
+                  <Type className='h-8 w-8 mx-auto mb-2 text-purple-600' aria-label='文字' />
                   <h3 className='font-medium'>文字</h3>
                   <p className='text-sm text-gray-600'>添加文字水印</p>
                 </CardContent>
@@ -227,7 +236,7 @@ export default function ImageEditorPage() {
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
               <Card className='cursor-pointer hover:shadow-md transition-shadow'>
                 <CardContent className='p-4 text-center'>
-                  <Palette className='h-8 w-8 mx-auto mb-2 text-pink-600' />
+                  <Palette className='h-8 w-8 mx-auto mb-2 text-pink-600' aria-label='滤镜' />
                   <h3 className='font-medium'>滤镜</h3>
                   <p className='text-sm text-gray-600'>应用各种滤镜效果</p>
                 </CardContent>
@@ -235,7 +244,7 @@ export default function ImageEditorPage() {
 
               <Card className='cursor-pointer hover:shadow-md transition-shadow'>
                 <CardContent className='p-4 text-center'>
-                  <Shapes className='h-8 w-8 mx-auto mb-2 text-indigo-600' />
+                  <Shapes className='h-8 w-8 mx-auto mb-2 text-indigo-600' aria-label='形状' />
                   <h3 className='font-medium'>形状</h3>
                   <p className='text-sm text-gray-600'>添加几何形状</p>
                 </CardContent>
@@ -243,7 +252,7 @@ export default function ImageEditorPage() {
 
               <Card className='cursor-pointer hover:shadow-md transition-shadow'>
                 <CardContent className='p-4 text-center'>
-                  <ZoomOut className='h-8 w-8 mx-auto mb-2 text-red-600' />
+                  <ZoomOut className='h-8 w-8 mx-auto mb-2 text-red-600' aria-label='模糊' />
                   <h3 className='font-medium'>模糊</h3>
                   <p className='text-sm text-gray-600'>应用模糊效果</p>
                 </CardContent>
@@ -251,7 +260,7 @@ export default function ImageEditorPage() {
 
               <Card className='cursor-pointer hover:shadow-md transition-shadow'>
                 <CardContent className='p-4 text-center'>
-                  <Image className='h-8 w-8 mx-auto mb-2 text-teal-600' />
+                  <Image className='h-8 w-8 mx-auto mb-2 text-teal-600' aria-label='AI增强' />
                   <h3 className='font-medium'>AI增强</h3>
                   <p className='text-sm text-gray-600'>AI智能图像增强</p>
                 </CardContent>

@@ -4,17 +4,17 @@ import sequelize from '@/lib/db/sequelize';
 
 const ENABLED = process.env.DB_SCHEMA_APPROVAL_ENABLED === 'true';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const approvals = await DbSchemaApproval.findAll({
     order: [['createdAt', 'DESC']],
   });
   return NextResponse.json({ approvals });
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   if (!ENABLED)
     return NextResponse.json({ error: '审批流未启用' }, { status: 403 });
-  const { action, sql, requester } = await req.json();
+  const { action, sql, requester } = await _req.json();
   if (!action || !sql || !requester)
     return NextResponse.json({ error: '参数不全' }, { status: 400 });
   const approval = await DbSchemaApproval.create({
@@ -28,10 +28,10 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ approval });
 }
 
-export async function PUT(req: NextRequest) {
+export async function PUT(_req: NextRequest) {
   if (!ENABLED)
     return NextResponse.json({ error: '审批流未启用' }, { status: 403 });
-  const { id, approve, approver } = await req.json();
+  const { id, approve, approver } = await _req.json();
   const approval = await DbSchemaApproval.findByPk(id);
   if (!approval)
     return NextResponse.json({ error: '未找到审批请求' }, { status: 404 });

@@ -1,28 +1,26 @@
 'use client';
 
-import { DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenuTrigger } from './ui/dropdown-menu';
 
-import { Button } from '@/components/ui/button';
-import { useAgent } from '@/context/agent-context';
-import { History, Check, ChevronDown, Bot, Globe } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
+import { useAgent } from '../context/agent-context';
+import { History, ChevronDown, Bot, Plus } from 'lucide-react';
+import { cn } from '../lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { useLanguage } from '@/context/language-context';
-import { useMobile } from '@/hooks/use-mobile';
+} from './ui/dropdown-menu';
+import { useLanguage } from '../context/language-context';
 
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ThemeToggle } from './theme-toggle';
+import { ThemeSwitcher } from './theme/theme-switcher';
 
 // Add isAdmin prop to the component
 export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
   const { selectedAgent, agents, selectAgent } = useAgent();
-  const { language, setLanguage, availableLanguages, t } = useLanguage();
-  const isMobile = useMobile();
+  const { t } = useLanguage();
 
   return (
     <header className='h-16 border-b bg-background/80 backdrop-blur-xl flex items-center justify-between px-2 sm:px-4 fixed top-0 left-0 right-0 z-30'>
@@ -91,7 +89,7 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
         )}
       </div>
 
-      <div className='fixed flex items-center gap-3 top-[0.85rem] right-[0.5rem] z-30'>
+      <div className='fixed flex items-center gap-2 top-[0.85rem] right-[0.5rem] z-30'>
         {/* 历史按钮 */}
         <Button
           variant='ghost'
@@ -105,7 +103,12 @@ export function Header({ isAdmin = false }: { isAdmin?: boolean }) {
           <History className='h-4 sm:h-5 w-4 sm:w-5' />
         </Button>
 
-        {/* 主题切换按钮 */}
+        {/* Lovart主题切换器 */}
+        <div className='hidden sm:block'>
+          <ThemeSwitcher size="sm" showPreview={false} />
+        </div>
+
+        {/* 传统主题切换按钮 */}
         <div className='flex items-center justify-center h-8 sm:h-9 w-8 sm:w-9'>
           <ThemeToggle />
         </div>

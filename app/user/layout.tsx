@@ -3,7 +3,6 @@ import '../globals.css';
 import { ThemeProvider } from '../../components/theme-provider';
 import { ReactNode } from 'react';
 import { UserProvider } from '../../context/user-context';
-import Link from 'next/link';
 import { AgentProvider } from '../../context/agent-context';
 import { LanguageProvider } from '../../context/language-context';
 import { Layout } from '../../components/layout';

@@ -1,5 +1,29 @@
+import { MemoryAgentModel } from '../../../lib/storage/memory-storage';
 import { NextResponse } from 'next/server';
-import { MemoryAgentModel } from '@/lib/storage/memory-storage';
+
+// 智能体数据接口定义
+interface AgentData {
+  id: string | number;
+  name: string;
+  description?: string;
+  type: string;
+  iconType?: string;
+  avatar?: string;
+  order?: number;
+  isPublished: boolean;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  multimodalModel?: string;
+  supportsStream?: boolean;
+  supportsDetail?: boolean;
+  globalVariables?: string;
+  welcomeText?: string;
+  apiKey?: string;
+  appId?: string;
+  apiUrl?: string;
+  updatedAt?: Date | string;
+}
 
 // 获取所有已发布的智能体列表（用户端）
 export async function GET() {
@@ -9,12 +33,12 @@ export async function GET() {
       where: { isPublished: true },
       order: [
         ['order', 'ASC'],
-        ['updatedAt', 'DESC'],
+        ['id', 'DESC'], // 使用id作为后备排序字段
       ],
     });
 
     // 处理智能体数据，分离FastGPT和自研智能体
-    const processedAgents = agents.map((a: any) => {
+    const processedAgents = agents.map((a: AgentData) => {
       const baseAgent = {
         id: String(a.id),
         name: a.name,
@@ -30,7 +54,9 @@ export async function GET() {
         multimodalModel: a.multimodalModel ?? '',
         supportsStream: a.supportsStream ?? true,
         supportsDetail: a.supportsDetail ?? true,
-        globalVariables: a.globalVariables ? JSON.parse(a.globalVariables) : [],
+        globalVariables: a.globalVariables && a.globalVariables.trim() !== ''
+          ? JSON.parse(a.globalVariables)
+          : [],
         welcomeText: a.welcomeText ?? '',
       };
 
@@ -56,18 +82,23 @@ export async function GET() {
           // 自研智能体特定的配置
           selfBuiltConfig: {
             endpoint: `/api/${a.type}/analyze`,
-            supportsFileUpload: ['image-editor', 'cad-analyzer'].includes(a.type),
-            supportedFormats: a.type === 'image-editor'
-              ? ['jpg', 'jpeg', 'png', 'webp', 'gif']
-              : a.type === 'cad-analyzer'
-              ? ['jpg', 'jpeg', 'png', 'dwg', 'dxf', 'pdf']
-              : [],
+            supportsFileUpload: ['image-editor', 'cad-analyzer'].includes(
+              a.type
+            ),
+            supportedFormats:
+              a.type === 'image-editor'
+                ? ['jpg', 'jpeg', 'png', 'webp', 'gif']
+                : a.type === 'cad-analyzer'
+                  ? ['jpg', 'jpeg', 'png', 'dwg', 'dxf', 'pdf']
+                  : [],
           },
         };
       }
     });
 
-    console.log(`返回 ${processedAgents.length} 个已发布智能体 (FastGPT: ${processedAgents.filter(a => a.type === 'fastgpt').length}, 自研: ${processedAgents.filter(a => a.type !== 'fastgpt').length})`);
+    console.log(
+      `返回 ${processedAgents.length} 个已发布智能体 (FastGPT: ${processedAgents.filter(a => a.type === 'fastgpt').length}, 自研: ${processedAgents.filter(a => a.type !== 'fastgpt').length})`
+    );
 
     return NextResponse.json({ success: true, data: processedAgents });
   } catch (error) {

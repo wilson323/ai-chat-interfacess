@@ -1,4 +1,4 @@
-import { Agent } from '@/types/agent';
+import { Agent } from '../../types/agent';
 
 const API_URL = '/api/agent-config';
 

@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand';
+// Removed invalid typescript import
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import type { Agent, Message } from '@/types';
@@ -50,7 +51,7 @@ interface AppState {
   };
 
   // 全局变量
-  globalVariables: Record<string, any>;
+  globalVariables: Record<string, unknown>;
 
   // 语音状态
   voice: {
@@ -95,8 +96,8 @@ interface AppState {
   setAbortController: (controller: AbortController | null) => void;
 
   // Actions - 全局变量相关
-  setGlobalVariables: (variables: Record<string, any>) => void;
-  updateGlobalVariable: (key: string, value: any) => void;
+  setGlobalVariables: (variables: Record<string, unknown>) => void;
+  updateGlobalVariable: (key: string, value: unknown) => void;
   clearGlobalVariables: () => void;
 
   // Actions - 语音相关
@@ -112,7 +113,7 @@ interface AppState {
  */
 export const useAppStore = create<AppState>()(
   persist(
-    immer((set, get) => ({
+    immer((set /*, get*/ ) => ({
       // 初始状态
       user: {
         id: null,
@@ -196,7 +197,7 @@ export const useAppStore = create<AppState>()(
           if (index !== -1) {
             Object.assign(state.agents.list[index], agent);
           }
-          if (state.agents.selected?.id === agent.id) {
+          if (state.agents.selected && state.agents.selected.id === agent.id) {
             Object.assign(state.agents.selected, agent);
           }
         }),

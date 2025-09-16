@@ -311,7 +311,7 @@ class SecurityScanner {
   /**
    * 扫描跨站脚本攻击
    */
-  private scanCrossSiteScripting(code: string, filePath: string): void {
+  private scanCrossSiteScripting(_code: string, _filePath: string): void {
     // 已在scanXSS中处理
   }
 

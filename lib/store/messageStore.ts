@@ -1,11 +1,12 @@
 import { create } from 'zustand';
+// Record is a built-in TypeScript utility type, no need to import
 import { persist } from 'zustand/middleware';
 import {
   loadMessagesFromStorage,
   saveMessagesToStorage,
-} from '@/lib/storage/index';
-import type { Message } from '@/types/message';
-import type { ConversationAgentType } from '@/types/agent';
+} from '../storage/index';
+import type { Message } from '../../types/message';
+import type { ConversationAgentType } from '../../types/agent';
 
 interface MessageState {
   messages: Record<string, Message[]>; // chatId -> messages
@@ -16,7 +17,7 @@ interface MessageState {
 
 export const useMessageStore = create<MessageState>()(
   persist<MessageState>(
-    (set, get) => ({
+    (set, _get) => ({
       messages: {},
       loadMessages: (chatId: ConversationAgentType) => {
         const loaded = loadMessagesFromStorage(chatId) ?? [];

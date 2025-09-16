@@ -2,7 +2,7 @@
 
 import { Layout, Button } from 'antd';
 import { MenuOutlined, PlusOutlined, HistoryOutlined } from '@ant-design/icons';
-import { cn } from '@/lib/utils';
+import { cn } from '../lib/utils';
 
 interface HeaderNavProps {
   onMenuClick: () => void;

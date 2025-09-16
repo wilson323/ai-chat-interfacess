@@ -60,11 +60,14 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('获取Redis统计信息失败:', error);
 
-    return NextResponse.json({
-      success: false,
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -78,9 +81,12 @@ export async function GET(request: NextRequest) {
  * - flush: 清空所有缓存
  */
 export async function POST(request: NextRequest) {
+  let operation: string | undefined;
+
   try {
     const body = await request.json();
-    const { operation, params = {} } = body;
+    const { operation: op, params = {} } = body;
+    operation = op;
 
     let result;
 
@@ -109,7 +115,7 @@ export async function POST(request: NextRequest) {
         result = {
           success: warmupResult,
           message: `已预热 ${items.length} 个缓存项`,
-          itemsCount: items.length
+          itemsCount: items.length,
         };
         break;
 
@@ -142,11 +148,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('执行Redis维护操作失败:', error);
 
-    return NextResponse.json({
-      success: false,
-      operation: body.operation,
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 400 });
+    return NextResponse.json(
+      {
+        success: false,
+        operation: (error as any).operation || 'unknown',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 400 }
+    );
   }
 }

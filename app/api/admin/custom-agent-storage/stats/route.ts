@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCustomAgentStorageStats } from '@/lib/storage/features/management/custom-agent-management';
 import { ErrorHandler } from '@/lib/utils/error-handler';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const stats = await getCustomAgentStorageStats();
 
@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     const standardError = ErrorHandler.handle(error, {
+      context: 'getCustomAgentStorageStats',
       operation: 'getCustomAgentStorageStats',
     });
     const response = ErrorHandler.toApiResponse(standardError, true);

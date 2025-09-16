@@ -14,8 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
-import { Agent } from '@/types/agent';
-import { Bot, Settings, Eye, EyeOff, Edit, Trash2 } from 'lucide-react';
+import { Agent } from '../../types/agent';
+import { Bot, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AgentCardProps {
@@ -81,46 +81,40 @@ export function AgentCard({
 
       <CardContent className='pt-0'>
         <div className='space-y-2'>
-          {agent.config?.model && (
-            <div className='text-sm'>
-              <span className='font-medium'>Model:</span> {agent.config.model}
-            </div>
-          )}
-
-          {agent.config?.temperature && (
+          {agent.temperature && (
             <div className='text-sm'>
               <span className='font-medium'>Temperature:</span>{' '}
-              {agent.config.temperature}
+              {agent.temperature}
             </div>
           )}
 
-          {agent.config?.maxTokens && (
+          {agent.maxTokens && (
             <div className='text-sm'>
               <span className='font-medium'>Max Tokens:</span>{' '}
-              {agent.config.maxTokens}
+              {agent.maxTokens}
             </div>
           )}
 
           <div className='flex items-center space-x-4 text-sm'>
-            {agent.config?.supportsFileUpload && (
+            {agent.supportsFileUpload && (
               <Badge variant='outline' className='text-xs'>
                 File Upload
               </Badge>
             )}
 
-            {agent.config?.supportsImageUpload && (
+            {agent.supportsImageUpload && (
               <Badge variant='outline' className='text-xs'>
                 Image Upload
               </Badge>
             )}
 
-            {agent.config?.supportsVoiceInput && (
+            {agent.config?.features?.voiceInput && (
               <Badge variant='outline' className='text-xs'>
                 Voice Input
               </Badge>
             )}
 
-            {agent.config?.supportsVoiceOutput && (
+            {agent.config?.features?.voiceOutput && (
               <Badge variant='outline' className='text-xs'>
                 Voice Output
               </Badge>

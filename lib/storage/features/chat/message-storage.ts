@@ -1,7 +1,8 @@
 /**
  * 消息存储模块
  */
-import type { Message } from '@/types/message';
+import type { Message } from '../../../../types/message';
+// Record is a built-in TypeScript utility type, no need to import
 import type { StorageProvider, ChatIndexItem } from '../../shared/types';
 import { MESSAGES_PREFIX, CHAT_INDEX_KEY } from '../../shared/constants';
 import {

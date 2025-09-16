@@ -3,28 +3,27 @@ import {
   UsageStatistics,
   HeatmapQueryParams,
   HeatmapService,
-  AggregationOptions
+  // AggregationOptions, // 移除未使用的导入
 } from '@/types/heatmap';
 import { AgentUsage, UserGeo, AgentConfig } from '@/lib/db/models';
+// Record is a built-in TypeScript utility type, no need to import
 import { sequelize } from '@/lib/db/sequelize';
-import logger from '@/lib/utils/logger';
+import type { JsonObject } from '@/types/common';
+import { Op, fn, col, literal } from 'sequelize';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * 热点地图数据聚合服务
  * 提供数据聚合、统计和可视化支持
  */
 export class HeatmapServiceImpl implements HeatmapService {
-  private readonly defaultAggregationOptions: AggregationOptions = {
-    groupBy: 'country',
-    timeWindow: 'day',
-    includeAnonymous: true,
-    minAccuracyLevel: 1,
-  };
 
   /**
    * 获取热点地图数据
    */
-  public async getHeatmapData(params: HeatmapQueryParams): Promise<HeatmapDataPoint[]> {
+  public async getHeatmapData(
+    params: HeatmapQueryParams
+  ): Promise<HeatmapDataPoint[]> {
     try {
       // 检查数据库连接状态
       if (!sequelize || !sequelize.authenticate) {
@@ -51,11 +50,11 @@ export class HeatmapServiceImpl implements HeatmapService {
       const queryEndDate = endDate || timeRangeObj.end;
 
       // 构建WHERE条件
-      const whereClause: any = {};
+      const whereClause: Record<string, unknown> = {};
       if (queryStartDate && queryEndDate) {
         whereClause.startTime = {
-          [sequelize.Op.between]: [queryStartDate, queryEndDate],
-        };
+          [Op.between]: [queryStartDate, queryEndDate],
+        } as unknown as Record<string, unknown>;
       }
 
       if (agentType) {
@@ -71,15 +70,15 @@ export class HeatmapServiceImpl implements HeatmapService {
       }
 
       // 地理位置过滤条件
-      const geoWhereClause: any = {};
+      const geoWhereClause: Record<string, unknown> = {};
       if (country) {
-        geoWhereClause[sequelize.literal('(location->>"country")')] = country;
+        geoWhereClause[(literal('(location->>"country")') as unknown) as string] = country;
       }
       if (region) {
-        geoWhereClause[sequelize.literal('(location->>"region")')] = region;
+        geoWhereClause[(literal('(location->>"region")') as unknown) as string] = region;
       }
       if (city) {
-        geoWhereClause[sequelize.literal('(location->>"city")')] = city;
+        geoWhereClause[(literal('(location->>"city")') as unknown) as string] = city;
       }
 
       // 执行查询
@@ -89,7 +88,10 @@ export class HeatmapServiceImpl implements HeatmapService {
           {
             model: UserGeo,
             as: 'geoLocation',
-            where: Object.keys(geoWhereClause).length > 0 ? geoWhereClause : undefined,
+            where:
+              Object.keys(geoWhereClause).length > 0
+                ? geoWhereClause
+                : undefined,
             required: false,
           },
           {
@@ -107,8 +109,8 @@ export class HeatmapServiceImpl implements HeatmapService {
           [sequelize.literal('COUNT(DISTINCT sessionId)'), 'sessionCount'],
           [sequelize.literal('SUM(messageCount)'), 'totalMessages'],
         ],
-        group: this.getGroupByClause(granularity, true),
-        order: [[sequelize.literal('totalMessages'), 'DESC']],
+        group: this.getGroupByClause(granularity, true) as any,
+        order: [[literal('totalMessages'), 'DESC']],
         raw: false,
       });
 
@@ -134,17 +136,12 @@ export class HeatmapServiceImpl implements HeatmapService {
         region: 'Beijing',
         city: 'Beijing',
         count: 150,
-        intensity: 0.8,
-        timestamp: new Date(),
         agentType: 'fastgpt',
         messageType: 'text',
-        userId: 'user1',
-        accuracy: 0.9,
-        metadata: {
-          device: 'desktop',
-          browser: 'Chrome',
-          os: 'Windows'
-        }
+        timeRange: {
+          start: new Date('2024-01-01'),
+          end: new Date('2024-01-31'),
+        },
       },
       {
         id: '2',
@@ -154,17 +151,12 @@ export class HeatmapServiceImpl implements HeatmapService {
         region: 'Shanghai',
         city: 'Shanghai',
         count: 120,
-        intensity: 0.7,
-        timestamp: new Date(),
         agentType: 'openai',
         messageType: 'voice',
-        userId: 'user2',
-        accuracy: 0.85,
-        metadata: {
-          device: 'mobile',
-          browser: 'Safari',
-          os: 'iOS'
-        }
+        timeRange: {
+          start: new Date('2024-02-01'),
+          end: new Date('2024-02-28'),
+        },
       },
       {
         id: '3',
@@ -174,25 +166,22 @@ export class HeatmapServiceImpl implements HeatmapService {
         region: 'Hong Kong',
         city: 'Hong Kong',
         count: 80,
-        intensity: 0.6,
-        timestamp: new Date(),
         agentType: 'claude',
         messageType: 'image',
-        userId: 'user3',
-        accuracy: 0.75,
-        metadata: {
-          device: 'tablet',
-          browser: 'Firefox',
-          os: 'Android'
-        }
-      }
+        timeRange: {
+          start: new Date('2024-03-01'),
+          end: new Date('2024-03-31'),
+        },
+      },
     ];
 
     // 根据参数过滤数据
     let filteredData = mockData;
 
     if (params.country) {
-      filteredData = filteredData.filter(item => item.country === params.country);
+      filteredData = filteredData.filter(
+        item => item.country === params.country
+      );
     }
 
     if (params.region) {
@@ -204,11 +193,15 @@ export class HeatmapServiceImpl implements HeatmapService {
     }
 
     if (params.agentType) {
-      filteredData = filteredData.filter(item => item.agentType === params.agentType);
+      filteredData = filteredData.filter(
+        item => item.agentType === params.agentType
+      );
     }
 
     if (params.messageType) {
-      filteredData = filteredData.filter(item => item.messageType === params.messageType);
+      filteredData = filteredData.filter(
+        item => item.messageType === params.messageType
+      );
     }
 
     return filteredData;
@@ -217,26 +210,22 @@ export class HeatmapServiceImpl implements HeatmapService {
   /**
    * 获取使用统计数据
    */
-  public async getUsageStatistics(params: HeatmapQueryParams): Promise<UsageStatistics> {
+  public async getUsageStatistics(
+    params: HeatmapQueryParams
+  ): Promise<UsageStatistics> {
     try {
-      const {
-        startDate,
-        endDate,
-        agentType,
-        messageType,
-        country,
-        timeRange,
-      } = params;
+      const { startDate, endDate, agentType, messageType, country, timeRange } =
+        params;
 
       const timeRangeObj = this.resolveTimeRange(timeRange);
       const queryStartDate = startDate || timeRangeObj.start;
       const queryEndDate = endDate || timeRangeObj.end;
 
       // 构建基础查询条件
-      const whereClause: any = {};
+      const whereClause: Record<string, unknown> = {};
       if (queryStartDate && queryEndDate) {
         whereClause.startTime = {
-          [sequelize.Op.between]: [queryStartDate, queryEndDate],
+          [Op.between]: [queryStartDate, queryEndDate],
         };
       }
 
@@ -303,7 +292,7 @@ export class HeatmapServiceImpl implements HeatmapService {
       const results = await AgentUsage.findAll({
         where: {
           startTime: {
-            [sequelize.Op.gte]: fiveMinutesAgo,
+            [Op.gte]: fiveMinutesAgo,
           },
         },
         include: [
@@ -317,10 +306,10 @@ export class HeatmapServiceImpl implements HeatmapService {
           'id',
           'sessionId',
           'startTime',
-          [sequelize.literal('COUNT(*)'), 'activityCount'],
+          [literal('COUNT(*)'), 'activityCount'],
         ],
         group: ['geoLocation.id'],
-        order: [[sequelize.literal('activityCount'), 'DESC']],
+        order: [[literal('activityCount'), 'DESC']],
         limit: 100,
       });
 
@@ -388,7 +377,10 @@ export class HeatmapServiceImpl implements HeatmapService {
     return { start, end };
   }
 
-  private getGroupByClause(granularity: string, includeLocation: boolean): string[] {
+  private getGroupByClause(
+    granularity: string,
+    includeLocation: boolean
+  ): string[] {
     const groupBy: string[] = [];
 
     if (includeLocation) {
@@ -397,16 +389,24 @@ export class HeatmapServiceImpl implements HeatmapService {
 
     switch (granularity) {
       case 'hour':
-        groupBy.push(sequelize.fn('DATE_TRUNC', 'hour', sequelize.col('startTime')));
+        groupBy.push(
+          (fn('DATE_TRUNC', 'hour', col('startTime')) as unknown) as string
+        );
         break;
       case 'day':
-        groupBy.push(sequelize.fn('DATE_TRUNC', 'day', sequelize.col('startTime')));
+        groupBy.push(
+          (fn('DATE_TRUNC', 'day', col('startTime')) as unknown) as string
+        );
         break;
       case 'week':
-        groupBy.push(sequelize.fn('DATE_TRUNC', 'week', sequelize.col('startTime')));
+        groupBy.push(
+          (fn('DATE_TRUNC', 'week', col('startTime')) as unknown) as string
+        );
         break;
       case 'month':
-        groupBy.push(sequelize.fn('DATE_TRUNC', 'month', sequelize.col('startTime')));
+        groupBy.push(
+          (fn('DATE_TRUNC', 'month', col('startTime')) as unknown) as string
+        );
         break;
       case 'realtime':
         // 实时数据不需要时间分组
@@ -416,29 +416,37 @@ export class HeatmapServiceImpl implements HeatmapService {
     return groupBy;
   }
 
-  private transformToHeatmapPoints(results: any[], granularity: string): HeatmapDataPoint[] {
-    return results.map((result, index) => {
-      const geoLocation = result.geoLocation;
+  private transformToHeatmapPoints(
+    results: Array<any>,
+    _granularity: string
+  ): HeatmapDataPoint[] {
+    return results
+      .map((result: JsonObject, index: number) => {
+        const geoLocation = result.geoLocation as JsonObject;
+        const get = (k: string) => (typeof (result as any).get === 'function' ? (result as any).get(k) : undefined);
 
-      return {
-        id: `point_${index}_${Date.now()}`,
-        latitude: geoLocation?.location?.latitude || 0,
-        longitude: geoLocation?.location?.longitude || 0,
-        count: parseInt(result.get('sessionCount') || result.get('activityCount') || 1),
-        country: geoLocation?.location?.country || 'Unknown',
-        city: geoLocation?.location?.city,
-        region: geoLocation?.location?.region,
-        agentType: result.agent?.type,
-        messageType: result.messageType,
-        timeRange: {
-          start: result.startTime,
-          end: new Date(),
-        },
-      };
-    }).filter(point => point.latitude !== 0 && point.longitude !== 0);
+        return {
+          id: `point_${index}_${Date.now()}`,
+          latitude: (geoLocation?.location as any)?.latitude || 0,
+          longitude: (geoLocation?.location as any)?.longitude || 0,
+          count: parseInt(String(get('sessionCount') || get('activityCount') || 1), 10),
+          country: (geoLocation?.location as any)?.country || 'Unknown',
+          city: (geoLocation?.location as any)?.city,
+          region: (geoLocation?.location as any)?.region,
+          agentType: (result.agent && (result.agent as any).type) || undefined,
+          messageType: (result as any).messageType,
+          timeRange: {
+            start: (result as any).startTime || new Date(),
+            end: new Date(),
+          },
+        } as HeatmapDataPoint;
+      })
+      .filter(point => point.latitude !== 0 && point.longitude !== 0);
   }
 
-  private async getTotalSessions(whereClause: any): Promise<number> {
+  private async getTotalSessions(
+    whereClause: Record<string, unknown>
+  ): Promise<number> {
     const result = await AgentUsage.count({
       where: whereClause,
       distinct: true,
@@ -447,14 +455,18 @@ export class HeatmapServiceImpl implements HeatmapService {
     return result;
   }
 
-  private async getTotalMessages(whereClause: any): Promise<number> {
+  private async getTotalMessages(
+    whereClause: Record<string, unknown>
+  ): Promise<number> {
     const result = await AgentUsage.sum('messageCount', {
       where: whereClause,
     });
     return result || 0;
   }
 
-  private async getUniqueUsers(whereClause: any): Promise<number> {
+  private async getUniqueUsers(
+    whereClause: Record<string, unknown>
+  ): Promise<number> {
     const result = await AgentUsage.count({
       where: whereClause,
       distinct: true,
@@ -463,7 +475,9 @@ export class HeatmapServiceImpl implements HeatmapService {
     return result;
   }
 
-  private async getUniqueLocations(whereClause: any): Promise<number> {
+  private async getUniqueLocations(
+    whereClause: Record<string, unknown>
+  ): Promise<number> {
     const result = await AgentUsage.count({
       where: whereClause,
       distinct: true,
@@ -472,8 +486,10 @@ export class HeatmapServiceImpl implements HeatmapService {
     return result;
   }
 
-  private async getTopCountries(whereClause: any): Promise<Array<{ country: string; count: number; percentage: number }>> {
-    const results = await AgentUsage.findAll({
+  private async getTopCountries(
+    whereClause: Record<string, unknown>
+  ): Promise<Array<{ country: string; count: number; percentage: number }>> {
+    const results = (await AgentUsage.findAll({
       where: whereClause,
       include: [
         {
@@ -483,26 +499,35 @@ export class HeatmapServiceImpl implements HeatmapService {
         },
       ],
       attributes: [
-        [sequelize.literal('(geoLocation.location->>"country")'), 'country'],
-        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionId'))), 'count'],
+        [literal('(geoLocation.location->>"country")'), 'country'],
+        [fn('COUNT', fn('DISTINCT', col('sessionId'))), 'count'],
       ],
-      group: [sequelize.literal('(geoLocation.location->>"country")')],
-      order: [[sequelize.literal('count'), 'DESC']],
+      group: [literal('(geoLocation.location->>"country")') as any],
+      order: [[literal('count'), 'DESC']],
       limit: 10,
       raw: true,
-    });
+    })) as unknown as Array<{ country: string; count: string }>;
 
-    const total = results.reduce((sum, item: any) => sum + parseInt(item.count), 0);
+    const total: number = results.reduce((sum: number, item) => sum + parseInt(item.count), 0);
 
-    return results.map((item: any) => ({
+    return results.map(item => ({
       country: item.country || 'Unknown',
       count: parseInt(item.count),
       percentage: total > 0 ? (parseInt(item.count) / total) * 100 : 0,
     }));
   }
 
-  private async getTopAgents(whereClause: any): Promise<Array<{ agentId: number; agentName: string; usageCount: number; percentage: number }>> {
-    const results = await AgentUsage.findAll({
+  private async getTopAgents(
+    whereClause: Record<string, unknown>
+  ): Promise<
+    Array<{
+      agentId: number;
+      agentName: string;
+      usageCount: number;
+      percentage: number;
+    }>
+  > {
+    const results = (await AgentUsage.findAll({
       where: whereClause,
       include: [
         {
@@ -514,17 +539,17 @@ export class HeatmapServiceImpl implements HeatmapService {
       attributes: [
         'agentId',
         [sequelize.literal('agent.name'), 'agentName'],
-        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionId'))), 'usageCount'],
+        [fn('COUNT', fn('DISTINCT', col('sessionId'))), 'usageCount'],
       ],
       group: ['agentId', 'agent.id'],
-      order: [[sequelize.literal('usageCount'), 'DESC']],
+      order: [[literal('usageCount'), 'DESC']],
       limit: 10,
       raw: true,
-    });
+    })) as unknown as Array<{ agentId: string; agentName: string; usageCount: string }>;
 
-    const total = results.reduce((sum, item: any) => sum + parseInt(item.usageCount), 0);
+    const total: number = results.reduce((sum: number, item) => sum + parseInt(item.usageCount), 0);
 
-    return results.map((item: any) => ({
+    return results.map(item => ({
       agentId: parseInt(item.agentId),
       agentName: item.agentName || 'Unknown',
       usageCount: parseInt(item.usageCount),
@@ -532,42 +557,50 @@ export class HeatmapServiceImpl implements HeatmapService {
     }));
   }
 
-  private async getMessageTypeDistribution(whereClause: any): Promise<Array<{ type: string; count: number; percentage: number }>> {
-    const results = await AgentUsage.findAll({
+  private async getMessageTypeDistribution(
+    whereClause: Record<string, unknown>
+  ): Promise<Array<{ type: string; count: number; percentage: number }>> {
+    const results = (await AgentUsage.findAll({
       where: whereClause,
       attributes: [
         'messageType',
-        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionId'))), 'count'],
+        [fn('COUNT', fn('DISTINCT', col('sessionId'))), 'count'],
       ],
       group: ['messageType'],
-      order: [[sequelize.literal('count'), 'DESC']],
+      order: [[literal('count'), 'DESC']],
       raw: true,
-    });
+    })) as unknown as Array<{ messageType: string; count: string }>;
 
-    const total = results.reduce((sum, item: any) => sum + parseInt(item.count), 0);
+    const total: number = results.reduce((sum: number, item) => sum + parseInt(item.count), 0);
 
-    return results.map((item: any) => ({
+    return results.map(item => ({
       type: item.messageType,
       count: parseInt(item.count),
       percentage: total > 0 ? (parseInt(item.count) / total) * 100 : 0,
     }));
   }
 
-  private async getTimeSeriesData(whereClause: any, startDate?: Date, endDate?: Date): Promise<Array<{ date: string; sessions: number; messages: number; users: number }>> {
-    const results = await AgentUsage.findAll({
+  private async getTimeSeriesData(
+    whereClause: Record<string, unknown>,
+    _startDate?: Date,
+    _endDate?: Date
+  ): Promise<
+    Array<{ date: string; sessions: number; messages: number; users: number }>
+  > {
+    const results = (await AgentUsage.findAll({
       where: whereClause,
       attributes: [
-        [sequelize.fn('DATE_TRUNC', 'day', sequelize.col('startTime')), 'date'],
-        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionId'))), 'sessions'],
-        [sequelize.fn('SUM', sequelize.col('messageCount')), 'messages'],
-        [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('userId'))), 'users'],
+        [fn('DATE_TRUNC', 'day', col('startTime')), 'date'],
+        [fn('COUNT', fn('DISTINCT', col('sessionId'))), 'sessions'],
+        [fn('SUM', col('messageCount')), 'messages'],
+        [fn('COUNT', fn('DISTINCT', col('userId'))), 'users'],
       ],
-      group: [sequelize.fn('DATE_TRUNC', 'day', sequelize.col('startTime'))],
-      order: [[sequelize.fn('DATE_TRUNC', 'day', sequelize.col('startTime')), 'ASC']],
+      group: [fn('DATE_TRUNC', 'day', col('startTime'))],
+      order: [[fn('DATE_TRUNC', 'day', col('startTime')), 'ASC']],
       raw: true,
-    });
+    })) as unknown as Array<{ date: Date; sessions: string; messages: string; users: string }>;
 
-    return results.map((item: any) => ({
+    return results.map(item => ({
       date: item.date.toISOString().split('T')[0],
       sessions: parseInt(item.sessions),
       messages: parseInt(item.messages) || 0,
@@ -575,20 +608,34 @@ export class HeatmapServiceImpl implements HeatmapService {
     }));
   }
 
-  private async getAverageSessionDuration(whereClause: any): Promise<number> {
-    const result = await AgentUsage.findOne({
+  private async getAverageSessionDuration(
+    whereClause: Record<string, unknown>
+  ): Promise<number> {
+    const result = (await AgentUsage.findOne({
       where: whereClause,
       attributes: [
         [sequelize.fn('AVG', sequelize.col('duration')), 'avgDuration'],
       ],
       raw: true,
-    });
+    })) as unknown as { avgDuration?: string } | null;
 
-    return result ? parseFloat(result.avgDuration) || 0 : 0;
+    return result && result.avgDuration ? parseFloat(result.avgDuration) || 0 : 0;
   }
 
   private convertToCSV(data: HeatmapDataPoint[]): string {
-    const headers = ['id', 'latitude', 'longitude', 'count', 'country', 'city', 'region', 'agentType', 'messageType', 'startTime', 'endTime'];
+    const headers = [
+      'id',
+      'latitude',
+      'longitude',
+      'count',
+      'country',
+      'city',
+      'region',
+      'agentType',
+      'messageType',
+      'startTime',
+      'endTime',
+    ];
     const rows = data.map(point => [
       point.id,
       point.latitude,

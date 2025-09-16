@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+// Removed invalid typescript import
 import {
   createCrossPlatformTextDecoder,
   createCrossPlatformTextEncoder,
@@ -6,7 +7,7 @@ import {
   processStreamLines,
   categorizeStreamError,
   safeCrossPlatformLog,
-} from '@/lib/cross-platform-utils';
+} from '../../../lib/cross-platform-utils';
 
 // 辅助函数，验证 URL
 function isValidUrl(url: string): boolean {
@@ -78,7 +79,7 @@ export async function GET(request: Request) {
 
       // 添加重试逻辑
       let retryCount = 0;
-      const maxRetries = 1; // 减少重试次数
+      const maxRetries = 2; // 适中的重试次数
       let response;
 
       while (retryCount <= maxRetries) {
@@ -95,7 +96,7 @@ export async function GET(request: Request) {
         } catch (error) {
           retryCount++;
           console.error(
-            `GET Fetch 错误 (尝试 ${retryCount}/${maxRetries + 1}): ${typeof error === 'object' && error && 'message' in error ? (error as any).message : String(error)}`
+            `GET Fetch 错误 (尝试 ${retryCount}/${maxRetries + 1}): ${error instanceof Error ? error.message : String(error)}`
           );
 
           // 如果已达到最大重试次数，抛出错误
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
           }
 
           // 等待一段时间后重试 (指数退避)
-          const delay = Math.min(1000 * Math.pow(1.5, retryCount - 1), 3000); // 减少最大延迟
+          const delay = Math.min(500 * Math.pow(1.5, retryCount - 1), 2000); // 优化延迟时间
           console.log(`等待 ${delay}ms 后重试...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
@@ -218,7 +219,7 @@ export async function POST(request: Request) {
 
     if (isStreaming) {
       // 🔥 增强流式请求处理逻辑
-      safeCrossPlatformLog('log', `开始处理流式请求`, {
+      safeCrossPlatformLog('info', `开始处理流式请求`, {
         targetUrl,
         requestBodySize: JSON.stringify(safeRequestBody).length,
       });
@@ -280,7 +281,7 @@ export async function POST(request: Request) {
 
           // 🔥 使用跨平台兼容的内容类型检查
           const contentType = response.headers.get('content-type') || '';
-          safeCrossPlatformLog('log', `响应内容类型检查`, { contentType });
+          safeCrossPlatformLog('info', `响应内容类型检查`, { contentType });
 
           if (!isStreamingContentType(contentType)) {
             safeCrossPlatformLog('warn', `预期流式内容但收到非标准类型`, {
@@ -303,12 +304,12 @@ export async function POST(request: Request) {
             let lineCount = 0;
             const decoder = createCrossPlatformTextDecoder();
 
-            safeCrossPlatformLog('log', `开始读取流式数据`);
+            safeCrossPlatformLog('info', `开始读取流式数据`);
 
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
-                safeCrossPlatformLog('log', `流读取完成`, { lineCount });
+                safeCrossPlatformLog('info', `流读取完成`, { lineCount });
                 break;
               }
 
@@ -329,14 +330,14 @@ export async function POST(request: Request) {
 
                 // 每100行输出一次进度日志
                 if (lineCount % 100 === 0) {
-                  safeCrossPlatformLog('log', `处理进度`, { lineCount });
+                  safeCrossPlatformLog('debug', `处理进度`, { lineCount });
                 }
               }
             }
 
             // 🔥 处理缓冲区中的任何剩余数据
             if (buffer.trim() !== '') {
-              safeCrossPlatformLog('log', `处理剩余缓冲区数据`, {
+              safeCrossPlatformLog('debug', `处理剩余缓冲区数据`, {
                 bufferLength: buffer.length,
               });
               await writer.write(encoder.encode(buffer + '\n'));
@@ -422,7 +423,7 @@ export async function POST(request: Request) {
 
         // 添加错误处理和重试逻辑
         let retryCount = 0;
-        const maxRetries = 1; // 减少重试次数
+        const maxRetries = 2; // 适中的重试次数
         let response;
 
         while (retryCount <= maxRetries) {
@@ -443,7 +444,7 @@ export async function POST(request: Request) {
           } catch (fetchError) {
             retryCount++;
             console.error(
-              `Fetch 错误 (尝试 ${retryCount}/${maxRetries + 1}): ${typeof fetchError === 'object' && fetchError && 'message' in fetchError ? (fetchError as any).message : String(fetchError)}`
+              `Fetch 错误 (尝试 ${retryCount}/${maxRetries + 1}): ${fetchError instanceof Error ? fetchError.message : String(fetchError)}`
             );
 
             // 如果已达到最大重试次数，抛出错误
@@ -452,7 +453,7 @@ export async function POST(request: Request) {
             }
 
             // 等待一段时间后重试 (指数退避)
-            const delay = Math.min(1000 * Math.pow(1.5, retryCount - 1), 3000); // 减少最大延迟
+            const delay = Math.min(500 * Math.pow(1.5, retryCount - 1), 2000); // 优化延迟时间
             console.log(`等待 ${delay}ms 后重试...`);
             await new Promise(resolve => setTimeout(resolve, delay));
           }

@@ -14,16 +14,16 @@ import {
 } from 'react';
 import { Loader2 } from 'lucide-react';
 
+// Record is a built-in TypeScript utility type
 /**
  * 懒加载组件包装器
  */
-export function withLazyLoading<T extends ComponentType<any>>(
-  importFunc: () => Promise<{ default: T }>,
-  fallback?: ReactNode
-) {
+export function withLazyLoading<
+  T extends ComponentType<any>,
+>(importFunc: () => Promise<{ default: T }>, fallback?: ReactNode): ComponentType<React.ComponentProps<T>> {
   const LazyComponent = lazy(importFunc);
 
-  return function LazyWrapper(props: any) {
+  return function LazyWrapper(props: React.ComponentProps<T>) {
     return (
       <Suspense fallback={fallback || <DefaultFallback />}>
         <LazyComponent {...props} />
@@ -118,6 +118,7 @@ export function LazyContainer({
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isVisible]);
 
   return (
@@ -168,13 +169,14 @@ export function LazyImage({
       { rootMargin, threshold }
     );
 
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
+    const currentImg = imgRef.current;
+    if (currentImg) {
+      observer.observe(currentImg);
     }
 
     return () => {
-      if (imgRef.current) {
-        observer.unobserve(imgRef.current);
+      if (currentImg) {
+        observer.unobserve(currentImg);
       }
     };
   }, [rootMargin, threshold]);
@@ -205,6 +207,7 @@ export function LazyImage({
       )}
 
       {/* 图片 */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
         src={displaySrc || '/placeholder.svg'}
@@ -260,13 +263,14 @@ export function LazyVideo({
       { rootMargin, threshold }
     );
 
-    if (videoRef.current) {
-      observer.observe(videoRef.current);
+    const currentVideo = videoRef.current;
+    if (currentVideo) {
+      observer.observe(currentVideo);
     }
 
     return () => {
-      if (videoRef.current) {
-        observer.unobserve(videoRef.current);
+      if (currentVideo) {
+        observer.unobserve(currentVideo);
       }
     };
   }, [rootMargin, threshold]);
@@ -349,13 +353,14 @@ export function LazyIframe({
       { rootMargin, threshold }
     );
 
-    if (iframeRef.current) {
-      observer.observe(iframeRef.current);
+    const currentIframe = iframeRef.current;
+    if (currentIframe) {
+      observer.observe(currentIframe);
     }
 
     return () => {
-      if (iframeRef.current) {
-        observer.unobserve(iframeRef.current);
+      if (currentIframe) {
+        observer.unobserve(currentIframe);
       }
     };
   }, [rootMargin, threshold]);
@@ -426,13 +431,14 @@ export function useLazyLoading(
       }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
+    const currentElement = ref.current;
+    if (currentElement) {
+      observer.observe(currentElement);
     }
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
+      if (currentElement) {
+        observer.unobserve(currentElement);
       }
     };
   }, [options.rootMargin, options.threshold]);
@@ -445,6 +451,7 @@ export function useLazyLoading(
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isVisible]);
 
   return { ref, isVisible, isLoaded };
@@ -473,7 +480,7 @@ export function usePreload() {
 /**
  * 默认导出
  */
-export default {
+const lazyLoadingUtils = {
   withLazyLoading,
   CustomFallback,
   preloadComponent,
@@ -484,3 +491,5 @@ export default {
   useLazyLoading,
   usePreload,
 };
+
+export default lazyLoadingUtils;

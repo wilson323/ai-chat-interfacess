@@ -4,6 +4,7 @@
  */
 
 import { redisManager } from './redis-manager';
+// Record is a built-in TypeScript utility type
 import { AgentConfig } from '../db/models/agent-config';
 
 interface FastGPTCacheKey {
@@ -14,7 +15,7 @@ interface FastGPTCacheKey {
   type: 'chat' | 'config' | 'response';
 }
 
-interface CachedChatResponse {
+interface CachedChatResponse extends Record<string, unknown> {
   response: string;
   timestamp: number;
   ttl: number;
@@ -36,7 +37,7 @@ export class FastGPTCacheManager {
       key.agentId,
       key.chatId || 'no-chat',
       key.messageId || 'no-message',
-      key.userId || 'anonymous'
+      key.userId || 'anonymous',
     ];
     return parts.join(':');
   }
@@ -55,7 +56,7 @@ export class FastGPTCacheManager {
       response,
       timestamp: Date.now(),
       ttl: this.CHAT_TTL,
-      hitCount: 0
+      hitCount: 0,
     };
 
     return await redisManager.set(fullKey, cachedData, this.CHAT_TTL);
@@ -84,10 +85,13 @@ export class FastGPTCacheManager {
   /**
    * 缓存智能体配置
    */
-  async cacheAgentConfig(agentId: string, config: AgentConfig): Promise<boolean> {
+  async cacheAgentConfig(
+    agentId: string,
+    config: AgentConfig
+  ): Promise<boolean> {
     const cacheKey: FastGPTCacheKey = {
       agentId,
-      type: 'config'
+      type: 'config',
     };
     const fullKey = this.generateKey(cacheKey);
 
@@ -100,11 +104,11 @@ export class FastGPTCacheManager {
   async getCachedAgentConfig(agentId: string): Promise<AgentConfig | null> {
     const cacheKey: FastGPTCacheKey = {
       agentId,
-      type: 'config'
+      type: 'config',
     };
     const fullKey = this.generateKey(cacheKey);
 
-    return await redisManager.get<AgentConfig>(fullKey);
+    return await redisManager.get<Record<string, unknown>>(fullKey) as AgentConfig | null;
   }
 
   /**
@@ -112,20 +116,24 @@ export class FastGPTCacheManager {
    */
   async cacheAPIResponse(
     url: string,
-    params: Record<string, any>,
-    response: any
+    params: Record<string, unknown>,
+    response: Record<string, unknown>
   ): Promise<boolean> {
     const cacheKey: FastGPTCacheKey = {
       agentId: 'api',
       type: 'response',
-      messageId: this.hashRequest(url, params)
+      messageId: this.hashRequest(url, params),
     };
     const fullKey = this.generateKey(cacheKey);
 
-    return await redisManager.set(fullKey, {
-      response,
-      timestamp: Date.now()
-    }, this.RESPONSE_TTL);
+    return await redisManager.set(
+      fullKey,
+      {
+        response,
+        timestamp: Date.now(),
+      },
+      this.RESPONSE_TTL
+    );
   }
 
   /**
@@ -133,17 +141,17 @@ export class FastGPTCacheManager {
    */
   async getCachedAPIResponse(
     url: string,
-    params: Record<string, any>
-  ): Promise<any | null> {
+    params: Record<string, unknown>
+  ): Promise<Record<string, unknown> | null> {
     const cacheKey: FastGPTCacheKey = {
       agentId: 'api',
       type: 'response',
-      messageId: this.hashRequest(url, params)
+      messageId: this.hashRequest(url, params),
     };
     const fullKey = this.generateKey(cacheKey);
 
-    const cached = await redisManager.get(fullKey);
-    return cached?.response || null;
+    const cached = await redisManager.get<Record<string, unknown>>(fullKey);
+    return (cached as any)?.response || null;
   }
 
   /**
@@ -153,10 +161,10 @@ export class FastGPTCacheManager {
     const warmupItems = agents.map(agent => ({
       key: this.generateKey({
         agentId: String(agent.id),
-        type: 'config'
+        type: 'config',
       }),
       value: agent,
-      ttl: this.CONFIG_TTL
+      ttl: this.CONFIG_TTL,
     }));
 
     return await redisManager.warmup(warmupItems);
@@ -166,13 +174,13 @@ export class FastGPTCacheManager {
    * 清理过期缓存
    */
   async cleanup(): Promise<number> {
-    const stats = await redisManager.getStats();
     const hotKeys = await redisManager.getHotKeys(50);
 
     let cleanedCount = 0;
 
     for (const key of hotKeys) {
-      if (key.accessCount < 2) { // 清理低频访问的键
+      if (key.accessCount < 2) {
+        // 清理低频访问的键
         await redisManager.delete(key.key);
         cleanedCount++;
       }
@@ -191,32 +199,37 @@ export class FastGPTCacheManager {
     return {
       ...stats,
       hotKeys,
-      efficiency: this.calculateEfficiency(stats)
+      efficiency: this.calculateEfficiency(stats),
     };
   }
 
   /**
    * 计算缓存效率
    */
-  private calculateEfficiency(stats: any): number {
+  private calculateEfficiency(stats: {
+    totalKeys: number;
+    memoryUsage: number;
+    hitRate: number;
+  }): number {
     if (stats.totalKeys === 0) return 0;
 
-    const memoryEfficiency = stats.memoryUsage < 80 ? 1 : (100 - stats.memoryUsage) / 100;
+    const memoryEfficiency =
+      stats.memoryUsage < 80 ? 1 : (100 - stats.memoryUsage) / 100;
     const hitRateEfficiency = stats.hitRate / 100;
 
-    return Math.round((memoryEfficiency + hitRateEfficiency) / 2 * 100);
+    return Math.round(((memoryEfficiency + hitRateEfficiency) / 2) * 100);
   }
 
   /**
    * 请求哈希
    */
-  private hashRequest(url: string, params: Record<string, any>): string {
+  private hashRequest(url: string, params: Record<string, unknown>): string {
     const str = JSON.stringify({ url, params });
     let hash = 0;
 
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // 转换为32位整数
     }
 

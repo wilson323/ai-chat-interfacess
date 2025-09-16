@@ -9,7 +9,7 @@ async function checkAdminAuth(req: NextRequest) {
   if (!token) return false;
   try {
     const decoded = verify(token, JWT_SECRET);
-    return decoded && (decoded as any).role === 'admin';
+    return decoded && typeof decoded === 'object' && 'role' in decoded && decoded.role === 'admin';
   } catch {
     return false;
   }
@@ -71,8 +71,9 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || 'all';
 
     // 过滤数据
-    let filteredData = mockData.filter((item) => {
-      const matchesSearch = !search ||
+    let filteredData = mockData.filter(item => {
+      const matchesSearch =
+        !search ||
         item.fileName.toLowerCase().includes(search.toLowerCase()) ||
         item.analysisResult.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = status === 'all' || item.status === status;

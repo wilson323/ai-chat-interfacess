@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { DEVICE_ID_KEY } from '@/lib/storage/shared/constants';
+import { DEVICE_ID_KEY } from './storage/shared/constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

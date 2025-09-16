@@ -1,0 +1,451 @@
+---
+alwaysApply: true
+trigger: always_on
+---
+
+# 📊 代码质量规范
+
+## 🎯 核心原则
+
+### 1. 代码质量至上
+- **TypeScript严格模式**: 禁止使用any类型
+- **零容忍错误**: 所有代码必须通过检查
+- **DRY原则**: 严格禁止代码重复
+- **单一职责**: 每个函数/组件只负责一个功能
+
+## 📊 质量指标要求
+
+### 1. 代码质量指标
+- **自定义代码占比**: < 20%
+- **单元测试覆盖率**: ≥ 80%
+- **集成测试覆盖率**: ≥ 60%
+- **关键业务逻辑覆盖率**: ≥ 90%
+- **代码重复率**: < 3%
+- **圈复杂度**: < 10
+
+### 2. 性能指标
+- **首屏加载时间**: < 3秒
+- **API响应时间**: < 500ms
+- **内存使用率**: < 80%
+- **包体积增长**: < 10%
+
+## 🔧 代码规范要求
+
+### 1. TypeScript规范
+```typescript
+// ✅ 正确的类型定义
+export interface UserProps {
+  id: string
+  name: string
+  email: string
+  age?: number
+  isActive: boolean
+}
+
+// ✅ 函数类型定义
+export function createUser(userData: UserProps): Promise<User> {
+  // 实现逻辑
+}
+
+// ❌ 禁止使用any类型
+export function badFunction(data: any): any {
+  // 禁止使用any
+}
+
+// ✅ 使用泛型
+export function processData<T>(data: T[]): T[] {
+  return data.filter(item => item !== null)
+}
+```
+
+### 2. 命名规范
+```typescript
+// ✅ 好的命名 - 清晰表达意图
+function createNewConversation(): void
+function handleUserInput(input: string): void
+function validateMessageContent(content: string): boolean
+function calculateTotalPrice(items: CartItem[]): number
+
+// ❌ 不好的命名 - 模糊不清
+function fn(): void
+function handle(e: Event): void
+function process(data: any): any
+function calc(items: any[]): number
+```
+
+### 3. 函数设计规范
+```typescript
+// ✅ 单一职责 - 每个函数只做一件事
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+export function formatUserName(firstName: string, lastName: string): string {
+  return `${firstName} ${lastName}`.trim()
+}
+
+// ❌ 多职责 - 违反单一职责原则
+export function processUserData(userData: any): any {
+  // 验证数据
+  // 格式化数据
+  // 保存数据
+  // 发送通知
+  // 太多职责！
+}
+```
+
+### 4. 组件设计规范
+```typescript
+// ✅ 好的组件设计
+interface ButtonProps {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  children: React.ReactNode
+  onClick?: () => void
+  disabled?: boolean
+  className?: string
+}
+
+export function Button({ 
+  variant = 'default', 
+  size = 'default', 
+  children, 
+  onClick, 
+  disabled = false,
+  className 
+}: ButtonProps) {
+  return (
+    <button
+      className={cn(buttonVariants({ variant, size }), className)}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  )
+}
+
+// ❌ 不好的组件设计
+export function BadButton(props: any) {
+  // 使用any类型
+  // 没有明确的接口定义
+  // 职责不清晰
+}
+```
+
+## 🛡️ 错误处理规范
+
+### 1. 统一错误处理
+```typescript
+// ✅ 自定义错误类
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public statusCode: number = 500,
+    public details?: unknown
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+// ✅ 错误处理中间件
+export function errorHandler(error: Error) {
+  if (error instanceof ApiError) {
+    return {
+      code: error.code,
+      message: error.message,
+      statusCode: error.statusCode,
+      details: error.details
+    }
+  }
+  
+  return {
+    code: 'UNKNOWN_ERROR',
+    message: '未知错误',
+    statusCode: 500
+  }
+}
+
+// ✅ 异步函数错误处理
+export async function fetchUserData(userId: string): Promise<User> {
+  try {
+    const response = await fetch(`/api/users/${userId}`)
+    
+    if (!response.ok) {
+      throw new ApiError(
+        'USER_NOT_FOUND',
+        '用户不存在',
+        response.status
+      )
+    }
+    
+    return await response.json()
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    
+    throw new ApiError(
+      'FETCH_ERROR',
+      '获取用户数据失败',
+      500,
+      error
+    )
+  }
+}
+```
+
+### 2. 输入验证
+```typescript
+// ✅ 使用Zod进行严格验证
+import { z } from 'zod'
+
+const UserSchema = z.object({
+  name: z.string().min(1, '姓名不能为空').max(100, '姓名不能超过100个字符'),
+  email: z.string().email('邮箱格式不正确'),
+  age: z.number().min(0, '年龄不能小于0').max(150, '年龄不能超过150'),
+  isActive: z.boolean().default(true)
+})
+
+export function validateUser(input: unknown) {
+  try {
+    return UserSchema.parse(input)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new ApiError(
+        'VALIDATION_ERROR',
+        '数据验证失败',
+        400,
+        error.errors
+      )
+    }
+    throw error
+  }
+}
+```
+
+## 📝 注释规范
+
+### 1. JSDoc注释
+```typescript
+/**
+ * 创建新的对话会话
+ * @description 初始化新的聊天会话，重置相关状态，并返回会话ID
+ * @param {string} agentId - 智能体ID
+ * @param {string} userId - 用户ID
+ * @param {ConversationOptions} options - 会话选项
+ * @returns {Promise<Conversation>} 返回新创建的会话对象
+ * @throws {ApiError} 当智能体不存在或用户无权限时抛出
+ * @example
+ * ```typescript
+ * const conversation = await createNewConversation(
+ *   'agent-123',
+ *   'user-456',
+ *   { maxMessages: 100 }
+ * )
+ * ```
+ */
+export async function createNewConversation(
+  agentId: string,
+  userId: string,
+  options: ConversationOptions = {}
+): Promise<Conversation> {
+  // 实现逻辑
+}
+```
+
+### 2. 复杂逻辑注释
+```typescript
+export function calculateComplexScore(data: UserData[]): number {
+  // 1. 过滤有效用户数据
+  const validUsers = data.filter(user => 
+    user.isActive && user.score !== null
+  )
+  
+  // 2. 计算加权平均分
+  // 权重：活跃度(0.3) + 评分(0.7)
+  const weightedSum = validUsers.reduce((sum, user) => {
+    const weight = user.isActive ? 0.3 : 0.1
+    return sum + (user.score * weight)
+  }, 0)
+  
+  // 3. 返回标准化分数 (0-100)
+  return Math.min(100, Math.max(0, weightedSum))
+}
+```
+
+## 🧪 测试规范
+
+### 1. 测试覆盖率要求
+- **单元测试覆盖率**: ≥ 80%
+- **集成测试覆盖率**: ≥ 60%
+- **关键业务逻辑覆盖率**: ≥ 90%
+
+### 2. 测试命令
+```bash
+# 运行所有测试
+npm test
+
+# 运行单元测试
+npm run test:unit
+
+# 运行集成测试
+npm run test:integration
+
+# 生成覆盖率报告
+npm run test:coverage
+```
+
+### 3. 测试示例
+```typescript
+// ✅ 组件测试示例
+import { render, screen, fireEvent } from '@testing-library/react'
+import { Button } from '@/components/ui/button'
+
+describe('Button', () => {
+  it('should render button with correct text', () => {
+    render(<Button>Click me</Button>)
+    expect(screen.getByText('Click me')).toBeInTheDocument()
+  })
+
+  it('should call onClick when clicked', () => {
+    const handleClick = jest.fn()
+    render(<Button onClick={handleClick}>Click me</Button>)
+    
+    fireEvent.click(screen.getByText('Click me'))
+    expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('should be disabled when disabled prop is true', () => {
+    render(<Button disabled>Click me</Button>)
+    expect(screen.getByRole('button')).toBeDisabled()
+  })
+})
+
+// ✅ 函数测试示例
+import { validateEmail, formatUserName } from '@/lib/utils'
+
+describe('validateEmail', () => {
+  it('should return true for valid email', () => {
+    expect(validateEmail('test@example.com')).toBe(true)
+  })
+
+  it('should return false for invalid email', () => {
+    expect(validateEmail('invalid-email')).toBe(false)
+    expect(validateEmail('')).toBe(false)
+  })
+})
+
+describe('formatUserName', () => {
+  it('should format first and last name correctly', () => {
+    expect(formatUserName('John', 'Doe')).toBe('John Doe')
+  })
+
+  it('should handle empty names', () => {
+    expect(formatUserName('', '')).toBe('')
+    expect(formatUserName('John', '')).toBe('John')
+  })
+})
+```
+
+## ⚡ 性能优化规范
+
+### 1. 代码分割
+```typescript
+// ✅ 使用动态导入
+import { lazy, Suspense } from 'react'
+
+const CADAnalyzer = lazy(() => import('@/components/cad-analyzer'))
+const ImageEditor = lazy(() => import('@/components/image-editor'))
+
+export function FeaturePage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <CADAnalyzer />
+    </Suspense>
+  )
+}
+```
+
+### 2. 状态管理优化
+```typescript
+// ✅ 使用useCallback优化
+import { useCallback, useMemo } from 'react'
+
+export function UserProfile({ user, onUpdate }: UserProfileProps) {
+  const handleSubmit = useCallback((data: FormData) => {
+    onUpdate(user.id, data)
+  }, [user.id, onUpdate])
+
+  const expensiveValue = useMemo(() => {
+    return computeExpensiveValue(user.data)
+  }, [user.data])
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* 表单内容 */}
+    </form>
+  )
+}
+```
+
+### 3. 虚拟滚动
+```typescript
+// ✅ 大量数据使用虚拟滚动
+import { FixedSizeList as List } from 'react-window'
+
+export function MessageList({ messages }: MessageListProps) {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
+    <div style={style}>
+      <MessageCard message={messages[index]} />
+    </div>
+  )
+
+  return (
+    <List
+      height={600}
+      itemCount={messages.length}
+      itemSize={80}
+    >
+      {Row}
+    </List>
+  )
+}
+```
+
+## 📋 代码质量检查清单
+
+### 代码质量检查
+- [ ] 使用成熟组件库，避免自定义
+- [ ] TypeScript类型完整，无any类型
+- [ ] 错误处理完善
+- [ ] 注释完整，JSDoc规范
+- [ ] 无重复代码
+- [ ] 无未使用变量/函数
+
+### 架构检查
+- [ ] 组件职责单一
+- [ ] 状态管理合理
+- [ ] API设计统一
+- [ ] 错误处理统一
+- [ ] 配置管理统一
+
+### 性能检查
+- [ ] 代码分割合理
+- [ ] 懒加载使用
+- [ ] 缓存策略完善
+- [ ] 内存泄漏防护
+- [ ] 渲染优化
+
+## ⚠️ 重要提醒
+
+1. **成熟库优先**: 优先使用成熟组件库，自定义代码占比 < 20%
+2. **全局一致性**: 确保配置、错误处理、API设计全局一致
+3. **代码质量**: 零容忍错误，严格类型检查
+4. **性能优化**: 代码分割、懒加载、缓存策略
+5. **安全防护**: 输入验证、输出编码、权限控制
+
+**记住: 好的代码是设计出来的，不是改出来的。优先使用成熟解决方案，确保项目高质量交付。**

@@ -1,4 +1,5 @@
 import type { Message } from '@/types/message';
+// // Record is a built-in TypeScript utility type // 移除错误的Record导入，使用内置Record类型
 import {
   getAllChatSessions,
   loadMessagesFromLocalStorage,

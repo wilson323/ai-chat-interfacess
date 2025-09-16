@@ -1,11 +1,10 @@
 'use client';
-import type { Message } from '@/types/message';
-import type { MessageRole } from '@/types/message';
+import type { Message, ProcessingStep } from '../types/message';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
+import { cn } from '../lib/utils';
 import {
-  Bot,
   User,
   Copy,
   RotateCcw,
@@ -17,27 +16,22 @@ import {
   Pencil,
   Check,
   Volume2,
-  Brain,
-  MessageSquare,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+  } from 'lucide-react';
+import { Button } from './ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useLanguage } from '@/context/language-context';
-import { MarkdownMessage } from '@/components/markdown-message';
-import { LazyImage } from '@/components/lazy-image';
-import { Textarea } from '@/components/ui/textarea';
-import { useResponsive } from '@/hooks/use-responsive';
+} from './ui/tooltip';
+import { useLanguage } from '../context/language-context';
+import { MarkdownMessage } from './markdown-message';
+import { LazyImage } from './lazy-image';
+import { Textarea } from './ui/textarea';
+// import { useResponsive } from '../hooks/use-responsive'; // unused
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { InlineBubbleInteractive } from './inline-bubble-interactive';
+// import { InlineBubbleInteractive } from './inline-bubble-interactive'; // 暂时注释掉，未使用
 import { EnhancedThinkingBubble } from './enhanced-thinking-bubble';
 
 // 使用shadcn/ui的Textarea组件，通过CSS实现自动调整大小
@@ -69,9 +63,8 @@ export function ChatMessage({
   const [disliked, setDisliked] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
-  const [showActions, setShowActions] = useState(false);
-  const { isMdAndDown } = useResponsive();
-  const messageRef = useRef<HTMLDivElement>(null);
+  const [_showActions, _setShowActions] = useState(false); // 暂时注释掉，未使用
+  // const messageRef = useRef<HTMLDivElement>(null); // unused
   const [feedback, setFeedback] = useState<null | 'like' | 'dislike'>(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -90,18 +83,18 @@ export function ChatMessage({
 
   // 类型安全判断
   const isUser = message.role === 'user';
-  const isAI = message.role === 'assistant';
   // 兼容后端自定义扩展角色
-  const roleRaw =
-    (message as any).roleRaw || message.metadata?.roleRaw || message.role;
+  const roleRaw = message.metadata?.roleRaw || message.role;
   const isUserCompat = isUser || roleRaw === 'human';
-  const isAICompat = isAI || roleRaw === 'bot' || roleRaw === 'ai';
+  // const isAICompat = isAI || roleRaw === 'bot' || roleRaw === 'ai'; // unused
   const isOffline = message.metadata?.offline === true;
   const timestamp = message.timestamp
     ? new Date(message.timestamp)
     : new Date();
 
   // 节点名称和状态的中文映射
+  // 节点名称和状态的中文映射 - 暂时注释掉，未使用
+  /*
   const nodeNameMap: Record<string, string> = {
     updateVariables: '更新变量',
     flowResponses: '流程响应',
@@ -138,23 +131,9 @@ export function ChatMessage({
     error: '错误',
     pending: '等待中',
   };
+  */
 
-  // Handle hover effects for desktop
-  useEffect(() => {
-    const handleMouseEnter = () => setShowActions(true);
-    const handleMouseLeave = () => setShowActions(false);
-
-    const element = messageRef.current;
-    if (element && !isMdAndDown) {
-      element.addEventListener('mouseenter', handleMouseEnter);
-      element.addEventListener('mouseleave', handleMouseLeave);
-
-      return () => {
-        element.removeEventListener('mouseenter', handleMouseEnter);
-        element.removeEventListener('mouseleave', handleMouseLeave);
-      };
-    }
-  }, [isMdAndDown]);
+  // Handle hover effects for desktop - 已移除，因为_showActions功能暂时未使用
 
   const handleCopy = () => {
     if (typeof message.content === 'string') {
@@ -198,15 +177,15 @@ export function ChatMessage({
     }
   };
 
-  const handleLike = () => {
-    if (disliked) setDisliked(false);
-    setLiked(!liked);
-  };
+  // const handleLike = () => { // 暂时注释掉，未使用
+  //   if (disliked) setDisliked(false);
+  //   setLiked(!liked);
+  // };
 
-  const handleDislike = () => {
-    if (liked) setLiked(false);
-    setDisliked(!disliked);
-  };
+  // const handleDislike = () => { // 暂时注释掉，未使用
+  //   if (liked) setLiked(false);
+  //   setDisliked(!disliked);
+  // };
 
   const handleDelete = () => {
     if (onDelete) {
@@ -268,12 +247,12 @@ export function ChatMessage({
         // 如果有chatId，则调用外部反馈API
         console.log('检查是否可以调用外部反馈API:', {
           chatId,
-          appId: message.metadata?.appId,
+          appId: message.metadata?.['appId'],
         });
-        if (chatId && message.metadata?.appId) {
+        if (chatId && message.metadata?.['appId']) {
           const userGoodFeedback = type === 'like' ? 'yes' : undefined;
-          const apiKey = message.metadata?.apiKey;
-          const dataId = message.metadata?.responseId || message.id;
+          const apiKey = message.metadata?.['apiKey'];
+          const dataId = message.metadata?.['responseId'] || message.id;
           const headers: Record<string, string> = {
             'Content-Type': 'application/json',
           };
@@ -284,7 +263,7 @@ export function ChatMessage({
               method: 'POST',
               headers,
               body: JSON.stringify({
-                appId: message.metadata?.appId,
+                appId: message.metadata?.['appId'],
                 chatId: chatId,
                 dataId: dataId,
                 userGoodFeedback,
@@ -303,7 +282,7 @@ export function ChatMessage({
 
       setTimeout(() => setFeedbackLoading(false), 1500);
     },
-    [feedbackLoading, feedback, message.id, message.metadata, chatId]
+    [feedbackLoading, feedback, message.id, message.metadata, chatId, setFeedback, setLiked, setDisliked]
   );
 
   // TTS语音播放
@@ -329,44 +308,52 @@ export function ChatMessage({
     }
   }, [isUser, message.content]);
 
-  // 渲染thinking详细内容
+  // 渲染thinking详细内容 - 暂时注释掉，未使用
+  /*
   const renderThinkingDetails = () => {
     const thinkingSteps =
       message.metadata?.processingSteps?.filter(
-        (step: any) => step.type.includes('thinking') && step.content
+        (step: unknown) => {
+          const stepObj = step as { type?: string; content?: string };
+          return stepObj.type?.includes('thinking') && stepObj.content;
+        }
       ) || [];
 
     if (thinkingSteps.length === 0) return null;
 
     return (
       <div className='space-y-2'>
-        {thinkingSteps.map((step: any) => (
-          <div
-            key={step.id}
-            className='bg-amber-50/50 dark:bg-amber-900/10 rounded-lg p-2 border border-amber-200 dark:border-amber-800/30'
-          >
-            <div className='flex items-center gap-2 mb-1'>
-              <Brain className='h-3.5 w-3.5 text-amber-500' />
-              <span className='text-xs font-medium text-amber-700 dark:text-amber-300'>
-                思考过程
-              </span>
-              <Badge
-                variant='outline'
-                className='text-[10px] h-4 px-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/30'
-              >
-                {step.timestamp
-                  ? new Date(step.timestamp).toLocaleTimeString()
-                  : ''}
-              </Badge>
+        {thinkingSteps.map((step: unknown) => {
+          const stepObj = step as { id?: string; timestamp?: string; content?: string };
+          return (
+            <div
+              key={stepObj.id}
+              className='bg-amber-50/50 dark:bg-amber-900/10 rounded-lg p-2 border border-amber-200 dark:border-amber-800/30'
+            >
+              <div className='flex items-center gap-2 mb-1'>
+                <Brain className='h-3.5 w-3.5 text-amber-500' />
+                <span className='text-xs font-medium text-amber-700 dark:text-amber-300'>
+                  思考过程
+                </span>
+                <Badge
+                  variant='outline'
+                  className='text-[10px] h-4 px-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/30'
+                >
+                  {stepObj.timestamp
+                    ? new Date(stepObj.timestamp).toLocaleTimeString()
+                    : ''}
+                </Badge>
+              </div>
+              <div className='text-xs text-amber-900 dark:text-amber-200 whitespace-pre-wrap'>
+                {stepObj.content}
+              </div>
             </div>
-            <div className='text-xs text-amber-900 dark:text-amber-200 whitespace-pre-wrap'>
-              {step.content}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
+  */
 
   // 头像渲染
   const userAvatar = (
@@ -376,9 +363,11 @@ export function ChatMessage({
   );
   const aiAvatar = (
     <div className='w-9 h-9 rounded-full bg-gradient-to-br from-zinc-100 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 flex items-center justify-center shadow-lg ring-2 ring-blue-400/30'>
-      <img
+      <Image
         src='/mascot.png'
         alt='AI'
+        width={28}
+        height={28}
         className='w-7 h-7 rounded-full object-cover'
       />
     </div>
@@ -417,7 +406,7 @@ export function ChatMessage({
             <span className='font-medium'>
               {isUserCompat
                 ? t('you')
-                : message.metadata?.botName || t('assistant')}
+                : (message.metadata?.['botName'] as string) || t('assistant')}
             </span>
             <span className='mx-1.5'>•</span>
             <span>
@@ -430,33 +419,36 @@ export function ChatMessage({
           {/* 显示上传的文件 */}
           {hasFiles && (
             <div className='mb-3 flex flex-wrap gap-2 p-4 pb-0'>
-              {message.metadata?.files?.map((file: any) => (
-                <div key={file.id} className='flex flex-col'>
-                  {file.type.startsWith('image/') && file.url ? (
-                    <div className='relative rounded-lg overflow-hidden border border-white/20 dark:border-zinc-700/70 shadow-md hover:shadow-lg transition-all duration-200'>
-                      <LazyImage
-                        src={file.url}
-                        alt={file.name}
-                        className='max-w-[200px] max-h-[200px] object-contain'
-                      />
-                      <div className='absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate backdrop-blur-sm'>
-                        {file.name}
+              {message.metadata?.files?.map((file: unknown) => {
+                const fileObj = file as { id?: string; type?: string; url?: string; name?: string };
+                return (
+                  <div key={fileObj.id} className='flex flex-col'>
+                    {fileObj.type?.startsWith('image/') && fileObj.url ? (
+                      <div className='relative rounded-lg overflow-hidden border border-white/20 dark:border-zinc-700/70 shadow-md hover:shadow-lg transition-all duration-200'>
+                        <LazyImage
+                          src={fileObj.url}
+                          alt={fileObj.name || 'file'}
+                          className='max-w-[200px] max-h-[200px] object-contain'
+                        />
+                        <div className='absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate backdrop-blur-sm'>
+                          {fileObj.name}
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className='flex items-center gap-2 bg-white/10 dark:bg-zinc-800/80 p-2 rounded-lg border border-white/20 dark:border-zinc-700/70 backdrop-blur-sm hover:bg-white/15 dark:hover:bg-zinc-800/90 transition-all duration-200'>
-                      {file.type.includes('pdf') ? (
-                        <FileText className='h-4 w-4' />
-                      ) : (
-                        <ImageIcon className='h-4 w-4' />
-                      )}
-                      <span className='text-xs truncate max-w-[150px]'>
-                        {file.name}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    ) : (
+                      <div className='flex items-center gap-2 bg-white/10 dark:bg-zinc-800/80 p-2 rounded-lg border border-white/20 dark:border-zinc-700/70 backdrop-blur-sm hover:bg-white/15 dark:hover:bg-zinc-800/90 transition-all duration-200'>
+                        {fileObj.type?.includes('pdf') ? (
+                          <FileText className='h-4 w-4' />
+                        ) : (
+                          <ImageIcon className='h-4 w-4' />
+                        )}
+                        <span className='text-xs truncate max-w-[150px]'>
+                          {fileObj.name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
           {/* 消息内容 */}
@@ -500,7 +492,7 @@ export function ChatMessage({
             ) : (
               <>
                 {/* 文字内容渲染 - 只要不是节点状态消息就显示 */}
-                {!message.metadata?.isNodeStatus && message.content && (
+                {!message.metadata?.['isNodeStatus'] && message.content && (
                   <MarkdownMessage
                     content={
                       typeof message.content === 'string' ? message.content : ''
@@ -521,24 +513,26 @@ export function ChatMessage({
               // 🔥 修复：扩展过滤条件，包含所有处理步骤类型
               const allProcessingSteps =
                 message.metadata?.processingSteps || [];
-              const thinkingSteps = allProcessingSteps.filter((step: any) => {
-                // 包含思考相关的事件类型
-                const isThinkingType = step.type.includes('thinking');
-                // 包含流程处理相关的事件类型
-                const isProcessingType = [
-                  'flowNodeStatus',
-                  'moduleStatus',
-                  'moduleStart',
-                  'moduleEnd',
-                  'toolCall',
-                  'toolParams',
-                  'toolResponse',
-                ].includes(step.type);
-                // 必须有内容才显示
-                const hasContent = step.content || step.name;
+              const thinkingSteps = allProcessingSteps.filter(
+                (step): step is ProcessingStep & { type: string; content?: string; name?: string } => {
+                  // 包含思考相关的事件类型
+                  const isThinkingType = step.type?.includes('thinking');
+                  // 包含流程处理相关的事件类型
+                  const isProcessingType = [
+                    'flowNodeStatus',
+                    'moduleStatus',
+                    'moduleStart',
+                    'moduleEnd',
+                    'toolCall',
+                    'toolParams',
+                    'toolResponse',
+                  ].includes(step.type || '');
+                  // 必须有内容才显示
+                  const hasContent = !!(step.content || step.name);
 
-                return (isThinkingType || isProcessingType) && hasContent;
-              });
+                  return (isThinkingType || isProcessingType) && hasContent;
+                }
+              );
 
               const hasThinkingSteps = thinkingSteps.length > 0;
               const hasInteractiveData = !!message.metadata?.interactiveData;
@@ -577,7 +571,7 @@ export function ChatMessage({
           {/* 实时处理状态和操作按钮行 */}
           <div className='flex flex-row flex-wrap justify-between items-end gap-2'>
             {/* 实时处理状态区域 */}
-            {message.metadata?.isNodeStatus ? (
+            {message.metadata?.['isNodeStatus'] ? (
               <div className='flex items-center gap-2 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 px-3 py-2 rounded-lg text-xs font-medium animate-pulse border border-blue-200 dark:border-blue-700'>
                 <span role='img' aria-label='AI'></span>
                 <span>{message.content}</span>
@@ -617,7 +611,7 @@ export function ChatMessage({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side='top'>
-                    <p>{copied ? t('copied') : t('copy' as any)}</p>
+                    <p>{copied ? t('copied') : t('copyText')}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -690,7 +684,7 @@ export function ChatMessage({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side='top'>
-                      <p>{t('regenerate')}</p>
+                      <p>{String(t('regenerate'))}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -718,7 +712,7 @@ export function ChatMessage({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side='top'>
-                        <p>{t('helpful')}</p>
+                        <p>{String(t('helpful'))}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -743,7 +737,7 @@ export function ChatMessage({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side='top'>
-                        <p>{t('notHelpful')}</p>
+                        <p>{String(t('notHelpful'))}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

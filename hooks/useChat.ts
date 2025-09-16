@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
-import { useAgent } from '@/context/agent-context';
-import { useMessageStore } from '@/lib/store/messageStore';
-import { useChatStore } from '@/lib/store/chatStore';
-import type { Message } from '@/types/message';
-import type { ProcessingStep } from '@/types/message';
+import { useAgent } from '../context/agent-context';
+import { useMessageStore } from '../lib/store/messageStore';
+import type { Message } from '../types/message';
+import { MessageType } from '../types/message';
+import type { ConversationAgentType } from '../types/agent';
 
 interface UploadedFile {
   id: string;
@@ -15,16 +15,16 @@ interface UploadedFile {
 
 export function useChat() {
   const { selectedAgent } = useAgent();
-  const { messages: storedMessages, saveMessages, loadMessages } = useMessageStore();
-  const { sessions, addSession, saveSessionMessages } = useChatStore();
+  const {
+    messages: storedMessages,
+    saveMessages,
+  } = useMessageStore();
 
   const [input, setInput] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
-  const [showProcessingFlow, setShowProcessingFlow] = useState(false);
 
   // 获取当前聊天会话的消息
   const messages = selectedAgent ? storedMessages[selectedAgent.id] || [] : [];
@@ -40,6 +40,7 @@ export function useChat() {
 
     const newMessage: Message = {
       id: Date.now().toString(),
+      type: MessageType.Text, // 添加缺失字段
       content: input,
       role: 'user',
       timestamp: new Date(),
@@ -49,7 +50,7 @@ export function useChat() {
     const updatedMessages = [...messages, newMessage];
 
     // 保存消息到存储
-    saveMessages(selectedAgent.id, updatedMessages);
+    saveMessages(selectedAgent.id as ConversationAgentType, updatedMessages);
 
     // 清空输入
     setInput('');
@@ -62,6 +63,7 @@ export function useChat() {
       setTimeout(() => {
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
+          type: MessageType.Text, // 添加缺失字段
           content: `收到您的消息: ${input}`,
           role: 'assistant',
           timestamp: new Date(),
@@ -69,7 +71,7 @@ export function useChat() {
         };
 
         const finalMessages = [...updatedMessages, botMessage];
-        saveMessages(selectedAgent.id, finalMessages);
+        saveMessages(selectedAgent.id as ConversationAgentType, finalMessages);
         setIsTyping(false);
         setIsSending(false);
       }, 1000);
@@ -108,21 +110,27 @@ export function useChat() {
   }, []);
 
   // 消息操作
-  const onEditMessage = useCallback((message: Message) => {
-    if (!selectedAgent) return;
+  const onEditMessage = useCallback(
+    (message: Message) => {
+      if (!selectedAgent) return;
 
-    const updatedMessages = messages.map(msg =>
-      msg.id === message.id ? message : msg
-    );
-    saveMessages(selectedAgent.id, updatedMessages);
-  }, [messages, selectedAgent, saveMessages]);
+      const updatedMessages = messages.map(msg =>
+        msg.id === message.id ? message : msg
+      );
+      saveMessages(selectedAgent.id as ConversationAgentType, updatedMessages);
+    },
+    [messages, selectedAgent, saveMessages]
+  );
 
-  const onDeleteMessage = useCallback((message: Message) => {
-    if (!selectedAgent) return;
+  const onDeleteMessage = useCallback(
+    (message: Message) => {
+      if (!selectedAgent) return;
 
-    const updatedMessages = messages.filter(msg => msg.id !== message.id);
-    saveMessages(selectedAgent.id, updatedMessages);
-  }, [messages, selectedAgent, saveMessages]);
+      const updatedMessages = messages.filter(msg => msg.id !== message.id);
+      saveMessages(selectedAgent.id as ConversationAgentType, updatedMessages);
+    },
+    [messages, selectedAgent, saveMessages]
+  );
 
   const onCopyMessage = useCallback((message: Message) => {
     navigator.clipboard.writeText(message.content);
@@ -139,15 +147,21 @@ export function useChat() {
   }, []);
 
   // 历史记录操作
-  const onSelectHistory = useCallback((historyMessages: Message[], chatId: string) => {
-    if (selectedAgent) {
-      saveMessages(selectedAgent.id, historyMessages);
-    }
-  }, [selectedAgent, saveMessages]);
+  const onSelectHistory = useCallback(
+    (historyMessages: Message[]) => {
+      if (selectedAgent) {
+        saveMessages(
+          selectedAgent.id as ConversationAgentType,
+          historyMessages
+        );
+      }
+    },
+    [selectedAgent, saveMessages]
+  );
 
   const onNewChat = useCallback(() => {
     if (selectedAgent) {
-      saveMessages(selectedAgent.id, []);
+      saveMessages(selectedAgent.id as ConversationAgentType, []);
       setUploadedFiles([]);
       setInput('');
     }
@@ -171,8 +185,6 @@ export function useChat() {
     isTyping,
     isRecording,
     isSending,
-    processingSteps,
-    showProcessingFlow,
     onSelectHistory,
     onNewChat,
     onManageHistory,

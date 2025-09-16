@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+// Removed invalid typescript import
 import { isAdmin } from '@/lib/api/auth';
 import { ApiResponse } from '@/types';
 import { User, UserRole, UserStatus } from '@/types/admin';
-import { User as UserModel, OperationLog, OperationStatus } from '@/lib/db/models';
+import {
+  User as UserModel,
+  OperationLog,
+  OperationStatus,
+} from '@/lib/db/models';
 import sequelize from '@/lib/db/sequelize';
 import { Op } from 'sequelize';
 import { z } from 'zod';
@@ -24,10 +29,10 @@ async function logOperation(
   action: string,
   resourceType: string,
   resourceId: string,
-  details: Record<string, any>,
+  details: Record<string, unknown>,
   status: OperationStatus,
-  errorMessage?: string,
-  request: NextRequest
+  request: NextRequest,
+  errorMessage?: string
 ) {
   try {
     await OperationLog.create({
@@ -36,7 +41,10 @@ async function logOperation(
       resourceType,
       resourceId,
       details,
-      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      ipAddress:
+        request.headers.get('x-forwarded-for') ||
+        request.headers.get('x-real-ip') ||
+        'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown',
       status,
       errorMessage,
@@ -53,26 +61,32 @@ export async function GET(
 ) {
   try {
     // 验证管理员权限
-    const authResult = await isAdmin(request);
-    if (!authResult.success) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+    const isAdminUser = await isAdmin(request);
+    if (!isAdminUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     const userId = parseInt(params.id);
     if (isNaN(userId)) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'INVALID_ID',
-          message: '无效的用户ID',
-        },
-      } as ApiResponse, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_ID',
+            message: '无效的用户ID',
+          },
+        } as ApiResponse,
+        { status: 400 }
+      );
     }
 
     // 查询用户
@@ -91,44 +105,57 @@ export async function GET(
           as: 'operationLogs',
           limit: 10,
           order: [['createdAt', 'DESC']],
-          attributes: ['id', 'action', 'resourceType', 'status', 'createdAt', 'details'],
+          attributes: [
+            'id',
+            'action',
+            'resourceType',
+            'status',
+            'createdAt',
+            'details',
+          ],
         },
       ],
     });
 
     if (!user) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: '用户不存在',
-        },
-      } as ApiResponse, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: '用户不存在',
+          },
+        } as ApiResponse,
+        { status: 404 }
+      );
     }
 
+    const userData = user.toJSON() as unknown as User;
     return NextResponse.json({
       success: true,
-      data: user.toJSON() as User,
+      data: userData,
       meta: {
         timestamp: new Date().toISOString(),
         requestId: crypto.randomUUID(),
       },
     } as ApiResponse<User>);
-
   } catch (error) {
     console.error('获取用户详情失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '获取用户详情失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '获取用户详情失败',
+          details: error instanceof Error ? error.message : error,
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }
 
@@ -141,41 +168,50 @@ export async function PUT(
 
   try {
     // 验证管理员权限
-    const authResult = await isAdmin(request);
-    if (!authResult.success) {
+    const isAdminUser = await isAdmin(request);
+    if (!isAdminUser) {
       await transaction.rollback();
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     const userId = parseInt(params.id);
     if (isNaN(userId)) {
       await transaction.rollback();
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'INVALID_ID',
-          message: '无效的用户ID',
-        },
-      } as ApiResponse, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_ID',
+            message: '无效的用户ID',
+          },
+        } as ApiResponse,
+        { status: 400 }
+      );
     }
 
     // 查询用户
     const user = await UserModel.findByPk(userId, { transaction });
     if (!user) {
       await transaction.rollback();
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: '用户不存在',
-        },
-      } as ApiResponse, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: '用户不存在',
+          },
+        } as ApiResponse,
+        { status: 404 }
+      );
     }
 
     // 解析和验证请求数据
@@ -184,7 +220,7 @@ export async function PUT(
 
     // 检查用户名和邮箱唯一性
     if (validatedData.username || validatedData.email) {
-      const whereClause: any = { id: { [Op.ne]: userId } };
+      const whereClause: Record<string, unknown> = { id: { [Op.ne]: userId } };
 
       if (validatedData.username) {
         whereClause.username = validatedData.username;
@@ -200,13 +236,16 @@ export async function PUT(
 
       if (existingUser) {
         await transaction.rollback();
-        return NextResponse.json({
-          success: false,
-          error: {
-            code: 'USER_EXISTS',
-            message: '用户名或邮箱已存在',
-          },
-        } as ApiResponse, { status: 409 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'USER_EXISTS',
+              message: '用户名或邮箱已存在',
+            },
+          } as ApiResponse,
+          { status: 409 }
+        );
       }
     }
 
@@ -234,7 +273,6 @@ export async function PUT(
         after: validatedData,
       },
       OperationStatus.SUCCESS,
-      undefined,
       request
     );
 
@@ -247,46 +285,52 @@ export async function PUT(
       },
     });
 
+    const updatedUserData = updatedUser?.toJSON() as unknown as User;
     return NextResponse.json({
       success: true,
-      data: updatedUser?.toJSON() as User,
+      data: updatedUserData,
       meta: {
         timestamp: new Date().toISOString(),
         requestId: crypto.randomUUID(),
       },
     } as ApiResponse<User>);
-
   } catch (error) {
     await transaction.rollback();
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json({
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '请求数据验证失败',
+            details: error.errors,
+          },
+          meta: {
+            timestamp: new Date().toISOString(),
+            requestId: crypto.randomUUID(),
+          },
+        } as ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    console.error('更新用户失败:', error);
+    return NextResponse.json(
+      {
         success: false,
         error: {
-          code: 'VALIDATION_ERROR',
-          message: '请求数据验证失败',
-          details: error.errors,
+          code: 'INTERNAL_ERROR',
+          message: '更新用户失败',
+          details: error instanceof Error ? error.message : error,
         },
         meta: {
           timestamp: new Date().toISOString(),
           requestId: crypto.randomUUID(),
         },
-      } as ApiResponse, { status: 400 });
-    }
-
-    console.error('更新用户失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '更新用户失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }
 
@@ -299,41 +343,50 @@ export async function DELETE(
 
   try {
     // 验证管理员权限
-    const authResult = await isAdmin(request);
-    if (!authResult.success) {
+    const isAdminUser = await isAdmin(request);
+    if (!isAdminUser) {
       await transaction.rollback();
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: '需要管理员权限',
-        },
-      } as ApiResponse, { status: 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '需要管理员权限',
+          },
+        } as ApiResponse,
+        { status: 401 }
+      );
     }
 
     const userId = parseInt(params.id);
     if (isNaN(userId)) {
       await transaction.rollback();
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'INVALID_ID',
-          message: '无效的用户ID',
-        },
-      } as ApiResponse, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_ID',
+            message: '无效的用户ID',
+          },
+        } as ApiResponse,
+        { status: 400 }
+      );
     }
 
     // 查询用户
     const user = await UserModel.findByPk(userId, { transaction });
     if (!user) {
       await transaction.rollback();
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: '用户不存在',
-        },
-      } as ApiResponse, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: '用户不存在',
+          },
+        } as ApiResponse,
+        { status: 404 }
+      );
     }
 
     // 获取当前操作用户
@@ -344,7 +397,7 @@ export async function DELETE(
     }
 
     // 记录删除前的数据
-    const deletedData = user.toJSON();
+    const deletedData = user.toJSON() as Record<string, unknown>;
     delete deletedData.password; // 不记录密码
 
     // 删除用户
@@ -360,36 +413,40 @@ export async function DELETE(
         deletedUser: deletedData,
       },
       OperationStatus.SUCCESS,
-      undefined,
       request
     );
 
     await transaction.commit();
 
-    return NextResponse.json({
-      success: true,
-      message: '用户删除成功',
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 200 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        message: '用户删除成功',
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      } as ApiResponse,
+      { status: 200 }
+    );
   } catch (error) {
     await transaction.rollback();
 
     console.error('删除用户失败:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: '删除用户失败',
-        details: error instanceof Error ? error.message : error,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: crypto.randomUUID(),
-      },
-    } as ApiResponse, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '删除用户失败',
+          details: error instanceof Error ? error.message : error,
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: crypto.randomUUID(),
+        },
+      } as ApiResponse,
+      { status: 500 }
+    );
   }
 }

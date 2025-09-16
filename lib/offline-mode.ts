@@ -40,7 +40,7 @@ export async function checkNetworkConnection(): Promise<boolean> {
  * @param input User input
  * @returns Offline response text
  */
-export function generateOfflineResponse(input: string): string {
+export function generateOfflineResponse(_input: string): string {
   // Simple offline response generation
   const responses = [
     '我目前处于离线模式，无法处理您的请求。请检查您的网络连接后再试。',

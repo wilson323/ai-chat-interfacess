@@ -1,4 +1,4 @@
-import { Agent } from '@/types/agent';
+import { Agent } from '../../types/agent';
 
 const API_URL = '/api/admin/agent-config';
 
@@ -55,4 +55,14 @@ export async function deleteAgent(id: string): Promise<void> {
   const result = await res.json();
   if (!res.ok || !result.success)
     throw new Error(result.error || '删除智能体失败');
+}
+
+// 获取智能体详情（管理端）
+export async function fetchAgentById(id: string): Promise<Agent> {
+  const url = `${API_URL}?id=${encodeURIComponent(id)}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  const result = await res.json();
+  if (!res.ok || !result.success)
+    throw new Error(result.error || '获取智能体详情失败');
+  return result.data;
 }

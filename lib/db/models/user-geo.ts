@@ -1,16 +1,40 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import sequelize, { Op } from '../sequelize';
-import { UserGeoAttributes, UserGeoCreationAttributes, GeoLocation } from '@/types/heatmap';
+import {
+  UserGeoAttributes,
+  UserGeoCreationAttributes,
+  GeoLocationInfo,
+} from '@/types/heatmap';
 
 export class UserGeo
   extends Model<UserGeoAttributes, UserGeoCreationAttributes>
   implements UserGeoAttributes
 {
+  // 静态方法声明
+  static upsertUserGeo: (
+    userId: number | undefined,
+    sessionId: string | undefined,
+    ipAddress: string,
+    location: GeoLocationInfo
+  ) => Promise<UserGeo>;
+
+  static getUserLocations: (
+    userId: number,
+    limit?: number
+  ) => Promise<UserGeo[]>;
+
+  static getActiveUsersByLocation: (
+    timeRange: Date
+  ) => Promise<Array<{ location: string; count: number }>>;
+
+  static cleanupOldData: (
+    daysToKeep: number
+  ) => Promise<number>;
   public id!: number;
   public userId?: number;
   public sessionId?: string;
   public ipAddress!: string;
-  public location!: GeoLocation;
+  public location!: GeoLocationInfo;
   public lastSeen!: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -123,19 +147,22 @@ UserGeo.init(
 );
 
 // 实例方法
-UserGeo.prototype.toJSON = function(): object {
+UserGeo.prototype.toJSON = function (): object {
   const values = Object.assign({}, this.get());
   // 隐藏敏感信息
-  delete values.ipAddress;
+  if ('ipAddress' in values) {
+    const { ipAddress, ...rest } = values as any;
+    return rest;
+  }
   return values;
 };
 
 // 静态方法
-UserGeo.upsertUserGeo = async function(
+(UserGeo as any).upsertUserGeo = async function (
   userId: number | undefined,
   sessionId: string | undefined,
   ipAddress: string,
-  location: GeoLocation
+  location: GeoLocationInfo
 ): Promise<UserGeo> {
   const [userGeo, created] = await UserGeo.findOrCreate({
     where: {
@@ -147,6 +174,7 @@ UserGeo.upsertUserGeo = async function(
       sessionId,
       ipAddress,
       location,
+      lastSeen: new Date(),
     },
   });
 
@@ -161,7 +189,7 @@ UserGeo.upsertUserGeo = async function(
   return userGeo;
 };
 
-UserGeo.getUserLocations = async function(
+(UserGeo as any).getUserLocations = async function (
   userId?: number,
   limit: number = 100
 ): Promise<UserGeo[]> {
@@ -177,42 +205,50 @@ UserGeo.getUserLocations = async function(
   });
 };
 
-UserGeo.getActiveUsersByLocation = async function(
+(UserGeo as any).getActiveUsersByLocation = async function (
   timeRange: Date,
   groupBy: 'country' | 'region' | 'city' = 'country'
 ): Promise<Array<{ location: string; count: number }>> {
   const where: any = {
     lastSeen: {
-      [sequelize.Op.gte]: timeRange,
+      [Op.gte]: timeRange,
     },
   };
 
-  const groupColumn = groupBy === 'country'
-    ? sequelize.literal('(location->>"country")')
-    : groupBy === 'region'
-    ? sequelize.literal('(location->>"region")')
-    : sequelize.literal('(location->>"city")');
+  const groupColumn =
+    groupBy === 'country'
+      ? sequelize.literal('(location->>"country")')
+      : groupBy === 'region'
+        ? sequelize.literal('(location->>"region")')
+        : sequelize.literal('(location->>"city")');
 
-  return await UserGeo.findAll({
+  const results = await UserGeo.findAll({
     where,
     attributes: [
       [groupColumn, 'location'],
       [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
     ],
-    group: [groupColumn],
+    group: [groupColumn as any],
     order: [[sequelize.literal('count'), 'DESC']],
     raw: true,
   });
+
+  return results.map((result: any) => ({
+    location: result.location || 'Unknown',
+    count: parseInt(result.count) || 0,
+  }));
 };
 
-UserGeo.cleanupOldData = async function(daysToKeep: number = 90): Promise<number> {
+(UserGeo as any).cleanupOldData = async function (
+  daysToKeep: number = 90
+): Promise<number> {
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
   const result = await UserGeo.destroy({
     where: {
       lastSeen: {
-        [sequelize.Op.lt]: cutoffDate,
+        [Op.lt]: cutoffDate,
       },
     },
   });

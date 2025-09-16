@@ -1,4 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
+// Record is a built-in TypeScript utility type
 import sequelize from '../sequelize';
 
 // 操作日志属性接口
@@ -8,7 +9,7 @@ interface OperationLogAttributes {
   action: string;
   resourceType?: string;
   resourceId?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   status: OperationStatus;
@@ -17,7 +18,10 @@ interface OperationLogAttributes {
 }
 
 // 创建操作日志时的可选属性
-interface OperationLogCreationAttributes extends Optional<OperationLogAttributes, 'id' | 'createdAt'> {}
+type OperationLogCreationAttributes = Optional<
+  OperationLogAttributes,
+  'id' | 'createdAt'
+>;
 
 // 操作状态枚举
 export enum OperationStatus {
@@ -27,13 +31,16 @@ export enum OperationStatus {
 }
 
 // 操作日志模型类
-class OperationLog extends Model<OperationLogAttributes, OperationLogCreationAttributes> implements OperationLogAttributes {
+class OperationLog
+  extends Model<OperationLogAttributes, OperationLogCreationAttributes>
+  implements OperationLogAttributes
+{
   public id!: number;
   public userId?: number;
   public action!: string;
   public resourceType?: string;
   public resourceId?: string;
-  public details?: Record<string, any>;
+  public details?: Record<string, unknown>;
   public ipAddress?: string;
   public userAgent?: string;
   public status!: OperationStatus;
@@ -128,4 +135,4 @@ OperationLog.init(
 );
 
 export default OperationLog;
-export { OperationLog, OperationLogAttributes, OperationLogCreationAttributes };
+export type { OperationLogAttributes, OperationLogCreationAttributes };

@@ -14,7 +14,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Paperclip, Mic, Send, Image, FileText, X } from 'lucide-react';
+import {
+  Paperclip,
+  Mic,
+  Send,
+  Image as ImageIcon,
+  FileText,
+  X,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface UploadedFile {
@@ -32,14 +39,17 @@ interface ChatInputProps {
   onFileUpload?: (files: File[]) => void;
   onVoiceStart?: () => void;
   onVoiceStop?: () => void;
-  uploadedFiles: UploadedFile[];
+  onVoiceTextRecognized?: (text: string) => void;
+  uploadedFiles?: UploadedFile[];
   onRemoveFile?: (fileId: string) => void;
   isRecording?: boolean;
   isSending?: boolean;
+  isTyping?: boolean;
   disabled?: boolean;
   placeholder?: string;
   maxLength?: number;
   className?: string;
+  onGlobalVariablesChange?: (variables: unknown[]) => void;
 }
 
 export function ChatInput({
@@ -49,7 +59,7 @@ export function ChatInput({
   onFileUpload,
   onVoiceStart,
   onVoiceStop,
-  uploadedFiles,
+  uploadedFiles = [],
   onRemoveFile,
   isRecording = false,
   isSending = false,
@@ -65,14 +75,14 @@ export function ChatInput({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
       e.preventDefault();
-      if (value.trim() && !isSending) {
+      if (value.trim() && !isSending && onSend) {
         onSend();
       }
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length > 0 && onFileUpload) {
       onFileUpload(files);
     }
@@ -87,7 +97,7 @@ export function ChatInput({
   };
 
   const handleSend = () => {
-    if (value.trim() && !isSending) {
+    if (value.trim() && !isSending && onSend) {
       onSend();
     }
   };
@@ -127,6 +137,9 @@ export function ChatInput({
           {/* 输入区域 */}
           <div className='flex-1'>
             <Textarea
+              id='chat-input'
+              name='message'
+              aria-label='聊天输入'
               ref={textareaRef}
               value={value}
               onChange={e => onChange(e.target.value)}
@@ -185,7 +198,7 @@ export function ChatInput({
                     disabled={disabled || isSending}
                     className='h-10 w-10 p-0'
                   >
-                    <Image className='h-4 w-4' />
+                    <ImageIcon className='h-4 w-4' />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -241,6 +254,9 @@ export function ChatInput({
 
         {/* 隐藏的文件输入 */}
         <input
+          id='chat-file-input'
+          name='attachments'
+          aria-label='附件上传'
           ref={fileInputRef}
           type='file'
           multiple

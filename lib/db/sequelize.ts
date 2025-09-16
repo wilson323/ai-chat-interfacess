@@ -1,15 +1,10 @@
 import { Sequelize, Op } from 'sequelize';
 import { Client } from 'pg';
-import pg from 'pg';
-import { appConfig, validateConfig } from '@/lib/config';
+import * as pg from 'pg';
+import { appConfig, validateConfig } from '../config';
 
 console.log('Sequelize loaded, cwd:', process.cwd());
-try {
-  require('pg');
-  console.log('pg loaded successfully');
-} catch (e) {
-  console.error('pg load failed', e);
-}
+// pg is already imported at the top
 
 // 验证配置
 try {
@@ -66,7 +61,7 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle,
     evict: 1000, // 清理间隔
-    handleDisconnects: true, // 处理断开连接
+    // handleDisconnects: true, // 处理断开连接 - 移除不存在的属性
   },
 
   // 添加重试机制
@@ -133,6 +128,8 @@ async function initializeDefaultData() {
           isPublished: true,
           description: '系统内置默认智能体',
           order: 1,
+          supportsStream: true,
+          supportsDetail: true,
         },
       ]);
       console.log('已自动初始化默认智能体数据');
@@ -154,8 +151,9 @@ export const sequelizeInitPromise = (async () => {
 
     // 延迟初始化数据，避免循环依赖
     await initializeDefaultData();
+    return true;
   } catch (err) {
-    console.warn('数据库连接失败，启用内存存储模式:', err.message);
+    console.warn('数据库连接失败，启用内存存储模式:', (err as Error).message);
     console.warn('连接信息:', {
       database: DB_NAME,
       user: DB_USER,

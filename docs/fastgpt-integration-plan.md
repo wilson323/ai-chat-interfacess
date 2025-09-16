@@ -9,20 +9,23 @@
 ### 1.1 现有集成状况
 
 **API配置结构**：
+
 - 基础端点：`https://zktecoaihub.com/api/v1/chat/completions`
 - 当前配置：`http://171.43.138.237:3000` (开发环境)
 - 认证方式：Bearer Token + AppId双验证
 
 **智能体类型区分**：
+
 ```typescript
 // FastGPT智能体 - 数据源为FastGPT API，对话内容通过API分页拉取
-type: 'fastgpt' | 'chat'
+type: 'fastgpt' | 'chat';
 
 // 自研智能体 - 业务数据本地存储，API全量可控
-type: 'cad-analyzer' | 'image-editor'
+type: 'cad-analyzer' | 'image-editor';
 ```
 
 **数据存储策略**：
+
 - **平台数据库**：仅存储智能体配置、用户权限、调用日志
 - **FastGPT智能体**：不存储对话内容，前端localStorage短期缓存
 - **自研智能体**：本地全量存储，支持增删改查、审计、导出
@@ -30,16 +33,19 @@ type: 'cad-analyzer' | 'image-editor'
 ### 1.2 现有问题识别
 
 **性能瓶颈**：
+
 - 每次对话都直接调用FastGPT API，无缓存机制
 - 缺少请求合并和批处理优化
 - 流式响应处理效率有待提升
 
 **配置管理**：
+
 - 环境变量硬编码，缺少动态配置能力
 - 智能体配置更新需要重启服务
 - 缺少配置版本控制和回滚机制
 
 **安全风险**：
+
 - API密钥明文存储在环境变量中
 - 缺少访问频率限制和异常检测
 - 配置变更缺少审计日志
@@ -126,6 +132,7 @@ interface ConfigManager {
 ### 3.1 请求合并与批处理
 
 **批处理策略**：
+
 ```typescript
 class BatchProcessor {
   private queue: ChatRequest[] = [];
@@ -250,7 +257,7 @@ class StreamingOptimizer {
         } catch (error) {
           controller.error(error);
         }
-      }
+      },
     });
   }
 }
@@ -261,6 +268,7 @@ class StreamingOptimizer {
 ### 4.1 API密钥管理
 
 **密钥存储加密**：
+
 ```typescript
 class KeyManager {
   private masterKey: string;
@@ -278,7 +286,7 @@ class KeyManager {
       iv: Array.from(iv).join(','),
       data: Array.from(new Uint8Array(encryptedData)).join(','),
       algorithm: this.algorithm,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -343,7 +351,11 @@ class SecurityManager implements AccessControl {
     const limit = await this.getUserRateLimit(userId);
 
     if (current >= limit) {
-      await this.auditLogger.log('rate_limit_exceeded', { userId, current, limit });
+      await this.auditLogger.log('rate_limit_exceeded', {
+        userId,
+        current,
+        limit,
+      });
       return false;
     }
 
@@ -357,7 +369,7 @@ class SecurityManager implements AccessControl {
     return {
       suspiciousActivity: this.analyzeSuspiciousPatterns(recentRequests),
       riskScore: this.calculateRiskScore(recentRequests),
-      recommendations: this.generateRecommendations(recentRequests)
+      recommendations: this.generateRecommendations(recentRequests),
     };
   }
 }
@@ -441,7 +453,7 @@ class PerformanceMonitor {
       cacheHitRate: await this.collectCacheMetrics(),
       errorRate: await this.collectErrorMetrics(),
       memoryUsage: process.memoryUsage().heapUsed,
-      cpuUsage: process.cpuUsage().user
+      cpuUsage: process.cpuUsage().user,
     };
   }
 
@@ -453,7 +465,7 @@ class PerformanceMonitor {
         type: 'high_latency',
         severity: 'warning',
         message: 'API latency exceeds threshold',
-        metrics: { p95: metrics.apiLatency.p95 }
+        metrics: { p95: metrics.apiLatency.p95 },
       });
     }
 
@@ -462,7 +474,7 @@ class PerformanceMonitor {
         type: 'low_cache_hit_rate',
         severity: 'warning',
         message: 'Cache hit rate below threshold',
-        metrics: { hitRate: metrics.cacheHitRate }
+        metrics: { hitRate: metrics.cacheHitRate },
       });
     }
 
@@ -471,7 +483,7 @@ class PerformanceMonitor {
         type: 'high_error_rate',
         severity: 'critical',
         message: 'Error rate exceeds threshold',
-        metrics: { errorRate: metrics.errorRate }
+        metrics: { errorRate: metrics.errorRate },
       });
     }
 
@@ -506,7 +518,7 @@ class AuditLogger {
       result: this.determineResult(details),
       details,
       ip: this.getCurrentIp(),
-      userAgent: this.getCurrentUserAgent()
+      userAgent: this.getCurrentUserAgent(),
     };
 
     await this.persistLog(logEntry);
@@ -518,9 +530,12 @@ class AuditLogger {
     return this.sanitizeLogs(logs);
   }
 
-  async generateReport(period: { start: Date; end: Date }): Promise<AuditReport> {
+  async generateReport(period: {
+    start: Date;
+    end: Date;
+  }): Promise<AuditReport> {
     const logs = await this.queryLogs({
-      timestamp: { $gte: period.start, $lte: period.end }
+      timestamp: { $gte: period.start, $lte: period.end },
     });
 
     return {
@@ -528,7 +543,7 @@ class AuditLogger {
       successRate: this.calculateSuccessRate(logs),
       topActions: this.getTopActions(logs),
       suspiciousActivities: this.identifySuspiciousActivities(logs),
-      performanceMetrics: this.calculatePerformanceMetrics(logs)
+      performanceMetrics: this.calculatePerformanceMetrics(logs),
     };
   }
 }
@@ -537,6 +552,7 @@ class AuditLogger {
 ## 🚀 实施路线图
 
 ### 阶段一：基础优化 (1-2周)
+
 1. **缓存层实现**
    - 添加Redis缓存支持
    - 实现内存缓存策略
@@ -553,6 +569,7 @@ class AuditLogger {
    - 简单审计日志
 
 ### 阶段二：高级功能 (2-3周)
+
 1. **智能路由**
    - 负载均衡实现
    - 熔断器机制
@@ -569,6 +586,7 @@ class AuditLogger {
    - 告警机制
 
 ### 阶段三：生产部署 (1周)
+
 1. **测试验证**
    - 压力测试
    - 安全测试
@@ -587,22 +605,26 @@ class AuditLogger {
 ## 📈 预期效果
 
 ### 性能提升
+
 - **响应时间**：减少40-60%的平均响应时间
 - **并发处理**：提升3-5倍的并发处理能力
 - **缓存命中率**：达到85%以上的缓存命中率
 - **错误率**：降低到1%以下
 
 ### 系统稳定性
+
 - **可用性**：99.9%以上的系统可用性
 - **故障恢复**：自动故障检测和恢复
 - **扩展性**：支持水平扩展和负载均衡
 
 ### 安全保障
+
 - **数据安全**：所有敏感数据加密存储
 - **访问控制**：细粒度的权限管理
 - **审计追踪**：完整的操作审计日志
 
 ### 运维效率
+
 - **配置管理**：动态配置更新，无需重启
 - **监控告警**：实时监控和智能告警
 - **故障排查**：详细的日志和性能指标
@@ -610,21 +632,25 @@ class AuditLogger {
 ## 💡 最佳实践建议
 
 ### 1. 性能优化
+
 - 使用连接池管理数据库连接
 - 实现智能缓存策略，避免缓存穿透
 - 采用异步非阻塞的I/O处理
 
 ### 2. 安全防护
+
 - 定期轮换API密钥和访问令牌
 - 实现多因素认证机制
 - 建立安全漏洞定期扫描机制
 
 ### 3. 运维管理
+
 - 建立完善的监控和告警体系
 - 实现自动化部署和回滚机制
 - 制定详细的应急响应预案
 
 ### 4. 开发规范
+
 - 遵循代码审查和测试流程
 - 实现持续集成和持续部署
 - 建立技术债务管理机制

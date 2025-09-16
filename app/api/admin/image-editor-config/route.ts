@@ -16,7 +16,7 @@ async function checkAdminAuth(req: NextRequest) {
   if (!token) return false;
   try {
     const decoded = verify(token, JWT_SECRET);
-    return decoded && (decoded as any).role === 'admin';
+    return decoded && typeof decoded === 'object' && 'role' in decoded && decoded.role === 'admin';
   } catch {
     return false;
   }

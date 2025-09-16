@@ -2,8 +2,8 @@
 
 import type React from 'react';
 
-import { cn } from '@/lib/utils';
-import { useResponsive } from '@/hooks/use-responsive';
+import { cn } from '../lib/utils';
+import { useResponsive } from '../hooks/use-responsive';
 
 interface ResponsiveContainerProps {
   children: React.ReactNode;

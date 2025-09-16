@@ -7,6 +7,9 @@ export enum MessageType {
   File = 'file',
   Code = 'code',
   Markdown = 'markdown',
+  User = 'user',
+  Assistant = 'assistant',
+  System = 'system',
 }
 
 /**
@@ -54,6 +57,7 @@ export interface MessageMetadata {
   agentId?: string;
   offline?: boolean;
   error?: boolean;
+  roleRaw?: string; // 原始角色信息
   files?: Array<{
     name: string;
     size: number;
@@ -69,7 +73,7 @@ export interface MessageMetadata {
   interactionStatus?: InteractionStatus;
   // 处理步骤数据
   processingSteps?: ProcessingStep[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -82,6 +86,10 @@ export interface Message {
   content: string;
   timestamp: Date;
   metadata?: MessageMetadata;
+  agentId?: string; // 添加智能体ID字段
+  avatar?: string; // 添加头像字段
+  agentName?: string; // 添加智能体名称字段
+  agentType?: string; // 添加智能体类型字段
 }
 
 /**
@@ -94,6 +102,6 @@ export interface ProcessingStep {
   status: 'running' | 'success' | 'error' | 'pending';
   content?: string;
   timestamp: Date;
-  details?: any;
+  details?: unknown;
   isNew?: boolean;
 }

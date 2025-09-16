@@ -10,10 +10,10 @@ interface CacheEntry<T> {
 }
 
 class SimpleCacheManager {
-  private cache = new Map<string, CacheEntry<any>>();
+  private cache = new Map<string, CacheEntry<Record<string, unknown>>>();
   private defaultTTL = 3600; // 1小时
 
-  async get<T>(key: string): Promise<T | null> {
+  async get<T extends Record<string, unknown>>(key: string): Promise<T | null> {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
@@ -22,10 +22,14 @@ class SimpleCacheManager {
       return null;
     }
 
-    return entry.data;
+    return entry.data as T;
   }
 
-  async set<T>(key: string, data: T, ttl: number = this.defaultTTL): Promise<void> {
+  async set<T extends Record<string, unknown>>(
+    key: string,
+    data: T,
+    ttl: number = this.defaultTTL
+  ): Promise<void> {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -53,7 +57,11 @@ class SimpleCacheManager {
     this.cache.clear();
   }
 
-  async getStats(): Promise<any> {
+  async getStats(): Promise<{
+    size: number;
+    keys: string[];
+    timestamp: number;
+  }> {
     return {
       size: this.cache.size,
       keys: Array.from(this.cache.keys()),
@@ -62,12 +70,18 @@ class SimpleCacheManager {
   }
 
   // 智能体配置特定的缓存方法
-  async getCachedAgentConfig(key: string): Promise<any[] | null> {
-    return this.get<any[]>(key);
+  async getCachedAgentConfig(
+    key: string
+  ): Promise<Array<Record<string, unknown>> | null> {
+    const result = await this.get<Record<string, unknown>>(key);
+    return (result as any)?.items || null;
   }
 
-  async cacheAgentConfig(key: string, data: any[]): Promise<void> {
-    await this.set(key, data, 1800); // 30分钟
+  async cacheAgentConfig(
+    key: string,
+    data: Array<Record<string, unknown>>
+  ): Promise<void> {
+    await this.set(key, { items: data } as Record<string, unknown>, 1800); // 30分钟
   }
 }
 

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AgentUsage, ChatSession, UserGeo, AgentConfig } from '@/lib/db/models';
+import { AgentUsage, UserGeo, AgentConfig } from '@/lib/db/models';
 import { Op } from 'sequelize';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // 获取最近24小时的数据
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       errorRate,
       performanceMetrics,
       topAgents,
-      activeLocations
+      activeLocations,
     ] = await Promise.all([
       getOnlineUsers(),
       getCurrentHourStats(oneHourAgo),
@@ -55,73 +55,161 @@ async function getOnlineUsers() {
   // 最近5分钟内有活动的用户
   const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
+  const sequelize = AgentUsage.sequelize;
+  if (!sequelize) {
+    throw new Error('Database connection not available');
+  }
+
   const activeSessions = await AgentUsage.findAll({
     where: {
       startTime: { [Op.gte]: fiveMinutesAgo },
-      endTime: null, // 仍在进行的会话
+      endTime: { [Op.is]: null as any }, // 仍在进行的会话
     },
     attributes: [
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.fn('DISTINCT', AgentUsage.sequelize.col('userId'))), 'loggedUsers'],
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.fn('DISTINCT', AgentUsage.sequelize.col('sessionId'))), 'totalSessions'],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('userId')
+          )
+        ),
+        'loggedUsers',
+      ],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('sessionId')
+          )
+        ),
+        'totalSessions',
+      ],
     ],
     raw: true,
   });
 
-  const result = activeSessions[0] || { loggedUsers: 0, totalSessions: 0 };
+  const result = (activeSessions[0] as unknown as { loggedUsers: number; totalSessions: number }) || { loggedUsers: 0, totalSessions: 0 };
 
   return {
     total: result.totalSessions || 0,
     logged: result.loggedUsers || 0,
-    anonymous: Math.max(0, (result.totalSessions || 0) - (result.loggedUsers || 0)),
+    anonymous: Math.max(
+      0,
+      (result.totalSessions || 0) - (result.loggedUsers || 0)
+    ),
   };
 }
 
 // 获取当前小时的统计
 async function getCurrentHourStats(oneHourAgo: Date) {
+  const sequelize = AgentUsage.sequelize;
+  if (!sequelize) {
+    throw new Error('Database connection not available');
+  }
+
   const currentHourData = await AgentUsage.findAll({
     where: {
       startTime: { [Op.gte]: oneHourAgo },
     },
     attributes: [
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.col('id')), 'sessions'],
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.fn('DISTINCT', AgentUsage.sequelize.col('userId'))), 'users'],
-      [AgentUsage.sequelize.fn('SUM', AgentUsage.sequelize.col('messageCount')), 'messages'],
-      [AgentUsage.sequelize.fn('AVG', AgentUsage.sequelize.col('responseTime')), 'avgResponseTime'],
+      [
+        sequelize.fn('COUNT', sequelize.col('id')),
+        'sessions',
+      ],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('userId')
+          )
+        ),
+        'users',
+      ],
+      [
+        sequelize.fn(
+          'SUM',
+          sequelize.col('messageCount')
+        ),
+        'messages',
+      ],
+      [
+        sequelize.fn(
+          'AVG',
+          sequelize.col('responseTime')
+        ),
+        'avgResponseTime',
+      ],
     ],
     raw: true,
   });
 
-  return currentHourData[0] || {
-    sessions: 0,
-    users: 0,
-    messages: 0,
-    avgResponseTime: 0,
-  };
+  return (
+    currentHourData[0] || {
+      sessions: 0,
+      users: 0,
+      messages: 0,
+      avgResponseTime: 0,
+    }
+  );
 }
 
 // 获取今日统计
 async function getTodayStats(twentyFourHoursAgo: Date) {
+  const sequelize = AgentUsage.sequelize;
+  if (!sequelize) {
+    throw new Error('Database connection not available');
+  }
+
   const todayData = await AgentUsage.findAll({
     where: {
       startTime: { [Op.gte]: twentyFourHoursAgo },
     },
     attributes: [
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.col('id')), 'sessions'],
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.fn('DISTINCT', AgentUsage.sequelize.col('userId'))), 'users'],
-      [AgentUsage.sequelize.fn('SUM', AgentUsage.sequelize.col('messageCount')), 'messages'],
-      [AgentUsage.sequelize.fn('SUM', AgentUsage.sequelize.col('tokenUsage')), 'tokens'],
-      [AgentUsage.sequelize.fn('AVG', AgentUsage.sequelize.col('duration')), 'avgDuration'],
+      [
+        sequelize.fn('COUNT', sequelize.col('id')),
+        'sessions',
+      ],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('userId')
+          )
+        ),
+        'users',
+      ],
+      [
+        sequelize.fn(
+          'SUM',
+          sequelize.col('messageCount')
+        ),
+        'messages',
+      ],
+      [
+        sequelize.fn('SUM', sequelize.col('tokenUsage')),
+        'tokens',
+      ],
+      [
+        sequelize.fn('AVG', sequelize.col('duration')),
+        'avgDuration',
+      ],
     ],
     raw: true,
   });
 
-  return todayData[0] || {
-    sessions: 0,
-    users: 0,
-    messages: 0,
-    tokens: 0,
-    avgDuration: 0,
-  };
+  return (
+    todayData[0] || {
+      sessions: 0,
+      users: 0,
+      messages: 0,
+      tokens: 0,
+      avgDuration: 0,
+    }
+  );
 }
 
 // 获取错误率（假设我们有一些错误记录）
@@ -147,22 +235,51 @@ async function getErrorRate(thirtyMinutesAgo: Date) {
 
 // 获取性能指标
 async function getPerformanceMetrics(thirtyMinutesAgo: Date) {
+  const sequelize = AgentUsage.sequelize;
+  if (!sequelize) {
+    throw new Error('Database connection not available');
+  }
+
   const performanceData = await AgentUsage.findAll({
     where: {
       startTime: { [Op.gte]: thirtyMinutesAgo },
-      responseTime: { [Op.not]: null },
+      responseTime: { [Op.ne]: null as any },
     },
     attributes: [
-      [AgentUsage.sequelize.fn('AVG', AgentUsage.sequelize.col('responseTime')), 'avgResponseTime'],
-      [AgentUsage.sequelize.fn('MAX', AgentUsage.sequelize.col('responseTime')), 'maxResponseTime'],
-      [AgentUsage.sequelize.fn('MIN', AgentUsage.sequelize.col('responseTime')), 'minResponseTime'],
-      [AgentUsage.sequelize.fn('AVG', AgentUsage.sequelize.col('duration')), 'avgDuration'],
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.col('id')), 'totalRequests'],
+      [
+        sequelize.fn(
+          'AVG',
+          sequelize.col('responseTime')
+        ),
+        'avgResponseTime',
+      ],
+      [
+        sequelize.fn(
+          'MAX',
+          sequelize.col('responseTime')
+        ),
+        'maxResponseTime',
+      ],
+      [
+        sequelize.fn(
+          'MIN',
+          sequelize.col('responseTime')
+        ),
+        'minResponseTime',
+      ],
+      [
+        sequelize.fn('AVG', sequelize.col('duration')),
+        'avgDuration',
+      ],
+      [
+        sequelize.fn('COUNT', sequelize.col('id')),
+        'totalRequests',
+      ],
     ],
     raw: true,
   });
 
-  const data = performanceData[0] || {
+  const data = performanceData[0] as any || {
     avgResponseTime: 0,
     maxResponseTime: 0,
     minResponseTime: 0,
@@ -185,28 +302,44 @@ async function getPerformanceMetrics(thirtyMinutesAgo: Date) {
 
 // 获取热门智能体
 async function getTopAgents(twentyFourHoursAgo: Date) {
+  const sequelize = AgentUsage.sequelize;
+  if (!sequelize) {
+    throw new Error('Database connection not available');
+  }
+
   const topAgents = await AgentUsage.findAll({
     where: {
       startTime: { [Op.gte]: twentyFourHoursAgo },
     },
-    include: [{
-      model: AgentConfig,
-      as: 'agent',
-      attributes: ['name', 'type'],
-      required: true,
-    }],
+    include: [
+      {
+        model: AgentConfig,
+        as: 'agent',
+        attributes: ['name', 'type'],
+        required: true,
+      },
+    ],
     attributes: [
       'agentId',
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.col('id')), 'usageCount'],
-      [AgentUsage.sequelize.fn('SUM', AgentUsage.sequelize.col('messageCount')), 'messageCount'],
+      [
+        sequelize.fn('COUNT', sequelize.col('id')),
+        'usageCount',
+      ],
+      [
+        sequelize.fn(
+          'SUM',
+          sequelize.col('messageCount')
+        ),
+        'messageCount',
+      ],
     ],
     group: ['agentId', 'agent.id'],
-    order: [[AgentUsage.sequelize.literal('usageCount'), 'DESC']],
+    order: [[sequelize.literal('usageCount'), 'DESC']],
     limit: 5,
     raw: true,
   });
 
-  return topAgents.map(item => ({
+  return topAgents.map((item: any) => ({
     id: item.agentId,
     name: item['agent.name'],
     type: item['agent.type'],
@@ -217,17 +350,33 @@ async function getTopAgents(twentyFourHoursAgo: Date) {
 
 // 获取活跃地理位置
 async function getActiveLocations(oneHourAgo: Date) {
+  const sequelize = AgentUsage.sequelize;
+  if (!sequelize) {
+    throw new Error('Database connection not available');
+  }
+
   const activeLocations = await AgentUsage.findAll({
     where: {
       startTime: { [Op.gte]: oneHourAgo },
     },
-    include: [{
-      model: UserGeo,
-      as: 'geoLocation',
-      required: true,
-    }],
+    include: [
+      {
+        model: UserGeo,
+        as: 'geoLocation',
+        required: true,
+      },
+    ],
     attributes: [
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.fn('DISTINCT', AgentUsage.sequelize.col('geoLocationId'))), 'uniqueLocations'],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('geoLocationId')
+          )
+        ),
+        'uniqueLocations',
+      ],
     ],
     raw: true,
   });
@@ -237,24 +386,38 @@ async function getActiveLocations(oneHourAgo: Date) {
     where: {
       startTime: { [Op.gte]: oneHourAgo },
     },
-    include: [{
-      model: UserGeo,
-      as: 'geoLocation',
-      required: true,
-    }],
-    attributes: [
-      [AgentUsage.sequelize.literal("geoLocation.location->>'country'"), 'country'],
-      [AgentUsage.sequelize.fn('COUNT', AgentUsage.sequelize.fn('DISTINCT', AgentUsage.sequelize.col('geoLocationId'))), 'count'],
+    include: [
+      {
+        model: UserGeo,
+        as: 'geoLocation',
+        required: true,
+      },
     ],
-    group: [AgentUsage.sequelize.literal("geoLocation.location->>'country'")],
-    order: [[AgentUsage.sequelize.literal('count'), 'DESC']],
+    attributes: [
+      [
+        sequelize.literal("geoLocation.location->>'country'"),
+        'country',
+      ],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('geoLocationId')
+          )
+        ),
+        'count',
+      ],
+    ],
+    group: [sequelize.literal("geoLocation.location->>'country'") as any],
+    order: [[sequelize.literal('count'), 'DESC']],
     limit: 5,
     raw: true,
   });
 
   return {
-    totalUniqueLocations: activeLocations[0]?.uniqueLocations || 0,
-    topCountries: locationDistribution.map(item => ({
+    totalUniqueLocations: (activeLocations[0] as any)?.uniqueLocations || 0,
+    topCountries: locationDistribution.map((item: any) => ({
       country: item.country || 'Unknown',
       count: item.count,
     })),

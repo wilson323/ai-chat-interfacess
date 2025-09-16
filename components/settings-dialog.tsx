@@ -3,8 +3,8 @@
 import type React from 'react';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 import {
   Dialog,
   DialogContent,
@@ -12,26 +12,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { useAgent } from '@/context/agent-context';
-import { Settings, Globe, AlertCircle } from 'lucide-react';
-import { useLanguage } from '@/context/language-context';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Language } from '@/lib/i18n/translations';
+} from './ui/dialog';
+import { useAgent } from '../context/agent-context';
+import { Settings, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../context/language-context';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import {
   validateApiEndpoint,
   validateApiKey,
   validateAppId,
-} from '@/lib/security';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Switch } from '@/components/ui/switch';
+} from '../lib/security';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Switch } from './ui/switch';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -41,7 +33,7 @@ interface SettingsDialogProps {
 // Update the SettingsDialog component to hide API settings for regular users
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { selectedAgent, updateAgentConfig } = useAgent();
-  const { t, language, setLanguage, availableLanguages } = useLanguage();
+  const { t } = useLanguage();
 
   const [apiEndpoint, setApiEndpoint] = useState('');
   const [apiKey, setApiKey] = useState('');

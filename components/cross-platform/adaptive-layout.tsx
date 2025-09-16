@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import NextImage from 'next/image';
 import { cn } from '@/lib/utils';
 import { useCrossPlatform } from './cross-platform-provider';
 
@@ -26,8 +27,8 @@ export function AdaptiveLayout({
   className,
   adaptiveSpacing = true,
   adaptiveTypography = true,
-  adaptiveImages = true,
-  adaptiveNavigation = true,
+  // adaptiveImages = true, // 未使用的参数，保留用于未来扩展
+  // adaptiveNavigation = true, // 未使用的参数，保留用于未来扩展,
   breakpoints = {
     mobile: 480,
     tablet: 768,
@@ -35,7 +36,7 @@ export function AdaptiveLayout({
     wide: 1280,
   },
 }: AdaptiveLayoutProps) {
-  const { screenWidth, isMobile, isTablet, isDesktop } = useCrossPlatform();
+  const { isMobile, isTablet, isDesktop, screenWidth } = useCrossPlatform();
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -45,8 +46,6 @@ export function AdaptiveLayout({
   if (!isHydrated) {
     return <div className='min-h-screen'>{children}</div>;
   }
-
-  // 根据屏幕宽度确定布局模式
   const getLayoutMode = () => {
     if (screenWidth < breakpoints.mobile) return 'mobile';
     if (screenWidth < breakpoints.tablet) return 'tablet';
@@ -130,7 +129,7 @@ export function AdaptiveContainer({
   center = true,
   fluid = false,
 }: AdaptiveContainerProps) {
-  const { screenWidth, isMobile, isTablet } = useCrossPlatform();
+  const { isMobile, isTablet } = useCrossPlatform();
 
   const maxWidthClasses = {
     sm: 'max-w-sm',
@@ -443,7 +442,7 @@ export function AdaptiveImage({
     wide: '25vw',
   },
   priority = false,
-  quality = 75,
+  // quality = 75, // 未使用的参数，保留用于未来扩展
   fill = false,
   objectFit = 'cover',
 }: AdaptiveImageProps) {
@@ -459,31 +458,34 @@ export function AdaptiveImage({
   if (fill) {
     return (
       <div className={cn('relative overflow-hidden', className)}>
-        <img
+        <NextImage
           src={src}
           alt={alt}
+          fill
           className={cn(
-            'absolute inset-0 h-full w-full',
             `object-${objectFit}`,
             'transition-transform duration-300 hover:scale-105'
           )}
-          loading={priority ? 'eager' : 'lazy'}
+          priority={priority}
+          sizes={getResponsiveSizes()}
         />
       </div>
     );
   }
 
   return (
-    <img
+    <NextImage
       src={src}
       alt={alt}
+      width={800}
+      height={600}
       className={cn(
         'h-auto w-full',
         `object-${objectFit}`,
         'transition-transform duration-300 hover:scale-105',
         className
       )}
-      loading={priority ? 'eager' : 'lazy'}
+      priority={priority}
       sizes={getResponsiveSizes()}
     />
   );

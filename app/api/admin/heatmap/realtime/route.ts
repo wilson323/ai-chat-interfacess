@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { heatmapService } from '@/lib/services/heatmap-service';
 import { ApiResponse } from '@/types';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * 获取实时热点地图数据
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // 获取实时活动数据
     const realtimeData = await heatmapService.getRealtimeActivity();

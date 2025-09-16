@@ -2,17 +2,15 @@
 // 仅用于非会话型智能体的存储、配置、管理
 
 import type { StorageStats } from '../../shared/types';
-import { CadHistory } from '@/lib/db/models/cad-history';
-import { AgentConfig } from '@/lib/db/models/agent-config';
-import { logger } from '@/lib/utils/logger';
-import {
-  ErrorHandler,
-  DatabaseError,
-  FileSystemError,
-  InternalError,
-} from '@/lib/utils/error-handler';
-import fs from 'fs';
-import path from 'path';
+// Record is a built-in TypeScript utility type, no need to import
+import { AgentConfig } from '../../../db/models/agent-config';
+import { CadHistory } from '../../../db/models/cad-history';
+import { ErrorHandler, InternalError } from '../../../utils/error-handler';
+import { logger } from '../../../utils/logger';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Op } from 'sequelize';
+import { fromDatabaseModel } from './types';
 
 /**
  * 自研智能体数据类型定义
@@ -21,7 +19,7 @@ export interface CustomAgentData {
   id: string;
   name: string;
   type: string;
-  config: any;
+  config: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
   fileData?: {
@@ -41,7 +39,7 @@ export async function getCustomAgentStorageStats(): Promise<StorageStats> {
     const customAgents = await AgentConfig.findAll({
       where: {
         type: {
-          [require('sequelize').Op.not]: 'fastgpt',
+          [Op.not]: 'fastgpt',
         },
       },
     });
@@ -102,7 +100,8 @@ export async function getCustomAgentStorageStats(): Promise<StorageStats> {
       chatCount,
     };
   } catch (error) {
-    const standardError = ErrorHandler.handle(error, {
+    ErrorHandler.handle(error, {
+      context: 'getCustomAgentStorageStats',
       operation: 'getCustomAgentStorageStats',
     });
     throw new InternalError('获取自研智能体存储统计失败', error as Error, {
@@ -142,7 +141,8 @@ export async function clearAllCustomAgentData(): Promise<boolean> {
 
     return true;
   } catch (error) {
-    const standardError = ErrorHandler.handle(error, {
+    ErrorHandler.handle(error, {
+      context: 'clearAllCustomAgentData',
       operation: 'clearAllCustomAgentData',
     });
     throw new InternalError('清除自研智能体数据失败', error as Error, {
@@ -159,7 +159,7 @@ export async function exportAllCustomAgentData(): Promise<CustomAgentData[]> {
     const customAgents = await AgentConfig.findAll({
       where: {
         type: {
-          [require('sequelize').Op.not]: 'fastgpt',
+          [Op.not]: 'fastgpt',
         },
       },
     });
@@ -179,35 +179,38 @@ export async function exportAllCustomAgentData(): Promise<CustomAgentData[]> {
         analysisResult: history.analysisResult,
       }));
 
+      // 使用类型安全的转换函数
+      const agentData = fromDatabaseModel(agent);
       exportData.push({
-        id: agent.id.toString(),
-        name: agent.name,
-        type: agent.type,
+        id: agentData.id.toString(),
+        name: agentData.name,
+        type: agentData.type,
         config: {
-          apiKey: agent.apiKey,
-          appId: agent.appId,
-          apiUrl: agent.apiUrl,
-          systemPrompt: agent.systemPrompt,
-          temperature: agent.temperature,
-          maxTokens: agent.maxTokens,
-          multimodalModel: agent.multimodalModel,
-          isPublished: agent.isPublished,
-          description: agent.description,
-          order: agent.order,
-          supportsStream: agent.supportsStream,
-          supportsDetail: agent.supportsDetail,
-          globalVariables: agent.globalVariables,
-          welcomeText: agent.welcomeText,
+          apiKey: agentData.apiKey,
+          appId: agentData.appId,
+          apiUrl: agentData.apiUrl,
+          systemPrompt: agentData.systemPrompt,
+          temperature: agentData.temperature,
+          maxTokens: agentData.maxTokens,
+          multimodalModel: agentData.multimodalModel,
+          isPublished: agentData.isPublished,
+          description: agentData.description,
+          order: agentData.order,
+          supportsStream: agentData.supportsStream,
+          supportsDetail: agentData.supportsDetail,
+          globalVariables: agentData.globalVariables,
+          welcomeText: agentData.welcomeText,
         },
-        createdAt: agent.createdAt || new Date(),
-        updatedAt: agent.updatedAt || new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         fileData,
       });
     }
 
     return exportData;
   } catch (error) {
-    const standardError = ErrorHandler.handle(error, {
+    ErrorHandler.handle(error, {
+      context: 'exportAllCustomAgentData',
       operation: 'exportAllCustomAgentData',
     });
     throw new InternalError('导出自研智能体数据失败', error as Error, {
@@ -235,23 +238,24 @@ export async function importCustomAgentData(
       }
 
       // 创建新的智能体配置
+      const cfg = (agentData.config || {}) as Record<string, unknown>;
       const newAgent = await AgentConfig.create({
         name: agentData.name,
         type: agentData.type,
-        apiKey: agentData.config.apiKey,
-        appId: agentData.config.appId,
-        apiUrl: agentData.config.apiUrl,
-        systemPrompt: agentData.config.systemPrompt,
-        temperature: agentData.config.temperature,
-        maxTokens: agentData.config.maxTokens,
-        multimodalModel: agentData.config.multimodalModel,
-        isPublished: agentData.config.isPublished,
-        description: agentData.config.description,
-        order: agentData.config.order,
-        supportsStream: agentData.config.supportsStream,
-        supportsDetail: agentData.config.supportsDetail,
-        globalVariables: agentData.config.globalVariables,
-        welcomeText: agentData.config.welcomeText,
+        apiKey: String(cfg.apiKey ?? ''),
+        appId: String(cfg.appId ?? ''),
+        apiUrl: cfg.apiUrl === undefined || cfg.apiUrl === null ? undefined : String(cfg.apiUrl),
+        systemPrompt: String(cfg.systemPrompt ?? ''),
+        temperature: Number(cfg.temperature ?? 0.8),
+        maxTokens: Number(cfg.maxTokens ?? 2048),
+        multimodalModel: cfg.multimodalModel === undefined || cfg.multimodalModel === null ? undefined : String(cfg.multimodalModel),
+        isPublished: Boolean(cfg.isPublished ?? false),
+        description: cfg.description === undefined || cfg.description === null ? undefined : String(cfg.description),
+        order: Number(cfg.order ?? 0),
+        supportsStream: Boolean(cfg.supportsStream ?? true),
+        supportsDetail: Boolean(cfg.supportsDetail ?? false),
+        globalVariables: cfg.globalVariables as unknown as string | undefined,
+        welcomeText: cfg.welcomeText === undefined || cfg.welcomeText === null ? undefined : String(cfg.welcomeText),
       });
 
       // 导入文件数据
@@ -270,7 +274,8 @@ export async function importCustomAgentData(
 
     return true;
   } catch (error) {
-    const standardError = ErrorHandler.handle(error, {
+    ErrorHandler.handle(error, {
+      context: 'importCustomAgentData',
       operation: 'importCustomAgentData',
     });
     throw new InternalError('导入自研智能体数据失败', error as Error, {

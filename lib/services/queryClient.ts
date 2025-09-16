@@ -5,6 +5,7 @@
 
 import { QueryClient } from '@tanstack/react-query';
 
+// Record is a built-in TypeScript utility type, no need to import
 /**
  * 创建 QueryClient 实例
  * 配置默认选项和缓存策略
@@ -14,7 +15,7 @@ export const queryClient = new QueryClient({
     queries: {
       // 数据新鲜度配置
       staleTime: 5 * 60 * 1000, // 5分钟内数据被认为是新鲜的
-      cacheTime: 10 * 60 * 1000, // 10分钟后清理缓存
+      gcTime: 10 * 60 * 1000, // 10分钟后清理缓存（v5 使用 gcTime）
 
       // 重试配置
       retry: (failureCount, error) => {
@@ -111,35 +112,35 @@ export const queryConfigs = {
   // 智能体列表查询
   agentsList: {
     staleTime: 5 * 60 * 1000, // 5分钟
-    cacheTime: 10 * 60 * 1000, // 10分钟
+    gcTime: 10 * 60 * 1000, // 10分钟
     refetchOnWindowFocus: false,
   },
 
   // 智能体详情查询
   agentDetail: {
     staleTime: 10 * 60 * 1000, // 10分钟
-    cacheTime: 30 * 60 * 1000, // 30分钟
+    gcTime: 30 * 60 * 1000, // 30分钟
     refetchOnWindowFocus: false,
   },
 
   // 聊天消息查询
   chatMessages: {
     staleTime: 1 * 60 * 1000, // 1分钟
-    cacheTime: 5 * 60 * 1000, // 5分钟
+    gcTime: 5 * 60 * 1000, // 5分钟
     refetchOnWindowFocus: false,
   },
 
   // 用户配置查询
   userConfig: {
     staleTime: 15 * 60 * 1000, // 15分钟
-    cacheTime: 60 * 60 * 1000, // 1小时
+    gcTime: 60 * 60 * 1000, // 1小时
     refetchOnWindowFocus: false,
   },
 
   // 实时数据查询
   realtime: {
     staleTime: 0, // 立即过期
-    cacheTime: 1 * 60 * 1000, // 1分钟
+    gcTime: 1 * 60 * 1000, // 1分钟
     refetchInterval: 30 * 1000, // 30秒轮询
     refetchOnWindowFocus: true,
   },
@@ -189,8 +190,8 @@ export const cacheUtils = {
    */
   prefetchQuery: async (
     queryKey: readonly unknown[],
-    queryFn: () => Promise<any>,
-    options?: any
+    queryFn: () => Promise<unknown>,
+    options?: Record<string, unknown>
   ) => {
     await queryClient.prefetchQuery({
       queryKey,
@@ -209,7 +210,7 @@ export const cacheUtils = {
   /**
    * 设置查询数据
    */
-  setQueryData: (queryKey: readonly unknown[], data: any) => {
+  setQueryData: (queryKey: readonly unknown[], data: unknown) => {
     queryClient.setQueryData(queryKey, data);
   },
 };
@@ -221,38 +222,38 @@ export const errorUtils = {
   /**
    * 检查是否为网络错误
    */
-  isNetworkError: (error: any): boolean => {
+  isNetworkError: (error: unknown): boolean => {
+    const e = error as { message?: string; code?: string } | undefined;
     return (
-      error?.message?.includes('network') ||
-      error?.message?.includes('fetch') ||
-      error?.code === 'NETWORK_ERROR'
+      !!e?.message?.toLowerCase?.().includes('network') ||
+      !!e?.message?.toLowerCase?.().includes('fetch') ||
+      e?.code === 'NETWORK_ERROR'
     );
   },
 
   /**
    * 检查是否为认证错误
    */
-  isAuthError: (error: any): boolean => {
-    return error?.status === 401 || error?.code === 'UNAUTHORIZED';
+  isAuthError: (error: unknown): boolean => {
+    const e = error as { status?: number; code?: string } | undefined;
+    return e?.status === 401 || e?.code === 'UNAUTHORIZED';
   },
 
   /**
    * 检查是否为权限错误
    */
-  isPermissionError: (error: any): boolean => {
-    return error?.status === 403 || error?.code === 'FORBIDDEN';
+  isPermissionError: (error: unknown): boolean => {
+    const e = error as { status?: number; code?: string } | undefined;
+    return e?.status === 403 || e?.code === 'FORBIDDEN';
   },
 
   /**
    * 获取错误消息
    */
-  getErrorMessage: (error: any): string => {
-    if (error?.message) {
-      return error.message;
-    }
-    if (error?.error) {
-      return error.error;
-    }
+  getErrorMessage: (error: unknown): string => {
+    const e = error as { message?: string; error?: string } | undefined;
+    if (e?.message) return e.message;
+    if (e?.error) return e.error;
     return '未知错误';
   },
 };
@@ -260,9 +261,9 @@ export const errorUtils = {
 /**
  * 开发环境调试工具
  */
-if (process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   // 全局暴露 queryClient 用于调试
-  (window as any).__QUERY_CLIENT__ = queryClient;
+  (window as unknown as { __QUERY_CLIENT__?: QueryClient }).__QUERY_CLIENT__ = queryClient;
 
   // 查询状态变化监听
   queryClient.getQueryCache().subscribe(event => {

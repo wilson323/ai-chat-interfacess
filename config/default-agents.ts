@@ -1,5 +1,6 @@
-import type { Agent } from '@/types/agent';
-import { API_CONSTANTS } from '@/lib/storage/shared/constants';
+import type { Agent } from '../types/agent';
+import { API_CONSTANTS } from '../lib/storage/shared/constants';
+import { DEFAULT_AGENT_CONFIG } from '../types/unified-agent';
 
 // 默认智能体配置
 export const DEFAULT_AGENTS: Omit<Agent, 'icon'>[] = [
@@ -20,6 +21,10 @@ export const DEFAULT_AGENTS: Omit<Agent, 'icon'>[] = [
     maxTokens: 2000,
     supportsFileUpload: true,
     supportsImageUpload: true,
+    isActive: true, // 添加缺失字段
+    supportsStream: true, // 添加缺失字段
+    supportsDetail: true, // 添加缺失字段
+    config: DEFAULT_AGENT_CONFIG, // 添加必需的 config 属性
   },
   {
     id: 'image-editor',
@@ -38,6 +43,10 @@ export const DEFAULT_AGENTS: Omit<Agent, 'icon'>[] = [
     maxTokens: 2000,
     supportsFileUpload: true,
     supportsImageUpload: true,
+    isActive: true, // 添加缺失字段
+    supportsStream: true, // 添加缺失字段
+    supportsDetail: true, // 添加缺失字段
+    config: DEFAULT_AGENT_CONFIG, // 添加必需的 config 属性
   },
   {
     id: 'cad-analyzer',
@@ -57,6 +66,10 @@ export const DEFAULT_AGENTS: Omit<Agent, 'icon'>[] = [
     maxTokens: 4000,
     supportsFileUpload: true,
     supportsImageUpload: true,
+    isActive: true, // 添加缺失字段
+    supportsStream: true, // 添加缺失字段
+    supportsDetail: true, // 添加缺失字段
+    config: DEFAULT_AGENT_CONFIG, // 添加必需的 config 属性
   },
 ];
 

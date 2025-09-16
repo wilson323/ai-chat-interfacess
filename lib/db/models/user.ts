@@ -20,7 +20,10 @@ interface UserAttributes {
 }
 
 // 创建用户时的可选属性
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+type UserCreationAttributes = Optional<
+  UserAttributes,
+  'id' | 'createdAt' | 'updatedAt'
+>;
 
 // 用户角色枚举
 export enum UserRole {
@@ -38,7 +41,10 @@ export enum UserStatus {
 }
 
 // 用户模型类
-class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+class User
+  extends Model<UserAttributes, UserCreationAttributes>
+  implements UserAttributes
+{
   public id!: number;
   public username!: string;
   public email!: string;
@@ -55,16 +61,21 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public readonly updatedAt!: Date;
 
   // 实例方法
-  public toJSON(): object {
-    const values = Object.assign({}, this.get());
+  public toJSON(): Record<string, unknown> {
+    const values = Object.assign({}, this.get()) as unknown as Record<string, unknown>;
     // 不返回密码
-    delete values.password;
+    if ('password' in values) {
+      delete values.password;
+    }
     return values;
   }
 
   // 检查用户是否有特定权限
   public hasPermission(permission: string): boolean {
-    return this.permissions.includes(permission) || this.role === UserRole.SUPER_ADMIN;
+    return (
+      this.permissions.includes(permission) ||
+      this.role === UserRole.SUPER_ADMIN
+    );
   }
 
   // 检查用户是否为管理员
@@ -181,7 +192,7 @@ User.init(
       },
     ],
     hooks: {
-      beforeCreate: async (user: User) => {
+      beforeCreate: async () => {
         // 在实际应用中，这里应该对密码进行加密
         // user.password = await bcrypt.hash(user.password, 10);
       },
@@ -196,4 +207,4 @@ User.init(
 );
 
 export default User;
-export { User, UserAttributes, UserCreationAttributes };
+export type { UserAttributes, UserCreationAttributes };
