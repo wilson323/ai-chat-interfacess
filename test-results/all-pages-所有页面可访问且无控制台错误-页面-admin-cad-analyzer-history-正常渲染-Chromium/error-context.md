@@ -1,0 +1,133 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - generic:
+        - generic:
+          - generic:
+            - heading "选择智能体" [level=5]: 选择智能体
+        - generic:
+          - generic:
+            - generic:
+              - list:
+                - listitem:
+                  - generic [ref=e7]: 默
+                  - generic [ref=e8]:
+                    - generic [ref=e9]: 默认助手
+                    - generic [ref=e10]: 系统默认智能助手
+                - listitem:
+                  - generic [ref=e12]: 图
+                  - generic [ref=e13]:
+                    - generic [ref=e14]: 图像编辑器
+                    - generic [ref=e15]: AI图像编辑和处理工具
+                - listitem:
+                  - generic [ref=e17]: C
+                  - generic [ref=e18]:
+                    - generic [ref=e19]: CAD分析器
+                    - generic [ref=e20]: CAD图纸分析和安防设备识别
+        - button "主题设置" [ref=e21]:
+          - img [ref=e22]
+          - generic [ref=e28]: 主题设置
+    - generic [ref=e29]:
+      - banner [ref=e30]:
+        - generic [ref=e31]:
+          - button "打开聊天历史" [ref=e32]:
+            - img [ref=e33]
+          - button "现代简约" [ref=e39]:
+            - generic [ref=e40]: 现代简约
+            - img [ref=e41]
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - img [ref=e51]
+            - generic [ref=e53]: 切换主题
+      - main [ref=e54]:
+        - link "返回管理员首页" [ref=e56] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e57] [cursor=pointer]
+          - text: 返回管理员首页
+        - generic [ref=e59]:
+          - generic [ref=e61]:
+            - img [ref=e62]
+            - text: CAD 智能体历史记录
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - generic [ref=e68]:
+                - img [ref=e69]
+                - textbox "搜索文件名或分析结果..." [ref=e72]
+              - combobox [ref=e73]:
+                - generic: 全部状态
+                - img [ref=e74]
+              - button "刷新" [ref=e76]
+              - button "批量导出" [ref=e77]:
+                - img [ref=e78]
+                - text: 批量导出
+            - table [ref=e83]:
+              - rowgroup [ref=e84]:
+                - row "文件名 状态 用户ID 分析结果 创建时间 操作" [ref=e85]:
+                  - cell "文件名" [ref=e86]
+                  - cell "状态" [ref=e87]
+                  - cell "用户ID" [ref=e88]
+                  - cell "分析结果" [ref=e89]
+                  - cell "创建时间" [ref=e90]
+                  - cell "操作" [ref=e91]
+              - rowgroup [ref=e92]:
+                - row "暂无数据" [ref=e93]:
+                  - cell "暂无数据" [ref=e94]
+    - complementary [ref=e95]:
+      - generic [ref=e96]:
+        - heading "聊天历史" [level=2] [ref=e97]:
+          - img [ref=e98]
+          - text: 聊天历史
+        - button [ref=e100]:
+          - img [ref=e101]
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - img [ref=e106]
+          - textbox "搜索历史..." [ref=e109]
+        - tablist [ref=e111]:
+          - tab "所有对话" [selected] [ref=e112]
+          - tab "当前助手" [ref=e113]
+        - button "新对话" [ref=e115]:
+          - img [ref=e116]
+          - text: 新对话
+      - generic [ref=e118]:
+        - generic [ref=e119]:
+          - img [ref=e120]
+          - text: 最近对话
+        - generic [ref=e123]:
+          - button [ref=e124]:
+            - img [ref=e125]
+          - button [ref=e128]:
+            - img [ref=e129]
+      - generic [ref=e135]:
+        - generic [ref=e136]:
+          - generic [ref=e137]:
+            - img [ref=e138]
+            - generic [ref=e140]: 关于人工智能的讨论
+          - generic [ref=e141]: 人工智能是计算机科学的一个分支，致力于创造能够模拟人类智能的系统...
+          - generic [ref=e142]:
+            - img [ref=e143]
+            - text: 大约 2 小时前
+        - generic [ref=e145]:
+          - generic [ref=e146]:
+            - img [ref=e147]
+            - generic [ref=e149]: Web开发技术问题
+          - generic [ref=e150]: React是一个用于构建用户界面的JavaScript库，由Facebook开发...
+          - generic [ref=e151]:
+            - img [ref=e152]
+            - text: 1 天前
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - img [ref=e156]
+            - generic [ref=e158]: 数据库设计咨询
+          - generic [ref=e159]: 关系型数据库和NoSQL数据库各有优缺点...
+          - generic [ref=e160]:
+            - img [ref=e161]
+            - text: 3 天前
+      - generic [ref=e163]:
+        - textbox "搜索历史..." [ref=e165]
+        - generic [ref=e169]: 未找到对话
+```

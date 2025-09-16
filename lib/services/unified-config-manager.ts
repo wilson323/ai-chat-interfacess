@@ -77,11 +77,35 @@ export class UnifiedConfigManager {
   }
 
   /**
+   * 解析 API URL：
+   * - 浏览器环境保留相对路径
+   * - Node/服务端环境拼接为绝对地址（默认 http://localhost:3001）
+   */
+  private resolveApiUrl(path: string): string {
+    // 浏览器环境直接返回相对路径
+    if (typeof window !== 'undefined') return path;
+
+    const port = process.env.PORT || '3001';
+    const baseEnv =
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.PLAYWRIGHT_BASE_URL ||
+      `http://localhost:${String(port)}`;
+    try {
+      // 若 baseEnv 已含协议与主机名，正常拼接
+      const u = new URL(baseEnv);
+      return new URL(path, u).toString();
+    } catch {
+      // 兜底
+      return `http://localhost:${String(port)}${path}`;
+    }
+  }
+
+  /**
    * 从现有API获取所有智能体配置
    */
   async getAllAgents(): Promise<UnifiedAgent[]> {
     try {
-      const response = await fetch('/api/admin/agent-config');
+      const response = await fetch(this.resolveApiUrl('/api/admin/agent-config'));
       const result = await response.json();
 
       if (!result.success) {
@@ -114,7 +138,7 @@ export class UnifiedConfigManager {
       }
 
       // 从API获取
-      const response = await fetch(`/api/admin/agent-config/${agentId}`);
+      const response = await fetch(this.resolveApiUrl(`/api/admin/agent-config/${agentId}`));
       const result = await response.json();
 
       if (!result.success) {
@@ -136,7 +160,7 @@ export class UnifiedConfigManager {
    */
   async createAgent(agentData: Partial<UnifiedAgent>): Promise<UnifiedAgent> {
     try {
-      const response = await fetch('/api/admin/agent-config', {
+      const response = await fetch(this.resolveApiUrl('/api/admin/agent-config'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +190,7 @@ export class UnifiedConfigManager {
    */
   async updateAgent(agentId: string, updates: Partial<UnifiedAgent>): Promise<UnifiedAgent> {
     try {
-      const response = await fetch('/api/admin/agent-config', {
+      const response = await fetch(this.resolveApiUrl('/api/admin/agent-config'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -199,7 +223,7 @@ export class UnifiedConfigManager {
    */
   async deleteAgent(agentId: string): Promise<void> {
     try {
-      const response = await fetch(`/api/admin/agent-config/${agentId}`, {
+      const response = await fetch(this.resolveApiUrl(`/api/admin/agent-config/${agentId}`), {
         method: 'DELETE',
       });
 
@@ -222,7 +246,7 @@ export class UnifiedConfigManager {
    */
   async getPublishedAgents(): Promise<UnifiedAgent[]> {
     try {
-      const response = await fetch('/api/agent-config');
+      const response = await fetch(this.resolveApiUrl('/api/agent-config'));
       const result = await response.json();
 
       if (!result.success) {

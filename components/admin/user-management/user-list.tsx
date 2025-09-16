@@ -331,14 +331,14 @@ export function UserList({ refreshTrigger }: UserListProps) {
             />
           </div>
           <Select
-            value={filters.role}
-            onValueChange={value => handleFilterChange('role', value)}
+            value={filters.role || 'all'}
+            onValueChange={value => handleFilterChange('role', value === 'all' ? '' : value)}
           >
             <SelectTrigger className='w-full md:w-40'>
               <SelectValue placeholder='选择角色' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value=''>全部角色</SelectItem>
+              <SelectItem value='all'>全部角色</SelectItem>
               {Object.values(UserRole).map(role => (
                 <SelectItem key={role} value={role as string}>
                   {role === 'super_admin'
@@ -353,14 +353,14 @@ export function UserList({ refreshTrigger }: UserListProps) {
             </SelectContent>
           </Select>
           <Select
-            value={filters.status}
-            onValueChange={value => handleFilterChange('status', value)}
+            value={filters.status || 'all'}
+            onValueChange={value => handleFilterChange('status', value === 'all' ? '' : value)}
           >
             <SelectTrigger className='w-full md:w-40'>
               <SelectValue placeholder='选择状态' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value=''>全部状态</SelectItem>
+              <SelectItem value='all'>全部状态</SelectItem>
               {Object.values(UserStatus).map(status => (
                 <SelectItem key={status} value={status as string}>
                   {status === 'active'

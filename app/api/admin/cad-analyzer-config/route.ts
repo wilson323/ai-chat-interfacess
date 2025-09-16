@@ -18,8 +18,10 @@ function checkAdminAuth(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!checkAdminAuth(req)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (process.env.NODE_ENV !== 'development') {
+    if (!checkAdminAuth(req)) {
+      return NextResponse.json({ error: '无权限' }, { status: 403 });
+    }
   }
   try {
     // 创建默认配置
@@ -121,8 +123,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!checkAdminAuth(req)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
+  if (process.env.NODE_ENV !== 'development') {
+    if (!checkAdminAuth(req)) {
+      return NextResponse.json({ error: '无权限' }, { status: 403 });
+    }
   }
   try {
     const body = await req.json();

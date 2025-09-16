@@ -389,7 +389,7 @@ export default function SystemManagementPage() {
                     <p className='text-sm font-medium text-gray-600'>
                       系统健康
                     </p>
-                    <p className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold'>
                       <Badge
                         className={getHealthColor(
                           metrics?.systemHealth || 'good'
@@ -397,7 +397,7 @@ export default function SystemManagementPage() {
                       >
                         {metrics?.systemHealth}
                       </Badge>
-                    </p>
+                    </div>
                   </div>
                   <CheckCircle className='h-8 w-8 text-green-500' />
                 </div>

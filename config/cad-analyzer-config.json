@@ -1,8 +1,11 @@
 {
   "enabled": true,
+  "models": [],
   "defaultModel": "qwen-turbo-latest",
   "maxFileSizeMB": 100,
-  "supportedFormats": ["dxf"],
+  "supportedFormats": [
+    "dxf"
+  ],
   "analysisParams": {
     "precision": "medium",
     "timeoutSec": 60,
@@ -12,6 +15,5 @@
   "description": "专业CAD图纸解析工具，识别安防设备布局",
   "apiEndpoint": "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
   "apiKey": "sk-e7494146b9d34192961dd4dad8489dd4",
-  "models": [],
   "error": "无权限"
 }
