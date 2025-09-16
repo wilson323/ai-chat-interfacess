@@ -1,0 +1,22 @@
+# 统一行尾策略
+* text=auto
+
+# Husky 与 Shell 脚本强制 LF（避免在 *nix/WSL 运行时出现 sh\r 错误）
+.husky/* text eol=lf
+*.sh text eol=lf
+scripts/*.sh text eol=lf
+
+# 批处理/PowerShell 保持 CRLF（Windows 可直接运行）
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 常见文本文件按默认自动处理
+*.js text
+*.ts text
+*.tsx text
+*.jsx text
+*.json text
+*.md text
+*.css text
+*.mjs text
