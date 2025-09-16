@@ -170,7 +170,7 @@ function fixComponentTypes() {
     'components/chat-history.tsx',
     'components/chat-message.tsx',
     'components/chat/ChatMessages.tsx',
-    'components/chat/MultiAgentChatContainer.tsx',
+    // 'components/chat/MultiAgentChatContainer.tsx', // deprecated, do not auto-fix
     'components/chat/unified-chat-container.tsx',
     'components/chat/unified-file-upload.tsx',
     'components/chat/unified-input.tsx',

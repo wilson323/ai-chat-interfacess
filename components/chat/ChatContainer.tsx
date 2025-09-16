@@ -14,7 +14,7 @@ import { ChatInput } from './ChatInput';
 import { ChatHistory } from '../chat-history';
 import { useAgent } from '@/context/agent-context';
 import { useChatState } from './hooks/useChatState';
-import { getGlobalChatService } from '@/lib/services/multi-agent-chat-service';
+import { getGlobalChatService } from '@/lib/services/chat-service';
 import { saveMessagesToStorage } from '@/lib/storage/index';
 import { logger } from '@/lib/utils/logger';
 import { errorHandler } from '@/lib/utils/error-handler';

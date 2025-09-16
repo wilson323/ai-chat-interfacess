@@ -61,11 +61,14 @@ if (nodeEntrypoint) {
 }
 
 // 创建子进程
+// Windows 下：仅当未使用 nodeEntrypoint 且目标为 .cmd/.bat 时才启用 shell，避免 DEP0190 警告
+const isWindows = process.platform === 'win32';
+const looksLikeBatch = /\\|\//.test(cmdPath) ? /\.(cmd|bat)$/i.test(cmdPath) : false;
+const useShell = isWindows && !nodeEntrypoint && looksLikeBatch;
+
 const child = spawn(cmdPath, finalArgs, {
   stdio: 'inherit',
-  // 在 Windows 下启用 shell 可避免某些可执行文件触发 EINVAL
-  shell: process.platform === 'win32',
-  // 关闭隐藏窗口，避免在部分 Node 版本/终端下 EINVAL
+  shell: useShell,
   windowsHide: false,
   cwd: process.cwd()
 });

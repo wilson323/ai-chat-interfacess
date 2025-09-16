@@ -34,6 +34,9 @@ interface UploadedFile {
   url: string;
 }
 
+/**
+ * @deprecated 已迁移到单智能体 ChatContainer，本组件保留仅供历史参考，不在页面中使用。
+ */
 interface MultiAgentChatContainerProps {
   className?: string;
 }
